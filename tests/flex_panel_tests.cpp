@@ -1,4 +1,4 @@
-// Stage L, phase L3: FlexLayoutPanel over child controls. Item records and
+// Stage L, phase L3: FlexPanel over child controls. Item records and
 // their validation and reconciliation, the solver's results published as
 // child slots, nested intrinsic sizes, and the counts of PLAN section 5 at
 // 10,000 children: changing one item's text costs one item measure
@@ -110,7 +110,7 @@ protected:
 };
 
 void test_row_grows_and_stretches() {
-    std::shared_ptr<FlexLayoutPanel> panel = make_control<FlexLayoutPanel>(StableId("flex.row"));
+    std::shared_ptr<FlexPanel> panel = make_control<FlexPanel>(StableId("flex.row"));
     (*panel).set_padding({10.0, 5.0, 10.0, 5.0});
     (*panel).set_column_gap(LengthPercentage{LogicalLength{6.0}, 0.0});
     std::vector<std::shared_ptr<Panel>> boxes;
@@ -135,7 +135,7 @@ void test_row_grows_and_stretches() {
 }
 
 void test_item_records_validate_and_reconcile() {
-    std::shared_ptr<FlexLayoutPanel> panel = make_control<FlexLayoutPanel>(StableId("flex.records"));
+    std::shared_ptr<FlexPanel> panel = make_control<FlexPanel>(StableId("flex.records"));
     std::shared_ptr<Panel> child = box("flex.records.child", 10.0, 10.0);
     std::shared_ptr<Panel> stranger = box("flex.records.stranger", 10.0, 10.0);
     (*panel).add_child(child);
@@ -174,11 +174,11 @@ void test_item_records_validate_and_reconcile() {
 }
 
 void test_nested_columns_size_from_content() {
-    std::shared_ptr<FlexLayoutPanel> column = make_control<FlexLayoutPanel>(StableId("flex.column"));
+    std::shared_ptr<FlexPanel> column = make_control<FlexPanel>(StableId("flex.column"));
     (*column).set_flex_direction(FlexDirection::column);
     (*column).set_row_gap(LengthPercentage{LogicalLength{4.0}, 0.0});
     (*column).set_align_items(LayoutAlignment::flex_start);
-    std::shared_ptr<FlexLayoutPanel> inner = make_control<FlexLayoutPanel>(StableId("flex.column.row"));
+    std::shared_ptr<FlexPanel> inner = make_control<FlexPanel>(StableId("flex.column.row"));
     std::shared_ptr<Panel> first = box("flex.column.row.a", 30.0, 12.0);
     std::shared_ptr<Panel> second = box("flex.column.row.b", 40.0, 18.0);
     (*inner).add_child(first);
@@ -197,7 +197,7 @@ void test_nested_columns_size_from_content() {
 
 // The docstring's two examples, with the results their comments state.
 void test_documented_examples() {
-    std::shared_ptr<FlexLayoutPanel> row = make_control<FlexLayoutPanel>(StableId("doc.row"));
+    std::shared_ptr<FlexPanel> row = make_control<FlexPanel>(StableId("doc.row"));
     std::shared_ptr<Button> fixed = make_control<Button>(StableId("doc.row.fixed"), "Fixed");
     std::shared_ptr<Button> narrow = make_control<Button>(StableId("doc.row.narrow"), "Narrow");
     std::shared_ptr<Button> wide = make_control<Button>(StableId("doc.row.wide"), "Wide");
@@ -218,7 +218,7 @@ void test_documented_examples() {
     require_bounds(*narrow, 20.0, 0.0, 30.0, 20.0, "the one-share button");
     require_bounds(*wide, 50.0, 0.0, 50.0, 20.0, "the two-share button");
 
-    std::shared_ptr<FlexLayoutPanel> bar = make_control<FlexLayoutPanel>(StableId("doc.bar"));
+    std::shared_ptr<FlexPanel> bar = make_control<FlexPanel>(StableId("doc.bar"));
     (*bar).set_align_items(LayoutAlignment::center);
     std::shared_ptr<Button> save = make_control<Button>(StableId("doc.bar.save"), "Save");
     std::shared_ptr<Button> close = make_control<Button>(StableId("doc.bar.close"), "Close");
@@ -239,7 +239,7 @@ void test_documented_examples() {
 
 void test_ten_thousand_children_counts() {
     constexpr std::size_t count = 10'000U;
-    std::shared_ptr<FlexLayoutPanel> panel = make_control<FlexLayoutPanel>(StableId("flex.many"));
+    std::shared_ptr<FlexPanel> panel = make_control<FlexPanel>(StableId("flex.many"));
     (*panel).set_flex_wrap(FlexWrap::wrap);
     (*panel).set_align_items(LayoutAlignment::flex_start);
     FlexItemLayout rigid{};
@@ -298,7 +298,7 @@ void test_ten_thousand_children_counts() {
     counting_allocations = false;
     require(counted_allocations == 0U, "arranging 10000 children allocated " + std::to_string(counted_allocations) +
                                            " times");
-    std::cout << "flex-layout-panel-tests: 10000 children: 1 callback on a text change, 0 on a resize, "
+    std::cout << "flex-panel-tests: 10000 children: 1 callback on a text change, 0 on a resize, "
                  "0 allocations per arrange\n";
 }
 
@@ -311,10 +311,10 @@ int main() {
         test_nested_columns_size_from_content();
         test_documented_examples();
         test_ten_thousand_children_counts();
-        std::cout << "flex-layout-panel-tests: pass\n";
+        std::cout << "flex-panel-tests: pass\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {
-        std::cerr << "flex-layout-panel-tests: fail: " << error.what() << '\n';
+        std::cerr << "flex-panel-tests: fail: " << error.what() << '\n';
         return EXIT_FAILURE;
     }
 }

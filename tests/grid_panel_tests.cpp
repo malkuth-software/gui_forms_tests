@@ -1,4 +1,4 @@
-// Stage L, phase L4: GridLayoutPanel over child controls. Track lists,
+// Stage L, phase L4: GridPanel over child controls. Track lists,
 // areas and item records and their validation and reconciliation, the
 // solver's results published as child slots, nested intrinsic sizes, the
 // cell limit's refusal, and the counts of PLAN section 5 at 10,000
@@ -149,7 +149,7 @@ GridItemLayout in_area(const std::string& name) {
     return layout;
 }
 
-bool refuses_item(GridLayoutPanel& panel, const Control& child, const GridItemLayout& layout) {
+bool refuses_item(GridPanel& panel, const Control& child, const GridItemLayout& layout) {
     try {
         panel.set_item_layout(child, layout);
     } catch (const std::invalid_argument&) {
@@ -158,7 +158,7 @@ bool refuses_item(GridLayoutPanel& panel, const Control& child, const GridItemLa
     return false;
 }
 
-bool refuses_columns(GridLayoutPanel& panel, const GridTrackList& list) {
+bool refuses_columns(GridPanel& panel, const GridTrackList& list) {
     try {
         panel.set_template_columns(list);
     } catch (const std::invalid_argument&) {
@@ -183,7 +183,7 @@ protected:
 };
 
 void test_tracks_gaps_and_stretch() {
-    std::shared_ptr<GridLayoutPanel> panel = make_control<GridLayoutPanel>(StableId("grid.tracks"));
+    std::shared_ptr<GridPanel> panel = make_control<GridPanel>(StableId("grid.tracks"));
     (*panel).set_padding({10.0, 10.0, 10.0, 10.0});
     (*panel).set_template_columns(tracks({fixed(100.0), fraction(1.0)}));
     (*panel).set_column_gap(px(10.0));
@@ -215,7 +215,7 @@ void test_tracks_gaps_and_stretch() {
 }
 
 void test_records_validate_and_reconcile() {
-    std::shared_ptr<GridLayoutPanel> panel = make_control<GridLayoutPanel>(StableId("grid.records"));
+    std::shared_ptr<GridPanel> panel = make_control<GridPanel>(StableId("grid.records"));
     std::shared_ptr<Panel> child = box("grid.records.child", 10.0, 10.0);
     std::shared_ptr<Panel> stranger = box("grid.records.stranger", 10.0, 10.0);
     (*panel).add_child(child);
@@ -274,7 +274,7 @@ void test_records_validate_and_reconcile() {
 }
 
 void test_named_areas() {
-    std::shared_ptr<GridLayoutPanel> panel = make_control<GridLayoutPanel>(StableId("grid.areas"));
+    std::shared_ptr<GridPanel> panel = make_control<GridPanel>(StableId("grid.areas"));
     (*panel).set_template_columns(tracks({fixed(80.0), fraction(1.0)}));
     (*panel).set_template_rows(tracks({fixed(30.0), fraction(1.0)}));
     GridTemplateAreas areas{};
@@ -300,9 +300,9 @@ void test_named_areas() {
 }
 
 void test_nested_intrinsic_columns() {
-    std::shared_ptr<GridLayoutPanel> outer = make_control<GridLayoutPanel>(StableId("grid.outer"));
+    std::shared_ptr<GridPanel> outer = make_control<GridPanel>(StableId("grid.outer"));
     (*outer).set_template_columns(tracks({automatic(), fraction(1.0)}));
-    std::shared_ptr<GridLayoutPanel> inner = make_control<GridLayoutPanel>(StableId("grid.outer.inner"));
+    std::shared_ptr<GridPanel> inner = make_control<GridPanel>(StableId("grid.outer.inner"));
     (*inner).set_template_columns(tracks({fixed(30.0), fixed(40.0)}));
     (*inner).set_column_gap(px(5.0));
     (*inner).set_margin({0.0, 0.0, 0.0, 0.0});
@@ -321,7 +321,7 @@ void test_nested_intrinsic_columns() {
 }
 
 void test_cell_limit_refuses() {
-    std::shared_ptr<GridLayoutPanel> panel = make_control<GridLayoutPanel>(StableId("grid.limit"));
+    std::shared_ptr<GridPanel> panel = make_control<GridPanel>(StableId("grid.limit"));
     std::shared_ptr<Panel> far = box("grid.limit.far", 10.0, 10.0);
     std::shared_ptr<Panel> placed = box("grid.limit.placed", 10.0, 10.0);
     (*panel).add_child(far);
@@ -350,7 +350,7 @@ std::shared_ptr<Button> sized_button(const std::string& id) {
 
 // The docstring's two examples, with the results their comments state.
 void test_documented_examples() {
-    std::shared_ptr<GridLayoutPanel> form = make_control<GridLayoutPanel>(StableId("doc.form"));
+    std::shared_ptr<GridPanel> form = make_control<GridPanel>(StableId("doc.form"));
     (*form).set_template_columns(tracks({fixed(80.0), fraction(1.0)}));
     (*form).set_column_gap(px(10.0));
     (*form).set_row_gap(px(5.0));
@@ -366,7 +366,7 @@ void test_documented_examples() {
     require_bounds(*buttons[2], 0.0, 25.0, 80.0, 20.0, "the third form button");
     require_bounds(*buttons[3], 90.0, 25.0, 110.0, 20.0, "the fourth form button");
 
-    std::shared_ptr<GridLayoutPanel> cards = make_control<GridLayoutPanel>(StableId("doc.cards"));
+    std::shared_ptr<GridPanel> cards = make_control<GridPanel>(StableId("doc.cards"));
     GridTrackSize card = fraction(1.0);
     card.minimum = TrackBreadth{TrackBreadthKind::length_percentage, px(100.0), FractionFactor{}};
     GridTrackList columns{};
@@ -392,7 +392,7 @@ void test_documented_examples() {
 
 void test_ten_thousand_children_counts() {
     constexpr std::size_t count = 10'000U;
-    std::shared_ptr<GridLayoutPanel> panel = make_control<GridLayoutPanel>(StableId("grid.many"));
+    std::shared_ptr<GridPanel> panel = make_control<GridPanel>(StableId("grid.many"));
     GridTrackList columns{};
     columns.auto_repeat = AutoRepeatKind::auto_fill;
     columns.auto_repeat_tracks = {fixed(120.0)};
@@ -453,7 +453,7 @@ void test_ten_thousand_children_counts() {
     counting_allocations = false;
     require(counted_allocations == 0U, "arranging 10000 children allocated " + std::to_string(counted_allocations) +
                                            " times");
-    std::cout << "grid-layout-panel-tests: 10000 children: 1 callback on a text change, 0 on a resize, "
+    std::cout << "grid-panel-tests: 10000 children: 1 callback on a text change, 0 on a resize, "
                  "0 allocations per arrange\n";
 }
 
@@ -468,10 +468,10 @@ int main() {
         test_cell_limit_refuses();
         test_documented_examples();
         test_ten_thousand_children_counts();
-        std::cout << "grid-layout-panel-tests: pass\n";
+        std::cout << "grid-panel-tests: pass\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {
-        std::cerr << "grid-layout-panel-tests: fail: " << error.what() << '\n';
+        std::cerr << "grid-panel-tests: fail: " << error.what() << '\n';
         return EXIT_FAILURE;
     }
 }

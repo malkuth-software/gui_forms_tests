@@ -1,4 +1,4 @@
-// Stage L, phase L5: BlockFlowPanel over child controls. Block stacking
+// Stage L, phase L5: BlockPanel over child controls. Block stacking
 // with margins collapsing between siblings and through a nested panel,
 // widths and auto margins, line boxes with text-align and the strut,
 // shrink-to-fit inline panels, records and their validation and
@@ -90,8 +90,8 @@ std::shared_ptr<Panel> box(const std::string& id, double width, double height) {
     return made;
 }
 
-std::shared_ptr<BlockFlowPanel> flow(const std::string& id) {
-    std::shared_ptr<BlockFlowPanel> made = make_control<BlockFlowPanel>(StableId(id));
+std::shared_ptr<BlockPanel> flow(const std::string& id) {
+    std::shared_ptr<BlockPanel> made = make_control<BlockPanel>(StableId(id));
     (*made).set_margin({0.0, 0.0, 0.0, 0.0});
     return made;
 }
@@ -119,7 +119,7 @@ BlockFlowItemLayout inline_item(double width, double height) {
     return layout;
 }
 
-bool refuses_item(BlockFlowPanel& panel, const Control& child, const BlockFlowItemLayout& layout) {
+bool refuses_item(BlockPanel& panel, const Control& child, const BlockFlowItemLayout& layout) {
     try {
         panel.set_item_layout(child, layout);
     } catch (const std::invalid_argument&) {
@@ -132,13 +132,13 @@ bool refuses_item(BlockFlowPanel& panel, const Control& child, const BlockFlowIt
 // with its child's margins on both sides, an empty block. (A control's
 // margins are nonnegative; the solver's tests cover negative ones.)
 void test_stacking_and_margin_collapsing() {
-    std::shared_ptr<BlockFlowPanel> root = flow("block.collapse");
+    std::shared_ptr<BlockPanel> root = flow("block.collapse");
     (*root).set_padding({8.0, 8.0, 8.0, 8.0});
     std::shared_ptr<Panel> first = box("block.collapse.a", 0.0, 20.0);
     set_vertical_margins(*first, 0.0, 10.0);
     std::shared_ptr<Panel> second = box("block.collapse.b", 0.0, 20.0);
     set_vertical_margins(*second, 30.0, 0.0);
-    std::shared_ptr<BlockFlowPanel> nested = flow("block.collapse.p");
+    std::shared_ptr<BlockPanel> nested = flow("block.collapse.p");
     set_vertical_margins(*nested, 10.0, 0.0);
     std::shared_ptr<Panel> inner = box("block.collapse.c", 0.0, 20.0);
     set_vertical_margins(*inner, 25.0, 15.0);
@@ -181,7 +181,7 @@ void test_stacking_and_margin_collapsing() {
 }
 
 void test_widths_and_auto_margins() {
-    std::shared_ptr<BlockFlowPanel> root = flow("block.widths");
+    std::shared_ptr<BlockPanel> root = flow("block.widths");
     (*root).set_padding({8.0, 8.0, 8.0, 8.0});
     std::shared_ptr<Panel> centred = box("block.widths.a", 0.0, 10.0);
     std::shared_ptr<Panel> half = box("block.widths.b", 0.0, 10.0);
@@ -219,8 +219,8 @@ void test_widths_and_auto_margins() {
 }
 
 void test_lines_and_shrink_to_fit() {
-    std::shared_ptr<BlockFlowPanel> root = flow("block.lines");
-    std::shared_ptr<BlockFlowPanel> line = flow("block.lines.w");
+    std::shared_ptr<BlockPanel> root = flow("block.lines");
+    std::shared_ptr<BlockPanel> line = flow("block.lines.w");
     (*line).set_text_align(TextAlignment::center);
     (*root).add_child(line);
     BlockFlowItemLayout narrow{};
@@ -233,7 +233,7 @@ void test_lines_and_shrink_to_fit() {
         (*line).set_item_layout(*boxes.back(), inline_item(40.0, 10.0));
     }
     // An inline-block panel shrinks to its content.
-    std::shared_ptr<BlockFlowPanel> fitted = flow("block.lines.fit");
+    std::shared_ptr<BlockPanel> fitted = flow("block.lines.fit");
     std::shared_ptr<Panel> content = box("block.lines.fit.content", 0.0, 0.0);
     (*fitted).add_child(content);
     BlockFlowItemLayout content_layout{};
@@ -268,7 +268,7 @@ void test_lines_and_shrink_to_fit() {
 }
 
 void test_records_validate_and_reconcile() {
-    std::shared_ptr<BlockFlowPanel> panel = flow("block.records");
+    std::shared_ptr<BlockPanel> panel = flow("block.records");
     std::shared_ptr<Panel> child = box("block.records.child", 10.0, 10.0);
     std::shared_ptr<Panel> stranger = box("block.records.stranger", 10.0, 10.0);
     (*panel).add_child(child);
@@ -298,8 +298,8 @@ void test_records_validate_and_reconcile() {
 // A nested panel shares margins only as a block item: made inline, it is a
 // formatting-context root again, and its cached measures are refreshed.
 void test_level_change_refreshes_nested_panel() {
-    std::shared_ptr<BlockFlowPanel> root = flow("block.level");
-    std::shared_ptr<BlockFlowPanel> nested = flow("block.level.p");
+    std::shared_ptr<BlockPanel> root = flow("block.level");
+    std::shared_ptr<BlockPanel> nested = flow("block.level.p");
     std::shared_ptr<Panel> inner = box("block.level.c", 0.0, 20.0);
     set_vertical_margins(*inner, 25.0, 0.0);
     BlockFlowItemLayout sized{};
@@ -320,7 +320,7 @@ void test_level_change_refreshes_nested_panel() {
 
 // The docstring's two examples, with the results their comments state.
 void test_documented_examples() {
-    std::shared_ptr<BlockFlowPanel> stack = make_control<BlockFlowPanel>(StableId("doc.stack"));
+    std::shared_ptr<BlockPanel> stack = make_control<BlockPanel>(StableId("doc.stack"));
     std::vector<std::shared_ptr<Button>> buttons;
     for (int index = 0; index < 3; ++index) {
         std::shared_ptr<Button> button =
@@ -336,7 +336,7 @@ void test_documented_examples() {
     require_bounds(*buttons[1], 0.0, 40.0, 200.0, 20.0, "the second stacked button");
     require_bounds(*buttons[2], 0.0, 70.0, 200.0, 20.0, "the third stacked button");
 
-    std::shared_ptr<BlockFlowPanel> row = make_control<BlockFlowPanel>(StableId("doc.row"));
+    std::shared_ptr<BlockPanel> row = make_control<BlockPanel>(StableId("doc.row"));
     (*row).set_text_align(TextAlignment::center);
     const BlockFlowItemLayout atomic = inline_item(80.0, 20.0);
     std::vector<std::shared_ptr<Button>> row_buttons;
@@ -372,7 +372,7 @@ protected:
 
 void test_ten_thousand_children_counts() {
     constexpr std::size_t count = 10'000U;
-    std::shared_ptr<BlockFlowPanel> panel = flow("block.many");
+    std::shared_ptr<BlockPanel> panel = flow("block.many");
     std::vector<std::shared_ptr<CountingLabel>> labels;
     labels.reserve(count);
     for (std::size_t index = 0U; index < count; ++index) {
@@ -425,7 +425,7 @@ void test_ten_thousand_children_counts() {
     counting_allocations = false;
     require(counted_allocations == 0U, "arranging 10000 children allocated " + std::to_string(counted_allocations) +
                                            " times");
-    std::cout << "block-flow-panel-tests: 10000 children: 1 callback on a text change, 0 on a resize, "
+    std::cout << "block-panel-tests: 10000 children: 1 callback on a text change, 0 on a resize, "
                  "0 allocations per arrange\n";
 }
 
@@ -440,10 +440,10 @@ int main() {
         test_level_change_refreshes_nested_panel();
         test_documented_examples();
         test_ten_thousand_children_counts();
-        std::cout << "block-flow-panel-tests: pass\n";
+        std::cout << "block-panel-tests: pass\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {
-        std::cerr << "block-flow-panel-tests: fail: " << error.what() << '\n';
+        std::cerr << "block-panel-tests: fail: " << error.what() << '\n';
         return EXIT_FAILURE;
     }
 }
