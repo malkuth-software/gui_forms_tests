@@ -5,7 +5,8 @@ A test file whose program is not registered runs nowhere: it compiles in no
 target, or its target is no ctest's command, and its checks pass silently by
 never executing (tests/theme_font_tests.cpp was one, until T4 registered it).
 This tool reads every tests/**/*.cpp that defines a main function, and every
-add_executable and add_test in CMakeLists.txt and cmake/*.cmake, and fails
+add_executable and add_test in CMakeLists.txt, cmake/*.cmake and
+cmake/sections/*.cmake, and fails
 on a test program that:
 
 - no add_executable lists, or
@@ -76,7 +77,7 @@ def cmake_texts(root: Path) -> list[tuple[str, str]]:
     texts: list[tuple[str, str]] = []
     included: list[Path] = [root / 'CMakeLists.txt']
     included.extend(sorted((root / 'cmake').glob('*.cmake')))
-    included.extend(sorted((root / 'demo').rglob('*.cmake')))
+    included.extend(sorted((root / 'cmake' / 'sections').glob('*.cmake')))
     for path in included:
         if path.is_file():
             texts.append((COMMENT.sub('', path.read_text(encoding='utf-8')), ''))

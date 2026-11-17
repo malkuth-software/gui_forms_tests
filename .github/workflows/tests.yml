@@ -1,0 +1,263 @@
+name: GUI.Forms tests
+# Builds and runs GUI.Forms' tests against the test cache gui_forms.lock
+# names (gui_forms tools/test_cache.py, published by gui_forms CI per
+# commit). Nothing of GUI.Forms is compiled here: the tests link the cache.
+# Each job runs tools/ci_tests.py, the entry point a local run uses too.
+#
+# A pull request builds and runs only the test programs whose sources it
+# changed (ci_tests.py --changed: anything else, a header, a fixture, the
+# CMake or gui_forms.lock, selects the whole suite). Pushes to main, the
+# schedule and dispatches run the whole suite.
+on:
+  push:
+    branches: [main, 'checkpoint/**']
+  pull_request:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      sanitize:
+        description: Run the whole suite against the sanitize test cache (Linux, ASan + UBSan + LSan)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  # The house-style checks over the tests (gui_forms AGENTS.md), with
+  # gui_forms' tools from the pinned cache's source tree, and the files
+  # gui_forms' generators write here (the C# hook test, the documentation
+  # examples) against that tree.
+  house-style:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: gui_forms_tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch the pinned test cache
+        id: cache
+        run: echo "directory=$(python gui_forms_tests/tools/fetch_test_cache.py --platform linux-x64 | tail -1)" >> "$GITHUB_OUTPUT"
+      # gui_forms' checkers are template_harness's, which gui_forms' tools find
+      # beside the gui_forms tree (here the cache's source/), at its harness.lock.
+      - name: Check out the template_harness gui_forms pins
+        env:
+          CACHE: ${{ steps.cache.outputs.directory }}
+        run: |
+          repository="$(sed -n 's/^repository[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' "$CACHE/source/harness.lock")"
+          commit="$(sed -n 's/^commit[[:space:]]*=[[:space:]]*"\([0-9a-f]*\)"/\1/p' "$CACHE/source/harness.lock")"
+          git init -q "$CACHE/template_harness"
+          git -C "$CACHE/template_harness" fetch -q --depth 1 "https://github.com/$repository" "$commit"
+          git -C "$CACHE/template_harness" checkout -q --detach FETCH_HEAD
+      - name: Check the tests
+        working-directory: gui_forms_tests
+        env:
+          GF: ${{ steps.cache.outputs.directory }}/source
+        run: |
+          python3 -B "$GF/tools/check_house_style.py" tests file_manager_demoboard/tests tools
+          python3 -B "$GF/tools/check_lifetime_rules.py" tests file_manager_demoboard/tests tools
+          python3 -I "$GF/tools/check_std_rules.py" --config tools/std_rules.toml
+          python3 -B tools/check_test_registration.py --root .
+          python3 -B tools/check_test_asserts.py --root .
+          python3 -B -m unittest discover -s tools -p 'test_*.py'
+          python3 -B "$GF/tools/abi_class_tables.py" --check --tests-root .
+          python3 -B "$GF/tools/generate_library_docs.py" --check --tests-root .
+
+  tests:
+    name: tests (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: macos-15, platform: macos-arm64}
+          - {runner: ubuntu-24.04, platform: linux-x64}
+          - {runner: ubuntu-24.04-arm, platform: linux-arm64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      CC: clang
+      CXX: clang++
+      OBJCXX: clang++
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: gui_forms_tests
+          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # The cache first: it carries the gui_forms tree, whose harness.lock
+      # names the template_harness commit that installs the toolchain.
+      - name: Fetch the pinned test cache
+        id: cache
+        run: |
+          directory="$(python gui_forms_tests/tools/fetch_test_cache.py --platform ${{ matrix.platform }} | tail -1)"
+          echo "directory=$directory" >> "$GITHUB_OUTPUT"
+          commit="$(sed -n 's/^commit = "\([0-9a-f]*\)"/\1/p' gui_forms_tests/gui_forms.lock)"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+      - name: Check out the template_harness gui_forms pins
+        env:
+          LOCK: ${{ steps.cache.outputs.directory }}/source/harness.lock
+        run: |
+          repository="$(sed -n 's/^repository[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' "$LOCK")"
+          commit="$(sed -n 's/^commit[[:space:]]*=[[:space:]]*"\([0-9a-f]*\)"/\1/p' "$LOCK")"
+          git init -q template_harness
+          git -C template_harness fetch -q --depth 1 "https://github.com/$repository" "$commit"
+          git -C template_harness checkout -q --detach FETCH_HEAD
+          echo "HARNESS_PROJECT=$PWD/template_harness/projects/gui_forms.toml" >> "$GITHUB_ENV"
+          echo "HARNESS_WORKSPACE=$PWD" >> "$GITHUB_ENV"
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          brew install cmake ninja ccache llvm@22
+          echo "$(brew --prefix llvm@22)/bin" >> "$GITHUB_PATH"
+          echo "GUI_FORMS_LLVM_RUNTIME=$PWD/.build/toolchain/llvm-22.1.8-macos14" >> "$GITHUB_ENV"
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sh template_harness/harness/install_linux_ci_packages.sh toolkit "$RUNNER_TEMP/apt-archives"
+      - name: Identify and verify LLVM release compiler
+        id: compiler
+        run: python template_harness/harness/compiler_identity.py
+      - name: Select the Linux runtime prefix
+        id: linux-runtime
+        if: runner.os == 'Linux'
+        run: |
+          directory="$(python template_harness/harness/linux_runtime_manifest.py --directory-name)"
+          echo "GUI_FORMS_LLVM_RUNTIME=$PWD/.build/toolchain/$directory" >> "$GITHUB_ENV"
+      # The same runtime gui_forms' native jobs link (its key, so a restore
+      # finds what they saved only within this repository's caches).
+      - uses: actions/cache@v4
+        with:
+          path: .build/toolchain
+          key: gui-tests-runtimes-v1-${{ matrix.platform }}-${{ steps.compiler.outputs.identity }}-${{ hashFiles('template_harness/harness/build_linux_runtimes.py', 'template_harness/harness/build_macos_runtimes.py', 'template_harness/harness/linux_runtime_manifest.py', 'template_harness/harness/macos_runtime_manifest.py') }}
+      - name: Build the static runtimes
+        run: |
+          if [ ! -f "$GUI_FORMS_LLVM_RUNTIME/runtime-manifest.json" ]; then
+            if [ "$RUNNER_OS" = macOS ]; then
+              python template_harness/harness/build_macos_runtimes.py --work "$RUNNER_TEMP/llvm-runtimes" --prefix "$GUI_FORMS_LLVM_RUNTIME" --jobs 4
+            else
+              python template_harness/harness/build_linux_runtimes.py --work "$RUNNER_TEMP/llvm-runtimes" --prefix "$GUI_FORMS_LLVM_RUNTIME" --jobs 4
+            fi
+          fi
+      - name: Configure the compiler cache
+        run: |
+          echo "CCACHE_DIR=$PWD/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_BASEDIR=$PWD" >> "$GITHUB_ENV"
+          echo "CCACHE_COMPILERCHECK=content" >> "$GITHUB_ENV"
+          echo "CCACHE_SLOPPINESS=pch_defines,time_macros" >> "$GITHUB_ENV"
+          echo "CCACHE_MAXSIZE=1G" >> "$GITHUB_ENV"
+      # The tests' own objects, keyed by the pinned gui_forms commit: a new pin
+      # recompiles the tests whose headers changed, nothing of GUI.Forms.
+      - uses: actions/cache/restore@v4
+        with:
+          path: .ccache
+          key: gui-tests-objects-v1-${{ matrix.platform }}-${{ steps.compiler.outputs.identity }}-${{ steps.cache.outputs.commit }}-${{ github.sha }}
+          restore-keys: |
+            gui-tests-objects-v1-${{ matrix.platform }}-${{ steps.compiler.outputs.identity }}-${{ steps.cache.outputs.commit }}-
+            gui-tests-objects-v1-${{ matrix.platform }}-${{ steps.compiler.outputs.identity }}-
+      - name: Build and run the tests
+        env:
+          GUI_FORMS_ENGINE_GATE_MANIFEST: ${{ github.workspace }}/.ci/engine-gate-${{ matrix.platform }}.tsv
+          CHANGED: ${{ github.event_name == 'pull_request' && format('--changed {0}', github.event.pull_request.base.sha) || '' }}
+        run: |
+          mkdir -p .ci
+          ccache --zero-stats
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a -s "-screen 0 1280x1024x24 -noreset" python gui_forms_tests/tools/ci_tests.py --platform ${{ matrix.platform }} --jobs 4 --test-jobs 4 $CHANGED
+          else
+            python gui_forms_tests/tools/ci_tests.py --platform ${{ matrix.platform }} --jobs 4 --test-jobs 4 $CHANGED
+          fi
+      - name: Report cache statistics
+        if: always()
+        run: ccache --show-stats
+      - uses: actions/cache/save@v4
+        if: success() && github.event_name != 'pull_request'
+        with:
+          path: .ccache
+          key: gui-tests-objects-v1-${{ matrix.platform }}-${{ steps.compiler.outputs.identity }}-${{ steps.cache.outputs.commit }}-${{ github.sha }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gui-forms-tests-evidence-${{ matrix.platform }}
+          include-hidden-files: true
+          path: |
+            gui_forms_tests/.build/${{ matrix.platform }}/Testing/Temporary/LastTest.log
+            gui_forms_tests/.build/${{ matrix.platform }}/ctest-junit.xml
+            gui_forms_tests/.build/${{ matrix.platform }}/.ninja_log
+            .ci/engine-gate-*.tsv
+
+  # The engine gate (T2 E11): every host's engine manifest must agree. A pull
+  # request that ran a subset compares what it ran.
+  engine-gate:
+    needs: tests
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gui-forms-tests-evidence-*
+          path: .ci/evidence
+      - name: Compare the engine gate manifests across hosts
+        run: >-
+          python3 -B tools/engine_gate.py compare --evidence .ci/evidence --out .ci/engine-gate
+          --commit "${{ github.sha }}"
+          --run "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          --job-results "$NEEDS"
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t2-engine-gate-record
+          path: .ci/engine-gate/
+          if-no-files-found: warn
+
+  # The whole suite under the sanitizers, against the sanitize test cache
+  # (dispatch only, as in gui_forms: house style section 1).
+  sanitizers:
+    if: github.event_name == 'workflow_dispatch' && inputs.sanitize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CC: clang
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: gui_forms_tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch the pinned sanitize test cache
+        id: cache
+        run: echo "directory=$(python gui_forms_tests/tools/fetch_test_cache.py --platform linux-x64 --kind sanitize | tail -1)" >> "$GITHUB_OUTPUT"
+      - name: Check out the template_harness gui_forms pins
+        env:
+          LOCK: ${{ steps.cache.outputs.directory }}/source/harness.lock
+        run: |
+          repository="$(sed -n 's/^repository[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' "$LOCK")"
+          commit="$(sed -n 's/^commit[[:space:]]*=[[:space:]]*"\([0-9a-f]*\)"/\1/p' "$LOCK")"
+          git init -q template_harness
+          git -C template_harness fetch -q --depth 1 "https://github.com/$repository" "$commit"
+          git -C template_harness checkout -q --detach FETCH_HEAD
+          echo "HARNESS_PROJECT=$PWD/template_harness/projects/gui_forms.toml" >> "$GITHUB_ENV"
+      - name: Install Linux dependencies and runtimes
+        run: |
+          sh template_harness/harness/install_linux_ci_packages.sh toolkit "$RUNNER_TEMP/apt-archives"
+          directory="$(python template_harness/harness/linux_runtime_manifest.py --directory-name)"
+          echo "GUI_FORMS_LLVM_RUNTIME=$PWD/.build/toolchain/$directory" >> "$GITHUB_ENV"
+          python template_harness/harness/build_linux_runtimes.py --work "$RUNNER_TEMP/llvm-runtimes" --prefix "$PWD/.build/toolchain/$directory" --jobs 4
+      - name: Build and run the whole suite under the sanitizers
+        env:
+          LSAN_OPTIONS: suppressions=${{ github.workspace }}/gui_forms_tests/tools/sanitizer/lsan.supp
+        run: xvfb-run -a -s "-screen 0 1280x1024x24 -noreset" python gui_forms_tests/tools/ci_tests.py --platform linux-x64 --kind sanitize --jobs 4 --test-jobs 4

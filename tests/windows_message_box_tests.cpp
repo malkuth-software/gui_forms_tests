@@ -10,7 +10,7 @@
 // finds the box, reads its icon control's pixels and presses OK. A
 // foreground test (gui_forms_foreground_test): it runs on a private
 // desktop on a development machine.
-#include "../src/surface/windows/application/windows_host.cpp"
+#include "src/surface/windows/application/windows_host.cpp"
 
 #include <cstdint>
 #include <cstdlib>

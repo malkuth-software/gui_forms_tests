@@ -14,13 +14,13 @@
 // trace follows the normative order, and its host scroll moves the
 // surface's pixels to exactly what a whole compose gives.
 
-#include "../src/host/surface/manager/surface_manager_internal.hpp"
+#include "src/host/surface/manager/surface_manager_internal.hpp"
 #include "gui_forms/canvas.hpp"
 #include "gui_forms/components/business_card/business_card.hpp"
 #if defined(_WIN32)
-#include "../src/surface/windows/fonts/sealed_pages_windows.hpp"
+#include "src/surface/windows/fonts/sealed_pages_windows.hpp"
 #else
-#include "../src/surface/posix/fonts/sealed_pages_posix.hpp"
+#include "src/surface/posix/fonts/sealed_pages_posix.hpp"
 #endif
 
 #include <cstdlib>

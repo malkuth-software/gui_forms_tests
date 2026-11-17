@@ -4,7 +4,7 @@
 // ill-formed byte. The owned forms (Utf8String, Vector, Optional) convert
 // by named copies that leave their sources unchanged.
 
-#include "../src/platform/stxlib_bridge.hpp"
+#include "src/platform/stxlib_bridge.hpp"
 
 #include <stxlib/error.hpp>
 

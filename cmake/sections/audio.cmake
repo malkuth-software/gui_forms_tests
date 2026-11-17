@@ -1,0 +1,16 @@
+# gui_forms compiles gui_forms_audio with GUI_FORMS_AUDIO_TESTING for the test cache (its cmake/Audio.cmake).
+add_executable(gui_forms_audio_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/audio/audio_service_tests.cpp")
+target_compile_definitions(gui_forms_audio_tests PRIVATE GUI_FORMS_AUDIO_TESTING)
+target_link_libraries(gui_forms_audio_tests PRIVATE GUIForms::Audio)
+if(GUI_FORMS_AUDIO_VORBIS_BACKEND STREQUAL "stx")
+    target_compile_definitions(gui_forms_audio_tests PRIVATE GUI_FORMS_AUDIO_VORBIS_STX)
+endif()
+add_test(NAME gui_forms_audio_tests COMMAND gui_forms_audio_tests)
+if(GUI_FORMS_BUILD_AUDIO_LOOP_TRANSPORT)
+    add_executable(gui_forms_audio_loop_transport_tests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/audio/audio_loop_transport_tests.cpp")
+    target_compile_definitions(gui_forms_audio_loop_transport_tests PRIVATE GUI_FORMS_AUDIO_TESTING)
+    target_link_libraries(gui_forms_audio_loop_transport_tests PRIVATE GUIForms::Audio)
+    add_test(NAME gui_forms_audio_loop_transport_tests COMMAND gui_forms_audio_loop_transport_tests)
+    set_tests_properties(gui_forms_audio_loop_transport_tests PROPERTIES TIMEOUT 30)
+endif()

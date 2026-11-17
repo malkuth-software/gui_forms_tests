@@ -21,7 +21,7 @@
 // dark; felt over paper fibre; the cloth weave close up across finish
 // tile boundaries: 30 files. It never opens a window.
 
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/capture/offscreen_raster/offscreen_raster.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"

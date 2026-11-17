@@ -27,7 +27,7 @@
 #include "gui_forms/window.hpp"
 #include "application/headless_application.hpp"
 #include "application/headless_splashscreen.hpp"
-#include "../src/core/image/png_writer.hpp"
+#include "src/core/image/png_writer.hpp"
 
 #include <chrono>
 #include <cstddef>

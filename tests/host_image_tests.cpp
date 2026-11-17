@@ -1,8 +1,8 @@
 #include "gui_forms/host.hpp"
 #include "headless_host.hpp"
-#include "../src/core/host/image/clipboard_image_wire.hpp"
-#include "../src/core/host/image/clipboard_dib.hpp"
-#include "../src/core/host/image/host_image_pixels.hpp"
+#include "src/core/host/image/clipboard_image_wire.hpp"
+#include "src/core/host/image/clipboard_dib.hpp"
+#include "src/core/host/image/host_image_pixels.hpp"
 
 #include <algorithm>
 #include <array>

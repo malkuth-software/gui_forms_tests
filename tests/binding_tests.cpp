@@ -32,7 +32,7 @@
 #include "gui_forms/detail/bound_member_function.hpp"
 #include "support/binding_test_rows.hpp"
 #include "support/named_callbacks.hpp"
-#include "../src/platform/stxlib_bridge.hpp"
+#include "src/platform/stxlib_bridge.hpp"
 
 #include <stxlib/optional.hpp>
 #include <cstdlib>

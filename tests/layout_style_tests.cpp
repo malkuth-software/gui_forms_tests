@@ -5,7 +5,7 @@
 // attribute of the layout corpus, and a deterministic mutation run in which
 // a refused read must leave the style as it was.
 
-#include "../src/core/layout/style_reader/layout_style_reader.hpp"
+#include "src/core/layout/style_reader/layout_style_reader.hpp"
 
 #include <cstdint>
 #include <cstdlib>

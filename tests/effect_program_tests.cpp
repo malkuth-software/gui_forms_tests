@@ -50,8 +50,8 @@
 #include "support/professional_theme.hpp"
 #include "support/theme_definition_heap.hpp"
 
-#include "../src/core/text/localizable/gui_forms_notes.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/text/localizable/gui_forms_notes.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 #include "support/frame_wake.hpp"
 
 #include <chrono>

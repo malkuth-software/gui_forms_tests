@@ -8,15 +8,15 @@
 // --write-sealed the program writes into a sealed face and must die by the platform's
 // protection fault (cmake/expect_fault.cmake checks how it ended).
 
-#include "../src/core/resources/fonts/bundled_font_set.hpp"
+#include "src/core/resources/fonts/bundled_font_set.hpp"
 #include "gui_forms/metrics/metrics/metrics.hpp"
 #include "gui_forms/typography/font_families/font_families.hpp"
 #include "stx_fontpack/loader.hpp"
 #include "support/unique_temporary_directory.hpp"
 #if defined(_WIN32)
-#include "../src/surface/windows/fonts/sealed_pages_windows.hpp"
+#include "src/surface/windows/fonts/sealed_pages_windows.hpp"
 #else
-#include "../src/surface/posix/fonts/sealed_pages_posix.hpp"
+#include "src/surface/posix/fonts/sealed_pages_posix.hpp"
 #endif
 
 #include <stxlib/optional.hpp>

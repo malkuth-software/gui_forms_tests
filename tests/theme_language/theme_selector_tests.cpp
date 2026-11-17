@@ -4,11 +4,11 @@
 // (R2-13): resolved against the selector's control type or item system,
 // a standard name first, and W106 where nothing declares them.
 
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/selector/theme_selector.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/selector/theme_selector.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 
 #include <array>
 #include <cstddef>

@@ -11,7 +11,7 @@
 // reference's tab row, every tab a tapered folder tucked under its left
 // neighbour, and sets Backstage's column apart from its page.
 
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/commands/command/command.hpp"

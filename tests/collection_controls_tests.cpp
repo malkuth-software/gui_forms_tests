@@ -4,7 +4,7 @@
 #include "gui_forms_lab/correspondence_view.hpp"
 #include "support/named_callbacks.hpp"
 #include "support/professional_theme.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 #include "support/frame_wake.hpp"
 
 #include <algorithm>

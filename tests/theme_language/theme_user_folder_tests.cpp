@@ -5,7 +5,7 @@
 // limits); a refused theme kept with its diagnostics; the command line;
 // the selection; and the export, which never overwrites and whose themes
 // compile. Works in a folder of its own under the system's temporary one.
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/application/user_themes/user_themes.hpp"
 #include "gui_forms/resources/application_resources/application_resources.hpp"

@@ -7,9 +7,9 @@
 // copied after a whole move; the whole area is copied after a partial one.
 // Plain C++, tested on every platform; no window system.
 
-#include "../src/core/host/presentation/host_scroll.hpp"
-#include "../src/core/host/presentation/presentation_geometry.hpp"
-#include "../src/core/host/presentation/presentation_shim.hpp"
+#include "src/core/host/presentation/host_scroll.hpp"
+#include "src/core/host/presentation/presentation_geometry.hpp"
+#include "src/core/host/presentation/presentation_shim.hpp"
 
 #include <array>
 #include <cstddef>

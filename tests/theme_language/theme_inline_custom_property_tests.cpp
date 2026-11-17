@@ -11,9 +11,9 @@
 // before its fallback; the default theme, which keeps the empty sheet's
 // source, defines none.
 
-#include "../../src/core/theme/theme/theme_access.hpp"
-#include "../../src/core/theme/theme_compiler/theme_source_record.hpp"
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme/theme/theme_access.hpp"
+#include "src/core/theme/theme_compiler/theme_source_record.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "../support/professional_theme.hpp"
 #include "../support/theme_definition_heap.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"

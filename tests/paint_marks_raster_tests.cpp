@@ -23,8 +23,8 @@
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/window/window.hpp"
 #include "skia_raster.hpp"
-#include "../src/core/display/recording_painter/recording_painter.hpp"
-#include "../src/core/display/replay/replay_display_chunk.hpp"
+#include "src/core/display/recording_painter/recording_painter.hpp"
+#include "src/core/display/replay/replay_display_chunk.hpp"
 
 #include <array>
 #include <cstddef>

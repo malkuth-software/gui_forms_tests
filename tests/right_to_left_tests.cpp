@@ -48,7 +48,7 @@
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/window/window.hpp"
 #include "gui_forms/window.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 
 #include <cmath>
 #include <cstddef>

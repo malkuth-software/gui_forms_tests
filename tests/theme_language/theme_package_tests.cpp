@@ -4,7 +4,7 @@
 // their manifests' hashes (E603, E604, E605, E506). Gate: a fixture for
 // each code, the closure's cascade order, and each pack once.
 
-#include "../../src/core/theme_language/package/theme_package.hpp"
+#include "src/core/theme_language/package/theme_package.hpp"
 
 #include <cstddef>
 #include <iostream>

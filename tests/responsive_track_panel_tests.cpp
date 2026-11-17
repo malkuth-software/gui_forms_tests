@@ -14,7 +14,7 @@
 #include "gui_forms/types/paint_types/paint_types.hpp"
 #include "gui_forms/visual_inspection/types/visual_inspection_types.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/platform/stxlib_bridge.hpp"
+#include "src/platform/stxlib_bridge.hpp"
 
 #include <cmath>
 #include <cstdlib>

@@ -5,7 +5,7 @@
 // refused in a state rule, lose to a font set in code, and a change of the
 // resolved font is a layout change.
 
-#include "../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "support/theme_definition_heap.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"

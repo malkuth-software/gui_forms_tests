@@ -1,4 +1,4 @@
-#include "../lab/src/sort.hpp"
+#include "lab/src/sort.hpp"
 
 #include <algorithm>
 #include <cstddef>

@@ -5,13 +5,13 @@
 // refuses what it cannot spell, located, leaving the caller's text as it
 // was; and the golden header is what the generator writes today.
 
-#include "../../src/core/form_language/form_generator/form_generator.hpp"
-#include "../../src/core/form_language/form_loader/form_loader.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/form_language/form_xml/form_xml.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../tools/form_compiler/form_catalog.hpp"
+#include "src/core/form_language/form_generator/form_generator.hpp"
+#include "src/core/form_language/form_loader/form_loader.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/form_language/form_xml/form_xml.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "tools/form_compiler/form_catalog.hpp"
 
 #include "generated/sample_dialog_form.hpp"
 

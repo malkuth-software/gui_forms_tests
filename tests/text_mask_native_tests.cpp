@@ -1,4 +1,4 @@
-#include "../src/render/text/text_mask/text_mask_native.hpp"
+#include "src/render/text/text_mask/text_mask_native.hpp"
 #include "prepared_text_test_support.hpp"
 
 #include <stxlib/glyph_face.hpp>

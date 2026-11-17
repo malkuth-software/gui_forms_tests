@@ -4,11 +4,11 @@
 // attribute located at its bytes; every reader defect is one located E821
 // that leaves nothing behind.
 
-#include "../../src/core/form_language/form_xml/form_xml.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/form_language/form_xml/form_xml.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 
 #include "gui_forms/xml/types/xml_types.hpp"
 #include "gui_forms/xml/xml_reader/xml_reader.hpp"

@@ -29,8 +29,8 @@
 #include "gui_forms/theme.hpp"
 #include "gui_forms/window.hpp"
 
-#include "../src/core/engine/primitives/material/material_bake_policy.hpp"
-#include "../src/core/engine/primitives/procedural/procedural_pattern.hpp"
+#include "src/core/engine/primitives/material/material_bake_policy.hpp"
+#include "src/core/engine/primitives/procedural/procedural_pattern.hpp"
 #include "support/rgba_order.hpp"
 
 #include <algorithm>

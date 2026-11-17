@@ -20,8 +20,8 @@
 #include "gui_forms/engine/types/engine_types.hpp"
 #include "gui_forms/surface_material/finish_fill/finish_fill.hpp"
 
-#include "../src/core/engine/primitives/finish/finish_kernel.hpp"
-#include "../src/core/engine/primitives/finish/finish_world.hpp"
+#include "src/core/engine/primitives/finish/finish_kernel.hpp"
+#include "src/core/engine/primitives/finish/finish_world.hpp"
 
 #include <array>
 #include <cstddef>

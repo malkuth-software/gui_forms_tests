@@ -27,7 +27,7 @@
 #include "gui_forms/surface_root/surface_root.hpp"
 
 #include "gui_forms/engine/light_planes/light_planes.hpp"
-#include "../src/core/engine/primitives/finish/finish_kernel.hpp"
+#include "src/core/engine/primitives/finish/finish_kernel.hpp"
 #include "support/unique_temporary_directory.hpp"
 
 #include <algorithm>

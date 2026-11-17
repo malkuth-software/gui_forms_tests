@@ -11,7 +11,7 @@
 // (cp33): per-edge reservations, cycling and the limiter, colour roles,
 // textures, and the host's shaping report (docs/user/window-band.md).
 
-#include "../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "support/theme_definition_heap.hpp"
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/container_controls.hpp"

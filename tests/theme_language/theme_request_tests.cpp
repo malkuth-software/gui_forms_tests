@@ -8,7 +8,7 @@
 // over the program's own choice. The launched programs are
 // theme_request_app.cpp and tests/abi/gf_abi_theme_request_app.c. Works in a
 // folder of its own under the system's temporary one.
-#include "../../src/runtime/user_themes/theme_files.hpp"
+#include "src/runtime/user_themes/theme_files.hpp"
 #include "gui_forms/application/user_themes/user_themes.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"

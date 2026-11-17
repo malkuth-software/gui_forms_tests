@@ -3,7 +3,7 @@
 // optional Adam7, filters cycling 0..4 by row, tRNS where legal, extra
 // ancillary chunks before PLTE, and IDAT compressed by the owned encoder.
 // Decoded pixels depend only on the raw scanlines, never on the encoder.
-#include "../../src/core/image/png_writer.hpp"
+#include "src/core/image/png_writer.hpp"
 #include "stx_zlib/checksum.hpp"
 #include "stx_zlib/deflate.hpp"
 

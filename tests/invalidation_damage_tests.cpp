@@ -17,7 +17,7 @@
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/core/damage/device_damage/device_damage.hpp"
+#include "src/core/damage/device_damage/device_damage.hpp"
 #include "support/named_callbacks.hpp"
 #include "support/routed_input_probe.hpp"
 

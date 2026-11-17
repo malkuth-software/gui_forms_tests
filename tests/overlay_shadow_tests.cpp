@@ -28,7 +28,7 @@
 #include "gui_forms/window/window.hpp"
 #include "support/theme_definition_heap.hpp"
 
-#include "../src/core/engine/primitives/material/overlay_shadow_primitive.hpp"
+#include "src/core/engine/primitives/material/overlay_shadow_primitive.hpp"
 
 #include <cmath>
 #include <cstdlib>

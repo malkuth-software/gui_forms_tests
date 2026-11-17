@@ -14,9 +14,9 @@
 
 #include "gui_forms/c/gf_abi.h"
 
-#include "../../../src/abi/stable/failure/abi_failure.hpp"
-#include "../../../src/abi/stable/registry/abi_registry.hpp"
-#include "../../../src/core/failure/failure_snapshot.hpp"
+#include "src/abi/stable/failure/abi_failure.hpp"
+#include "src/abi/stable/registry/abi_registry.hpp"
+#include "src/core/failure/failure_snapshot.hpp"
 
 #include "gui_forms/diagnostics/shadow_frames/shadow_frames.hpp"
 

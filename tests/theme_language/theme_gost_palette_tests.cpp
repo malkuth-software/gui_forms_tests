@@ -8,7 +8,7 @@
 // its pin, compiles over the stock anatomies without a finding and reads
 // its key paint, GOST 319, through its own custom properties.
 
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"

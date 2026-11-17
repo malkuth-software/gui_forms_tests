@@ -5,13 +5,13 @@
 // count, E506) and the lowered size (E513, theme_compiler_tests) are
 // tested where their inputs are built.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
-#include "../../src/core/theme_language/custom_properties/theme_custom_properties.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/motion/theme_motion_lowering.hpp"
-#include "../../src/core/theme_language/selector/theme_selector.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/custom_properties/theme_custom_properties.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/motion/theme_motion_lowering.hpp"
+#include "src/core/theme_language/selector/theme_selector.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/engine/engine_expression/engine_expression.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"

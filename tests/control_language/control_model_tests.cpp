@@ -5,10 +5,10 @@
 // one pass, and a refused document leaves the model as it was; a custom
 // state without a look rule is a warning (W950) that does not refuse.
 
-#include "../../src/core/control_language/control_model/control_model.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/control_language/control_model/control_model.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/controls/button.hpp"

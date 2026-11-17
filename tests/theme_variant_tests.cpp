@@ -5,8 +5,8 @@
 // application may follow the host's scheme; colours set on controls warn
 // (W404); env() reads the host's colour hints with a required fallback.
 
-#include "../src/core/theme_language/compiler/theme_compiler.hpp"
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "support/professional_theme.hpp"
 #include "support/theme_definition_heap.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"

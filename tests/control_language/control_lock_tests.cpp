@@ -5,11 +5,11 @@
 // malformed lock each violate it (E923) at the lock's line; a new major
 // version is not held to the old lock.
 
-#include "../../src/core/control_language/control_lock/control_lock.hpp"
-#include "../../src/core/control_language/control_model/control_model.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/control_language/control_lock/control_lock.hpp"
+#include "src/core/control_language/control_model/control_model.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/flex_panel.hpp"

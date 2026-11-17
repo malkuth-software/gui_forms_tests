@@ -8,7 +8,7 @@
 // font's role and its inheritance, the em lengths' records, and the
 // current colour's.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "../support/theme_definition_heap.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/control/control/control.hpp"

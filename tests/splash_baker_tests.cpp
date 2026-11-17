@@ -9,8 +9,8 @@
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/types/paint_types/paint_types.hpp"
 #include "gui_forms/types/painter/painter.hpp"
-#include "../src/core/display/snapshot/display_snapshot.hpp"
-#include "../src/core/display/snapshot/splash_baker.hpp"
+#include "src/core/display/snapshot/display_snapshot.hpp"
+#include "src/core/display/snapshot/splash_baker.hpp"
 
 #include <atomic>
 #include <chrono>

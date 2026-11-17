@@ -8,10 +8,10 @@
 #include "gui_forms/diagnostic_controls.hpp"
 #include "gui_forms/window.hpp"
 #include "gui_forms/text.hpp"
-#include "../src/controls/basic/basic_control_rendering.hpp"
+#include "src/controls/basic/basic_control_rendering.hpp"
 #include "support/named_callbacks.hpp"
 #include "support/professional_theme.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 
 #include <algorithm>
 #include <array>

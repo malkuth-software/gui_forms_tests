@@ -4,4 +4,4 @@
 // does when GUI_FORMS_EFFECT_VERIFY is OFF or the plugin is unusable), and
 // the file that registers them must say so. The case compiles the real file,
 // so its warning cannot drift from it; the object is never linked.
-#include "../../src/controls/range_control/progress_bar/progress_bar_effects.cpp"
+#include "src/controls/range_control/progress_bar/progress_bar_effects.cpp"

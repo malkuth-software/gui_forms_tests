@@ -19,12 +19,12 @@
 //   one fixture per error and warning code), except the codes the table's
 //   `code-elsewhere` rows place in another test with the reason.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 #include "gui_forms/engine/effect_registry/effect_registry.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"

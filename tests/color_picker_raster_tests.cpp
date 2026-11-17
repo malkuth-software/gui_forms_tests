@@ -13,7 +13,7 @@
 // and a transparent one the checkerboard. In forced high contrast (ruling 9) the content keeps its
 // colours inside high contrast's frame.
 
-#include "../src/core/theme/theme_compiler/content_parts_sheet.hpp"
+#include "src/core/theme/theme_compiler/content_parts_sheet.hpp"
 
 #include "gui_forms/capture/offscreen_raster/offscreen_raster.hpp"
 #include "gui_forms/controls/color_picker.hpp"

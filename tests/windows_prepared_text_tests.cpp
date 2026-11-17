@@ -1,5 +1,5 @@
 #include "prepared_text_test_support.hpp"
-#include "../src/core/text/prepared/prepared_storage.hpp"
+#include "src/core/text/prepared/prepared_storage.hpp"
 
 #include <cstdlib>
 #include <iostream>

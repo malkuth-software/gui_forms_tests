@@ -5,7 +5,7 @@
 // The cross-host byte identity of the composite is checked by
 // part_composite_identity_tests on the Skia raster every host draws with.
 
-#include "../src/core/text/composite/text_composite.hpp"
+#include "src/core/text/composite/text_composite.hpp"
 
 #include "gui_forms/control.hpp"
 #include "gui_forms/engine.hpp"

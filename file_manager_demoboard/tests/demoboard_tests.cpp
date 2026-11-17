@@ -3,7 +3,7 @@
 #include "gui_forms/gui_forms.hpp"
 #include "gui_forms_lab/correspondence_view.hpp"
 #include "gui_forms_lab/instrument_rack.hpp"
-#include "../src/smoke_test.hpp"
+#include "file_manager_demoboard/src/smoke_test.hpp"
 
 #include <algorithm>
 #include <chrono>

@@ -1,5 +1,5 @@
 #include "harfbuzz_font_engine.hpp"
-#include "../src/core/resources/fonts/bundled_font_set.hpp"
+#include "src/core/resources/fonts/bundled_font_set.hpp"
 
 #include <algorithm>
 #include <array>

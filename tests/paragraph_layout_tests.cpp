@@ -19,7 +19,7 @@
 #include "gui_forms/text/paragraph_layout/paragraph_layout.hpp"
 #include "gui_forms/window.hpp"
 
-#include "../src/controls/text_block/line_wrapping.hpp"
+#include "src/controls/text_block/line_wrapping.hpp"
 
 #include <array>
 #include <cmath>

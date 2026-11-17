@@ -3,7 +3,7 @@
 // with neutral metadata, and refuses files of no admitted format; the
 // ResourcePixelDecoder decodes PNG resources through every target layout to
 // bytes that match an independent reference.
-#include "../../src/core/image/resource_pixels.hpp"
+#include "src/core/image/resource_pixels.hpp"
 #include "gui_forms/resources.hpp"
 #include "stx_png/encoder.hpp"
 

@@ -3,9 +3,9 @@
 // pointer and text input by stable ID, and assert that the reading pane,
 // counts and model change together.
 
-#include "../demo/correspondence/correspondence.hpp"
-#include "../demo/correspondence/correspondence_controls.hpp"
-#include "../demo/correspondence/correspondence_model.hpp"
+#include "demo/correspondence/correspondence.hpp"
+#include "demo/correspondence/correspondence_controls.hpp"
+#include "demo/correspondence/correspondence_model.hpp"
 #include "gui_forms_lab/correspondence_view.hpp"
 
 #include <cstdint>

@@ -3,7 +3,7 @@
 // with Python's float(), which rounds correctly; a host whose conversion
 // differs fails here, which is how CI proves the three hosts identical.
 
-#include "../../src/core/theme_language/number/theme_number.hpp"
+#include "src/core/theme_language/number/theme_number.hpp"
 
 #include <array>
 #include <bit>

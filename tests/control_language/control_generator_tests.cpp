@@ -6,12 +6,12 @@
 // is no identifier, a child type without a header and a document holding
 // the raw literal's delimiter are refused with E812.
 
-#include "../../src/core/control_language/composite_definition/composite_definition.hpp"
-#include "../../src/core/control_language/control_generator/control_generator.hpp"
-#include "../../src/core/control_language/control_model/control_model.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/control_language/composite_definition/composite_definition.hpp"
+#include "src/core/control_language/control_generator/control_generator.hpp"
+#include "src/core/control_language/control_model/control_model.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/flex_panel.hpp"

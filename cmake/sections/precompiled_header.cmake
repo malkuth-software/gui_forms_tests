@@ -1,0 +1,2 @@
+include(cmake/TestPrecompiledHeader.cmake)
+gui_forms_share_test_precompiled_header()

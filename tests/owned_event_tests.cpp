@@ -6,7 +6,7 @@
 #include "gui_forms/value.hpp"
 #include "gui_forms/collection_controls.hpp"
 #include "gui_forms/window.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 
 #include <stxlib/optional.hpp>
 #include <array>

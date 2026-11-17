@@ -3,7 +3,7 @@
 // it was found, and the narrower rules (duplicate names, U+0000, lone
 // surrogates, a byte order mark) a manifest relies on.
 
-#include "../src/core/json/json_reader/json_reader.hpp"
+#include "src/core/json/json_reader/json_reader.hpp"
 
 #include <array>
 #include <cstddef>

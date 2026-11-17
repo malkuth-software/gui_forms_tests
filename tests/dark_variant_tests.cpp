@@ -1,8 +1,8 @@
 // The dark colour rule (stage T4 phase 5a): the fit to the accepted dark
 // studies, the order surfaces keep, the fixed Phosphor colours, relief
 // alpha and the contrast of derived ink on derived faces.
-#include "../src/core/theme/contrast/theme_contrast.hpp"
-#include "../src/core/theme/dark_variant/dark_variant.hpp"
+#include "src/core/theme/contrast/theme_contrast.hpp"
+#include "src/core/theme/dark_variant/dark_variant.hpp"
 
 #include <array>
 #include <cmath>

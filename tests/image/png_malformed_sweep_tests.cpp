@@ -12,7 +12,7 @@
 //     the stated storage; nothing may write outside it.
 // The sanitizers turn any out-of-bounds access or undefined behaviour into a
 // failure.
-#include "../../src/core/image/png_pixels.hpp"
+#include "src/core/image/png_pixels.hpp"
 #include "gui_forms/resources/types/image_resource_types.hpp"
 #include "png_test_files.hpp"
 

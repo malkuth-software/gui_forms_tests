@@ -1,4 +1,4 @@
-#include "../src/core/text/prepared_window/prepared_window_input.hpp"
+#include "src/core/text/prepared_window/prepared_window_input.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <vector>

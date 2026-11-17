@@ -2,7 +2,7 @@
 // click counts from the desktop's double-click time and distance, and the
 // keys that ask for a context menu. No Xlib, so tested on every platform.
 
-#include "../src/host/linux/application/linux_input_rules.hpp"
+#include "src/host/linux/application/linux_input_rules.hpp"
 
 #include <cstdlib>
 #include <iostream>

@@ -2,7 +2,7 @@
 // engine's result clamped to the caller's range, every refusal before any
 // write, and nothing else added to the engine (stx_conv). The engine itself
 // is tested in stx_conv/tests.
-#include "../../src/core/interpolation/interpolation.hpp"
+#include "src/core/interpolation/interpolation.hpp"
 
 #include <stx_conv/conv.hpp>
 

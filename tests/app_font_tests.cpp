@@ -10,9 +10,9 @@
 //
 // The process registry is shared by every case: each case loads families under its own names.
 
-#include "../src/core/theme_language/compiler/theme_compiler.hpp"
-#include "../src/core/resources/fonts/program_typefaces.hpp"
-#include "../src/render/text/harfbuzz/harfbuzz_font_engine.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/resources/fonts/program_typefaces.hpp"
+#include "src/render/text/harfbuzz/harfbuzz_font_engine.hpp"
 #include "gui_forms/composites/composite_control/composite_control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"

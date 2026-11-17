@@ -2,8 +2,8 @@
 // owned decode through every target layout, the colour-chunk policy, and the
 // cross-platform identity hashes. The same expected hashes are checked on
 // every CI platform, so a pass there proves byte-identical decoded pixels.
-#include "../../src/core/host/image/clipboard_png.hpp"
-#include "../../src/core/image/png_pixels.hpp"
+#include "src/core/host/image/clipboard_png.hpp"
+#include "src/core/image/png_pixels.hpp"
 #include "png_test_files.hpp"
 
 #include <algorithm>

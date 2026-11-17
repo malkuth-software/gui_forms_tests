@@ -1,4 +1,4 @@
-#include "../src/render/text/prepared_window_shape.hpp"
+#include "src/render/text/prepared_window_shape.hpp"
 #include "prepared_text_test_support.hpp"
 
 #include <stxlib/font_file.hpp>

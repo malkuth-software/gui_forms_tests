@@ -11,8 +11,8 @@
 
 #include "gui_forms/c/gf_abi.h"
 
-#include "../../../src/abi/stable/events/abi_event_fields.hpp"
-#include "../../../src/abi/stable/registry/abi_registry.hpp"
+#include "src/abi/stable/events/abi_event_fields.hpp"
+#include "src/abi/stable/registry/abi_registry.hpp"
 
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/component/failures/component_failures.hpp"

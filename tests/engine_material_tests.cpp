@@ -32,10 +32,10 @@
 #include "gui_forms/theme.hpp"
 #include "gui_forms/window.hpp"
 
-#include "../src/core/types/restrict/restrict.hpp"
-#include "../src/core/engine/primitives/material/image_variant.hpp"
-#include "../src/core/engine/primitives/material/material_bake_policy.hpp"
-#include "../src/core/engine/primitives/material/material_primitive.hpp"
+#include "src/core/types/restrict/restrict.hpp"
+#include "src/core/engine/primitives/material/image_variant.hpp"
+#include "src/core/engine/primitives/material/material_bake_policy.hpp"
+#include "src/core/engine/primitives/material/material_primitive.hpp"
 
 #include <stxlib/optional.hpp>
 #include <algorithm>

@@ -18,7 +18,7 @@
 // card; the copyright is a part of its own; the heading band rule hides
 // and disarms the page card above the band and lapses with the band; the
 // website goes to the host's open-URL service when no handler answers.
-#include "../src/controls/business_card/card_turn.hpp"
+#include "src/controls/business_card/card_turn.hpp"
 #include "gui_forms/components/business_card/business_card.hpp"
 #include "gui_forms/engine/motion_clock/motion_clock.hpp"
 #include "gui_forms/scheduler/types/scheduler_types.hpp"

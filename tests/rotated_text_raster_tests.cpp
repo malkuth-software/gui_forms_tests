@@ -28,11 +28,11 @@
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 #include "skia_raster.hpp"
-#include "../src/core/resources/fonts/bundled_font_set.hpp"
+#include "src/core/resources/fonts/bundled_font_set.hpp"
 #if defined(_WIN32)
-#include "../src/surface/windows/fonts/sealed_pages_windows.hpp"
+#include "src/surface/windows/fonts/sealed_pages_windows.hpp"
 #else
-#include "../src/surface/posix/fonts/sealed_pages_posix.hpp"
+#include "src/surface/posix/fonts/sealed_pages_posix.hpp"
 #endif
 
 #include <algorithm>

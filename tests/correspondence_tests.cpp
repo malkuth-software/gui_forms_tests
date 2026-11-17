@@ -2,7 +2,7 @@
 // window: the fixture and CorrespondenceModel must be deterministic and
 // self-consistent on their own.
 
-#include "../demo/correspondence/correspondence_model.hpp"
+#include "demo/correspondence/correspondence_model.hpp"
 
 #include <cstdlib>
 #include <iostream>

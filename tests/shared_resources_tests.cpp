@@ -9,7 +9,7 @@
 #include "gui_forms/theme.hpp"
 #include "gui_forms/window.hpp"
 #include "application/headless_application.hpp"
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 
 #include <array>
 #include <cstdint>

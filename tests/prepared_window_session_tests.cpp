@@ -1,4 +1,4 @@
-#include "../src/render/text/prepared_window_session.hpp"
+#include "src/render/text/prepared_window_session.hpp"
 #include "prepared_text_test_support.hpp"
 
 #include <cstdlib>

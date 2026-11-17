@@ -3,12 +3,12 @@
 // properties and var() with their limits; budget overruns are errors; and
 // folded and unfolded programs evaluate to the same bits.
 
-#include "../../src/core/theme_language/custom_properties/theme_custom_properties.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
-#include "../../src/core/theme_language/value/theme_value.hpp"
+#include "src/core/theme_language/custom_properties/theme_custom_properties.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme_language/value/theme_value.hpp"
 
 #include <array>
 #include <bit>

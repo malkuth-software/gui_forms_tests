@@ -42,9 +42,9 @@
 #include "support/theme_definition_heap.hpp"
 #include "support/rgba_order.hpp"
 
-#include "../src/core/engine/primitives/material/material_primitive.hpp"
-#include "../src/core/engine/primitives/light/sheen_primitive.hpp"
-#include "../src/core/engine/primitives/material/overlay_shadow_primitive.hpp"
+#include "src/core/engine/primitives/material/material_primitive.hpp"
+#include "src/core/engine/primitives/light/sheen_primitive.hpp"
+#include "src/core/engine/primitives/material/overlay_shadow_primitive.hpp"
 #include "support/routed_input_probe.hpp"
 
 #include <algorithm>

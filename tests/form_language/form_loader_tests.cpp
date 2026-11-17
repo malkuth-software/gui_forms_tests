@@ -6,12 +6,12 @@
 // of a source is located and leaves the previous load as it was; a form
 // loads as a window whose controls are found by stable ID (stage B).
 
-#include "../../src/core/form_language/form_loader/form_loader.hpp"
-#include "../../src/core/form_language/form_loader/form_window_loader.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/form_language/form_xml/form_xml.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/form_language/form_loader/form_loader.hpp"
+#include "src/core/form_language/form_loader/form_window_loader.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/form_language/form_xml/form_xml.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/application/application.hpp"
 #include "gui_forms/binding/binding_schema/binding_schema.hpp"

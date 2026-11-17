@@ -2,9 +2,9 @@
 // pipeline, chunk precedence, degenerate values and cICP. Reference values
 // come from the host's std::pow and the published BT.2087 matrix, with the
 // stated tolerance; identity hashes are checked on every CI platform.
-#include "../../src/core/host/image/clipboard_png.hpp"
-#include "../../src/core/image/png_color.hpp"
-#include "../../src/core/image/png_pixels.hpp"
+#include "src/core/host/image/clipboard_png.hpp"
+#include "src/core/image/png_color.hpp"
+#include "src/core/image/png_pixels.hpp"
 #include "png_test_files.hpp"
 
 #include <algorithm>

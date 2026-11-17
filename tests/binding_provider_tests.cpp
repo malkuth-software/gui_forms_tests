@@ -25,8 +25,8 @@
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/window/window.hpp"
 
-#include "../src/core/binding/binding_view/binding_order_tree.hpp"
-#include "../src/platform/stxlib_bridge.hpp"
+#include "src/core/binding/binding_view/binding_order_tree.hpp"
+#include "src/platform/stxlib_bridge.hpp"
 
 #include <algorithm>
 #include <atomic>

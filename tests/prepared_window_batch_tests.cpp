@@ -1,4 +1,4 @@
-#include "../src/core/text/prepared_window/prepared_window_batch.hpp"
+#include "src/core/text/prepared_window/prepared_window_batch.hpp"
 #include <array>
 #include <cstdlib>
 #include <iostream>

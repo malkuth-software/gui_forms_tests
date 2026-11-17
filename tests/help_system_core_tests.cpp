@@ -18,7 +18,7 @@
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/window/window.hpp"
 #include "gui_forms/xml/types/xml_types.hpp"
-#include "../src/platform/stxlib_bridge.hpp"
+#include "src/platform/stxlib_bridge.hpp"
 
 #include <stxlib/optional.hpp>
 #include <chrono>

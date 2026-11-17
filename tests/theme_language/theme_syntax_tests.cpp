@@ -2,10 +2,10 @@
 // (stage T3, phase P2). Gate: the round-trip corpus returns identical
 // bytes; every structural defect is located.
 
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 
 #include <array>
 #include <cstddef>

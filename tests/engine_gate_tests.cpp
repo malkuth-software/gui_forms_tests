@@ -72,11 +72,11 @@
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 
-#include "../src/core/engine/feature_samples/engine_feature_samples.hpp"
-#include "../src/core/engine/primitives/material/material_bake_policy.hpp"
-#include "../src/core/engine/primitives/material/material_primitive.hpp"
-#include "../src/core/image/png_writer.hpp"
-#include "../src/core/text/composite/text_composite.hpp"
+#include "src/core/engine/feature_samples/engine_feature_samples.hpp"
+#include "src/core/engine/primitives/material/material_bake_policy.hpp"
+#include "src/core/engine/primitives/material/material_primitive.hpp"
+#include "src/core/image/png_writer.hpp"
+#include "src/core/text/composite/text_composite.hpp"
 #include "support/rgba_order.hpp"
 
 #include <algorithm>

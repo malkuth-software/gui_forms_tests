@@ -6,7 +6,7 @@
 // paints a Ribbon whole, in the stock theme and in Plan Paint's rules, and
 // samples its faces' pixels.
 
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/commands/command/command.hpp"
 #include "gui_forms/control/control/control.hpp"
@@ -30,11 +30,11 @@
 #include "gui_forms/window/window.hpp"
 #include "demo/gallery.hpp"
 #include "skia_raster.hpp"
-#include "../src/core/resources/fonts/bundled_font_set.hpp"
+#include "src/core/resources/fonts/bundled_font_set.hpp"
 #if defined(_WIN32)
-#include "../src/surface/windows/fonts/sealed_pages_windows.hpp"
+#include "src/surface/windows/fonts/sealed_pages_windows.hpp"
 #else
-#include "../src/surface/posix/fonts/sealed_pages_posix.hpp"
+#include "src/surface/posix/fonts/sealed_pages_posix.hpp"
 #endif
 
 #include <algorithm>

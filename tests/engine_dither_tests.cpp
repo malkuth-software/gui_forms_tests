@@ -61,10 +61,10 @@
 #include "gui_forms/types/paint_types/paint_types.hpp"
 #include "gui_forms/window.hpp"
 
-#include "../src/core/engine/primitives/kernel/dither.hpp"
-#include "../src/core/engine/primitives/kernel/pixel_kernel.hpp"
-#include "../src/core/engine/primitives/material/material_primitive.hpp"
-#include "../src/core/engine/primitives/material/material_raster.hpp"
+#include "src/core/engine/primitives/kernel/dither.hpp"
+#include "src/core/engine/primitives/kernel/pixel_kernel.hpp"
+#include "src/core/engine/primitives/material/material_primitive.hpp"
+#include "src/core/engine/primitives/material/material_raster.hpp"
 
 #include <algorithm>
 #include <array>

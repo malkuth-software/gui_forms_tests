@@ -2,9 +2,9 @@
 // T3, phase P1). Gate: a fixture per token kind; every lexical defect with
 // its line and column; tokens covering the input exactly.
 
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 
 #include <array>
 #include <cstddef>

@@ -9,9 +9,9 @@
 // half-surface tiling and capsule moves are here too; the capsule's
 // gestures are tests/window_capsule_tests.cpp. Tested on every platform.
 
-#include "../src/host/surface/compose/surface_compose.hpp"
-#include "../src/host/surface/desk/surface_desk.hpp"
-#include "../src/host/surface/input/surface_input.hpp"
+#include "src/host/surface/compose/surface_compose.hpp"
+#include "src/host/surface/desk/surface_desk.hpp"
+#include "src/host/surface/input/surface_input.hpp"
 
 #include <array>
 #include <chrono>

@@ -5,19 +5,19 @@
 // pictures for Windows (src/surface/windows/locale/windows_date_pattern.hpp),
 // which take plain text and are tested on every platform; and the
 // platform's own reader where it is compiled in.
-#include "../src/host/linux/locale/strftime_date_pattern.hpp"
-#include "../src/host/macos/locale/icu_date_pattern.hpp"
-#include "../src/surface/windows/locale/windows_date_pattern.hpp"
+#include "src/host/linux/locale/strftime_date_pattern.hpp"
+#include "src/host/macos/locale/icu_date_pattern.hpp"
+#include "src/surface/windows/locale/windows_date_pattern.hpp"
 #include "gui_forms/host/types/host_locale/host_locale.hpp"
 
 #if defined(GUI_FORMS_TEST_MACOS_LOCALE)
-#include "../src/surface/macos/locale/macos_locale.hpp"
+#include "src/surface/macos/locale/macos_locale.hpp"
 #endif
 #if defined(GUI_FORMS_TEST_POSIX_LOCALE)
-#include "../src/surface/linux/locale/posix_locale.hpp"
+#include "src/surface/linux/locale/posix_locale.hpp"
 #endif
 #if defined(GUI_FORMS_TEST_WINDOWS_LOCALE)
-#include "../src/surface/windows/locale/windows_locale.hpp"
+#include "src/surface/windows/locale/windows_locale.hpp"
 #endif
 
 #include <cstdlib>

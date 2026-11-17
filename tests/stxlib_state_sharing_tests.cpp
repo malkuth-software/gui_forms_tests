@@ -11,7 +11,7 @@
 // every build. Tested, not proved: a build that shared the allocator but not
 // the issuer would pass the first half only.
 
-#include "../src/runtime/stxlib_state_probe.hpp"
+#include "src/runtime/stxlib_state_probe.hpp"
 
 #include <stxlib/memory.hpp>
 #include <stxlib/threads.hpp>

@@ -2,7 +2,7 @@
 // smoke passes only when a frame had been presented before its scheduled
 // close, and fails when the deadline closed a window that never presented.
 
-#include "../demo/program_options.hpp"
+#include "demo/program_options.hpp"
 
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"

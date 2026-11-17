@@ -4,7 +4,7 @@
 // schema E601, published values E606. Gate: a full manifest read whole, a
 // minimal one, and a fixture for each refusal.
 
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 
 #include <array>
 #include <cstddef>

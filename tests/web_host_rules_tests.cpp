@@ -4,9 +4,9 @@
 // and save names (src/host/web/application/web_dialog_rules.cpp). No
 // Emscripten, so tested on every platform.
 
-#include "../src/host/web/application/web_surface_host.hpp"
-#include "../src/host/web/input/web_input_rules.hpp"
-#include "../src/host/web/page/web_present.hpp"
+#include "src/host/web/application/web_surface_host.hpp"
+#include "src/host/web/input/web_input_rules.hpp"
+#include "src/host/web/page/web_present.hpp"
 
 #include <array>
 #include <cstdlib>

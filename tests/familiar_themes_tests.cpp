@@ -8,11 +8,11 @@
 // With GUI_FORMS_CONTRAST_REPORT_DIRECTORY=<path> it writes each theme's
 // report as <path>/<id>.tsv, for the stage record.
 
-#include "../src/core/theme/contrast/theme_contrast.hpp"
-#include "../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../src/core/theme_language/source_text/theme_source_text.hpp"
-#include "../src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
-#include "../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme/contrast/theme_contrast.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/theme_language/syntax_tree/theme_syntax_tree.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 #include "gui_forms/theme.hpp"
 
 #include <stxlib/optional.hpp>

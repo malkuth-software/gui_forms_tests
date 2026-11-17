@@ -3,7 +3,7 @@
 #include "macos_host.hpp"
 #include "gallery.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/host/macos/application/display_link_trace.hpp"
+#include "src/host/macos/application/display_link_trace.hpp"
 
 #include <algorithm>
 #include <cstddef>

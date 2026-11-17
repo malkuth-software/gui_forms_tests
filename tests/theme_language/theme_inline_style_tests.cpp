@@ -7,8 +7,8 @@
 // stand over all; a refused inline style keeps the previous one; the forms
 // an inline style refuses; and W401 once per window.
 
-#include "../../src/core/theme/theme/forced_high_contrast.hpp"
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme/theme/forced_high_contrast.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "../support/professional_theme.hpp"
 #include "../support/theme_definition_heap.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"

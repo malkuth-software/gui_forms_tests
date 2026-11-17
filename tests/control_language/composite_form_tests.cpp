@@ -14,14 +14,14 @@
 
 #include "gui_forms/composites/composite_control/composite_control.hpp"
 
-#include "../../src/controls/composite_control/composite_forms.hpp"
-#include "../../src/core/form_language/form_editor/form_editor.hpp"
-#include "../../src/core/form_language/form_generator/form_generator.hpp"
-#include "../../src/core/form_language/form_loader/form_loader.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/form_language/form_schema_export/form_schema_export.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/controls/composite_control/composite_forms.hpp"
+#include "src/core/form_language/form_editor/form_editor.hpp"
+#include "src/core/form_language/form_generator/form_generator.hpp"
+#include "src/core/form_language/form_loader/form_loader.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/form_language/form_schema_export/form_schema_export.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/binding/value/binding_value.hpp"
 #include "gui_forms/controls/button.hpp"

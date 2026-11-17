@@ -6,7 +6,7 @@
 // warning, and the lowered-size limit; and that the engine accepts every
 // sheet the compiler accepts, with no diagnostic of its own.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "../support/rgba_order.hpp"
 #include "../support/theme_definition_heap.hpp"
 #include "gui_forms/engine/effect_registry/effect_registry.hpp"

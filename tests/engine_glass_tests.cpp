@@ -31,7 +31,7 @@
 #include "support/theme_definition_heap.hpp"
 #include "support/rgba_order.hpp"
 
-#include "../src/core/engine/primitives/light/glass_primitive.hpp"
+#include "src/core/engine/primitives/light/glass_primitive.hpp"
 
 #include <stxlib/optional.hpp>
 #include <algorithm>

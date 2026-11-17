@@ -1,5 +1,5 @@
-#include "../src/render/text/glyph_run/glyph_run_raster.hpp"
-#include "../src/core/resources/fonts/program_typefaces.hpp"
+#include "src/render/text/glyph_run/glyph_run_raster.hpp"
+#include "src/core/resources/fonts/program_typefaces.hpp"
 #include "gui_forms/allocation/statistics/allocation_statistics.hpp"
 
 #include <stxlib/glyph_face.hpp>

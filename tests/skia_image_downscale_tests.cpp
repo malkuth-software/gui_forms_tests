@@ -18,8 +18,8 @@
 
 #include "gui_forms/window.hpp"
 #include "skia_raster.hpp"
-#include "../src/core/image/png_writer.hpp"
-#include "../src/core/interpolation/interpolation.hpp"
+#include "src/core/image/png_writer.hpp"
+#include "src/core/interpolation/interpolation.hpp"
 
 #include <algorithm>
 #include <chrono>

@@ -8,7 +8,7 @@
 // replacing one; and the icon overrides (section 6), checked, held by the
 // theme and resolved by the application's icon registry.
 
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/engine/theme_rules/theme_rules.hpp"
 #include "gui_forms/plots/series_column/series_column.hpp"

@@ -48,7 +48,7 @@
 #include "gui_forms/window/tool_tips/tool_tips.hpp"
 #include "gui_forms/window/window.hpp"
 
-#include "../src/controls/text_block/line_wrapping.hpp"
+#include "src/controls/text_block/line_wrapping.hpp"
 #include "support/binding_test_rows.hpp"
 
 #include <algorithm>

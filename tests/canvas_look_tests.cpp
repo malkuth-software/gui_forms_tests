@@ -11,7 +11,7 @@
 // pose at phase 0, and its phase following the ticks. Time comes from the
 // test, never the wall clock. Pixels are checked in canvas_look_raster_tests.
 
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/link_flow_effects.hpp"
 #include "gui_forms/controls/panel.hpp"

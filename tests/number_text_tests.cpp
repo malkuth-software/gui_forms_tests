@@ -1,7 +1,7 @@
 // Locale-independent number parsing (audit F4): the controls read typed and
 // assistive-client numbers in the C-locale form whatever LC_NUMERIC says.
 
-#include "../src/controls/basic/number_text.hpp"
+#include "src/controls/basic/number_text.hpp"
 
 #include <charconv>
 #include <clocale>

@@ -40,8 +40,8 @@
 
 #include "gui_forms/composites/composite_control/composite_control.hpp"
 
-#include "../../src/core/control_language/composite_definition/composite_definition.hpp"
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/control_language/composite_definition/composite_definition.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "../support/clip_tracking_painter.hpp"
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/content_text_editor.hpp"

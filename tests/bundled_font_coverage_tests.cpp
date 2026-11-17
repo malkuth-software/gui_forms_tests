@@ -16,7 +16,7 @@
 // a minimal Chinese face holding only hanzi neither of those holds, and minimal Arabic and
 // Indic faces with no presentation forms and nothing outside their scripts.
 
-#include "../src/core/resources/fonts/bundled_font_set.hpp"
+#include "src/core/resources/fonts/bundled_font_set.hpp"
 
 #include <stxlib/font_file.hpp>
 

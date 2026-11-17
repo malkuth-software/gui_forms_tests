@@ -4,7 +4,7 @@
 // that thread fails as disposed (the callers' quiet degradation); a thread
 // that returns without one has its records released by STXlib's exit hook.
 
-#include "../src/core/thread_records/thread_records_end.hpp"
+#include "src/core/thread_records/thread_records_end.hpp"
 
 #include <stxlib/error.hpp>
 #include <stxlib/result.hpp>

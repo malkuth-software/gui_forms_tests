@@ -1,5 +1,5 @@
 #include "gui_forms/text.hpp"
-#include "../src/platform/stxlib_bridge.hpp"
+#include "src/platform/stxlib_bridge.hpp"
 
 #include <stx_rtf2md/document.hpp>
 #include <stx_rtf2md/limits.hpp>

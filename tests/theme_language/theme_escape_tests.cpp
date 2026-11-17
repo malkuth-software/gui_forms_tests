@@ -5,8 +5,8 @@
 // surrogate or a value past U+10FFFF; a form document or layout style
 // (NameEscapes::refused, the default) refuses every backslash, as before.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
-#include "../../src/core/theme_language/tokenizer/theme_tokenizer.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/tokenizer/theme_tokenizer.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/token_box.hpp"

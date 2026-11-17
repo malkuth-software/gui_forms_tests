@@ -1,7 +1,7 @@
 #include "gui_forms/application.hpp"
 #include "gui_forms/control.hpp"
 #include "gui_forms/host/session/host_session.hpp"
-#include "../src/core/application/application_state.hpp"
+#include "src/core/application/application_state.hpp"
 
 #include <iostream>
 #include <limits>

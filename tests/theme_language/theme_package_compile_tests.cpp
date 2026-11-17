@@ -6,7 +6,7 @@
 // theme and the window's focus, capture, selection and edit unchanged, and
 // a good swap preserves them too.
 
-#include "../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/engine/effect_registry/effect_registry.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/control/control/control.hpp"

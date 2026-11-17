@@ -17,8 +17,8 @@
 #include "gui_forms/types/paint_types/paint_types.hpp"
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/core/display/recording_painter/recording_painter.hpp"
-#include "../src/core/display/replay/replay_display_chunk.hpp"
+#include "src/core/display/recording_painter/recording_painter.hpp"
+#include "src/core/display/replay/replay_display_chunk.hpp"
 
 #include <array>
 #include <cstdlib>

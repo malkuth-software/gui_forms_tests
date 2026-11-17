@@ -5,7 +5,7 @@
 // whichever side it is on, and where neither or both are important the
 // inline style wins.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"
 #include "gui_forms/engine/theme_rules/theme_rules.hpp"

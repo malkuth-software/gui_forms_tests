@@ -10,8 +10,8 @@
 
 #include "gui_forms/c/gf_abi.h"
 
-#include "../../../src/abi/stable/engine/abi_engine.hpp"
-#include "../../../src/abi/stable/registry/abi_registry.hpp"
+#include "src/abi/stable/engine/abi_engine.hpp"
+#include "src/abi/stable/registry/abi_registry.hpp"
 
 #include "gui_forms/binding.hpp"
 #include "gui_forms/control.hpp"

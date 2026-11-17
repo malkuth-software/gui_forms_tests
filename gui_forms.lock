@@ -1,0 +1,10 @@
+# The gui_forms commit these tests build against, and the SHA-256 of each
+# test cache gui_forms CI published for it (release test-cache-<commit>,
+# packed by gui_forms tools/test_cache.py). tools/fetch_test_cache.py
+# downloads and checks the cache; tools/update_lock.py moves the pin and
+# copies the digests from the release.
+[gui_forms]
+repository = "malkuth-software/gui_forms"
+commit = "2b60b145188abae94edda82fb67f2f1f65fc6601"
+
+[digests]

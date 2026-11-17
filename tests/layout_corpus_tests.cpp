@@ -37,7 +37,7 @@
 // declarations (font-size in rem, font-family, font-weight, font-style, a
 // unitless line-height, text-align and direction) are inherited as in CSS.
 
-#include "../src/core/layout/style_reader/layout_style_reader.hpp"
+#include "src/core/layout/style_reader/layout_style_reader.hpp"
 
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/container_controls.hpp"

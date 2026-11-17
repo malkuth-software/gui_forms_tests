@@ -4,7 +4,7 @@
 // encoded size and the best and median of several decodes in milliseconds.
 // A probe, not a test: it is built on demand and never registered with
 // CTest, so it never gates on timing.
-#include "../../src/core/image/resource_pixels.hpp"
+#include "src/core/image/resource_pixels.hpp"
 #include "gui_forms/resources.hpp"
 #include "stx_png/encoder.hpp"
 

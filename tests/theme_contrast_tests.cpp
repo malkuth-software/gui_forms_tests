@@ -4,7 +4,7 @@
 // GUI_FORMS_CONTRAST_REPORT=<path> it writes the built-in theme's report as
 // tab-separated rows there, for the stage record.
 
-#include "../src/core/theme/contrast/theme_contrast.hpp"
+#include "src/core/theme/contrast/theme_contrast.hpp"
 #include "support/theme_definition_heap.hpp"
 #include "gui_forms/theme.hpp"
 

@@ -17,8 +17,8 @@
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/visual_inspection/types/visual_inspection_types.hpp"
 #include "gui_forms/layout/radial_layout/radial_layout.hpp"
-#include "../src/core/display/recording_painter/recording_painter.hpp"
-#include "../src/core/display/replay/replay_display_chunk.hpp"
+#include "src/core/display/recording_painter/recording_painter.hpp"
+#include "src/core/display/replay/replay_display_chunk.hpp"
 
 #include <array>
 #include <cmath>

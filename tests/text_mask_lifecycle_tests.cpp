@@ -1,4 +1,4 @@
-#include "../src/core/text/text_mask/text_mask_state.hpp"
+#include "src/core/text/text_mask/text_mask_state.hpp"
 #include "prepared_text_test_support.hpp"
 
 #include <iostream>

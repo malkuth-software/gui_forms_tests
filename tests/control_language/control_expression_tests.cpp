@@ -4,7 +4,7 @@
 // 16-deep budget is refused in the parser without deeper recursion; every
 // malformed value is refused at the byte where it goes wrong.
 
-#include "../../src/core/control_language/control_expression/control_expression.hpp"
+#include "src/core/control_language/control_expression/control_expression.hpp"
 
 #include <cstddef>
 #include <iostream>

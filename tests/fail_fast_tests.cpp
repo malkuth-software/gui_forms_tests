@@ -16,7 +16,7 @@
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/window/window.hpp"
 #include "headless_host.hpp"
-#include "../src/core/failure/fail_fast.hpp"
+#include "src/core/failure/fail_fast.hpp"
 #include "support/routed_input_probe.hpp"
 
 #include <chrono>

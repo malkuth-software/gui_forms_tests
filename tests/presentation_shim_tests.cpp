@@ -7,9 +7,9 @@
 // paths, and producer mode (the window manager's). Plain C++, tested on
 // every platform; no window system.
 
-#include "../src/core/host/presentation/presentation_geometry.hpp"
-#include "../src/core/host/presentation/presentation_shim.hpp"
-#include "../src/core/host/presentation/presentation_trace.hpp"
+#include "src/core/host/presentation/presentation_geometry.hpp"
+#include "src/core/host/presentation/presentation_shim.hpp"
+#include "src/core/host/presentation/presentation_trace.hpp"
 
 #include <algorithm>
 #include <array>

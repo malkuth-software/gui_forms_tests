@@ -4,7 +4,7 @@
 // another thread), the theme compiled at create, the presentation defaults,
 // and an application destroyed before its windows.
 
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/application.hpp"
 #include "gui_forms/engine/effect_registry/effect_registry.hpp"
 #include "gui_forms/application/application.hpp"

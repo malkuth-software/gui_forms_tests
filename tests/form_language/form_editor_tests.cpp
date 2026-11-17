@@ -4,9 +4,9 @@
 // and the document's own layout survive every edit; an edit that would make
 // an invalid document is refused and leaves the document as it was.
 
-#include "../../src/core/form_language/form_editor/form_editor.hpp"
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/form_language/form_editor/form_editor.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
 
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/check_box.hpp"

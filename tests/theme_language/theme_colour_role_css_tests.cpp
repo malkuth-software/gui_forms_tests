@@ -6,7 +6,7 @@
 // the `literal_colour_unremappable` warning, undefined roles, and one
 // palette switching light and dark.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "../support/theme_definition_heap.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"

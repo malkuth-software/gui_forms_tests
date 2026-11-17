@@ -4,10 +4,10 @@
 // defect is reported at its place, all of them in one pass, and a refused
 // document leaves the previous model as it was.
 
-#include "../../src/core/form_language/form_model/form_model.hpp"
-#include "../../src/core/form_language/form_xml/form_xml.hpp"
-#include "../../src/core/theme_language/diagnostics/theme_diagnostics.hpp"
-#include "../../src/core/theme_language/source_text/theme_source_text.hpp"
+#include "src/core/form_language/form_model/form_model.hpp"
+#include "src/core/form_language/form_xml/form_xml.hpp"
+#include "src/core/theme_language/diagnostics/theme_diagnostics.hpp"
+#include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/binding/form_binding/form_binding.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"

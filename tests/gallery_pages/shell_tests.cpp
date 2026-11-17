@@ -1,7 +1,7 @@
 #include "support.hpp"
 #include "gui_forms/controls/list_view_values.hpp"
 #include "gui_forms/prepared_text/types/prepared_text_types.hpp"
-#include "../../src/core/theme/contrast/theme_contrast.hpp"
+#include "src/core/theme/contrast/theme_contrast.hpp"
 
 #include <cstddef>
 #include <cstdint>

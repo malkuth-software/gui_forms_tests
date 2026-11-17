@@ -2,7 +2,7 @@
 // 2026-11-16): PaintGroupEffect's validation, reach and mask material, and
 // apply_group_effect's stages on an image, each byte worked by hand.
 
-#include "../src/core/display/group_effect/group_effect.hpp"
+#include "src/core/display/group_effect/group_effect.hpp"
 
 #include "gui_forms/surface_material.hpp"
 

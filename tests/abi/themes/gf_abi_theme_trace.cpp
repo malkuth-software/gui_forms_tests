@@ -16,8 +16,8 @@
 
 #include "gui_forms/c/gf_abi.h"
 
-#include "../../../src/abi/stable/engine/abi_engine.hpp"
-#include "../../../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/abi/stable/engine/abi_engine.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/control.hpp"

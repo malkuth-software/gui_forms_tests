@@ -1,7 +1,7 @@
 #import <AppKit/AppKit.h>
 
 #include "prepared_text_test_support.hpp"
-#include "../src/core/text/prepared/prepared_storage.hpp"
+#include "src/core/text/prepared/prepared_storage.hpp"
 #include "gui_forms/platform/macos_host.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/control/control/control.hpp"

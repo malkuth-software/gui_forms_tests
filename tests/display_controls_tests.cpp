@@ -44,7 +44,7 @@
 #include "gui_forms/controls/choice_group.hpp"
 #include "gui_forms/engine/motion_clock/motion_clock.hpp"
 #include "gui_forms/types/painter/painter.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 
 #include <chrono>
 #include <cmath>

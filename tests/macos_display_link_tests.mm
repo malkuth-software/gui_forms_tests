@@ -13,7 +13,7 @@
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/window/window.hpp"
 #include "gui_forms/platform/macos_host.hpp"
-#include "../src/host/macos/application/display_link_trace.hpp"
+#include "src/host/macos/application/display_link_trace.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cstdint>

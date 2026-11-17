@@ -7,7 +7,7 @@
 // gradient. Gate: for each form, a sheet and the same material written in
 // C++ bake identical pixels.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "../support/theme_definition_heap.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/control/control/control.hpp"

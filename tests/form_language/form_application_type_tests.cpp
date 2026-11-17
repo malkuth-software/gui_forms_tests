@@ -4,7 +4,7 @@
 // base type's properties and its bindings; add_application_type refuses
 // malformed descriptions and leaves the schema unchanged.
 
-#include "../../tools/form_compiler/form_catalog.hpp"
+#include "tools/form_compiler/form_catalog.hpp"
 
 #include "generated/note_card.hpp"
 #include "note_dialog_form.hpp"

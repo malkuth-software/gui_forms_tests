@@ -1,5 +1,5 @@
-#include "../src/core/text/composite/clip_mask.hpp"
-#include "../src/core/text/composite/text_composite.hpp"
+#include "src/core/text/composite/clip_mask.hpp"
+#include "src/core/text/composite/text_composite.hpp"
 
 #include <array>
 #include <cstdint>

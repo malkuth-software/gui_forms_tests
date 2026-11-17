@@ -5,8 +5,8 @@
 // Prints CSV: level,files,raw_bytes,encoded_bytes,ratio,median_ms_total,min_ms_total
 // where the times are the sum over files of each file's median (or minimum)
 // encode time across repetitions.
-#include "../../src/core/image/png_pixels.hpp"
-#include "../../src/core/image/png_writer.hpp"
+#include "src/core/image/png_pixels.hpp"
+#include "src/core/image/png_writer.hpp"
 
 #include <algorithm>
 #include <charconv>

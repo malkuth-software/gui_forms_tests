@@ -1,7 +1,7 @@
 #include "gui_forms/live_surface.hpp"
 #include "gui_forms/window.hpp"
-#include "../src/host/macos/application/front_reuse.hpp"
-#include "../src/host/macos/application/live_surface_damage.hpp"
+#include "src/host/macos/application/front_reuse.hpp"
+#include "src/host/macos/application/live_surface_damage.hpp"
 
 #include <array>
 #include <cstdlib>

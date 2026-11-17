@@ -6,7 +6,7 @@
 // Headless and deterministic.
 
 #include "gui_forms/controls/value_bar_values.hpp"
-#include "../src/controls/range_control/value_bar/value_text.hpp"
+#include "src/controls/range_control/value_bar/value_text.hpp"
 
 #include <array>
 #include <cmath>

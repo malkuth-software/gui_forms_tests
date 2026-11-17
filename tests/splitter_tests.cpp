@@ -29,7 +29,7 @@
 #include "gui_forms/types/paint_types/paint_types.hpp"
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/core/drag_engine/drag_engine.hpp"
+#include "src/core/drag_engine/drag_engine.hpp"
 
 #include <array>
 #include <cmath>

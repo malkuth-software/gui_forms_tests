@@ -16,7 +16,7 @@
 #include "gui_forms/theme.hpp"
 #include "gui_forms/window.hpp"
 
-#include "../src/core/engine/primitives/material/material_primitive.hpp"
+#include "src/core/engine/primitives/material/material_primitive.hpp"
 
 #include <cmath>
 #include <cstddef>

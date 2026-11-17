@@ -1,5 +1,5 @@
 #include "gui_forms/text_mask.hpp"
-#include "../src/core/text/text_mask/text_mask_state.hpp"
+#include "src/core/text/text_mask/text_mask_state.hpp"
 #include <algorithm>
 #include <array>
 #include <chrono>

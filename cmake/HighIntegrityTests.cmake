@@ -1,8 +1,8 @@
 # The high-integrity configuration's tests (cmake/HighIntegrity.cmake), all
 # labelled high_integrity.
 #
-# Every tree with tests (an ordinary one with GUI_FORMS_BUILD_TESTS, a
-# high-integrity one with GUI_FORMS_BUILD_HIGH_INTEGRITY_TESTS) runs:
+# Every test tree (against an ordinary test cache, or a high-integrity one,
+# where these are the only tests; CMakeLists.txt) runs:
 #   - gui_forms_build_profile_tests: build_profile() reports the tree's
 #     profile and allowances;
 #   - gui_forms_high_integrity_refuses_*: a configure of this source with
@@ -11,10 +11,6 @@
 # A high-integrity tree also runs gui_forms_high_integrity_damaged_pack_fails_fast
 # and gui_forms_high_integrity_surface (below).
 
-if(NOT GUI_FORMS_BUILD_TESTS AND NOT GUI_FORMS_BUILD_HIGH_INTEGRITY_TESTS)
-    return()
-endif()
-enable_testing()
 
 add_executable(gui_forms_build_profile_tests tests/build_profile_tests.cpp)
 target_link_libraries(gui_forms_build_profile_tests PRIVATE gui_forms_core gui_forms_host_headless)
@@ -67,7 +63,7 @@ endif()
 # private header. The abort is a signal on POSIX, so the mode runs through
 # cmake/expect_fail_fast.cmake.
 target_include_directories(gui_forms_build_profile_tests PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/resources/fonts)
+    ${GUI_FORMS_SOURCE_DIR}/src/core/resources/fonts)
 add_test(NAME gui_forms_high_integrity_damaged_pack_fails_fast
     COMMAND ${CMAKE_COMMAND} -DPROGRAM=$<TARGET_FILE:gui_forms_build_profile_tests> -DMODE=damaged_pack
             "-DEXPECTED=fonts\\.bundled_pack"
@@ -91,30 +87,30 @@ set_tests_properties(gui_forms_high_integrity_damaged_pack_fails_fast PROPERTIES
 # check_object_surface.py, is manifests/high_integrity/object_surface/gui_forms.toml.
 set(_gf_high_integrity_binaries "")
 if(TARGET gui_forms_application)
-    add_executable(gui_forms_high_integrity_example examples/high_integrity/high_integrity_example.cpp)
+    add_executable(gui_forms_high_integrity_example ${GUI_FORMS_SOURCE_DIR}/examples/high_integrity/high_integrity_example.cpp)
     target_compile_features(gui_forms_high_integrity_example PRIVATE cxx_std_20)
     target_link_libraries(gui_forms_high_integrity_example PRIVATE gui_forms_application)
-    gui_forms_add_theme(gui_forms_high_integrity_example examples/high_integrity/theme
+    gui_forms_add_theme(gui_forms_high_integrity_example ${GUI_FORMS_SOURCE_DIR}/examples/high_integrity/theme
                         FUNCTION high_integrity_example_theme NAMESPACE high_integrity_example)
     set(_gf_high_integrity_binaries "$<TARGET_FILE:gui_forms_high_integrity_example>")
 endif()
 # The list the test reads: absent_symbols.txt, and the clipboard text
 # entries unless the build keeps that allowance.
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/manifests/high_integrity/absent_symbols.txt" _gf_high_integrity_absent)
+file(READ "${GUI_FORMS_SOURCE_DIR}/manifests/high_integrity/absent_symbols.txt" _gf_high_integrity_absent)
 if(NOT GUI_FORMS_HIGH_INTEGRITY_ALLOW_CLIPBOARD_TEXT)
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/manifests/high_integrity/absent_clipboard_text.txt"
+    file(READ "${GUI_FORMS_SOURCE_DIR}/manifests/high_integrity/absent_clipboard_text.txt"
          _gf_high_integrity_clipboard_text)
     string(APPEND _gf_high_integrity_absent "${_gf_high_integrity_clipboard_text}")
 endif()
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/high_integrity_absent_symbols.txt" "${_gf_high_integrity_absent}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/manifests/high_integrity/absent_symbols.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/manifests/high_integrity/absent_clipboard_text.txt")
+    "${GUI_FORMS_SOURCE_DIR}/manifests/high_integrity/absent_symbols.txt"
+    "${GUI_FORMS_SOURCE_DIR}/manifests/high_integrity/absent_clipboard_text.txt")
 if(NOT _gf_high_integrity_binaries STREQUAL "")
     add_test(NAME gui_forms_high_integrity_surface
         COMMAND "${CMAKE_COMMAND}" "-DTOOL_NM=${CMAKE_NM}" "-DTOOL_OBJDUMP=${CMAKE_OBJDUMP}"
             "-DBINARIES=${_gf_high_integrity_binaries}"
             "-DFORBIDDEN=${CMAKE_CURRENT_BINARY_DIR}/high_integrity_absent_symbols.txt"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckSystemImports.cmake")
+            -P "${GUI_FORMS_SOURCE_DIR}/cmake/CheckSystemImports.cmake")
     set_tests_properties(gui_forms_high_integrity_surface PROPERTIES LABELS high_integrity TIMEOUT 600)
 endif()

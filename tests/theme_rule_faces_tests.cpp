@@ -5,7 +5,7 @@
 // as they paint them. The `classes` property sets the classes a form
 // document writes.
 
-#include "../src/core/theme_language/package/theme_manifest.hpp"
+#include "src/core/theme_language/package/theme_manifest.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/binding/value/binding_value.hpp"
 #include "gui_forms/binding/value/binding_value_kind/binding_value_kind.hpp"

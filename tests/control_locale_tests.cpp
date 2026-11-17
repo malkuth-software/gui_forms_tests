@@ -21,7 +21,7 @@
 #include "gui_forms/resources/application_resources/application_resources.hpp"
 #include "gui_forms/window/window.hpp"
 #include "support/locale_fixtures.hpp"
-#include "../src/controls/basic/basic_control_rendering.hpp"
+#include "src/controls/basic/basic_control_rendering.hpp"
 
 #include <cstddef>
 #include <cstdint>

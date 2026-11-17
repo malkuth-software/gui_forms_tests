@@ -1,13 +1,13 @@
-#include "../demo/gallery.hpp"
+#include "demo/gallery.hpp"
 #include "gui_forms/controls/check_box.hpp"
 #include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/list_box.hpp"
 #include "gui_forms/controls/progress_bar.hpp"
 #include "gui_forms/controls/text_box.hpp"
 #include "gui_forms/controls/track_bar.hpp"
-#include "../demo/gallery_instrument.hpp"
-#include "../demo/gallery_model.hpp"
-#include "../src/controls/gallery_controls.hpp"
+#include "demo/gallery_instrument.hpp"
+#include "demo/gallery_model.hpp"
+#include "src/controls/gallery_controls.hpp"
 
 #include <array>
 #include <cstdlib>

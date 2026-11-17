@@ -1,8 +1,8 @@
 #include "prepared_text_test_support.hpp"
 #include "gui_forms/window.hpp"
-#include "../src/core/display/recording_painter/recording_painter.hpp"
-#include "../src/core/display/replay/replay_display_chunk.hpp"
-#include "../src/core/text/prepared/prepared_storage.hpp"
+#include "src/core/display/recording_painter/recording_painter.hpp"
+#include "src/core/display/replay/replay_display_chunk.hpp"
+#include "src/core/text/prepared/prepared_storage.hpp"
 
 #include <cstdlib>
 #include <iostream>

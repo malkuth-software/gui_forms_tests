@@ -48,9 +48,9 @@
 #include "gui_forms/theme/theme_compiler/theme_compiler.hpp"
 #include "gui_forms/window.hpp"
 
-#include "../src/core/engine/primitives/finish/finish_kernel.hpp"
+#include "src/core/engine/primitives/finish/finish_kernel.hpp"
 #include "gui_forms/surface_material/painting/surface_material_painting.hpp"
-#include "../src/core/engine/primitives/material/material_bake_policy.hpp"
+#include "src/core/engine/primitives/material/material_bake_policy.hpp"
 #include "support/rgba_order.hpp"
 
 #include <algorithm>

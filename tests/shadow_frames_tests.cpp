@@ -15,7 +15,7 @@
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/window/window.hpp"
 #include "support/clip_tracking_painter.hpp"
-#include "../src/core/failure/failure_snapshot.hpp"
+#include "src/core/failure/failure_snapshot.hpp"
 #include "support/routed_input_probe.hpp"
 
 #include <stxlib/error.hpp>

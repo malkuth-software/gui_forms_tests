@@ -25,14 +25,14 @@
 # found.
 
 set(GUI_FORMS_HOSTILE_MACRO_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/hostile_macros")
-set(GUI_FORMS_HOSTILE_MACRO_NAMES "${CMAKE_CURRENT_SOURCE_DIR}/tests/hostile_macros/standard_library_names.txt")
+set(GUI_FORMS_HOSTILE_MACRO_NAMES "${GUI_FORMS_SOURCE_DIR}/manifests/standard_library_names.txt")
 # The include directories a consumer compiles with, transitively (STXlib's
 # among them), one per line.
 file(GENERATE OUTPUT "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt"
     CONTENT "$<JOIN:$<TARGET_PROPERTY:gui_forms_core,INTERFACE_INCLUDE_DIRECTORIES>,\n>\n")
 file(GLOB_RECURSE GUI_FORMS_HOSTILE_MACRO_HEADERS CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_forms/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_forms/*.hpp")
+    "${GUI_FORMS_SOURCE_DIR}/include/gui_forms/*.h"
+    "${GUI_FORMS_SOURCE_DIR}/include/gui_forms/*.hpp")
 add_custom_target(gui_forms_hostile_macro_conformance)
 
 function(gui_forms_hostile_macro_flags target)
@@ -67,14 +67,14 @@ function(gui_forms_add_hostile_macro_check set_name source)
     add_custom_command(OUTPUT "${generated}"
         COMMAND ${Python3_EXECUTABLE} -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_hostile_macros.py"
             --translation-unit "${CMAKE_CURRENT_SOURCE_DIR}/${source}"
-            --include-root "${CMAKE_CURRENT_SOURCE_DIR}/include"
+            --include-root "${GUI_FORMS_SOURCE_DIR}/include"
             --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt"
-            --surface "${CMAKE_CURRENT_SOURCE_DIR}/include/gui_forms"
+            --surface "${GUI_FORMS_SOURCE_DIR}/include/gui_forms"
             --standard-names "${GUI_FORMS_HOSTILE_MACRO_NAMES}"
             ${seed_arguments}
             --output "${generated}" --report "${report}"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_hostile_macros.py"
-            "${CMAKE_CURRENT_SOURCE_DIR}/tools/consumer_macros.py"
+            "${GUI_FORMS_SOURCE_DIR}/tools/consumer_macros.py"
             "${GUI_FORMS_HOSTILE_MACRO_NAMES}" "${CMAKE_CURRENT_SOURCE_DIR}/${source}"
             ${GUI_FORMS_HOSTILE_MACRO_HEADERS}
         COMMENT "Generating hostile consumer macros for ${set_name}"
@@ -118,21 +118,21 @@ gui_forms_hostile_macro_flags(gui_forms_shield_restore)
 # header under include/gui_forms) and the module interface unit. Regenerate
 # the checked-in ones with the _update target, the full shield by building.
 add_test(NAME gui_forms_consumer_c_shield_check
-    COMMAND ${Python3_EXECUTABLE} -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/consumer_shield.py" c --check
+    COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/consumer_shield.py" c --check
         --root "${CMAKE_CURRENT_SOURCE_DIR}"
         --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt")
 add_test(NAME gui_forms_consumer_shield_check
-    COMMAND ${Python3_EXECUTABLE} -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/consumer_shield.py" full --check
+    COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/consumer_shield.py" full --check
         --root "${CMAKE_CURRENT_SOURCE_DIR}" --output-dir "${GUI_FORMS_CONSUMER_SHIELD_DIRECTORY}/gui_forms"
         --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt")
 add_test(NAME gui_forms_module_exports_check
-    COMMAND ${Python3_EXECUTABLE} -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/module_exports.py" check
+    COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/module_exports.py" check
         --root "${CMAKE_CURRENT_SOURCE_DIR}")
 add_custom_target(gui_forms_consumer_shield_update
-    COMMAND ${Python3_EXECUTABLE} -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/consumer_shield.py" c
+    COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/consumer_shield.py" c
         --root "${CMAKE_CURRENT_SOURCE_DIR}"
         --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt"
-    COMMAND ${Python3_EXECUTABLE} -B "${CMAKE_CURRENT_SOURCE_DIR}/tools/module_exports.py" generate
+    COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/module_exports.py" generate
         --root "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Regenerating the C consumer-macro shield and the gui_forms module interface unit"
     VERBATIM)

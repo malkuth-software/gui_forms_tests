@@ -7,7 +7,7 @@
 // their parts, conditioned on the part's winner, which the engine finds by
 // the cascade; copies whose definitions cannot win together are not made.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"
 #include "gui_forms/engine/theme_rules/theme_rules.hpp"

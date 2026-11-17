@@ -9,9 +9,9 @@
 #include "gui_forms/plots/series_column/series_column.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/types/paint_types/paint_types.hpp"
-#include "../src/core/display/snapshot/display_snapshot.hpp"
-#include "../src/core/display/snapshot/splash_baker.hpp"
-#include "../src/render/skia/raster/skia_splash_bake.hpp"
+#include "src/core/display/snapshot/display_snapshot.hpp"
+#include "src/core/display/snapshot/splash_baker.hpp"
+#include "src/render/skia/raster/skia_splash_bake.hpp"
 
 #include <cstdint>
 #include <cstdlib>

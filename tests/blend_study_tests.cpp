@@ -29,8 +29,8 @@
 #include <string_view>
 #include <vector>
 
-#include "../src/core/image/png_writer.hpp"
-#include "../src/core/image/resource_pixels.hpp"
+#include "src/core/image/png_writer.hpp"
+#include "src/core/image/resource_pixels.hpp"
 
 #include <stxlib/optional.hpp>
 

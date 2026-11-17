@@ -2,7 +2,7 @@
 // (src/host/linux/settings/xsettings_parse.hpp). The parser takes plain
 // bytes, so it is tested on every platform with properties built here in
 // both byte orders.
-#include "../src/host/linux/settings/xsettings_parse.hpp"
+#include "src/host/linux/settings/xsettings_parse.hpp"
 
 #include <array>
 #include <cstddef>

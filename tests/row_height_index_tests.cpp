@@ -5,7 +5,7 @@
 // batched stores. Heights are whole numbers unless a test says otherwise, so
 // every sum is exact.
 
-#include "../src/controls/collections/row_height_index.hpp"
+#include "src/controls/collections/row_height_index.hpp"
 
 #include <cstddef>
 #include <cstdint>

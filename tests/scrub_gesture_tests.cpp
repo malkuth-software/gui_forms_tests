@@ -17,7 +17,7 @@
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/core/drag_engine/scrub_gesture.hpp"
+#include "src/core/drag_engine/scrub_gesture.hpp"
 #include "support/routed_input_probe.hpp"
 
 #include <array>

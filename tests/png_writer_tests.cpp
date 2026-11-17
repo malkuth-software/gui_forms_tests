@@ -2,8 +2,8 @@
 // and owned decoder, every source layout (RGBA/BGRA; straight, premultiplied,
 // opaque), every compression level, filter selection, refusals, and the
 // cross-platform identity hash of the encoded bytes.
-#include "../src/core/image/png_pixels.hpp"
-#include "../src/core/image/png_writer.hpp"
+#include "src/core/image/png_pixels.hpp"
+#include "src/core/image/png_writer.hpp"
 #include "gui_forms/resources/types/image_resource_types.hpp"
 
 #include <algorithm>

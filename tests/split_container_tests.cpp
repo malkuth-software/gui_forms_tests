@@ -24,8 +24,8 @@
 #include "gui_forms/types/painter/painter.hpp"
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
-#include "../src/core/drag_engine/drag_engine.hpp"
-#include "../src/core/control/control/control_input_access.hpp"
+#include "src/core/drag_engine/drag_engine.hpp"
+#include "src/core/control/control/control_input_access.hpp"
 
 #include <array>
 #include <chrono>

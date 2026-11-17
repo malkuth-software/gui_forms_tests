@@ -12,7 +12,7 @@
 #include "gui_forms/engine/effect/effect.hpp"
 #include "gui_forms/types/painter/painter.hpp"
 
-#include "../src/core/text/localizable/gui_forms_notes.hpp"
+#include "src/core/text/localizable/gui_forms_notes.hpp"
 
 #include <algorithm>
 #include <array>

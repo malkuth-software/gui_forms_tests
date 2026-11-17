@@ -9,7 +9,7 @@
 // engine_motion_tests written as a sheet giving the same values, and the
 // forms the engine cannot run refused.
 
-#include "../../src/core/theme_language/compiler/theme_compiler.hpp"
+#include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/engine/engine_expression/engine_expression.hpp"
