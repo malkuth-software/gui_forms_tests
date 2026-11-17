@@ -10,6 +10,7 @@ The real header's audit is the gui_forms_abi_audit test.
 """
 from __future__ import annotations
 
+import os
 import argparse
 import concurrent.futures
 from dataclasses import dataclass
@@ -21,7 +22,8 @@ import tempfile
 
 HERE: Path = Path(__file__).resolve().parent
 ROOT: Path = HERE.parent.parent
-AUDIT: Path = ROOT / "tools" / "abi_audit.py"
+# gui_forms' tool: the test cache's source tree (GUI_FORMS_SOURCE_DIR, set for every test).
+AUDIT: Path = Path(os.environ.get("GUI_FORMS_SOURCE_DIR", str(ROOT))) / "tools" / "abi_audit.py"
 BASE: Path = HERE / "audit_fixtures" / "base.h"
 
 

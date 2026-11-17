@@ -467,7 +467,7 @@ if(Python3_Interpreter_FOUND AND GUI_FORMS_REFERENCE_CLANG)
             --clang ${GUI_FORMS_REFERENCE_CLANG}
             --build ${CMAKE_CURRENT_BINARY_DIR}
             --output ${CMAKE_CURRENT_BINARY_DIR}/reference
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${GUI_FORMS_SOURCE_DIR}
         COMMENT "Extracting native C++ API and rendering authored contracts"
         VERBATIM)
 endif()
@@ -481,7 +481,7 @@ if(Python3_Interpreter_FOUND)
     # oracle): its SVG subset, the round trip of records, and the build's
     # generated records against the committed SVG files.
     add_test(NAME gui_forms_stock_icon_codec_tests
-        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${GUI_FORMS_SOURCE_DIR}/tools
             -p test_stock_icon_codec.py)
     set_tests_properties(gui_forms_stock_icon_codec_tests PROPERTIES
         ENVIRONMENT "GUI_FORMS_STOCK_ICON_DATA=${GUI_FORMS_STOCK_ICON_RECORDS}")
@@ -501,19 +501,19 @@ if(Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
             -p test_naming_audit.py)
     add_test(NAME gui_forms_exit_statics_check_unit
-        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${GUI_FORMS_SOURCE_DIR}/tools
             -p test_check_exit_statics.py)
     # Stable IDs written in tests use no '_' (tools/check_stable_id_literals.py):
     # the C ABI's tests pass them as run-time strings the ABI refuses.
     add_test(NAME gui_forms_stable_id_literals_check_unit
-        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
+        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${GUI_FORMS_SOURCE_DIR}/tools
             -p test_check_stable_id_literals.py)
     # Every native entry (window procedure, COM method, ATK callback,
     # AppKit selector) runs through the fail-fast boundary, or is listed
     # in tools/native_boundary_baseline.txt, which may only shrink.
     add_test(NAME gui_forms_native_boundary_check
         COMMAND ${Python3_EXECUTABLE} -B ${GUI_FORMS_SOURCE_DIR}/tools/check_native_boundaries.py
-            --root ${CMAKE_CURRENT_SOURCE_DIR})
+            --root ${GUI_FORMS_SOURCE_DIR})
     add_test(NAME gui_forms_native_boundary_check_self_test
         COMMAND ${Python3_EXECUTABLE} -B ${GUI_FORMS_SOURCE_DIR}/tools/check_native_boundaries.py
             --self-test)
@@ -660,7 +660,7 @@ add_test(NAME gui_drawing_trace_equivalence_tests
 # (cmake/StxDigest.cmake, tests/cmake/stx_digest_test.cmake).
 add_test(NAME gui_forms_stx_digest
          COMMAND ${CMAKE_COMMAND} -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/stx_digest_test
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/stx_digest_test.cmake)
+                 -DGUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/stx_digest_test.cmake)
 # Public headers name no renderer or platform type; comments may
 # (cmake/check_public_header_tokens.cmake). The fixtures prove a comment
 # passes and a token in code fails.
@@ -684,7 +684,7 @@ add_test(
         -DDRAWING_CORE=$<TARGET_FILE:gui_drawing_core>
         -DDRAWING_C_API=$<TARGET_FILE:gui_drawing_c_api_c11_tests>
         -DDRAWING_TEST_BINARY=$<TARGET_FILE:gui_drawing_core_tests>
-        -DSOURCE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}
+        -DSOURCE_DIRECTORY=${GUI_FORMS_SOURCE_DIR}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_drawing_boundaries.cmake
 )
 # The drawing ABI's export policy is the C ABI library's
@@ -1281,6 +1281,7 @@ if(TARGET gui_forms_form_compiler)
                  COMMAND ${CMAKE_COMMAND}
                          -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/form_shared_source_test
                          -DSOURCE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}
+                         -DGUI_FORMS_SOURCE_DIRECTORY=${GUI_FORMS_SOURCE_DIR}
                          -DGENERATOR=${CMAKE_GENERATOR}
                          -DMAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
                          -DCXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -1300,16 +1301,16 @@ if(TARGET gui_forms_form_compiler)
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/form_language)
         gui_forms_add_form(gui_forms_form_derived_class_tests tests/form_language/generated/sample_dialog.form
             CLASS SampleDialogWindow NAMESPACE form_generated OUTPUT gui_forms_forms/sample_dialog_window.hpp
-            MODEL form_generated::SampleModel MODEL_HEADER ${GUI_FORMS_SOURCE_DIR}/generated/sample_model.hpp)
+            MODEL form_generated::SampleModel MODEL_HEADER generated/sample_model.hpp)
         gui_forms_add_form(gui_forms_form_derived_class_tests tests/form_language/generated/derived_panel.form
             CLASS DerivedPanel NAMESPACE form_generated
-            MODEL form_generated::SampleModel MODEL_HEADER ${GUI_FORMS_SOURCE_DIR}/generated/sample_model.hpp)
+            MODEL form_generated::SampleModel MODEL_HEADER generated/sample_model.hpp)
         gui_forms_add_form(gui_forms_form_derived_class_tests tests/form_language/generated/plain_panel.form
             CLASS PlainPanel NAMESPACE form_generated DERIVED)
         # A final root type (a layout panel), composed instead of derived.
         gui_forms_add_form(gui_forms_form_derived_class_tests tests/form_language/generated/flex_root_panel.form
             CLASS FlexRootPanel NAMESPACE form_generated
-            MODEL form_generated::SampleModel MODEL_HEADER ${GUI_FORMS_SOURCE_DIR}/generated/sample_model.hpp)
+            MODEL form_generated::SampleModel MODEL_HEADER generated/sample_model.hpp)
         add_test(NAME gui_forms_form_derived_class_tests COMMAND gui_forms_form_derived_class_tests)
     endif()
 endif()
@@ -2814,10 +2815,11 @@ add_test(NAME gui_forms_gallery_interaction_tests
         tests/gallery_pages/schema_export_tests.cpp
     )
     # The theme switch test compiles the Gallery's embedded theme package
-    # (gui_forms_add_theme writes its header there).
+    # (gui_forms_add_theme writes its header there: in the gui_forms tree the
+    # cache was packed from, which carries it).
     target_include_directories(gui_forms_gallery_pages_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_BINARY_DIR}/gui_forms_themes
+        ${GUI_FORMS_BINARY_DIR}/gui_forms_themes
     )
     target_link_libraries(gui_forms_gallery_pages_tests PRIVATE
         gui_forms_gallery_model
@@ -2849,7 +2851,7 @@ add_test(NAME gui_forms_gallery_interaction_tests
     )
     foreach(gui_forms_gallery_page_source IN LISTS gui_forms_gallery_page_sources)
         list(APPEND gui_forms_gallery_policy_files
-            ${CMAKE_CURRENT_SOURCE_DIR}/${gui_forms_gallery_page_source})
+            ${GUI_FORMS_SOURCE_DIR}/${gui_forms_gallery_page_source})
     endforeach()
     string(REPLACE ";" "," gui_forms_gallery_policy_file_list
         "${gui_forms_gallery_policy_files}")

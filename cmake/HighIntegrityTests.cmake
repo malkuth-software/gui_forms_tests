@@ -44,7 +44,7 @@ foreach(_gf_high_integrity_refusal IN LISTS _gf_high_integrity_refusals)
     # A fresh scratch tree each run: the refused settings stay in its cache.
     set(_gf_high_integrity_scratch "${CMAKE_CURRENT_BINARY_DIR}/high-integrity-refusals/${_gf_high_integrity_suffix}")
     add_test(NAME gui_forms_high_integrity_refuses_${_gf_high_integrity_suffix}
-        COMMAND "${CMAKE_COMMAND}" --fresh -S "${CMAKE_CURRENT_SOURCE_DIR}" -B "${_gf_high_integrity_scratch}"
+        COMMAND "${CMAKE_COMMAND}" --fresh -S "${GUI_FORMS_SOURCE_DIR}" -B "${_gf_high_integrity_scratch}"
             ${_gf_high_integrity_refusal_arguments} ${_gf_high_integrity_settings})
     # PASS_REGULAR_EXPRESSION ignores the exit code; the text appears only on
     # the refusal (a FATAL_ERROR), so it proves the configure stopped there.

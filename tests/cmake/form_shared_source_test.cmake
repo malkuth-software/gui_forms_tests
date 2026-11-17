@@ -5,6 +5,7 @@
 # the ordering was a source-file property, which every target compiling the
 # shared file took. Run with:
 #   -DWORK_DIRECTORY=<scratch directory> -DSOURCE_DIRECTORY=<repository root>
+#   -DGUI_FORMS_SOURCE_DIRECTORY=<the gui_forms tree: the test cache's source tree>
 #   -DGENERATOR=<generator> and optionally -DMAKE_PROGRAM, -DCXX_COMPILER,
 #   -DCXX_FLAGS, -DLINKER_FLAGS, -DOSX_SYSROOT, -DOSX_ARCHITECTURES and
 #   -DEXECUTABLE_SUFFIX, the parent build's settings, and -DTOOLCHAIN_FILE,
@@ -13,7 +14,7 @@
 #   The nested project takes the same toolchain and runtime, so it links
 #   the same C++ runtime as the parent (on Linux the harness's static PIC
 #   libc++; the compiler and -stdlib=libc++ alone left libc++ unlinked).
-foreach(required IN ITEMS WORK_DIRECTORY SOURCE_DIRECTORY GENERATOR)
+foreach(required IN ITEMS WORK_DIRECTORY SOURCE_DIRECTORY GUI_FORMS_SOURCE_DIRECTORY GENERATOR)
     if(NOT ${required})
         message(FATAL_ERROR "form shared source test: ${required} is not set")
     endif()
@@ -43,7 +44,7 @@ set(build "${run}/build")
 file(COPY "${SOURCE_DIRECTORY}/tests/cmake/form_shared_source/" DESTINATION "${project}")
 
 set(configure_arguments -S "${project}" -B "${build}" -G "${GENERATOR}"
-    "-DGUI_FORMS_FORMS_MODULE=${SOURCE_DIRECTORY}/cmake/GUIFormsForms.cmake"
+    "-DGUI_FORMS_FORMS_MODULE=${GUI_FORMS_SOURCE_DIRECTORY}/cmake/GUIFormsForms.cmake"
     -DCMAKE_BUILD_TYPE=Release)
 if(MAKE_PROGRAM)
     list(APPEND configure_arguments "-DCMAKE_MAKE_PROGRAM=${MAKE_PROGRAM}")

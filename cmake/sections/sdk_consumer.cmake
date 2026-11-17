@@ -36,7 +36,7 @@ if(TARGET gui_forms_application AND NOT GUI_FORMS_BUILD_PREPARED_TEXT)
             "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
         add_test(NAME gui_forms_sdk_consumer_link
             COMMAND ${Python3_EXECUTABLE} -B ${GUI_FORMS_SOURCE_DIR}/tools/sdk_consumer_link.py
-                --build-dir ${CMAKE_BINARY_DIR}
+                --prefix ${GUI_FORMS_TEST_CACHE_PREFIX}
                 --scratch ${CMAKE_CURRENT_BINARY_DIR}/sdk-consumer-link
                 --config $<CONFIG>
                 --text-masks ${gui_forms_sdk_consumer_text_masks}

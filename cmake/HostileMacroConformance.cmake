@@ -119,21 +119,21 @@ gui_forms_hostile_macro_flags(gui_forms_shield_restore)
 # the checked-in ones with the _update target, the full shield by building.
 add_test(NAME gui_forms_consumer_c_shield_check
     COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/consumer_shield.py" c --check
-        --root "${CMAKE_CURRENT_SOURCE_DIR}"
+        --root "${GUI_FORMS_SOURCE_DIR}"
         --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt")
 add_test(NAME gui_forms_consumer_shield_check
     COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/consumer_shield.py" full --check
-        --root "${CMAKE_CURRENT_SOURCE_DIR}" --output-dir "${GUI_FORMS_CONSUMER_SHIELD_DIRECTORY}/gui_forms"
+        --root "${GUI_FORMS_SOURCE_DIR}" --output-dir "${GUI_FORMS_CONSUMER_SHIELD_DIRECTORY}/gui_forms"
         --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt")
 add_test(NAME gui_forms_module_exports_check
     COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/module_exports.py" check
-        --root "${CMAKE_CURRENT_SOURCE_DIR}")
+        --root "${GUI_FORMS_SOURCE_DIR}")
 add_custom_target(gui_forms_consumer_shield_update
     COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/consumer_shield.py" c
-        --root "${CMAKE_CURRENT_SOURCE_DIR}"
+        --root "${GUI_FORMS_SOURCE_DIR}"
         --include-directories-file "${GUI_FORMS_HOSTILE_MACRO_DIRECTORY}/include_directories.txt"
     COMMAND ${Python3_EXECUTABLE} -B "${GUI_FORMS_SOURCE_DIR}/tools/module_exports.py" generate
-        --root "${CMAKE_CURRENT_SOURCE_DIR}"
+        --root "${GUI_FORMS_SOURCE_DIR}"
     COMMENT "Regenerating the C consumer-macro shield and the gui_forms module interface unit"
     VERBATIM)
 

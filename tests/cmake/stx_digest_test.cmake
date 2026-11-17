@@ -1,7 +1,8 @@
 # cmake/StxDigest.cmake: a file's digest does not depend on its line
 # endings, an LF file's digest is its plain SHA-256, and different content
-# still differs. Run with -DWORK_DIRECTORY=<scratch directory>.
-include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/StxDigest.cmake")
+# still differs. Run with -DWORK_DIRECTORY=<scratch directory> and
+# -DGUI_FORMS_SOURCE_DIR=<the gui_forms tree> (the test cache's source tree).
+include("${GUI_FORMS_SOURCE_DIR}/cmake/StxDigest.cmake")
 if(NOT WORK_DIRECTORY)
     message(FATAL_ERROR "stx digest test: WORK_DIRECTORY is not set")
 endif()

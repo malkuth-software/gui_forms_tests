@@ -65,10 +65,12 @@ include("${GUI_FORMS_SOURCE_DIR}/cmake/FuzzTargets.cmake")
 include("${GUI_FORMS_SOURCE_DIR}/cmake/PeTables.cmake")
 set(_gf_tests_plugin_path "${GUI_FORMS_LOCALIZABLE_PLUGIN_PATH}")
 set(_gf_tests_plugin "${GUI_FORMS_LOCALIZABLE_PLUGIN}")
+set(_gf_tests_effects_verified "${GUI_FORMS_EFFECTS_VERIFIED}")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN OFF)
 include("${GUI_FORMS_SOURCE_DIR}/cmake/LocalizablePlugin.cmake")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN "${_gf_tests_plugin}")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN_PATH "${_gf_tests_plugin_path}")
+set(GUI_FORMS_EFFECTS_VERIFIED "${_gf_tests_effects_verified}")
 
 enable_testing()
 
@@ -109,8 +111,10 @@ include(cmake/sections/desktop_tests.cmake)
 
 # The gui_forms tools a test runs from the cache's source tree find this
 # checkout (its consumer projects, probes and generated sources) through
-# GUI_FORMS_TESTS_ROOT (gui_forms tools/tests_checkout.py).
+# GUI_FORMS_TESTS_ROOT (gui_forms tools/tests_checkout.py); a test script
+# finds gui_forms' tools in the cache's source tree through GUI_FORMS_SOURCE_DIR.
 get_property(_gf_tests_all DIRECTORY PROPERTY TESTS)
 foreach(_gf_tests_one IN LISTS _gf_tests_all)
-    set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}")
+    set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT
+        "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "GUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}")
 endforeach()

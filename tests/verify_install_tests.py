@@ -1,13 +1,15 @@
 """Verify the install-check command contract without building or touching an SDK."""
 from __future__ import annotations
 from pathlib import Path
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
+# gui_forms' tools: the test cache's source tree (GUI_FORMS_SOURCE_DIR, set for every test).
+sys.path.insert(0, str(Path(os.environ.get('GUI_FORMS_SOURCE_DIR', str(Path(__file__).resolve().parents[1]))) / 'tools'))
 import verify_install
 
 class CommandRecorder:

@@ -25,7 +25,7 @@ if(TARGET GUIForms::Application AND
         add_test(NAME gui_forms_application_text_configure_${link_case}
             COMMAND "${CMAKE_COMMAND}"
                 "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/tests/application_text_consumer"
-                "-DPROVIDER=${CMAKE_CURRENT_SOURCE_DIR}"
+                "-DPROVIDER=${GUI_FORMS_SOURCE_DIR}"
                 "-DBINARY=${CMAKE_CURRENT_BINARY_DIR}/application-text-${link_case}"
                 "-DCACHE=${application_text_cache}"
                 "-DLINK_CASE=${link_case}"

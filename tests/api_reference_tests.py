@@ -1,6 +1,7 @@
 """Regression tests for compiler facts used by the published API reference."""
 from __future__ import annotations
 from typing import ClassVar
+import os
 import re
 import json
 import hashlib
@@ -11,7 +12,8 @@ import tempfile
 import unittest
 
 ROOT: Path = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'tools'))
+# gui_forms' tools: the test cache's source tree (GUI_FORMS_SOURCE_DIR, set for every test).
+sys.path.insert(0, str(Path(os.environ.get('GUI_FORMS_SOURCE_DIR', str(ROOT))) / 'tools'))
 import api_reference
 import api_reference_render
 from api_reference_model import Inventory, Symbol, Contract, Coverage

@@ -5,7 +5,7 @@
  */
 #include "gui_forms/c/gf_abi.h"
 
-#include "conformance/gf_conformance_pthread.h"
+#include "src/abi/conformance/gf_conformance_pthread.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
