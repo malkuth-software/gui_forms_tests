@@ -1,6 +1,16 @@
 enable_testing()
+# The cached gui_forms_lamp_keys names its legend font by the absolute path of
+# the tree that built it (GUI_FORMS_LEGEND_FONT, GUI.Forms' CI workspace), which
+# no other machine has; the legend test builds the same program from the cache's
+# source, as GUI.Forms does, naming the font the cache carries.
 if(TARGET gui_forms_lamp_keys)
-    add_test(NAME gui_forms_lamp_keys_legend_tests COMMAND gui_forms_lamp_keys --legend-test)
+    add_executable(gui_forms_tests_lamp_keys
+        "${GUI_FORMS_SOURCE_DIR}/tools/industrial_surfaces/lamp_keys.cpp"
+        $<TARGET_OBJECTS:gui_forms_sealed_pages_objects>)
+    target_link_libraries(gui_forms_tests_lamp_keys PRIVATE gui_drawing_skia gui_forms_core)
+    target_compile_definitions(gui_forms_tests_lamp_keys PRIVATE
+        GUI_FORMS_LEGEND_FONT="${GUI_FORMS_SOURCE_DIR}/assets/fonts/PortsmouthMono.ttf")
+    add_test(NAME gui_forms_lamp_keys_legend_tests COMMAND gui_forms_tests_lamp_keys --legend-test)
 endif()
 if(TARGET gui_forms_text_masks_impl)
     add_executable(gui_forms_text_mask_cost_probe EXCLUDE_FROM_ALL tests/text_mask_cost_probe.cpp)

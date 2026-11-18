@@ -29,6 +29,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -64,6 +65,36 @@ def changed_files(base: str) -> list[str] | None:
             return None
         listing.update(line for line in completed.stdout.splitlines() if line)
     return sorted(listing)
+
+
+# The LLVM runtime prefix a test cache's settings name: GUI.Forms' CI records
+# its own (/home/runner/work/gui_forms/gui_forms/.build/toolchain/llvm-22.1.8-...),
+# which is not where this checkout's runtime is.
+RECORDED_RUNTIME: re.Pattern[str] = re.compile(r'[^"\s]*/llvm-\d+\.\d+\.\d+-[A-Za-z0-9_.-]+(?=/(?:include|lib)/)')
+
+
+def local_settings(cache: Path, build: Path) -> Path:
+    """The cache's settings.cmake for this machine, written into build: the
+    recorded runtime prefix becomes GUI_FORMS_LLVM_RUNTIME (when set), and the
+    file's own directory stays the cache's (its toolchain file is read from there).
+
+    The settings pass the C++ flags with the runtime's absolute paths, which
+    override what the toolchain file would derive from this machine's runtime."""
+    text: str = (cache / 'settings.cmake').read_text(encoding='utf-8')
+    text = text.replace('${CMAKE_CURRENT_LIST_DIR}', cache.as_posix())
+    runtime: str | None = os.environ.get('GUI_FORMS_LLVM_RUNTIME')
+    if runtime:
+        local: str = Path(runtime).as_posix()
+        recorded: set[str] = set(RECORDED_RUNTIME.findall(text))
+        prefix: str
+        for prefix in sorted(recorded):
+            if prefix != local:
+                print(f'ci_tests: the cache names the runtime {prefix}; using {local}', flush=True)
+                text = text.replace(prefix, local)
+    path: Path = build / 'gui_forms_test_cache_settings.cmake'
+    build.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding='utf-8')
+    return path
 
 
 def write_file_api_query(build: Path) -> None:
@@ -162,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f'ci_tests: test cache {cache}', flush=True)
     write_file_api_query(build)
     configure: list[str] = ['cmake', '-S', str(ROOT), '-B', str(build), '-G', 'Ninja',
-                            '-C', str(cache / 'settings.cmake'), '-DGUI_FORMS_TEST_CACHE=' + cache.as_posix()]
+                            '-C', str(local_settings(cache, build)), '-DGUI_FORMS_TEST_CACHE=' + cache.as_posix()]
     launcher: str | None = shutil.which('ccache')
     if launcher:
         configure.extend(f'-DCMAKE_{language}_COMPILER_LAUNCHER={launcher}' for language in ('C', 'CXX', 'OBJCXX'))
