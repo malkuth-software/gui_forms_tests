@@ -46,14 +46,23 @@ def run(command: list[str], **options: object) -> None:
     subprocess.run(command, check=True, **options)  # type: ignore[arg-type]
 
 
-def changed_files(base: str) -> list[str]:
-    """The repository-relative paths that differ from base (committed or not)."""
+def changed_files(base: str) -> list[str] | None:
+    """The repository-relative paths that differ from base (committed or not),
+    or None when git cannot say (the caller then runs the whole suite).
+
+    A failing git command is reported with its own message: it used to end the
+    run with git's exit status (128) and nothing printed."""
     listing: set[str] = set()
     command: list[str]
     for command in (['git', 'diff', '--name-only', base + '...HEAD'], ['git', 'diff', '--name-only', 'HEAD'],
                     ['git', 'ls-files', '--others', '--exclude-standard']):
-        output: str = subprocess.run(command, cwd=ROOT, check=True, capture_output=True, text=True).stdout
-        listing.update(line for line in output.splitlines() if line)
+        completed: subprocess.CompletedProcess[str] = subprocess.run(command, cwd=ROOT, check=False,
+                                                                     capture_output=True, text=True)
+        if completed.returncode != 0:
+            print(f'selection: {" ".join(command)} failed ({completed.returncode}) in {ROOT}: '
+                  f'{completed.stderr.strip()}', flush=True)
+            return None
+        listing.update(line for line in completed.stdout.splitlines() if line)
     return sorted(listing)
 
 
@@ -93,7 +102,10 @@ def source_targets(build: Path) -> dict[str, set[str]]:
 def select(build: Path, base: str) -> tuple[list[str], list[str]] | None:
     """The programs to build and the test names to run for the changes since
     base, or None for the whole suite."""
-    changes: list[str] = changed_files(base)
+    changes: list[str] | None = changed_files(base)
+    if changes is None:
+        print('selection: the changes are unknown; the whole suite', flush=True)
+        return None
     if not changes:
         print('selection: nothing changed; the whole suite', flush=True)
         return None
