@@ -53,6 +53,10 @@ option(GUI_FORMS_HOSTILE_MACRO_TESTS "Run the hostile-macro conformance compiles
 # The tests whose form header the form compiler generates at build time
 # (gui_forms_add_form). The state-machine gate turns them off: it parses
 # sources syntax-only and builds only generated headers.
+# Every compile warning in a test, a fixture or a lab fails its build
+# (owner, 2026-11-17); ci_tests.py keeps going past failures, so one build
+# lists them all.
+option(GUI_FORMS_TESTS_WARNINGS_AS_ERRORS "Compile the tests with -Werror" ON)
 option(GUI_FORMS_BUILD_GENERATED_FORM_TESTS "Build the tests that generate a form header at build time" ON)
 
 # The functions the tests call that gui_forms defines (from the cache's

@@ -551,7 +551,6 @@ public:
     }
 
     static constexpr std::size_t visible = 50U;
-    static constexpr std::size_t row_count = 1'000'000U;
     std::size_t first{};
     bool stable{true};
 };

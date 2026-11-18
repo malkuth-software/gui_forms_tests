@@ -111,8 +111,8 @@ InstrumentFieldSpec choice(std::string id, std::string name,
 InstrumentFieldSpec text(std::string id, std::string name,
                          std::string value, bool required = false,
                          double weight = 1.0) {
-    InstrumentFieldSpec result{std::move(id), std::move(name), std::move(value),
-                               InstrumentFieldEditor::text};
+    InstrumentFieldSpec result{.stable_id = std::move(id), .name = std::move(name), .value = std::move(value),
+                               .editor = InstrumentFieldEditor::text, .choices = {}, .validation_message = {}};
     result.required = required;
     result.width_weight = weight;
     return result;

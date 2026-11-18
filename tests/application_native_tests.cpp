@@ -30,9 +30,6 @@ using namespace gui_forms;
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
-void require(bool condition, const std::string& message) {
-    if (!condition) throw std::runtime_error(message);
-}
 // The test program's application (Application::create; one per process),
 // made on first use and kept until the program ends.
 Application& test_application() {

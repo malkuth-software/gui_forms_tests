@@ -147,7 +147,7 @@ void contract() {
     require(services.show_tray_menu(HostTrayIconId{1U}, unnamed).status.error == HostServiceError::invalid_argument,
             "a menu row without an identity is refused");
 
-    services.simulate_tray_icon_event({1U, HostTrayIconAction::double_click});
+    services.simulate_tray_icon_event({HostTrayIconId{1U}, HostTrayIconAction::double_click});
     services.simulate_tray_icon_event({HostTrayIconId{7U}, HostTrayIconAction::click});
     require(log.events.size() == 1U && log.events[0].action == HostTrayIconAction::double_click &&
                 services.snapshot().tray_events == 1U,
@@ -308,7 +308,7 @@ void menu_removed_by_its_command() {
     (*menu).set_items({MenuItemSpec("tray.menu.quit", MenuItemKind::command, quit)});
     icon.context_menu = menu;
     services.queue_tray_menu_choice("tray.menu.quit");
-    services.simulate_tray_icon_event({1U, HostTrayIconAction::context});
+    services.simulate_tray_icon_event({HostTrayIconId{1U}, HostTrayIconAction::context});
     require(!icon.context_menu.read(), "the command removed the icon's menu");
     require(log.invocations.size() == 1U && log.invocations[0].menu_id == "tray.menu" &&
                 log.invocations[0].item_id == "tray.menu.quit" && log.invocations[0].command_id == "tray.quit",

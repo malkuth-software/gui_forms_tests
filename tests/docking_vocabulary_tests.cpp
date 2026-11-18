@@ -49,7 +49,7 @@ struct Operation final {
     Color color{};
     Point origin{};
     TextOrientation orientation{TextOrientation::horizontal};
-    std::string text;
+    std::string text{};
 };
 
 class RecordingPainter final : public Painter {

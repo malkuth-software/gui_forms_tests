@@ -1350,8 +1350,6 @@ void refusals() {
     require(threw, "sorting by a missing column is refused");
 }
 
-} // namespace
-
 // Activation modes (Windows Forms' Activation): standard on a double click,
 // one_click on a single click (with the hand over items), two_click on a
 // click of the already selected and focused item; Enter in every mode.
@@ -1542,6 +1540,8 @@ void focus_handler_shrinks_the_list() {
                 "the press acts on the shrunken list, not on the row it was over before");
     }
 }
+
+} // namespace
 
 int main() {
     details_parts_and_paint();

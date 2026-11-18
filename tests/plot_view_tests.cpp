@@ -271,8 +271,6 @@ void subscribe(PlotView& plot, Recorder& recorder, std::vector<SubscriptionToken
         Delegate<std::size_t>::bind<Recorder, &Recorder::on_toggle>(recorder)));
 }
 
-const FrameTime start{std::chrono::seconds(1000)};
-
 struct Fixture final {
     std::shared_ptr<PlotView> plot{};
     std::shared_ptr<PlotAxisItem> x_axis{};

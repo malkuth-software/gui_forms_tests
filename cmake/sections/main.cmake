@@ -806,6 +806,11 @@ if(GUI_FORMS_EFFECTS_VERIFIED)
     foreach(_gf_case IN LISTS _gf_effect_cases)
         set(_gf_case_target gui_forms_effect_case_${_gf_case})
         add_library(${_gf_case_target} OBJECT EXCLUDE_FROM_ALL tests/effect_pass/${_gf_case}.cpp)
+        # A case is deliberately wrong code whose diagnostic the test reads
+        # (and `unverified` expects a #warning): warnings stay warnings here,
+        # or -Werror would answer first. A source property, so it comes after
+        # the targets' -Werror on the command line.
+        set_source_files_properties(tests/effect_pass/${_gf_case}.cpp PROPERTIES COMPILE_OPTIONS -Wno-error)
         # For the usage requirements only: with Ninja an object library's
         # compiles do not wait for the libraries it links.
         target_link_libraries(${_gf_case_target} PRIVATE gui_forms_controls)
@@ -1094,6 +1099,13 @@ add_test(NAME gui_forms_owned_event_tests COMMAND gui_forms_owned_event_tests)
 # by tools/generate_library_docs.py, compiled and run without a host.
 add_executable(gui_forms_doc_examples_tests tests/doc_examples_tests.cpp)
 target_link_libraries(gui_forms_doc_examples_tests PRIVATE gui_forms_controls)
+# The examples are the reference's snippets as written (gui_forms
+# tools/generate_library_docs.py): a snippet names a value to show it and
+# leaves a record's trailing fields to their defaults, so these two warnings
+# do not apply to the generated file. A source property, so it comes after the
+# hardening's -Wall -Wextra on the command line.
+set_source_files_properties(tests/doc_examples_tests.cpp PROPERTIES
+    COMPILE_OPTIONS "-Wno-unused-variable;-Wno-missing-field-initializers")
 add_test(NAME gui_forms_doc_examples_tests COMMAND gui_forms_doc_examples_tests)
 # The examples marked `// compile only` need a native host: they are
 # compiled against the Application library but never linked or run.

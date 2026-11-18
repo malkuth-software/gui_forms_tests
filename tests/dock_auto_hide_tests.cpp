@@ -256,15 +256,6 @@ Point pin_point(const DockSite& site, DockNodeId stack) {
     return point;
 }
 
-std::string joined(const Trace& trace) {
-    std::string text;
-    for (const std::string& line : trace.lines) {
-        text += line;
-        text += "; ";
-    }
-    return text;
-}
-
 void reduce_motion(Window& window) {
     PresentationSettings settings = window.presentation_settings();
     settings.reduced_motion = true;

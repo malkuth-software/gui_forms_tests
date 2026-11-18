@@ -677,8 +677,6 @@ void refusals() {
             "without columns the view shows no rows and no header");
 }
 
-} // namespace
-
 // A synthetic tree for the virtual source: roots, each with `children`
 // leaves, every root expanded at first. Root records can be removed and
 // inserted in bulk by the application (then splice_rows is called).
@@ -925,6 +923,8 @@ void focus_handler_shrinks_the_tree() {
                 "the focus handler left one collapsed row and the press changed nothing of the old rows");
     }
 }
+
+} // namespace
 
 int main() {
     parts_states_and_paint();

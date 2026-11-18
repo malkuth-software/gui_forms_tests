@@ -1092,7 +1092,6 @@ void test_link_and_callback_disposal() {
 void test_wrong_thread_property_mutation_is_rejected() {
     std::shared_ptr<gui_forms::Label> label = make_control<Label>(StableId("thread.label"), "Before");
     const std::unique_ptr<Window> held_window = std::make_unique<Window>(label, Size{100.0, 24.0});
-    Window& window = *held_window;
     bool rejected = false;
     std::thread worker(attempt_label_mutation, std::cref(label),
                        std::ref(rejected));

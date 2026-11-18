@@ -783,9 +783,8 @@ void tile_fade() {
                 "the fade is linear over 100 ms");
     }
     require(steps[6] == 1.0, "and ends exactly at 1 after 100 ms");
-    std::size_t frames = 0U;
     for (int step = 0; step < 40 && window.motion_clock().armed(); ++step) {
-        frames += run_frame(window, (*fixture).time, (*fixture).painter);
+        static_cast<void>(run_frame(window, (*fixture).time, (*fixture).painter));
     }
     require(!window.motion_clock().armed() && run_frame(window, (*fixture).time, (*fixture).painter) == 0U,
             "once the fade and the stamp settle, nothing is scheduled");

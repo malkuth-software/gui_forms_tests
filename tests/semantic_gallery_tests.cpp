@@ -159,12 +159,6 @@ bool has_action(const SemanticNode& node, SemanticAction action) noexcept {
     return false;
 }
 
-bool is_button_role(SemanticRole role) noexcept {
-    const bool button = role == SemanticRole::button || role == SemanticRole::split_button ||
-                        role == SemanticRole::menu_button;
-    return button;
-}
-
 bool is_check_role(SemanticRole role) noexcept {
     const bool check = role == SemanticRole::check_box || role == SemanticRole::check_list_item;
     return check;

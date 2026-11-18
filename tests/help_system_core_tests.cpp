@@ -131,8 +131,8 @@ void records_and_layers() {
                 bad.rejections.front().reason == HelpEntryRefusal::invalid_stable_id,
             "an invalid segment is rejected and the rest kept");
     std::vector<HelpKeyword> keywords;
-    parse_help_keywords("clipboard, copy; selection", keywords);
-    require(keywords.size() == 2U && keywords[0].keyword == "clipboard" && keywords[0].subkeyword == "copy" &&
+    const bool keywords_parsed = parse_help_keywords("clipboard, copy; selection", keywords);
+    require(keywords_parsed && keywords.size() == 2U && keywords[0].keyword == "clipboard" && keywords[0].subkeyword == "copy" &&
                 keywords[1].keyword == "selection",
             "keywords split on ';' and a subkeyword after ','");
 }

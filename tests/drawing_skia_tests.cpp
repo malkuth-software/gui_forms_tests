@@ -588,7 +588,6 @@ void text_uses_the_shared_engine() {
     const Font font("Portsmouth Rapids", 16.0, FontStyle::regular, GraphicsUnit::pixel);
     const Font bold("Portsmouth Rapids", 16.0, FontStyle::bold, GraphicsUnit::pixel);
     const Font italic("Portsmouth Rapids", 16.0, FontStyle::italic, GraphicsUnit::pixel);
-    const Matrix identity;
     const Matrix shifted(1.0, 0.0, 0.0, 1.0, 20.0, 40.0);
 
     // Unhinted advances: the measured advance is linear in size.

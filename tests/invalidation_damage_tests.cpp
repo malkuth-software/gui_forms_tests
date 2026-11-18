@@ -1200,7 +1200,6 @@ void test_buffering_styles_are_retained_compatibility_facts() {
             "DoubleBuffered must retain both compatible buffering bits");
     (*control).set_style(ControlStyles::resize_redraw, true);
     const std::unique_ptr<Window> held_window = std::make_unique<Window>(control, Size{40.0, 30.0});
-    Window& window = *held_window;
     require((*control).double_buffered.read() &&
                 (*control).has_style(ControlStyles::resize_redraw),
             "control styles must survive attachment and handle-equivalent lifetime");

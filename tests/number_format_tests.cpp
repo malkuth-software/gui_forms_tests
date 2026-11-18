@@ -208,7 +208,7 @@ void check_format_strings() {
         std::string_view text;
         bool accepted{};
         NumberFormatKind kind{NumberFormatKind::general};
-        stxlib::Optional<std::uint32_t> precision;
+        stxlib::Optional<std::uint32_t> precision{};
         bool upper_case{};
     };
     const FormatStringCase cases[] = {

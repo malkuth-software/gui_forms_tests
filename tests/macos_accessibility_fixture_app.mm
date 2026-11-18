@@ -86,7 +86,7 @@ using gui_forms::SemanticSnapshot;
 using gui_forms::test_support::StockControlFixture;
 using gui_forms::test_support::StockEffectCounter;
 
-constexpr const char* fixture_title = "GUI.Forms AX fixture";
+[[maybe_unused]] constexpr const char* fixture_title = "GUI.Forms AX fixture";
 
 void append_json_string(std::string& out, std::string_view text) {
     out += '"';
@@ -310,12 +310,12 @@ private:
     std::string frozen_page_;
     bool freeze_pending_{};
     // Ticks spent waiting for the selected page's sub-surfaces to publish.
-    std::uint32_t sub_surface_waits_{};
+    [[maybe_unused]] std::uint32_t sub_surface_waits_{};
 };
 
 // Main-queue work posted by SemanticDumpWriter::tick; the context is the
 // writer, which AppState keeps for the whole run.
-void freeze_page_on_main(void* context) {
+[[maybe_unused]] void freeze_page_on_main(void* context) {
     SemanticDumpWriter& writer = *static_cast<SemanticDumpWriter*>(context);
     writer.freeze_page();
 }

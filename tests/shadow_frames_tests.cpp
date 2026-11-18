@@ -398,7 +398,7 @@ public:
         seen_.paint = copy_stack();
         Control::on_paint(painter, local_damage);
     }
-    void routed_pointer(PointerEvent& event) override {
+    void routed_pointer(PointerEvent&) override {
         seen_.pointer = copy_stack();
         if (seen_.throw_on_pointer) {
             throw std::runtime_error("the probe's pointer handler failed");

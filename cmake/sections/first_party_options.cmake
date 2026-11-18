@@ -12,6 +12,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             endif()
             # Hardening and the warning level (cmake/Hardening.cmake, D11).
             gui_forms_harden_target(${gui_forms_first_party_target} ${gui_forms_target_type})
+            # Warnings are failures in the tests (owner, 2026-11-17).
+            if(GUI_FORMS_TESTS_WARNINGS_AS_ERRORS)
+                target_compile_options(${gui_forms_first_party_target} PRIVATE
+                    $<$<COMPILE_LANGUAGE:C,CXX,OBJC,OBJCXX>:-Werror>)
+            endif()
             # A view (std::string_view, std::span) bound or assigned to a
             # temporary dangles: PartPaint::text twice held a temporary
             # std::string (CorrespondenceView, PropertyList) and painting read

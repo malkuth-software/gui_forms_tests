@@ -112,6 +112,14 @@ def unpack(archive: Path, digest: str, destination: Path) -> None:
         unpacked: Path = work / ARCHIVE_ROOT
         if not (unpacked / 'GUIFormsTestCache.cmake').is_file():
             raise ValueError(f'{archive.name} holds no {ARCHIVE_ROOT}/GUIFormsTestCache.cmake')
+        # The archive's times are fixed (equal trees, equal archives); stamp
+        # the unpacked files now, so a build tree that compiled against an
+        # earlier cache sees every header and library as changed and rebuilds
+        # what depends on them (ccache keeps the compiles whose text is equal).
+        path: Path
+        for path in unpacked.rglob('*'):
+            if not path.is_symlink():
+                os.utime(path)
         (unpacked / '.digest').write_text(digest + '\n', encoding='utf-8')
         if destination.exists():
             shutil.rmtree(destination)

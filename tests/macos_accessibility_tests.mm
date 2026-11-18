@@ -161,7 +161,7 @@ struct ControlTally final {
     std::string manifest_id;
     std::size_t nodes{};
     std::size_t matched{};
-    std::string default_action;
+    std::string default_action{};
     bool action_observed{};
 };
 
