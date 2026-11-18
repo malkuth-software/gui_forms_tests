@@ -2,9 +2,11 @@
 # test cache gui_forms CI published for it (release test-cache-<commit>,
 # packed by gui_forms tools/test_cache.py). tools/fetch_test_cache.py
 # downloads and checks the cache; tools/update_lock.py moves the pin and
-# copies the digests from the release.
+# copies the digests from the release. The commit below is the gui_forms
+# change that moved the tests out (claude/tests-repo-split); its digests come
+# with the first checkpoint push whose CI publishes test-cache-<commit>.
 [gui_forms]
 repository = "malkuth-software/gui_forms"
-commit = "2b60b145188abae94edda82fb67f2f1f65fc6601"
+commit = "f04729b0139f8ba2c3b009056652e70e546b3568"
 
 [digests]
