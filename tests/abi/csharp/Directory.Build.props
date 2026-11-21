@@ -4,4 +4,9 @@
   <PropertyGroup Condition="'$(GfIntermediateRoot)' != ''">
     <BaseIntermediateOutputPath>$(GfIntermediateRoot)/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
   </PropertyGroup>
+  <!-- The GUI.Forms bindings the tests build against: the test cache's source
+       (ctest passes GuiFormsDir); else a gui_forms checkout beside this one. -->
+  <PropertyGroup>
+    <GuiFormsDir Condition="'$(GuiFormsDir)' == ''">$(MSBuildThisFileDirectory)../../../../</GuiFormsDir>
+  </PropertyGroup>
 </Project>

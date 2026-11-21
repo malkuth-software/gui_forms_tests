@@ -13,9 +13,9 @@
     <NoWarn>$(NoWarn);CS8981;IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../../../bindings/csharp/GuiForms.Forms/GuiForms.Forms.csproj" />
-    <ProjectReference Include="../../../../bindings/csharp/GuiForms.Forms.Generators/GuiForms.Forms.Generators.csproj"
+    <ProjectReference Include="$(GuiFormsDir)/bindings/csharp/GuiForms.Forms/GuiForms.Forms.csproj" />
+    <ProjectReference Include="$(GuiFormsDir)/bindings/csharp/GuiForms.Forms.Generators/GuiForms.Forms.Generators.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <Compile Include="../../../../bindings/csharp/GuiForms.Interop/Generated/Aliases.g.cs" Link="Aliases.g.cs" />
+    <Compile Include="$(GuiFormsDir)/bindings/csharp/GuiForms.Interop/Generated/Aliases.g.cs" Link="Aliases.g.cs" />
   </ItemGroup>
 </Project>

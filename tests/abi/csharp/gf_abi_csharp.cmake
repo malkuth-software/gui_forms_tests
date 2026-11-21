@@ -7,10 +7,12 @@
 # no .NET SDK of version 10 or later: nothing is downloaded or installed.
 #
 # Inputs (-D): DOTNET (the dotnet program, or a -NOTFOUND value), PYTHON,
-# SOURCE_DIR (the gui_forms checkout), LIBRARY_DIR (the directory holding the
+# SOURCE_DIR (this gui_forms_tests checkout: the C# test projects),
+# GUI_FORMS_DIR (the test cache's GUI.Forms source: the binding and class-table
+# tools, which stayed in GUI.Forms), LIBRARY_DIR (the directory holding the
 # DLL and the libraries it loads), WORK_DIR (scratch: obj/, bin/ and the empty
 # package source).
-foreach(required PYTHON SOURCE_DIR LIBRARY_DIR WORK_DIR)
+foreach(required PYTHON SOURCE_DIR GUI_FORMS_DIR LIBRARY_DIR WORK_DIR)
     if(NOT DEFINED ${required})
         message(FATAL_ERROR "gf_abi_csharp: ${required} is not set")
     endif()
@@ -46,7 +48,7 @@ if(NOT sdk_found)
     return()
 endif()
 
-execute_process(COMMAND "${PYTHON}" -B "${SOURCE_DIR}/tools/abi_bindings.py" csharp --check
+execute_process(COMMAND "${PYTHON}" -B "${GUI_FORMS_DIR}/tools/abi_bindings.py" csharp --check
                 RESULT_VARIABLE check_result)
 if(NOT check_result EQUAL 0)
     message(FATAL_ERROR "gf_abi_csharp: the generated C# is stale")
@@ -60,6 +62,7 @@ execute_process(
     COMMAND "${DOTNET}" build "${SOURCE_DIR}/tests/abi/csharp/GuiForms.Interop.Tests/GuiForms.Interop.Tests.csproj"
         --nologo --configuration Release --source "${WORK_DIR}/empty_source" --output "${WORK_DIR}/bin"
         -p:GfIntermediateRoot=${WORK_DIR}/obj
+        -p:GuiFormsDir=${GUI_FORMS_DIR}
     RESULT_VARIABLE build_result OUTPUT_VARIABLE build_output ERROR_VARIABLE build_output)
 if(NOT build_result EQUAL 0)
     message(FATAL_ERROR "gf_abi_csharp: the C# build failed:\n${build_output}")
@@ -82,7 +85,7 @@ endif()
 
 # The class tables (C ABI 1.3): GuiForms.Forms, its source generator and the
 # generated hook cases, against the same library.
-execute_process(COMMAND "${PYTHON}" -B "${SOURCE_DIR}/tools/abi_class_tables.py" --check
+execute_process(COMMAND "${PYTHON}" -B "${GUI_FORMS_DIR}/tools/abi_class_tables.py" --check
                 RESULT_VARIABLE classes_check_result)
 if(NOT classes_check_result EQUAL 0)
     message(FATAL_ERROR "gf_abi_csharp: the generated class tables are stale")
@@ -91,6 +94,7 @@ execute_process(
     COMMAND "${DOTNET}" build "${SOURCE_DIR}/tests/abi/csharp/GuiForms.Forms.Tests/GuiForms.Forms.Tests.csproj"
         --nologo --configuration Release --source "${WORK_DIR}/empty_source" --output "${WORK_DIR}/forms-bin"
         -p:GfIntermediateRoot=${WORK_DIR}/obj
+        -p:GuiFormsDir=${GUI_FORMS_DIR}
     RESULT_VARIABLE forms_build_result OUTPUT_VARIABLE forms_build_output ERROR_VARIABLE forms_build_output)
 if(NOT forms_build_result EQUAL 0)
     message(FATAL_ERROR "gf_abi_csharp: the GuiForms.Forms build failed:\n${forms_build_output}")

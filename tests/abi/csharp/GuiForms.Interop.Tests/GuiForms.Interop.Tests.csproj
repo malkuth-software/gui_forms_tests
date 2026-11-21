@@ -12,8 +12,8 @@
     <NoWarn>$(NoWarn);CS8981;IDE1006</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../../../bindings/csharp/GuiForms.Interop/GuiForms.Interop.csproj" />
+    <ProjectReference Include="$(GuiFormsDir)/bindings/csharp/GuiForms.Interop/GuiForms.Interop.csproj" />
     <!-- The scalar aliases (gf_status, gf_object...) are per assembly. -->
-    <Compile Include="../../../../bindings/csharp/GuiForms.Interop/Generated/Aliases.g.cs" Link="Aliases.g.cs" />
+    <Compile Include="$(GuiFormsDir)/bindings/csharp/GuiForms.Interop/Generated/Aliases.g.cs" Link="Aliases.g.cs" />
   </ItemGroup>
 </Project>

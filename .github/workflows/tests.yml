@@ -87,7 +87,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: gui_forms_tests
-          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
+          # Full history: ci_tests --changed diffs against the pull request's base.
+          # ("pull_request && 0 || 1" gave 1: 0 is false in an expression.)
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
