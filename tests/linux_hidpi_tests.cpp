@@ -144,13 +144,18 @@ Color server_pixel(const NativeWindow &window, int x, int y) {
 }
 
 // Turns the run until `window` reaches `scale` with a native size of
-// `width` x `height` device pixels, presented; at most 100 turns.
+// `width` x `height` device pixels, presented; at most 100 turns. Presented
+// includes the first show (first_frame_show.hpp): the first frame is staged
+// in the raster while the window is unmapped, its damage acknowledged, and
+// the Expose burst after mapping copies it to the window; until then the
+// server holds only the window's background.
 void settle(Runtime &runtime, const NativeWindow &window, double scale, int width, int height) {
   for (int turn = 0; turn < 100; ++turn) {
     runtime.step(10);
     const bool settled = window.scale == scale && window.device_width == width &&
                          window.device_height == height && window.damage.empty() &&
-                         window.raster.pixel_width() == static_cast<std::uint32_t>(width);
+                         window.raster.pixel_width() == static_cast<std::uint32_t>(width) &&
+                         !window.first_show_staging && !window.first_show_copy_pending;
     if (settled)
       return;
   }
