@@ -62,8 +62,12 @@ library change lands after it.
   harnesses and probes, none a CTest entry (`cmake/sections/benchmarks.cmake`),
   and the fuzz targets with their seed corpora: the suite's standalone runs
   and the libFuzzer programs (`cmake/FuzzTargets.cmake`,
-  `cmake/sections/fuzzers.cmake`, `.github/workflows/fuzz-smoke.yml`). The
-  Gallery workloads that gui_forms' own profiling jobs build stay there.
+  `cmake/sections/fuzzers.cmake`, `.github/workflows/fuzz-smoke.yml`), and
+  the Gallery workloads with their tools: the hot-path profile
+  (`tools/profile_hot_paths.py`, `.github/workflows/profile-linux.yml`,
+  against the profile test cache gui_forms `tools/profile_cache.py` packs),
+  the blend study (`tools/blend_study.py`) and the present measurement the
+  tests job takes (`.github/workflows/tests.yml`).
 - `tools/font_metrics_differential/` (stage F's differential, library and
   program), the menu, popup-margin and contention drivers, the PNG admission
   probe, the managed facade laboratories and smoke programs.

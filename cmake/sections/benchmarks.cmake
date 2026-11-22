@@ -1,13 +1,19 @@
 # Cut from gui_forms' CMakeLists.txt on 2026-11-22 (roadmap R1, the end of
-# the test-programs move): the measurement harnesses and probes (benchmarks/), none
-# of them a CTest entry. Paths into gui_forms read the cache's
-# source tree (GUI_FORMS_SOURCE_DIR); the programs' own sources are here.
+# the test-programs move, with the profiling and present workloads in its
+# second pass): the measurement harnesses, workloads and probes
+# (benchmarks/), none of them a CTest entry. Paths into gui_forms read the
+# cache's source tree (GUI_FORMS_SOURCE_DIR); the programs' own sources are
+# here.
 
 option(GUI_FORMS_BUILD_BENCHMARKS "Build the renderer benchmark and its boundary audit (macOS, Skia, the Gallery model)" OFF)
 option(GUI_FORMS_BUILD_TEXT_LAYOUT_PROBE "Build the private text shaping diagnostic" OFF)
 option(GUI_FORMS_BUILD_LABEL_LAYOUT_PROBE "Build the fixed Label measurement diagnostic" OFF)
 option(GUI_FORMS_BUILD_TEXT_WORKER_PROBE "Build the private text worker lifecycle proof" OFF)
 option(GUI_FORMS_BUILD_TEXT_PAINT_PROBE "Build the private prepared glyph raster proof" OFF)
+option(GUI_FORMS_BUILD_DOCUMENT_VIEW_BENCHMARK "Build the renderer-neutral D1 measurement harness" OFF)
+option(GUI_FORMS_BUILD_TEXT_ENGINE_BENCHMARK "Build the shared text engine cost benchmark" OFF)
+option(GUI_FORMS_BUILD_PAINT_PROFILE "Build the Gallery paint workload that the Linux profiling job samples" OFF)
+option(GUI_FORMS_BUILD_BLEND_STUDY "Build the Gallery blend and opaque study workload (tools/blend_study.py)" OFF)
 
 if(GUI_FORMS_BUILD_TEXT_LAYOUT_PROBE)
     add_executable(gui_forms_text_layout_probe benchmarks/text_layout_probe.cpp)
@@ -119,4 +125,48 @@ if(GUI_FORMS_BUILD_FOCUS_LABS)
         target_link_libraries(focus_exec_lab PRIVATE gui_drawing_skia gui_forms_core)
         target_include_directories(focus_exec_lab PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
     endif()
+endif()
+
+if(GUI_FORMS_BUILD_TEXT_ENGINE_BENCHMARK)
+    add_executable(gui_forms_text_engine_benchmark benchmarks/text_engine_benchmark.cpp)
+    target_link_libraries(gui_forms_text_engine_benchmark PRIVATE gui_forms_text_engine gui_forms_core)
+endif()
+
+if(GUI_FORMS_BUILD_DOCUMENT_VIEW_BENCHMARK)
+    add_executable(gui_forms_document_view_benchmark benchmarks/document_view_benchmark.cpp)
+    target_link_libraries(gui_forms_document_view_benchmark PRIVATE gui_forms_core)
+endif()
+
+# Phase E, E5: the Gallery painted through the CPU Skia adapter, for
+# .github/workflows/profile-linux.yml to sample (tools/profile_hot_paths.py,
+# against a profile test cache: gui_forms tools/profile_cache.py).
+if(GUI_FORMS_BUILD_PAINT_PROFILE)
+    if(NOT TARGET gui_forms_skia OR NOT TARGET gui_forms_gallery_model)
+        message(FATAL_ERROR "The paint profile workload requires a test cache with Skia and the Gallery model")
+    endif()
+    add_executable(gui_forms_paint_profile_workload benchmarks/paint_profile_workload.cpp)
+    target_compile_definitions(gui_forms_paint_profile_workload PRIVATE
+        GUI_FORMS_PROFILE_FONT_DIRECTORY="${GUI_FORMS_SOURCE_DIR}/assets/fonts")
+    target_link_libraries(gui_forms_paint_profile_workload PRIVATE gui_forms_gallery_model gui_forms_skia)
+endif()
+
+# The blend and opaque study (2026-11-16): the Gallery's blend counters and
+# frame times through the CPU Skia adapter, for tools/blend_study.py.
+if(GUI_FORMS_BUILD_BLEND_STUDY)
+    if(NOT TARGET gui_forms_skia OR NOT TARGET gui_forms_gallery_model)
+        message(FATAL_ERROR "The blend study workload requires a test cache with Skia and the Gallery model")
+    endif()
+    add_executable(gui_forms_blend_study_workload benchmarks/blend_study_workload.cpp)
+    target_compile_definitions(gui_forms_blend_study_workload PRIVATE
+        GUI_FORMS_BLEND_STUDY_FONT_DIRECTORY="${GUI_FORMS_SOURCE_DIR}/assets/fonts")
+    target_link_libraries(gui_forms_blend_study_workload PRIVATE gui_forms_gallery_model gui_forms_skia)
+endif()
+
+
+# SK2: the time each host spends presenting a frame, which the tests job
+# measures after the suite (.github/workflows/tests.yml). Built only when
+# asked for.
+if(TARGET gui_forms_application)
+    add_executable(gui_forms_present_profile_workload EXCLUDE_FROM_ALL benchmarks/present_profile_workload.cpp)
+    target_link_libraries(gui_forms_present_profile_workload PRIVATE gui_forms_application)
 endif()
