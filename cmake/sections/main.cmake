@@ -1232,6 +1232,19 @@ add_test(NAME gui_forms_form_loader_tests COMMAND gui_forms_form_loader_tests)
 add_executable(gui_forms_form_editor_tests tests/form_language/form_editor_tests.cpp)
 target_link_libraries(gui_forms_form_editor_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_form_editor_tests COMMAND gui_forms_form_editor_tests)
+# MCP G7: the Windows Forms converter's library, compiled from the source
+# tree (it is a tool, not a library GUI.Forms installs).
+add_executable(gui_forms_winforms_converter_tests tests/winforms_converter/winforms_converter_tests.cpp
+    ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_catalog.cpp
+    ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_core_catalog.cpp)
+foreach(converter_source IN ITEMS conversion_diagnostics converter_tools csharp_classes csharp_lexer designer_reader
+        form_document_diff resx_reader winforms_conversion winforms_mapping winforms_project)
+    target_sources(gui_forms_winforms_converter_tests PRIVATE
+        ${GUI_FORMS_SOURCE_DIR}/tools/winforms_converter/${converter_source}.cpp)
+endforeach()
+target_link_libraries(gui_forms_winforms_converter_tests PRIVATE gui_forms_controls)
+target_include_directories(gui_forms_winforms_converter_tests PRIVATE ${GUI_FORMS_SOURCE_DIR})
+add_test(NAME gui_forms_winforms_converter_tests COMMAND gui_forms_winforms_converter_tests)
 add_executable(gui_forms_form_generator_tests tests/form_language/form_generator_tests.cpp
     ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_catalog.cpp ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_lab_catalog.cpp)
 target_link_libraries(gui_forms_form_generator_tests PRIVATE gui_forms_lab gui_forms_demo_controls)
