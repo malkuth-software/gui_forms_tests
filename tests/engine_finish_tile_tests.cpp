@@ -1,6 +1,7 @@
 // World finish tiles (cp31, the node canvas's finish texture): a surface
 // finish evaluated at world device pixels, painted tile by tile, joins with
-// no seam. For four finishes, at two scales:
+// no seam. For every finish (the glints, lit in the room or above the
+// surface, among them), at two scales:
 // - two horizontally adjacent tiles, two vertically adjacent ones and four
 //   around the world's origin (negative world pixels included) are each
 //   byte for byte the region of one bake across all of them, so their
@@ -9,8 +10,11 @@
 // - the tiles are not all alike (the finish varies across the world);
 // - the window's tile cache (EnginePartTable::finish_tile) queues a tile
 //   it does not hold, paints it in generate_finish_tiles, notes the part
-//   that waited, and lends the same bytes; a tile outside the world's
-//   reach, or at a scale that does not draw, is never queued;
+//   that waited, and lends the same bytes, each raster its square and the
+//   apron of world pixels about it (finish_tile_apron, owner 2026-11-22:
+//   a grid showed where tiles met), so neighbours overlap with the same
+//   bytes; a tile outside the world's reach, its apron included, or at a
+//   scale that does not draw, is never queued;
 // - parallel material bakes (claude/geometry-1): a table painting its idle
 //   frames on a bake pool holds the same tiles, in the same order, with
 //   the same bytes, as one painting them in turn on its own thread.
@@ -45,8 +49,16 @@ void require(bool condition, const char* message) {
 
 constexpr std::uint32_t side = finish_tile_side;
 
-constexpr std::array<FinishKind, 4> tiled_kinds{FinishKind::orange_peel, FinishKind::cloth_weave,
-                                                FinishKind::hammertone, FinishKind::dusty_matte};
+// Every finish kind; the glint's presets in glint_presets.
+constexpr std::array<FinishKind, 9> tiled_kinds{FinishKind::orange_peel, FinishKind::cloth_weave,
+                                                FinishKind::hammertone,  FinishKind::dusty_matte,
+                                                FinishKind::wrinkle,     FinishKind::bead_blast,
+                                                FinishKind::sand_cast,   FinishKind::flat,
+                                                FinishKind::glint};
+
+// A glint lit as the study's dialog is (in the room) and one lit above
+// its surface.
+constexpr std::array<GlintPreset, 2> glint_presets{GlintPreset::blasted_enamel, GlintPreset::sand_blast};
 
 constexpr std::array<double, 2> scales{1.0, 2.5};
 
@@ -121,10 +133,28 @@ bool same_column(const WorldBake& bake_a, std::uint32_t column_a, const WorldBak
     return true;
 }
 
+// The fills the seam checks run over: each kind, the glint once for each
+// of glint_presets.
+std::vector<FinishFill> tiled_fills() {
+    std::vector<FinishFill> fills{};
+    for (const FinishKind kind : tiled_kinds) {
+        if (kind != FinishKind::glint) {
+            fills.push_back(fill_of(kind));
+            continue;
+        }
+        for (const GlintPreset preset : glint_presets) {
+            FinishFill fill = fill_of(kind);
+            fill.glint = preset;
+            fills.push_back(fill);
+        }
+    }
+    return fills;
+}
+
 void adjacent_tiles_join() {
     const std::int64_t tile = static_cast<std::int64_t>(side);
-    for (const FinishKind kind : tiled_kinds) {
-        const FinishFill fill = fill_of(kind);
+    for (const FinishFill& fill : tiled_fills()) {
+        const bool flat = fill.kind == FinishKind::flat;
         for (const double scale : scales) {
             // Across: tiles (0, 0) and (1, 0) against one bake of both.
             const WorldBake left = bake(fill, scale, 0, 0, side, side);
@@ -134,7 +164,7 @@ void adjacent_tiles_join() {
                     "the boundary columns of two adjacent tiles are the single bake's");
             require(same_tile(across, 0U, 0U, left) && same_tile(across, side, 0U, right),
                     "each of two adjacent tiles is its region of the single bake");
-            require(!(left.pixels == right.pixels), "the finish varies across the world");
+            require(flat || !(left.pixels == right.pixels), "the finish varies across the world");
             // Down: tiles (0, 0) and (0, 1).
             const WorldBake lower = bake(fill, scale, 0, tile, side, side);
             const WorldBake down = bake(fill, scale, 0, 0, side, 2U * side);
@@ -172,11 +202,13 @@ void cached_tiles_join() {
             "a tile queued already is not queued again");
     FinishTileKey far = first;
     far.column = engine_primitives::finish_world_reach / static_cast<std::int64_t>(side);
+    FinishTileKey outermost = first;
+    outermost.row = -(engine_primitives::finish_world_reach / static_cast<std::int64_t>(side));
     FinishTileKey unscaled = first;
     unscaled.scale = 0.0;
-    require(table.finish_tile(far, waiter, 1U) == nullptr && table.finish_tile(unscaled, waiter, 1U) == nullptr &&
-                table.cache_statistics().finish_tiles_queued == 2U,
-            "a tile beyond the world's reach, or at no scale, is never queued");
+    require(table.finish_tile(far, waiter, 1U) == nullptr && table.finish_tile(outermost, waiter, 1U) == nullptr &&
+                table.finish_tile(unscaled, waiter, 1U) == nullptr && table.cache_statistics().finish_tiles_queued == 2U,
+            "a tile beyond the world's reach, one whose apron would pass it, or one at no scale, is never queued");
     // A theme change (an offscreen capture's scheme switch and its
     // restore) keeps the queue: a tile depends on its key alone (cp32).
     table.invalidate_rasters();
@@ -197,16 +229,23 @@ void cached_tiles_join() {
     require(west != nullptr && east != nullptr && table.cache_statistics().finish_tile_hits == 2U,
             "the painted tiles are lent");
     if (west == nullptr || east == nullptr) return;
-    require((*west).extent().width == side && (*west).extent().height == side,
-            "a tile is finish_tile_side pixels square");
-    // World pixels: column -1 starts at -side, row 4 at 4 * side.
+    constexpr std::uint32_t raster_side = finish_tile_raster_side;
+    constexpr std::uint32_t apron = finish_tile_apron;
+    require(apron > 0U && raster_side == side + 2U * apron, "a tile's raster is its square and an apron about it");
+    require((*west).extent().width == raster_side && (*west).extent().height == raster_side,
+            "a tile's raster is finish_tile_raster_side pixels square");
+    // World pixels: column -1 starts at -side, row 4 at 4 * side, each
+    // raster `apron` pixels before its square.
     const std::int64_t tile = static_cast<std::int64_t>(side);
-    const WorldBake across = bake(first.finish, first.scale, -tile, 4 * tile, 2U * side, side);
+    const std::int64_t margin = static_cast<std::int64_t>(apron);
+    const WorldBake across = bake(first.finish, first.scale, -tile - margin, 4 * tile - margin, 2U * side + 2U * apron,
+                                  raster_side);
     const std::span<const std::uint8_t> west_pixels = (*west).pixels();
     const std::span<const std::uint8_t> east_pixels = (*east).pixels();
-    require(same_region(across, 0U, 0U, west_pixels, (*west).row_bytes(), side, side) &&
-                same_region(across, side, 0U, east_pixels, (*east).row_bytes(), side, side),
-            "cached adjacent tiles are their regions of one bake across both: no seam at their boundary");
+    require(same_region(across, 0U, 0U, west_pixels, (*west).row_bytes(), raster_side, raster_side) &&
+                same_region(across, side, 0U, east_pixels, (*east).row_bytes(), raster_side, raster_side),
+            "cached adjacent tiles, aprons included, are their regions of one bake across both: where they "
+            "overlap they hold the same bytes, and no seam is at their boundary");
     FinishTileKey rescaled = first;
     rescaled.scale = 6.0;
     require(table.finish_tile(rescaled, waiter, 3U) == nullptr, "a tile at another scale is another tile");
