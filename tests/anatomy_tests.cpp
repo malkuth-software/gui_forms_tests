@@ -479,6 +479,13 @@ public:
     std::vector<std::shared_ptr<const PartRaster>> rasters;
 };
 
+// The bytes of a PartRaster pixel, premultiplied BGRA8 (part_raster.hpp):
+// blue first, red third.
+constexpr std::size_t blue_byte = 0U;
+constexpr std::size_t green_byte = 1U;
+constexpr std::size_t red_byte = 2U;
+constexpr std::size_t alpha_byte = 3U;
+
 // The centre pixel of `raster`, as stored (premultiplied BGRA).
 std::array<std::uint8_t, 4> centre_pixel(const PartRaster& raster) {
     const std::uint32_t column = raster.extent().width / 2U;
@@ -487,6 +494,19 @@ std::array<std::uint8_t, 4> centre_pixel(const PartRaster& raster) {
     const std::size_t at = static_cast<std::size_t>(row) * raster.row_bytes() + static_cast<std::size_t>(column) * 4U;
     const std::array<std::uint8_t, 4> pixel{pixels[at], pixels[at + 1U], pixels[at + 2U], pixels[at + 3U]};
     return pixel;
+}
+
+// The 15-pixel jewels `rasters` holds, as "(r,g,b,a)" centres, with the
+// count of all rasters: what a jewel check prints when it fails.
+std::string describe_jewels(const std::vector<std::shared_ptr<const PartRaster>>& rasters) {
+    std::string text = std::to_string(rasters.size()) + " rasters; jewel centres (r,g,b,a):";
+    for (const std::shared_ptr<const PartRaster>& raster : rasters) {
+        if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
+        const std::array<std::uint8_t, 4> centre = centre_pixel(*raster);
+        text += " (" + std::to_string(centre[red_byte]) + "," + std::to_string(centre[green_byte]) + "," +
+                std::to_string(centre[blue_byte]) + "," + std::to_string(centre[alpha_byte]) + ")";
+    }
+    return text;
 }
 
 void test_button_label_matches_painted_text() {
@@ -679,12 +699,14 @@ void test_radio_button_lamp_look() {
         if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
         centres.push_back(centre_pixel(*raster));
     }
-    require(centres.size() == 2U, "each lamp row draws its well as one jewel");
+    require(centres.size() == 2U, "each lamp row draws its well as one jewel: " + describe_jewels(jewels.rasters));
     if (centres.size() == 2U) {
-        const bool glass = centres[0][3] == 255U && centres[1][3] == 255U && centres[0][1] > centres[0][2] &&
-                           centres[1][1] > centres[1][2];
-        require(glass, "both jewels are opaque green glass, lit or not");
-        require(centres[0][1] != centres[1][1], "the chosen jewel is lit and the other dark");
+        const bool glass = centres[0][alpha_byte] == 255U && centres[1][alpha_byte] == 255U &&
+                           centres[0][green_byte] > centres[0][red_byte] &&
+                           centres[1][green_byte] > centres[1][red_byte];
+        require(glass, "both jewels are opaque green glass, lit or not: " + describe_jewels(jewels.rasters));
+        require(centres[0][green_byte] != centres[1][green_byte],
+                "the chosen jewel is lit and the other dark: " + describe_jewels(jewels.rasters));
     }
 
     // The lamp colour is settable (owner, 2026-11-22): the light map is
@@ -701,11 +723,15 @@ void test_radio_button_lamp_look() {
     for (const std::shared_ptr<const PartRaster>& raster : tinted.rasters) {
         if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
         const std::array<std::uint8_t, 4> centre = centre_pixel(*raster);
-        if (centre[0] > centre[1] && centre[0] > centre[2]) ++red_jewels;
-        if (centre[1] > centre[0] && centre[1] > centre[2]) ++green_jewels;
+        const bool red = centre[red_byte] > centre[green_byte] && centre[red_byte] > centre[blue_byte];
+        const bool green = centre[green_byte] > centre[red_byte] && centre[green_byte] > centre[blue_byte];
+        if (red) ++red_jewels;
+        if (green) ++green_jewels;
     }
     require(red_jewels == 1U && green_jewels == 1U,
-            "a set lamp_color tints its own jewel alone, the other keeps the default green");
+            "a set lamp_color tints its own jewel alone, the other keeps the default green: " +
+                std::to_string(red_jewels) + " red, " + std::to_string(green_jewels) + " green; " +
+                describe_jewels(tinted.rasters));
     (*low).lamp_color = stxlib::Optional<Color>{};
 
     // The caption of the second row, well right of its lamp.
