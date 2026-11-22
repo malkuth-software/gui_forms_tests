@@ -3626,6 +3626,20 @@ void example() {
 }
 }  // namespace doc_example_Toast_1
 
+namespace doc_example_ToastNotification_1 {
+void example() {
+    std::shared_ptr<gf::Panel> root = gf::make_control<gf::Panel>(gf::StableId("doc.root"));
+    gf::Window window(root, {320.0, 200.0});
+    gf::ToastNotification toast(window);
+    toast.title = "Backup";
+    toast.text = "The backup finished.";
+    const gf::HostServiceStatus status = toast.show();
+    if (!status.accepted()) {
+        // Without a host, status.error is gf::HostServiceError::unsupported.
+    }
+}
+}  // namespace doc_example_ToastNotification_1
+
 namespace doc_example_ToggleSwitch_1 {
 void example() {
     std::shared_ptr<gf::ToggleSwitch> wifi = gf::make_control<gf::ToggleSwitch>(gf::StableId("settings.wifi"), "Wi-Fi");
@@ -4320,6 +4334,7 @@ int main() {
     failures += run("Timer example 1", &doc_example_Timer_1::example);
     failures += run("Timer example 2", &doc_example_Timer_2::example);
     failures += run("Toast example 1", &doc_example_Toast_1::example);
+    failures += run("ToastNotification example 1", &doc_example_ToastNotification_1::example);
     failures += run("ToggleSwitch example 1", &doc_example_ToggleSwitch_1::example);
     failures += run("TokenBox example 1", &doc_example_TokenBox_1::example);
     failures += run("ToolStrip example 1", &doc_example_ToolStrip_1::example);
