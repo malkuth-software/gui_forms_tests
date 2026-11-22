@@ -5,7 +5,7 @@
 // LampKeys with no text but their names, OK dark at rest and lit only
 // while held, its lamp striking and cooling, CANCEL lit throughout, the
 // presses moving on the engine's motion), its theme sheet (compiled on the
-// root, rebuilt for the paint and the seed, the grain at 1.5), and its
+// root, rebuilt for the paint and the seed, the grain at 2), and its
 // strip: each lamp's state cycled off, on, error and fault, the radio
 // lamps' colour set at run time, the coolant pinpoint, the Lamps toggle
 // that puts the status lamps and OK's lamp out, the keys' messages, and
@@ -89,15 +89,15 @@ void click(Window& window, const std::shared_ptr<Control>& control) {
 
 void test_the_sheet() {
     const std::string sheet = process_control::process_control_sheet(0U, process_control::study_seed);
-    require(sheet.find("finish(blasted-enamel-glint, #4d676d, #a3a3a3, 11, 1.5)") != std::string::npos &&
-                sheet.find("finish(blasted-enamel-heavy-glint, #656f74, #a3a3a3, 11, 1.5)") != std::string::npos,
-            "the study's paint: ГОСТ 397 under ГОСТ 832's band, seed 11, the grain 1.5");
+    require(sheet.find("finish(blasted-enamel-glint, #4d676d, #a3a3a3, 11, 2)") != std::string::npos &&
+                sheet.find("finish(blasted-enamel-heavy-glint, #656f74, #a3a3a3, 11, 2)") != std::string::npos,
+            "the study's paint: ГОСТ 397 under ГОСТ 832's band, seed 11, the grain 2");
     require(sheet.find("light-map") == std::string::npos && sheet.find("lamp-power") == std::string::npos,
             "the sheet lights no key: the keys draw and animate their own bakes");
     require(process_control::process_control_sheet(process_control::enamel_paints.size(), 3U) ==
                 process_control::process_control_sheet(0U, 3U),
             "the paint index wraps");
-    require(process_control::process_control_sheet(1U, 12U).find("#80948a, #a3a3a3, 12, 1.5)") != std::string::npos,
+    require(process_control::process_control_sheet(1U, 12U).find("#80948a, #a3a3a3, 12, 2)") != std::string::npos,
             "another paint and seed reach the enamel");
 }
 
@@ -200,7 +200,7 @@ void test_the_strip(Window& window) {
                 (*root).theme_override() != first,
             "the paint picker compiles the enamel over the next paint");
     click(window, find<Button>(window, "process.seed.up"));
-    require((*root).theme_sheet().find(", 12, 1.5)") != std::string_view::npos &&
+    require((*root).theme_sheet().find(", 12, 2)") != std::string_view::npos &&
                 (*find<Label>(window, "process.seed")).text.read() == "Seed 12",
             "the seed moves on");
 
