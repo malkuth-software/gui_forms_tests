@@ -34,7 +34,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_splashscreen_options, artwork) == 8, "gf_splashscre
 GF_LAYOUT_ASSERT(offsetof(gf_splashscreen_options, artwork_size) == 16, "gf_splashscreen_options.artwork_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_splashscreen_options, status) == 24, "gf_splashscreen_options.status offset");
 GF_LAYOUT_ASSERT(offsetof(gf_splashscreen_options, progress) == 40, "gf_splashscreen_options.progress offset");
-GF_LAYOUT_ASSERT(sizeof(gf_runtime_table) == 64, "gf_runtime_table size");
+GF_LAYOUT_ASSERT(sizeof(gf_runtime_table) == 72, "gf_runtime_table size");
 GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, struct_size) == 0, "gf_runtime_table.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, abi_minor) == 4, "gf_runtime_table.abi_minor offset");
 GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, version) == 8, "gf_runtime_table.version offset");
@@ -44,6 +44,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, splashscreen_show) == 32, "gf_runtim
 GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, splashscreen_set_status) == 40, "gf_runtime_table.splashscreen_set_status offset");
 GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, splashscreen_set_progress) == 48, "gf_runtime_table.splashscreen_set_progress offset");
 GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, splashscreen_close) == 56, "gf_runtime_table.splashscreen_close offset");
+GF_LAYOUT_ASSERT(offsetof(gf_runtime_table, splashscreen_state) == 64, "gf_runtime_table.splashscreen_state offset");
 GF_LAYOUT_ASSERT(sizeof(gf_logical_point) == 16, "gf_logical_point size");
 GF_LAYOUT_ASSERT(offsetof(gf_logical_point, x) == 0, "gf_logical_point.x offset");
 GF_LAYOUT_ASSERT(offsetof(gf_logical_point, y) == 8, "gf_logical_point.y offset");
@@ -219,7 +220,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_window_shaping, corner_shapes) == 12, "gf_window_sh
 GF_LAYOUT_ASSERT(offsetof(gf_window_shaping, corner_shape) == 16, "gf_window_shaping.corner_shape offset");
 GF_LAYOUT_ASSERT(offsetof(gf_window_shaping, reserved) == 20, "gf_window_shaping.reserved offset");
 GF_LAYOUT_ASSERT(offsetof(gf_window_shaping, corner_radius) == 24, "gf_window_shaping.corner_radius offset");
-GF_LAYOUT_ASSERT(sizeof(gf_windows_table) == 256, "gf_windows_table size");
+GF_LAYOUT_ASSERT(sizeof(gf_windows_table) == 264, "gf_windows_table size");
 GF_LAYOUT_ASSERT(offsetof(gf_windows_table, struct_size) == 0, "gf_windows_table.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_windows_table, abi_minor) == 4, "gf_windows_table.abi_minor offset");
 GF_LAYOUT_ASSERT(offsetof(gf_windows_table, run) == 8, "gf_windows_table.run offset");
@@ -253,6 +254,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_windows_table, set_mdi_children_minimized_anchor_bo
 GF_LAYOUT_ASSERT(offsetof(gf_windows_table, mdi_children_minimized_anchor_bottom) == 232, "gf_windows_table.mdi_children_minimized_anchor_bottom offset");
 GF_LAYOUT_ASSERT(offsetof(gf_windows_table, set_main_menu_strip) == 240, "gf_windows_table.set_main_menu_strip offset");
 GF_LAYOUT_ASSERT(offsetof(gf_windows_table, main_menu_strip) == 248, "gf_windows_table.main_menu_strip offset");
+GF_LAYOUT_ASSERT(offsetof(gf_windows_table, lifecycle) == 256, "gf_windows_table.lifecycle offset");
 GF_LAYOUT_ASSERT(sizeof(gf_schema_type) == 88, "gf_schema_type size");
 GF_LAYOUT_ASSERT(offsetof(gf_schema_type, struct_size) == 0, "gf_schema_type.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_schema_type, kind) == 4, "gf_schema_type.kind offset");

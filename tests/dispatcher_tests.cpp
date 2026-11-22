@@ -1024,7 +1024,8 @@ void test_window_dispatcher_outlives_its_window() {
         require(turn.invoked == 1U && marshalled.result == DispatchInvokeResult::completed &&
                     marshalled.ran.load(std::memory_order_acquire) &&
                     inline_result == DispatchInvokeResult::completed &&
-                    inline_ran.load(std::memory_order_acquire) && dispatcher.window_alive(),
+                    inline_ran.load(std::memory_order_acquire) && dispatcher.window_alive() &&
+                    dispatcher.state() == WindowDispatcherState::accepting,
                 "a live window's handle runs marshalled and inline work");
         window.shutdown_dispatcher();
     }
@@ -1063,7 +1064,8 @@ void test_window_dispatcher_outlives_its_window() {
     require(answers.invoked == DispatchInvokeResult::window_gone &&
                 answers.posted == DispatchOperationState::cancelled && !answers.alive &&
                 !answers.ran.load(std::memory_order_acquire) &&
-                ui_result == DispatchInvokeResult::window_gone && !ui_ran.load(std::memory_order_acquire),
+                ui_result == DispatchInvokeResult::window_gone && !ui_ran.load(std::memory_order_acquire) &&
+                kept.state() == WindowDispatcherState::gone,
             "a destroyed window's handle reports window_gone and runs nothing");
 
     // An empty handle is a programming error.
@@ -1074,7 +1076,16 @@ void test_window_dispatcher_outlives_its_window() {
     } catch (const std::logic_error&) {
         refused = true;
     }
-    require(refused && !empty.window_alive(), "an empty handle refuses to post");
+    require(refused && !empty.window_alive() && empty.state() == WindowDispatcherState::unbound,
+            "an empty handle refuses to post");
+    bool begin_refused = false;
+    try {
+        static_cast<void>(empty.begin_invoke(do_nothing));
+    } catch (const std::logic_error&) {
+        begin_refused = true;
+    }
+    require(begin_refused && empty.state() == WindowDispatcherState::unbound,
+            "an empty handle refuses begin_invoke too and stays unbound (the bound clause)");
 }
 
 } // namespace
