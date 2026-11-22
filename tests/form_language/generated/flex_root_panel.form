@@ -5,6 +5,10 @@
 <flex-panel xmlns="urn:gui-forms:form:1" id="flex.root"
     padding="2"
     auto-scroll="true">
-  <check-box id="flex.flag" text="Flag" checked="bind(auto_save_)" tab-index="0"/>
-  <button id="flex.go" text="Go" tab-index="1" command="bind(accept_)"/>
+  <check-box id="flex.flag" text="Flag" tab-index="0">
+    <bind property="checked" to="auto_save_"/>
+  </check-box>
+  <button id="flex.go" text="Go" tab-index="1">
+    <bind property="command" to="accept_"/>
+  </button>
 </flex-panel>

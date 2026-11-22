@@ -12,18 +12,23 @@
       tab-index="0">
     <check-box id="settings.general.autosave"
         text="Save automatically"
-        checked="bind(autosave_)"
-        tab-index="0"/>
+        tab-index="0">
+      <bind property="checked" to="autosave_"/>
+    </check-box>
     <text-box id="settings.general.name"
-        text="bind(settings_, 'name', update on-change)"
         tab-index="1"
-        classes="'field wide'"/>
+        classes="'field wide'">
+      <bind property="text" to="settings_" field="name" update="on-change"/>
+    </text-box>
   </group>
 
   <button id="settings.ok"
       text="OK"
       tab-index="1"
-      command="bind(accept_)"
-      classes="default-action"/>
-  <button id="settings.cancel" text="Cancel" tab-index="2" command="bind(dismiss_)"/>
+      classes="default-action">
+    <bind property="command" to="accept_"/>
+  </button>
+  <button id="settings.cancel" text="Cancel" tab-index="2">
+    <bind property="command" to="dismiss_"/>
+  </button>
 </form>
