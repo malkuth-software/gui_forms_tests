@@ -22,7 +22,7 @@ if(GUI_FORMS_BUILD_GALLERY)
         add_test(
             NAME gui_forms_correspondence_font_policy
             COMMAND ${CMAKE_COMMAND}
-                -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_correspondence>/Contents/Resources/fonts
+                -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_correspondence>/../Resources/fonts
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
         )
     endif()
