@@ -607,6 +607,8 @@ void test_sheet_gestures(Window& window, CodeSheet& sheet) {
     const Size size = window.client_size();
     const Point centre{size.width * 0.5, size.height * 0.5};
     sheet.show_at(1.0, sheet.content_point(capture_line, 0U), centre);
+    require(sheet.gesture_input() && window.gesture_input_requested(),
+            "the sheet asks its window for gestures");
     const Point pointer{size.width * 0.25, size.height * 0.25};
     const Point under = sheet.zoom_model().content_at(pointer);
     GestureEvent pinch{};
