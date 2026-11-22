@@ -12,6 +12,9 @@
 //   the rectangle's pixels inside the destination are written.
 // - The strike and press envelopes and the lean formula hold their values,
 //   and reduced motion arrives at once.
+// - The failing lamp's factor repeats for a seed, stays in (0, 1], drops out
+//   to near dark, holds at most two dips in any second, and is 1 under
+//   reduced motion.
 // - The shipped store (GFLP, binary16 grey planes) reads back exactly,
 //   subnormals included; each malformed store is refused with its defect;
 //   the six shipped bakes are embedded with their shapes and the jewel's
@@ -685,6 +688,62 @@ int preview(const std::filesystem::path& output, const std::filesystem::path& ba
 
 } // namespace
 
+// The failing lamp (owner, 2026-11-22): deterministic, steady under reduced
+// motion, dark in its dropouts, and never more than two dips in any second.
+void fault_flickers() {
+    require(engine_light::lamp_fault_flicker(0.0, 7U, false) == 1.0, "a fault starts lit");
+    require(engine_light::lamp_fault_flicker(-1.0, 7U, false) == 1.0 &&
+                engine_light::lamp_fault_flicker(std::numeric_limits<double>::quiet_NaN(), 7U, false) == 1.0 &&
+                engine_light::lamp_fault_flicker(1.0e16, 7U, false) == 1.0,
+            "before its start, for no time, and past any lamp's life the factor is 1");
+    std::size_t worst_dips = 0U;
+    std::size_t seeds_reaching_dark = 0U;
+    bool in_range = true;
+    bool repeats = true;
+    bool steady_when_reduced = true;
+    bool seeds_differ = false;
+    constexpr std::size_t frames_per_second = 240U;
+    constexpr std::size_t frames = frames_per_second * 20U;
+    for (std::uint32_t seed = 0U; seed < 200U; ++seed) {
+        std::vector<double> powers;
+        powers.reserve(frames);
+        double lowest = 1.0;
+        for (std::size_t frame = 0U; frame < frames; ++frame) {
+            const double seconds = static_cast<double>(frame) / static_cast<double>(frames_per_second);
+            const double power = engine_light::lamp_fault_flicker(seconds, seed, false);
+            if (!(power > 0.0 && power <= 1.0)) in_range = false;
+            if (engine_light::lamp_fault_flicker(seconds, seed, false) != power) repeats = false;
+            if (engine_light::lamp_fault_flicker(seconds, seed, true) != 1.0) steady_when_reduced = false;
+            if (engine_light::lamp_fault_flicker(seconds, seed + 1000U, false) != power) seeds_differ = true;
+            lowest = std::min(lowest, power);
+            powers.push_back(power);
+        }
+        if (lowest < 0.15) ++seeds_reaching_dark;
+        // A dip is a fall through 70%; count them in every one-second window.
+        std::vector<std::size_t> dips;
+        for (std::size_t frame = 1U; frame < frames; ++frame) {
+            if (powers[frame] < 0.7 && powers[frame - 1U] >= 0.7) dips.push_back(frame);
+        }
+        for (std::size_t first = 0U; first < dips.size(); ++first) {
+            std::size_t count = 0U;
+            for (std::size_t later = first; later < dips.size() && dips[later] < dips[first] + frames_per_second;
+                 ++later) {
+                ++count;
+            }
+            worst_dips = std::max(worst_dips, count);
+        }
+    }
+    require(in_range, "the factor stays in (0, 1]");
+    require(repeats, "the same seed and time give the same factor: captures repeat");
+    require(steady_when_reduced, "under reduced motion a failing lamp is steadily lit");
+    require(seeds_differ, "two seeds fail differently");
+    require(worst_dips >= 1U && worst_dips <= 2U,
+            "no second holds more than two dips, under three flashes a second");
+    require(seeds_reaching_dark == 200U, "within 20 s every seed drops out to near dark");
+    require(engine_light::lamp_fault_slot_seconds - engine_light::lamp_fault_latest_start > 0.5,
+            "two events start more than half a second apart");
+}
+
 int main(int argc, char** argv) {
     if (argc > 3 && std::strcmp(argv[1], "--preview") == 0) return preview(argv[2], argv[3]);
     reads_the_bake_file();
@@ -697,6 +756,7 @@ int main(int argc, char** argv) {
     press_mixes_the_bakes();
     stretches_over_other_sizes();
     envelopes_hold();
+    fault_flickers();
     cache_reads_on_first_use();
     std::cout << "gui_forms_engine_light_planes_tests passed\n";
     return 0;

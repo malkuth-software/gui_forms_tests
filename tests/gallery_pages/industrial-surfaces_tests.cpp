@@ -17,17 +17,20 @@ namespace gallery_pages_tests {
 // The industrial-surfaces page (skeudoindustrial surfaces, phase 5),
 // rebuilt around the owner's process-control dialog (owner, 2026-11-22):
 // the dialog's blasted enamel and its title band, its three status lamps
-// (jewels lit from the shipped indicator bake, each in its colour, FAULT
-// in its error state) and its CANCEL and OK keys lit from the shipped key
-// bakes, all shown with no light-plane directory set; the Lamps check box
-// that switches the status lamps and OK while CANCEL stays lit; the retired
+// (jewels lit from the shipped indicator bake, each in its colour, shown
+// with no light-plane directory set, FAULT failing) and its CANCEL and OK
+// keys, buttons the gallery theme draws with the light map (`lit-key`),
+// with no text but their accessible names; the Lamps check box that
+// switches the status lamps and OK (its `lamp-off` class) while CANCEL
+// stays lit; the retired
 // finish swatches gone; the industrial theme over the GOST paints, put on
 // the preview group and taken off; the preview's indicator lamps (Start
 // and Stop switch Running, the Coolant check box its flow lamp, a
 // pinpoint, and none is hit), its feed choice drawn with lamps (the row
 // takes the click), and its danger key; the carbon fibre swatch.
-// Compositing the lamps is covered by gui_forms_engine_light_planes_tests
-// and the baked lens by gui_forms_indicator_lamp_tests, the enamel by
+// Compositing the lamps is covered by gui_forms_engine_light_planes_tests,
+// the light map by gui_forms_engine_primitive_tests, the failing lamp and
+// the baked lens by gui_forms_indicator_lamp_tests, the enamel by
 // gui_forms_engine_finish_tests, and the industrial package's compile by
 // gui_forms_theme_gost_palette_tests.
 void test_industrial_surfaces(gui_forms::Window& window) {
@@ -64,34 +67,35 @@ void test_industrial_surfaces(gui_forms::Window& window) {
                 (*status[1]).lamp_color.read() != (*status[2]).lamp_color.read(),
             "PUMP READY, HEATING and FAULT each take their own colour");
     require((*status[0]).state.read() == IndicatorLampState::on && (*status[1]).state.read() == IndicatorLampState::on &&
-                (*status[2]).state.read() == IndicatorLampState::error,
-            "the status lamps start lit, FAULT in its error state");
+                (*status[2]).state.read() == IndicatorLampState::fault,
+            "the status lamps start lit, FAULT failing");
     require(!(*status[0]).hit_test_local(Point{4.0, 4.0}), "a status lamp is never hit");
 
-    const std::shared_ptr<IndicatorLamp> cancel =
-        std::dynamic_pointer_cast<IndicatorLamp>(window.find("gallery.industrial.key.cancel"));
-    const std::shared_ptr<IndicatorLamp> ok = std::dynamic_pointer_cast<IndicatorLamp>(window.find("gallery.industrial.key.ok"));
-    require(cancel != nullptr && ok != nullptr, "the dialog shows its CANCEL and OK keys");
+    const std::shared_ptr<Button> cancel = std::dynamic_pointer_cast<Button>(window.find("gallery.industrial.key.cancel"));
+    const std::shared_ptr<Button> ok = std::dynamic_pointer_cast<Button>(window.find("gallery.industrial.key.ok"));
+    require(cancel != nullptr && ok != nullptr, "the dialog shows its CANCEL and OK keys as buttons");
     if (cancel == nullptr || ok == nullptr) return;
-    require((*cancel).light_planes.read() == "dialog_cancel_up" && (*ok).light_planes.read() == "dialog_ok_up",
-            "each key names its bake");
-    require((*cancel).light_planes_shown() && (*ok).light_planes_shown(), "the keys are lit from the shipped bakes");
-    require((*cancel).state.read() == IndicatorLampState::on && (*ok).state.read() == IndicatorLampState::on,
-            "both keys start lit");
+    require((*cancel).has_class("lit-key") && (*cancel).has_class("lit-cancel") && (*ok).has_class("lit-key") &&
+                (*ok).has_class("lit-ok"),
+            "each key takes the gallery theme's light-map classes");
+    require((*cancel).text.read().empty() && (*ok).text.read().empty() &&
+                (*cancel).semantic_descriptor().name == "Cancel" && (*ok).semantic_descriptor().name == "OK",
+            "the bakes carry the legends: the keys have no text, only their accessible names");
+    require(!(*ok).has_class("lamp-off"), "both keys start lit");
 
     const std::shared_ptr<CheckBox> lamps = std::dynamic_pointer_cast<CheckBox>(window.find("gallery.industrial.lamps"));
     require(lamps != nullptr && (*lamps).checked.read(), "the lamps start on");
     click(window, lamps);
     window.perform_layout();
     require(!(*lamps).checked.read() && (*status[0]).state.read() == IndicatorLampState::off &&
-                (*status[2]).state.read() == IndicatorLampState::off && (*ok).state.read() == IndicatorLampState::off,
+                (*status[2]).state.read() == IndicatorLampState::off && (*ok).has_class("lamp-off"),
             "the Lamps check box puts the status lamps and OK out");
-    require((*cancel).state.read() == IndicatorLampState::on, "while CANCEL stays lit");
+    require(!(*cancel).has_class("lamp-off"), "while CANCEL stays lit");
     click(window, lamps);
     window.perform_layout();
     require((*lamps).checked.read() && (*status[0]).state.read() == IndicatorLampState::on &&
-                (*status[2]).state.read() == IndicatorLampState::error && (*ok).state.read() == IndicatorLampState::on,
-            "and lights them again, FAULT in its error state");
+                (*status[2]).state.read() == IndicatorLampState::fault && !(*ok).has_class("lamp-off"),
+            "and lights them again, FAULT failing");
 
     const std::shared_ptr<ScaledGroupBox> preview =
         std::dynamic_pointer_cast<ScaledGroupBox>(window.find("gallery.industrial.preview"));

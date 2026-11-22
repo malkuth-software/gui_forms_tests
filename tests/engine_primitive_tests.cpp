@@ -4,13 +4,16 @@
 // and the ribbon's bulge and dithered bulge (notes:planning/stages/T4-default-theme/
 // RENDERING_REFERENCE.md §2, §3, with the T2 round 001 decisions G1-3 and
 // G3-3) draw what the reference describes, with the same bytes on every CI
-// platform.
+// platform. The light map (owner, 2026-11-22) draws a shipped key bake
+// exactly as engine_light::composite_light_planes does, its press, lamp
+// power, colour and bake each changing the key, with nothing animated.
 //
 // The reference images are FNV-1a hashes of each raster's rows in RGBA
 // order. The expected values were produced on Windows x64 and are checked
 // by every CI platform. GUI_FORMS_ENGINE_IDENTITY_PRINT=1 prints the
 // observed table instead of checking it.
 
+#include "gui_forms/engine/light_planes/light_planes.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"
 #include "support/rgba_order.hpp"
 
@@ -181,8 +184,9 @@ const PrimitiveParameterDeclaration twice[] = {{"strength", PrimitiveParameterKi
 
 void test_builtin_registry() {
     const PrimitiveRegistry& registry = builtin_primitive_registry();
-    require(registry.primitives().size() == 12U,
-            "the built-in registry holds the bulge pair, the relief set, the material, the overlay shadow, the sheen and the glass");
+    require(registry.primitives().size() == 13U,
+            "the built-in registry holds the bulge pair, the relief set, the material, the overlay shadow, the sheen, "
+            "the glass and the light map");
     require(registry.find("not_a_primitive") == nullptr, "an unknown name finds nothing");
     const char* const names[] = {"bulge", "dithered_bulge"};
     for (const char* const name : names) {
@@ -941,6 +945,118 @@ void test_reference_images() {
 
 } // namespace
 
+// -- the light map ------------------------------------------------------------------
+
+// Whether the light map drawn with `parameters` differs from the raster
+// whose hash is `resting`.
+bool light_map_differs(const EnginePrimitive& primitive, const PrimitiveParameterBlock& parameters, Size key,
+                       double scale, std::uint64_t resting) {
+    TestRaster raster = make_raster(key, scale);
+    require(draw(primitive, parameters, raster, key, scale, AnatomyStateSet{}) == RasterOutcome::painted,
+            "the changed key paints");
+    const bool differs = raster_hash(raster) != resting;
+    return differs;
+}
+
+// The light map draws a shipped key bake, its colour set when it is drawn:
+// the same bytes as compositing the decoded stores directly, a press, a lit
+// lamp, another colour and the other bake each change the key, and none of
+// its parameters is animated (a key composited every frame would pass the
+// frame budget).
+void test_light_map() {
+    const EnginePrimitive& primitive = builtin("light_map");
+    const PrimitiveDescriptor& descriptor = primitive.descriptor();
+    require(descriptor.introduced == EngineVersion{0, 3} && descriptor.states_read.empty() &&
+                descriptor.inputs_read.empty(),
+            "the light map is engine 0.3 and reads no states and no inputs");
+    require(std::find(descriptor.roles.begin(), descriptor.roles.end(), PartRole::face) != descriptor.roles.end(),
+            "the light map paints faces");
+    require(descriptor.cost.per_device_pixel <= 512U, "the light map stays within the per-pixel budget");
+    for (const PrimitiveParameterDeclaration& parameter : descriptor.parameters) {
+        require(!parameter.animated, "no light-map parameter is animated");
+    }
+
+    const Size key{60.0, 24.0};
+    const double scale = 1.5;
+    const PrimitiveParameterBlock defaults = default_parameters(descriptor);
+    TestRaster unlit = make_raster(key, scale);
+    require(draw(primitive, defaults, unlit, key, scale, AnatomyStateSet{}) == RasterOutcome::painted,
+            "the default light map paints");
+    require(padding_untouched(unlit), "row padding is never written");
+    bool covered = false;
+    for (std::uint32_t row = 0U; row < unlit.extent.height; ++row) {
+        for (std::uint32_t column = 0U; column < unlit.extent.width; ++column) {
+            if (unlit.pixel(column, row)[3] != 0U) covered = true;
+        }
+    }
+    require(covered, "the key's coverage shows as alpha");
+
+    // The same bytes as the stores composited directly.
+    engine_light::LightPlanes up{};
+    engine_light::LightPlanes down{};
+    require(engine_light::read_light_plane_store(engine_light::shipped_light_plane_store("dialog_ok_up"), up) ==
+                    engine_light::LightPlanesDefect::none &&
+                engine_light::read_light_plane_store(engine_light::shipped_light_plane_store("dialog_ok_down"),
+                                                     down) == engine_light::LightPlanesDefect::none,
+            "the shipped OK key reads");
+    PrimitiveParameterBlock lit = defaults;
+    require(set_number_parameter(lit, descriptor, "lamp_power", 1.0) == ParameterAssignment::assigned &&
+                set_colour_parameter(lit, descriptor, "lamp_colour", Color{111, 255, 137, 255}) ==
+                    ParameterAssignment::assigned &&
+                set_number_parameter(lit, descriptor, "press", 0.5) == ParameterAssignment::assigned,
+            "the lamp's power and colour and the press are assigned");
+    TestRaster drawn = make_raster(key, scale);
+    require(draw(primitive, lit, drawn, key, scale, AnatomyStateSet{}) == RasterOutcome::painted, "the lit key paints");
+    TestRaster direct = make_raster(key, scale);
+    const std::array<engine_light::LampDrive, engine_light::maximum_light_plane_lamps> drives{
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+    };
+    engine_light::LightComposite settings{};
+    settings.press_mix = 0.5;
+    const engine_light::LightPlaneRect whole{0, 0, static_cast<std::int64_t>(direct.extent.width),
+                                             static_cast<std::int64_t>(direct.extent.height)};
+    require(engine_light::composite_light_planes(up, down, std::span(drives).first(up.lamp_count), settings, whole,
+                                                 direct.view()) > 0U,
+            "the stores composite directly");
+    require(raster_hash(drawn) == raster_hash(direct), "the light map is the stores' composite, byte for byte");
+    require(raster_hash(drawn) != raster_hash(unlit), "a lit, half-pressed key differs from the resting one");
+
+    // Each parameter changes the key on its own.
+    const std::uint64_t resting = raster_hash(unlit);
+    PrimitiveParameterBlock pressed = defaults;
+    require(set_number_parameter(pressed, descriptor, "press", 1.0) == ParameterAssignment::assigned, "press set");
+    require(light_map_differs(primitive, pressed, key, scale, resting), "a pressed key differs from the resting one");
+    PrimitiveParameterBlock powered = defaults;
+    require(set_number_parameter(powered, descriptor, "lamp_power", 1.0) == ParameterAssignment::assigned,
+            "power set");
+    require(light_map_differs(primitive, powered, key, scale, resting), "a lit key differs from the dark one");
+    PrimitiveParameterBlock dimmer = defaults;
+    require(set_number_parameter(dimmer, descriptor, "room", 0.5) == ParameterAssignment::assigned, "room set");
+    require(light_map_differs(primitive, dimmer, key, scale, resting), "a dimmer room darkens the key");
+    PrimitiveParameterBlock cancel = defaults;
+    require(set_choice_parameter(cancel, descriptor, "bake", "dialog_cancel") == ParameterAssignment::assigned,
+            "the cancel bake is chosen");
+    require(light_map_differs(primitive, cancel, key, scale, resting), "the cancel key is not the OK key");
+    PrimitiveParameterBlock unknown = defaults;
+    require(set_choice_parameter(unknown, descriptor, "bake", "indicator_backed") == ParameterAssignment::out_of_range,
+            "a bake the light map does not ship is refused");
+    // The colour's alpha scales the power: transparent lamps are dark.
+    PrimitiveParameterBlock clear = powered;
+    require(set_colour_parameter(clear, descriptor, "lamp_colour", Color{255, 255, 255, 0}) ==
+                ParameterAssignment::assigned,
+            "a transparent lamp colour is assigned");
+    TestRaster dark = make_raster(key, scale);
+    require(draw(primitive, clear, dark, key, scale, AnatomyStateSet{}) == RasterOutcome::painted, "it paints");
+    require(raster_hash(dark) == raster_hash(unlit), "a transparent lamp colour leaves the lamps dark");
+}
+
 int main() {
     test_builtin_registry();
     test_registration_refusals();
@@ -957,6 +1073,7 @@ int main() {
     test_lattice_follows_the_nearest_integer_scale();
     test_integer_scales_reproduce_the_old_reference_images();
     test_reference_images();
+    test_light_map();
     std::cout << "engine primitive tests passed\n";
     return 0;
 }

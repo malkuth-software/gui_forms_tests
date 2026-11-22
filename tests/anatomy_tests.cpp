@@ -687,6 +687,24 @@ void test_radio_button_lamp_look() {
         require(centres[0][1] != centres[1][1], "the chosen jewel is lit and the other dark");
     }
 
+    // The lamp colour is settable (owner, 2026-11-22): the light map is
+    // achromatic and the tint is set at run time, so a red lamp_color turns
+    // the chosen jewel red while its sibling keeps the green glass.
+    (*low).lamp_color = stxlib::Optional<Color>::of(Color::rgba(255, 40, 10));
+    RasterListPainter tinted;
+    window.paint(tinted);
+    std::size_t red_jewels = 0U;
+    std::size_t green_jewels = 0U;
+    for (const std::shared_ptr<const PartRaster>& raster : tinted.rasters) {
+        if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
+        const std::array<std::uint8_t, 4> centre = centre_pixel(*raster);
+        if (centre[0] > centre[1] && centre[0] > centre[2]) ++red_jewels;
+        if (centre[1] > centre[0] && centre[1] > centre[2]) ++green_jewels;
+    }
+    require(red_jewels == 1U && green_jewels == 1U,
+            "a set lamp_color tints its own jewel alone, the other keeps the default green");
+    (*low).lamp_color = stxlib::Optional<Color>{};
+
     // The caption of the second row, well right of its lamp.
     const Rect caption = (*high).parts().label.bounds;
     require(caption.x > dark.well.bounds.right(), "the caption lies after the lamp");

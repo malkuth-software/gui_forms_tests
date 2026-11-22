@@ -2953,6 +2953,16 @@ if(TARGET gui_forms_compositor_lab_model AND TARGET gui_forms_skia)
              COMMAND gui_forms_compositor_lab_tests)
 endif()
 
+if(TARGET gui_forms_process_control_model)
+    # The process-control demonstrator's window: its dialog, sheet and strip.
+    add_executable(gui_forms_process_control_tests
+        tests/process_control_tests.cpp)
+    target_link_libraries(gui_forms_process_control_tests PRIVATE
+        gui_forms_process_control_model)
+    add_test(NAME gui_forms_process_control_tests
+             COMMAND gui_forms_process_control_tests)
+endif()
+
 if(TARGET gui_forms_custom_chrome_lab_model)
     add_executable(gui_forms_custom_chrome_lab_tests
         tests/custom_chrome_lab_tests.cpp)
