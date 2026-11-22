@@ -213,8 +213,8 @@ void test_card_with_action() {
     require(model.children[1].parent == std::size_t{0U} && model.children[2].parent == std::size_t{0U},
             "the title and the action are the header's");
     require(model.children[3].slot && model.children[3].local_id == "content", "the slot");
-    require(model.children[2].attributes.size() == 3U && model.children[2].attributes[1].name == "command" &&
-                model.children[2].attributes[1].bound,
+    require(model.children[2].attributes.size() == 1U && model.children[2].bindings.size() == 2U &&
+                model.children[2].bindings[1].property == "command",
             "the action's command is bound to the composite");
     require(model.focus && (*model.focus).target == ControlFocusTarget::none, "the card is no Tab stop");
     require(model.semantics && (*model.semantics).children_exposed, "its children are exposed");

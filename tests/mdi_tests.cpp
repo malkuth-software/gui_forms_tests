@@ -361,6 +361,13 @@ stxlib::Optional<DockFrameMemory> memory_of(const DockWorkspace& workspace, std:
     return workspace.frame_memory(DockPanelId(std::string(panel)));
 }
 
+// A document's frame memory, or a default one for a document without a frame.
+DockFrameMemory memory_value(const DockWorkspace& workspace, std::string_view panel) {
+    const stxlib::Optional<DockFrameMemory> memory = memory_of(workspace, panel);
+    if (memory.absent()) return DockFrameMemory{};
+    return *memory.value();
+}
+
 DockFrameState state_of(const DockWorkspace& workspace, std::string_view panel) {
     const stxlib::Optional<DockFrameMemory> memory = memory_of(workspace, panel);
     if (memory.absent()) return DockFrameState::normal;
@@ -564,10 +571,10 @@ void pointer_moves_and_resizes() {
     move_to(window, {grip.x + 30.0, grip.y + 20.0});
     window.perform_layout();
     require(near(frame_on_window(site, "doc.first").x, bounds.x + 30.0) &&
-                near((*memory_of(workspace, "doc.first").value()).bounds.x, 60.0),
+                near(memory_value(workspace, "doc.first").bounds.x, 60.0),
             "the frame follows the drag; the layout waits for the release");
     release(window, {grip.x + 30.0, grip.y + 20.0});
-    const Rect moved = (*memory_of(workspace, "doc.first").value()).bounds;
+    const Rect moved = memory_value(workspace, "doc.first").bounds;
     require(near(moved.x, 90.0) && near(moved.y, 70.0) && near(moved.width, 300.0),
             "the release commits the moved frame");
     // Dragging the right border resizes it.
@@ -577,7 +584,7 @@ void pointer_moves_and_resizes() {
     press(window, edge);
     move_to(window, {edge.x + 50.0, edge.y});
     release(window, {edge.x + 50.0, edge.y});
-    const Rect resized = (*memory_of(workspace, "doc.first").value()).bounds;
+    const Rect resized = memory_value(workspace, "doc.first").bounds;
     require(near(resized.width, 350.0) && near(resized.x, 90.0) && near(resized.height, 200.0),
             "dragging the right border widens the frame");
     // A drag past the area's edge keeps the frame inside.
@@ -587,7 +594,7 @@ void pointer_moves_and_resizes() {
     press(window, again);
     move_to(window, {again.x - 500.0, again.y - 500.0});
     release(window, {again.x - 500.0, again.y - 500.0});
-    const Rect kept = (*memory_of(workspace, "doc.first").value()).bounds;
+    const Rect kept = memory_value(workspace, "doc.first").bounds;
     require(near(kept.x, 0.0) && near(kept.y, 0.0), "a frame dragged past the area stops at its edge");
 }
 
@@ -627,7 +634,7 @@ void arrangements() {
                 workspace.set_frame_state(DockPanelId("doc.first"), DockFrameState::normal).applied,
             "two frames minimize and one returns");
     require(window.layout_mdi(MdiLayout::arrange_icons), "arranging icons arranges");
-    require((*memory_of(workspace, "doc.second").value()).icon_slot == 0U, "arrange icons renumbers from the first slot");
+    require(memory_value(workspace, "doc.second").icon_slot == 0U, "arrange icons renumbers from the first slot");
     // Tabs: nothing to arrange.
     window.set_is_mdi_container(false);
     require(!window.layout_mdi(MdiLayout::cascade), "with tabs shown there is nothing to arrange");
@@ -740,7 +747,8 @@ void window_list() {
     std::unique_ptr<Fixture> fixture = make_fixture();
     Window& window = *(*fixture).window;
     MenuStrip& strip = *(*fixture).strip;
-    require(strip.mdi_window_list_item().present() && *strip.mdi_window_list_item().value() == 1U,
+    const stxlib::Optional<std::size_t> list_item = strip.mdi_window_list_item();
+    require(list_item.present() && *list_item.value() == 1U,
             "the Window menu is the window list item");
     require(window.activate_mdi_child(DockPanelId("doc.first")), "the first document activates");
     require(strip.open(1U), "the Window menu opens");
