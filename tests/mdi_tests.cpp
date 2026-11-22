@@ -6,6 +6,7 @@
 // back to tabs), a maximized frame's buttons on the main menu strip, the
 // panels' menu strips merging into it, and its window list.
 
+#include "gui_forms/commands/command/command.hpp"
 #include "gui_forms/components/context_menu/context_menu.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
@@ -13,7 +14,9 @@
 #include "gui_forms/controls/dock_workspace.hpp"
 #include "gui_forms/controls/menu_strip.hpp"
 #include "gui_forms/controls/panel.hpp"
+#include "gui_forms/controls/ribbon.hpp"
 #include "gui_forms/controls/text_box.hpp"
+#include "gui_forms/controls/tool_strip.hpp"
 #include "gui_forms/docking/dock_frames/dock_frames.hpp"
 #include "gui_forms/docking/dock_layout/dock_layout.hpp"
 #include "gui_forms/docking/types/dock_types.hpp"
@@ -747,6 +750,138 @@ void menu_strips_merge() {
             "clearing the active child's strip reverts its merge");
 }
 
+ToolStripItemSpec tool_button(std::string id, std::string text) {
+    ToolStripItemSpec item{};
+    item.stable_id = std::move(id);
+    item.text = std::move(text);
+    return item;
+}
+
+std::shared_ptr<ToolStrip> tool_strip(std::string id, std::vector<ToolStripItemSpec> items) {
+    std::shared_ptr<ToolStrip> strip = make_control<ToolStrip>(StableId(std::move(id)));
+    (*strip).set_items(std::move(items));
+    return strip;
+}
+
+// A tab holding one group of one button.
+RibbonTabSpec ribbon_tab(std::string id, std::string text, std::string group_id) {
+    RibbonTabSpec tab{};
+    tab.stable_id = std::move(id);
+    tab.text = std::move(text);
+    RibbonGroupSpec group{};
+    group.stable_id = group_id;
+    group.caption = group_id;
+    RibbonCommandSpec button{};
+    button.stable_id = group_id + "-run";
+    button.command = std::make_shared<Command>(group_id + ".command", "Run");
+    group.commands.push_back(std::move(button));
+    tab.groups.push_back(std::move(group));
+    return tab;
+}
+
+std::shared_ptr<Ribbon> ribbon_of_tabs(std::string id, std::vector<RibbonTabSpec> tabs) {
+    std::shared_ptr<Ribbon> ribbon = make_control<Ribbon>(StableId(std::move(id)));
+    (*ribbon).set_tabs(std::move(tabs));
+    return ribbon;
+}
+
+void tool_strips_merge() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    DockWorkspace& workspace = *(*fixture).workspace;
+    Window& window = *(*fixture).window;
+    std::vector<ToolStripItemSpec> main_items;
+    main_items.push_back(tool_button("new", "New"));
+    std::shared_ptr<ToolStrip> main = tool_strip("main-tools", std::move(main_items));
+    std::vector<ToolStripItemSpec> first_items;
+    first_items.push_back(tool_button("bold", "Bold"));
+    std::shared_ptr<ToolStrip> first = tool_strip("first-tools", std::move(first_items));
+    std::vector<ToolStripItemSpec> second_items;
+    second_items.push_back(tool_button("zoom", "Zoom"));
+    std::shared_ptr<ToolStrip> second = tool_strip("second-tools", std::move(second_items));
+    workspace.set_merge_tool_strip(*main);
+    require(workspace.merge_tool_strip() == main, "the merge tool strip is held");
+    require(workspace.set_panel_tool_strip(DockPanelId("doc.first"), *first) &&
+                workspace.set_panel_tool_strip(DockPanelId("doc.second"), *second) &&
+                !workspace.set_panel_tool_strip(DockPanelId("unknown"), *first),
+            "the documents' tool strips register and an unknown panel is refused");
+    require(window.activate_mdi_child(DockPanelId("doc.first")) && (*main).items().size() == 2U &&
+                (*main).items()[1].stable_id == "bold" && is(workspace.merged_tool_strip_document(), "doc.first"),
+            "the active child's tool strip merges into the merge tool strip");
+    require(window.activate_mdi_child(DockPanelId("doc.second")) && (*main).items().size() == 2U &&
+                (*main).items()[1].stable_id == "zoom" && (*first).items().size() == 1U,
+            "the merge follows the active child, the old one reverted");
+    require(window.activate_mdi_child(DockPanelId("doc.third")) && (*main).items().size() == 1U &&
+                workspace.merged_tool_strip_document().absent(),
+            "a child without a tool strip leaves the merge strip as it was");
+    require(window.activate_mdi_child(DockPanelId("doc.second")) && (*main).items().size() == 2U,
+            "the second strip merges again");
+    workspace.clear_merge_tool_strip();
+    require((*main).items().size() == 1U && (*second).items().size() == 1U && !workspace.merge_tool_strip(),
+            "clearing the merge strip reverts the merge");
+}
+
+void ribbons_merge() {
+    // The rules, outside a workspace: Home matches "&Home" and gains the
+    // group; View is new and follows the core tabs.
+    std::vector<RibbonTabSpec> main_tabs;
+    main_tabs.push_back(ribbon_tab("main-home", "&Home", "clipboard"));
+    std::shared_ptr<Ribbon> main = ribbon_of_tabs("main-ribbon", std::move(main_tabs));
+    std::vector<RibbonTabSpec> child_tabs;
+    child_tabs.push_back(ribbon_tab("child-home", "HOME", "font"));
+    child_tabs.push_back(ribbon_tab("child-view", "&View", "zoom"));
+    std::shared_ptr<Ribbon> child = ribbon_of_tabs("child-ribbon", std::move(child_tabs));
+    require((*main).merge(*child) && (*main).merge_source() == child, "the child's ribbon merges");
+    require((*main).tabs().size() == 2U && (*main).tabs()[0].groups.size() == 2U &&
+                (*main).tabs()[0].groups[1].stable_id == "font" && (*main).tabs()[1].stable_id == "child-view" &&
+                (*child).tabs().empty(),
+            "a matching tab gains the groups, another tab follows, and the source is left empty");
+    bool refused = false;
+    try {
+        (*main).set_tabs({});
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && (*main).tabs().size() == 2U, "a merged ribbon refuses set_tabs");
+    require((*main).revert_merge() && !(*main).merge_source() && (*main).tabs().size() == 1U &&
+                (*main).tabs()[0].groups.size() == 1U && (*child).tabs().size() == 2U,
+            "reverting restores both ribbons");
+    require(!(*main).revert_merge(), "nothing is left to revert");
+    std::vector<RibbonTabSpec> clashing_tabs;
+    clashing_tabs.push_back(ribbon_tab("main-home", "Other", "other"));
+    std::shared_ptr<Ribbon> clashing = ribbon_of_tabs("clashing-ribbon", std::move(clashing_tabs));
+    require(!(*main).merge(*clashing) && (*clashing).tabs().size() == 1U && (*main).tabs().size() == 1U,
+            "a merge that would repeat an ID is refused and changes nothing");
+    refused = false;
+    try {
+        static_cast<void>((*main).merge(*main));
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused, "a ribbon cannot merge into itself");
+
+    // In the workspace: the merge follows the active child.
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    DockWorkspace& workspace = *(*fixture).workspace;
+    Window& window = *(*fixture).window;
+    std::vector<RibbonTabSpec> second_tabs;
+    second_tabs.push_back(ribbon_tab("second-insert", "Insert", "tables"));
+    std::shared_ptr<Ribbon> second = ribbon_of_tabs("second-ribbon", std::move(second_tabs));
+    workspace.set_merge_ribbon(*main);
+    require(workspace.set_panel_ribbon(DockPanelId("doc.first"), *child) &&
+                workspace.set_panel_ribbon(DockPanelId("doc.second"), *second) &&
+                workspace.panel_ribbon(DockPanelId("doc.first")) == child,
+            "the documents' ribbons register");
+    require(window.activate_mdi_child(DockPanelId("doc.first")) && (*main).merge_source() == child &&
+                is(workspace.merged_ribbon_document(), "doc.first"),
+            "the active child's ribbon merges into the merge ribbon");
+    require(window.activate_mdi_child(DockPanelId("doc.second")) && (*main).merge_source() == second &&
+                (*child).tabs().size() == 2U && (*main).tabs().size() == 2U,
+            "the merge follows the active child, the old one reverted");
+    require(workspace.clear_panel_ribbon(DockPanelId("doc.second")) && !(*main).merge_source() &&
+                (*second).tabs().size() == 1U && workspace.merged_ribbon_document().absent(),
+            "clearing the active child's ribbon reverts its merge");
+}
+
 void window_list() {
     std::unique_ptr<Fixture> fixture = make_fixture();
     Window& window = *(*fixture).window;
@@ -839,6 +974,8 @@ int main() {
     keys_close_and_step();
     buttons_on_the_main_menu_strip();
     menu_strips_merge();
+    tool_strips_merge();
+    ribbons_merge();
     window_list();
     workspace_frame_calls();
     lifetime();
