@@ -9,6 +9,7 @@
 #include "gui_forms/controls/block_panel.hpp"
 #include "gui_forms/controls/breadcrumb_trail.hpp"
 #include "gui_forms/controls/button.hpp"
+#include "gui_forms/controls/button_text_box.hpp"
 #include "gui_forms/controls/callout.hpp"
 #include "gui_forms/controls/card.hpp"
 #include "gui_forms/controls/check_box.hpp"
@@ -378,6 +379,10 @@ void test_button_base_properties() {
         expect(raises == 1, "ButtonBase.expanded_state: an equal write raises nothing");
         static_cast<void>(token);
     }
+}
+
+void test_button_text_box_properties() {
+    std::shared_ptr<ButtonTextBox> control = make_control<ButtonTextBox>(StableId("generated.buttontextbox"));
 }
 
 void test_callout_properties() {
@@ -3523,6 +3528,7 @@ int main() {
     test_breadcrumb_trail_properties();
     test_button_properties();
     test_button_base_properties();
+    test_button_text_box_properties();
     test_callout_properties();
     test_card_properties();
     test_check_box_properties();

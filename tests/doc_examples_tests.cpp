@@ -430,6 +430,19 @@ void example() {
 }
 }  // namespace doc_example_ButtonBase_2
 
+namespace doc_example_ButtonTextBox_1 {
+void example() {
+    std::shared_ptr<gf::ButtonTextBox> folder = gf::make_control<gf::ButtonTextBox>(gf::StableId("export.folder"));
+    gf::EditButton browse;
+    browse.stable_id = "browse";
+    browse.caption = "Browse";
+    (*folder).set_buttons({browse});
+    (*folder).text = std::string{"Documents"};
+    const bool acted = (*folder).perform_button_click("browse");
+    // acted is true: button_clicked was raised with "browse"
+}
+}  // namespace doc_example_ButtonTextBox_1
+
 namespace doc_example_CancellationFlag_1 {
 void example() {
     gf::CancellationFlag flag;
@@ -4175,6 +4188,7 @@ int main() {
     failures += run("Button example 2", &doc_example_Button_2::example);
     failures += run("ButtonBase example 1", &doc_example_ButtonBase_1::example);
     failures += run("ButtonBase example 2", &doc_example_ButtonBase_2::example);
+    failures += run("ButtonTextBox example 1", &doc_example_ButtonTextBox_1::example);
     failures += run("CancellationFlag example 1", &doc_example_CancellationFlag_1::example);
     failures += run("CancellationFlag example 2", &doc_example_CancellationFlag_2::example);
     failures += run("Card example 1", &doc_example_Card_1::example);
