@@ -57,6 +57,7 @@
 #include "gui_forms/controls/page_view.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/controls/picture_box.hpp"
+#include "gui_forms/controls/pie_chart.hpp"
 #include "gui_forms/controls/plot3d_view.hpp"
 #include "gui_forms/controls/plot_annotation_item.hpp"
 #include "gui_forms/controls/plot_axis_item.hpp"
@@ -2011,6 +2012,47 @@ void test_picture_box_properties() {
     }
 }
 
+void test_pie_chart_properties() {
+    std::shared_ptr<PieChart> control = make_control<PieChart>(StableId("generated.piechart"));
+    {
+        const double sample = 60.0;
+        (*control).doughnut_radius = sample;
+        expect((*control).doughnut_radius.read() == sample, "PieChart.doughnut_radius: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("doughnut_radius");
+        expect(by_name && *by_name == PropertyValueTraits<double>::to_binding(sample),
+               "PieChart.doughnut_radius: the table reads the cell");
+    }
+    {
+        const double sample = 90.0;
+        (*control).start_angle = sample;
+        expect((*control).start_angle.read() == sample, "PieChart.start_angle: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("start_angle");
+        expect(by_name && *by_name == PropertyValueTraits<double>::to_binding(sample),
+               "PieChart.start_angle: the table reads the cell");
+    }
+    {
+        const PieChartLabelStyle sample = PieChartLabelStyle::outside;
+        (*control).label_style = sample;
+        expect((*control).label_style.read() == sample, "PieChart.label_style: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("label_style");
+        expect(by_name && *by_name == PropertyValueTraits<PieChartLabelStyle>::to_binding(sample),
+               "PieChart.label_style: the table reads the cell");
+    }
+    {
+        const bool sample = !(*control).legend_visible.read();
+        (*control).legend_visible = sample;
+        expect((*control).legend_visible.read() == sample, "PieChart.legend_visible: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("legend_visible");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "PieChart.legend_visible: the table reads the cell");
+    }
+    {
+        const FontSpec sample = FontSpec{FontRole::content, 12.0, 700, false};
+        (*control).font = sample;
+        expect((*control).font.read() == sample, "PieChart.font: a write stores");
+    }
+}
+
 void test_plot3d_view_properties() {
     std::shared_ptr<Plot3DView> control = make_control<Plot3DView>(StableId("generated.plot3dview"));
     {
@@ -3532,6 +3574,7 @@ int main() {
     test_page_view_properties();
     test_panel_properties();
     test_picture_box_properties();
+    test_pie_chart_properties();
     test_plot3d_view_properties();
     test_plot_annotation_item_properties();
     test_plot_axis_item_properties();
