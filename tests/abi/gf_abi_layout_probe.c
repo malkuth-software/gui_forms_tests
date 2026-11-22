@@ -1279,7 +1279,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_class_header, abi_minor) == 4, "gf_class_header.abi
 GF_LAYOUT_ASSERT(offsetof(gf_class_header, class_id) == 8, "gf_class_header.class_id offset");
 GF_LAYOUT_ASSERT(offsetof(gf_class_header, segment_count) == 12, "gf_class_header.segment_count offset");
 GF_LAYOUT_ASSERT(offsetof(gf_class_header, release) == 16, "gf_class_header.release offset");
-GF_LAYOUT_ASSERT(sizeof(gf_control_hooks) == 352, "gf_control_hooks size");
+GF_LAYOUT_ASSERT(sizeof(gf_control_hooks) == 360, "gf_control_hooks size");
 GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, struct_size) == 0, "gf_control_hooks.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, class_id) == 4, "gf_control_hooks.class_id offset");
 GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, on_auto_size_changed) == 8, "gf_control_hooks.on_auto_size_changed offset");
@@ -1325,6 +1325,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, on_paint_background) == 320, "gf_con
 GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, on_preview_key_down) == 328, "gf_control_hooks.on_preview_key_down offset");
 GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, on_validated) == 336, "gf_control_hooks.on_validated offset");
 GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, on_validating) == 344, "gf_control_hooks.on_validating offset");
+GF_LAYOUT_ASSERT(offsetof(gf_control_hooks, on_gesture) == 352, "gf_control_hooks.on_gesture offset");
 GF_LAYOUT_ASSERT(sizeof(gf_masked_text_box_hooks) == 16, "gf_masked_text_box_hooks size");
 GF_LAYOUT_ASSERT(offsetof(gf_masked_text_box_hooks, struct_size) == 0, "gf_masked_text_box_hooks.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_masked_text_box_hooks, class_id) == 4, "gf_masked_text_box_hooks.class_id offset");
