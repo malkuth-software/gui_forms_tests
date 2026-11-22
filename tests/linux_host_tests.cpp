@@ -1062,6 +1062,10 @@ int main() {
   try {
     require(host::linux_capabilities().supports(HostCapability::accessibility),
             "the Linux host advertises accessibility");
+    // XDND is a destination only here: no drag to other programs yet.
+    require(host::linux_capabilities().supports(HostCapability::typed_drag_destination) &&
+                !host::linux_capabilities().supports(HostCapability::typed_drag_source),
+            "the Linux host reports drops and no drag source");
     Runtime runtime;
     present_kernels(runtime.display);
     const std::shared_ptr<Root> root =

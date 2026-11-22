@@ -100,6 +100,19 @@ if(WIN32)
         ${GUI_FORMS_WINDOWS_DEFINITIONS})
     target_link_libraries(gui_forms_windows_notify_icon_tests PRIVATE gui_forms_core user32 gdi32 shell32)
     add_test(NAME gui_forms_windows_notify_icon_tests COMMAND gui_forms_windows_notify_icon_tests)
+    # OLE drag and drop with other programs: conversions, the drag data read
+    # back as a destination reads it, and the drop-target registration.
+    # Not built in a high-integrity configuration, which compiles none of it.
+    if(NOT GUI_FORMS_HIGH_INTEGRITY)
+        add_executable(gui_forms_windows_drag_drop_tests
+            tests/windows_drag_drop_tests.cpp
+            ${GUI_FORMS_SOURCE_DIR}/src/surface/windows/services/windows_drag_drop.cpp)
+        target_include_directories(gui_forms_windows_drag_drop_tests PRIVATE ${GUI_FORMS_SOURCE_DIR}/src/surface/windows)
+        target_compile_definitions(gui_forms_windows_drag_drop_tests PRIVATE
+            ${GUI_FORMS_WINDOWS_DEFINITIONS})
+        target_link_libraries(gui_forms_windows_drag_drop_tests PRIVATE gui_forms_core user32 ole32 shell32 uuid)
+        add_test(NAME gui_forms_windows_drag_drop_tests COMMAND gui_forms_windows_drag_drop_tests)
+    endif()
             add_executable(gui_forms_windows_cursor_tests tests/windows_cursor_tests.cpp)
     target_link_libraries(gui_forms_windows_cursor_tests PRIVATE gui_forms_core user32 gdi32)
     add_test(NAME gui_forms_windows_cursors COMMAND gui_forms_windows_cursor_tests)
