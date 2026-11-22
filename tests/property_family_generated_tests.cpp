@@ -1334,6 +1334,14 @@ void test_indicator_lamp_properties() {
         expect(by_name && *by_name == PropertyValueTraits<IndicatorLampStyle>::to_binding(sample),
                "IndicatorLamp.lamp_style: the table reads the cell");
     }
+    {
+        const bool sample = true;
+        (*control).lamp_sparkle = sample;
+        expect((*control).lamp_sparkle.read() == sample, "IndicatorLamp.lamp_sparkle: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("lamp_sparkle");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "IndicatorLamp.lamp_sparkle: the table reads the cell");
+    }
 }
 
 void test_info_banner_properties() {

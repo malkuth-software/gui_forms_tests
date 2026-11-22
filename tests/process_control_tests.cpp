@@ -1,16 +1,16 @@
 // The process-control demonstrator (owner, 2026-11-22; skeudoindustrial
 // surfaces, phase 3; demo/process_control/process_control.hpp): its dialog
 // (the enamel classes, the three status lamps lit from the shipped jewel,
-// FAULT failing, the CANCEL and OK keys as LampKeys with no text but their
-// names, OK dark at rest and lit only while held, its lamp striking and
-// cooling, CANCEL lit throughout, the presses moving on the engine's
-// motion), its theme sheet
-// (compiled on the root, rebuilt for the paint and the seed), and its
+// the amber one sparkling, FAULT failing, the CANCEL and OK keys as
+// LampKeys with no text but their names, OK dark at rest and lit only
+// while held, its lamp striking and cooling, CANCEL lit throughout, the
+// presses moving on the engine's motion), its theme sheet (compiled on the
+// root, rebuilt for the paint and the seed, the grain at 1.5), and its
 // strip: each lamp's state cycled off, on, error and fault, the radio
 // lamps' colour set at run time, the coolant pinpoint, the Lamps toggle
-// that puts the status lamps and OK's lamp out, the keys' messages,
-// and --check's staging. Compositing a bake is covered by
-// gui_forms_engine_light_planes_tests, the failing lamp by
+// that puts the status lamps and OK's lamp out, the keys' messages, and
+// --check's staging. Compositing a bake is covered by
+// gui_forms_engine_light_planes_tests, the failing lamp and the sparkle by
 // gui_forms_indicator_lamp_tests and gui_forms_engine_light_planes_tests,
 // the enamel by gui_forms_engine_finish_tests.
 
@@ -116,6 +116,11 @@ void test_the_dialog(Window& window) {
     require((*find<IndicatorLamp>(window, "process.status.pump-ready")).state.read() == IndicatorLampState::on &&
                 (*find<IndicatorLamp>(window, "process.status.fault")).state.read() == IndicatorLampState::fault,
             "PUMP READY starts lit and FAULT failing");
+    const std::shared_ptr<IndicatorLamp> heating = find<IndicatorLamp>(window, "process.status.heating");
+    require((*heating).lamp_sparkle.read() && (*heating).sparkling() &&
+                !(*find<IndicatorLamp>(window, "process.status.pump-ready")).lamp_sparkle.read() &&
+                !(*find<IndicatorLamp>(window, "process.status.fault")).lamp_sparkle.read(),
+            "the amber HEATING lamp sparkles, lit; the others do not");
     const std::shared_ptr<process_control::LampKey> ok = find<process_control::LampKey>(window, "process.key.ok");
     const std::shared_ptr<process_control::LampKey> cancel =
         find<process_control::LampKey>(window, "process.key.cancel");
