@@ -19,8 +19,9 @@ endforeach()
 # whose tests run on private desktops: tools/popup_margin_probe.py (Popup
 # and tooltip window size and hit margin) and a short seeded smoke run of
 # tools/contention_fuzz.py, labelled timing and non_gating (a long run is
-# local and on demand; see the script).
-if(TARGET gui_forms_menu_probe_windows AND GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONMENT)
+# local and on demand; see the script). Both drive the probe through the
+# library's MCP automation (--mcp-script, and --mcp with tools/mcp_client.py).
+if(TARGET gui_forms_menu_probe_windows AND GUI_FORMS_MCP)
     find_package(Python3 COMPONENTS Interpreter QUIET)
     set(gui_forms_popup_launcher "${GUI_FORMS_FOREGROUND_LAUNCHER}")
     if(NOT gui_forms_popup_launcher)
