@@ -1,6 +1,8 @@
 // IndicatorLamp (skeudoindustrial surfaces, follow-up 4): its states and
 // their names to assistive technology, its parts, the warm-up and cool-down
-// (and their absence under reduced motion and outside a window), that it
+// (and their absence under reduced motion and outside a window), the
+// failing lamp (fault: it flickers, repeats, and is steady under reduced
+// motion), that it
 // is never hit, and, drawn through the offscreen raster, that the lit lens
 // differs from the dark one in the default theme and every familiar theme
 // while not one pixel outside the lens changes. The light-plane lens: the
@@ -9,7 +11,9 @@
 // offscreen raster a lens composited from a bake written here (it takes the
 // bake's aspect, lights only inside the lens, never past the bake's
 // coverage, and changes colour with lamp_color), and the theme's lens where
-// the bake is missing, no directory is set, or high contrast is forced.
+// the bake is missing, no directory is set, or high contrast is forced;
+// the pinpoint as the shipped jewel's light in its dot, with no bake named
+// and no directory.
 // With GUI_FORMS_PREVIEW_DIR set, the test also writes preview shots of
 // each state in each theme.
 
@@ -28,6 +32,7 @@
 #include "gui_forms/window/window.hpp"
 #include "support/unique_temporary_directory.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -115,12 +120,22 @@ void test_states_and_semantics() {
     // The anatomy: three parts besides the region, three custom states.
     const ControlAnatomy& anatomy = (*lamp).anatomy();
     require(anatomy.control_id == "indicator_lamp" && anatomy.parts.size() == 4U &&
-                anatomy.custom_states.size() == 3U && anatomy.custom_states[0].name == "on" &&
-                anatomy.custom_states[1].name == "error" && anatomy.custom_states[2].name == "pinpoint",
-            "the anatomy declares region, bezel, lens and label, and the states on, error and pinpoint");
+                anatomy.custom_states.size() == 4U && anatomy.custom_states[0].name == "on" &&
+                anatomy.custom_states[1].name == "error" && anatomy.custom_states[2].name == "pinpoint" &&
+                anatomy.custom_states[3].name == "fault",
+            "the anatomy declares region, bezel, lens and label, and the states on, error, pinpoint and fault");
     const AnatomyStateSet error_states = (*lamp).anatomy_states();
     require(error_states.contains(CustomStateIndex{1U}) && !error_states.contains(CustomStateIndex{0U}),
             "an error lamp takes the error state alone");
+    (*lamp).state = IndicatorLampState::fault;
+    described = (*lamp).semantic_descriptor();
+    require(described.value == "fault" && IndicatorLamp::state_name(IndicatorLampState::fault) == "fault",
+            "a failing lamp is spoken as fault");
+    const AnatomyStateSet fault_states = (*lamp).anatomy_states();
+    require(fault_states.contains(CustomStateIndex{1U}) && fault_states.contains(CustomStateIndex{3U}) &&
+                !fault_states.contains(CustomStateIndex{0U}),
+            "a failing lamp takes fault and error, so a theme without fault rules draws an error");
+    require((*lamp).power() == 1.0 && !(*lamp).changing(), "outside a window a failing lamp is steadily lit");
     (*lamp).state = IndicatorLampState::off;
     const AnatomyStateSet off_states = (*lamp).anatomy_states();
     require(!off_states.contains(CustomStateIndex{0U}) && !off_states.contains(CustomStateIndex{1U}),
@@ -190,6 +205,41 @@ void test_warm_up_and_cool_down() {
     require(!(*made.lamp).changing() && (*made.lamp).power() == 1.0, "under reduced motion a lamp lights at once");
     (*made.lamp).state = IndicatorLampState::off;
     require(!(*made.lamp).changing() && (*made.lamp).power() == 0.0, "under reduced motion a lamp goes dark at once");
+}
+
+// The failing lamp (owner, 2026-11-22): in a window its timer runs for as
+// long as it fails, it drops out to near dark and recovers, two lamps with
+// the same stable id fail alike, it cools and stops when switched off, and
+// under reduced motion it is steadily lit with no frames at all.
+void test_fault_flickers() {
+    LampWindow made = lamp_window(Size{24.0, 24.0}, {});
+    LampWindow twin = lamp_window(Size{24.0, 24.0}, {});
+    (*made.lamp).state = IndicatorLampState::fault;
+    (*twin.lamp).state = IndicatorLampState::fault;
+    require((*made.lamp).changing(), "in a window a failing lamp strikes and keeps its frames");
+    // 625 frames of 16 ms: ten seconds, past root.lamp's first dropout at
+    // about 3 s (seeded by the stable id, so it never moves).
+    const std::vector<double> powers = run_change(made, 625U);
+    const std::vector<double> twins = run_change(twin, 625U);
+    require(powers.size() == 625U && (*made.lamp).changing(), "a failing lamp's frames do not end");
+    double lowest = 1.0;
+    double highest = 0.0;
+    for (std::size_t index = 8U; index < powers.size(); ++index) {
+        lowest = std::min(lowest, powers[index]);
+        highest = std::max(highest, powers[index]);
+    }
+    require(lowest < 0.15 && lowest > 0.0, "it drops out to near dark, never fully off");
+    require(highest == 1.0, "between its faults it is fully lit");
+    require(powers == twins, "lamps with the same stable id fail alike: captures repeat");
+
+    (*made.lamp).state = IndicatorLampState::off;
+    static_cast<void>(run_change(made, 64U));
+    require(!(*made.lamp).changing() && (*made.lamp).power() == 0.0, "switched off, a failing lamp cools and stops");
+
+    set_reduced_motion(*made.window, true);
+    (*made.lamp).state = IndicatorLampState::fault;
+    require(!(*made.lamp).changing() && (*made.lamp).power() == 1.0,
+            "under reduced motion a failing lamp is steadily lit, with no frames");
 }
 
 void test_parts() {
@@ -585,11 +635,32 @@ void test_baked_lens() {
     (*made.window).perform_layout();
     require((*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 0.0, 30.0, 20.0},
             "and setting it again the bake's aspect");
-    // A pinpoint is the theme's dot: it never shows the bake.
+    // A pinpoint (owner, 2026-11-22: a small point of light from the
+    // jewel lamps' light model) is the shipped jewel's light in its dot,
+    // with no bake named and in no directory of its own; in forced high
+    // contrast it is the theme's dot.
+    (*made.lamp).light_planes = std::string{};
     (*made.lamp).lamp_style = IndicatorLampStyle::pinpoint;
     (*made.window).perform_layout();
-    require(!(*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 7.0, 6.0, 6.0},
-            "a pinpoint shows its dot, not the bake");
+    require((*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 7.0, 6.0, 6.0},
+            "a pinpoint shows the jewel's light in its dot");
+    (*(*made.window).resources()).set_light_plane_directory(std::filesystem::path{});
+    (*made.window).perform_layout();
+    require((*made.lamp).light_planes_shown(), "the pinpoint's light is shipped, whatever the directory");
+    const Rect point{4.0, 4.0 + 7.0, 6.0, 6.0};
+    (*made.lamp).state = IndicatorLampState::off;
+    const std::optional<WindowCapture> point_dark = capture_lamp(attached, made);
+    (*made.lamp).state = IndicatorLampState::on;
+    const std::optional<WindowCapture> point_lit = capture_lamp(attached, made);
+    require(point_dark.has_value() && point_lit.has_value(), "the pinpoint is captured");
+    if (point_dark && point_lit) {
+        const Difference glowing = compare(*point_dark, *point_lit, point);
+        require(glowing.any && !glowing.outside, "the pinpoint lights within its dot only");
+    }
+    set_high_contrast(*made.window, true);
+    (*made.window).perform_layout();
+    require(!(*made.lamp).light_planes_shown(), "in forced high contrast the pinpoint is the theme's dot");
+    set_high_contrast(*made.window, false);
     test_support::remove_temporary_directory(directory);
 }
 
@@ -599,6 +670,7 @@ int main() {
     test_states_and_semantics();
     test_detached_changes_at_once();
     test_warm_up_and_cool_down();
+    test_fault_flickers();
     test_parts();
     test_pinpoint();
     test_lights_only_the_lens();
