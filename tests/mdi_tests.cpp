@@ -537,7 +537,11 @@ void caption_buttons_and_states() {
     require(near(site.document_frame_bounds(DockPanelId("doc.third")).y, area.y) &&
                 !workspace.frame_icons_at_bottom(),
             "the icons line the top of the area");
-    // A double-click on an icon's caption restores it.
+    // A double-click on an icon's caption restores it. Back along the bottom
+    // first: along the top, the active frame (doc.first, in front) covers
+    // the icon, and the double-click would maximize that frame instead.
+    window.set_mdi_children_minimized_anchor_bottom(true);
+    window.perform_layout();
     const Rect on_window = frame_on_window(site, "doc.third");
     press(window, {on_window.x + 12.0, on_window.y + on_window.height * 0.5}, 2U);
     release(window, {on_window.x + 12.0, on_window.y + on_window.height * 0.5});
