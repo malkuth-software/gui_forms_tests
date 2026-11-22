@@ -3105,6 +3105,15 @@ target_compile_options(gui_forms_macos_clipboard_image_tests PRIVATE -fobjc-arc)
 target_link_libraries(gui_forms_macos_clipboard_image_tests PRIVATE gui_forms_host_macos)
 add_test(NAME gui_forms_macos_clipboard_image_tests COMMAND gui_forms_macos_clipboard_image_tests)
 
+# The release a drag to other programs gives back to its window when the
+# dragging session ends. Not built in a high-integrity configuration.
+if(NOT GUI_FORMS_HIGH_INTEGRITY)
+    add_executable(gui_forms_macos_drag_release_tests tests/macos_drag_release_tests.mm)
+    target_compile_options(gui_forms_macos_drag_release_tests PRIVATE -fobjc-arc)
+    target_link_libraries(gui_forms_macos_drag_release_tests PRIVATE gui_forms_host_macos)
+    add_test(NAME gui_forms_macos_drag_release_tests COMMAND gui_forms_macos_drag_release_tests)
+endif()
+
 # The application menu names the running program, not the Gallery.
 add_executable(gui_forms_macos_application_menu_tests tests/macos_application_menu_tests.mm)
 target_compile_options(gui_forms_macos_application_menu_tests PRIVATE -fobjc-arc)

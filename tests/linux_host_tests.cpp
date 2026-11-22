@@ -1058,14 +1058,43 @@ void present_kernels(Display *display) {
   }
 }
 
+// The XDND source's pure parts (linux_drag_drop.cpp): file URIs that the
+// destination side (local_files) reads back unchanged, and the effect a
+// drag asks for under each modifier. A real drag needs a held button the
+// pointer grab follows, so the drop itself is a hand check (the integration
+// queue entry for host-drag-and-drop).
+void xdnd_source_helpers() {
+  require(xdnd_file_uri("/tmp/a b/\xCE\xA9%.txt") == "file:///tmp/a%20b/%CE%A9%25.txt",
+          "a file URI percent-encodes every byte outside the unreserved set and '/'");
+  DragFileListData files;
+  files.paths_utf8 = {"/captures/a.iq", "/tmp/a b/\xCE\xA9%.txt"};
+  const std::vector<std::byte> list = xdnd_uri_list(files);
+  const std::string text(reinterpret_cast<const char *>(list.data()), list.size());
+  require(text == "file:///captures/a.iq\r\nfile:///tmp/a%20b/%CE%A9%25.txt\r\n",
+          "text/uri-list holds one URI a line, each ended by CR LF");
+  const DragFileListData read = local_files(list);
+  require(read.paths_utf8 == files.paths_utf8, "the destination reads the source's paths back unchanged");
+  const DragEffect all = DragEffect::copy | DragEffect::move | DragEffect::link;
+  require(xdnd_requested_effect(0U, all) == DragEffect::copy, "no modifier asks for a copy");
+  require(xdnd_requested_effect(ShiftMask, all) == DragEffect::move, "Shift asks for a move");
+  require(xdnd_requested_effect(ControlMask, all) == DragEffect::copy, "Control asks for a copy");
+  require(xdnd_requested_effect(ShiftMask | ControlMask, all) == DragEffect::link,
+          "Shift and Control ask for a link");
+  require(xdnd_requested_effect(ShiftMask, DragEffect::copy) == DragEffect::copy,
+          "an effect not allowed falls back to the first allowed");
+  require(xdnd_requested_effect(0U, DragEffect::move | DragEffect::link) == DragEffect::move,
+          "without copy the first allowed is a move");
+}
+
 int main() {
   try {
     require(host::linux_capabilities().supports(HostCapability::accessibility),
             "the Linux host advertises accessibility");
-    // XDND is a destination only here: no drag to other programs yet.
+    // XDND both ways.
     require(host::linux_capabilities().supports(HostCapability::typed_drag_destination) &&
-                !host::linux_capabilities().supports(HostCapability::typed_drag_source),
-            "the Linux host reports drops and no drag source");
+                host::linux_capabilities().supports(HostCapability::typed_drag_source),
+            "the Linux host reports drops and drags to other programs");
+    xdnd_source_helpers();
     Runtime runtime;
     present_kernels(runtime.display);
     const std::shared_ptr<Root> root =
