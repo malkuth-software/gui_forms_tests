@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <span>
@@ -817,8 +818,40 @@ void test_display_timing_grid() {
     require(std::string_view(display_timing_source_name(DisplayTimingSource::assumed)) == "assumed" &&
                 std::string_view(display_timing_source_name(DisplayTimingSource::display)) == "display" &&
                 std::string_view(display_timing_source_name(DisplayTimingSource::measured)) == "measured" &&
+                std::string_view(display_timing_source_name(DisplayTimingSource::nominal)) == "nominal" &&
                 std::string_view(display_timing_source_name(DisplayTimingSource::fixed)) == "fixed",
             "every source has its diagnostic name");
+}
+
+// Display timing from refresh-counting completion stamps (X11 Present's ust
+// and msc): the period over the refreshes since the anchor, phased at the
+// latest stamp; nothing for the first stamp or one that does not advance;
+// the anchor moving on keeps the period.
+void test_refresh_counter_timing() {
+    RefreshCounterTiming timing;
+    require(timing.take(FrameTime{1000ms}, 100U).absent(), "the first stamp gives no timing");
+    const stxlib::Optional<DisplayTiming> second = timing.take(FrameTime{1008ms}, 101U);
+    require(second.present() && (*second.value()).source == DisplayTimingSource::display &&
+                (*second.value()).refresh_period == 8ms && (*second.value()).presentation_phase == FrameTime{1008ms},
+            "two stamps give the period between them, phased at the latest");
+    const stxlib::Optional<DisplayTiming> skipped = timing.take(FrameTime{1024ms}, 103U);
+    require(skipped.present() && (*skipped.value()).refresh_period == 8ms,
+            "a stamp two refreshes on divides by the refreshes, not the stamps");
+    require(timing.take(FrameTime{1030ms}, 103U).absent(), "a count that does not advance starts again");
+    require(timing.take(FrameTime{1038ms}, 104U).present(), "and the next stamp gives timing again");
+    require(timing.take(FrameTime{1000ms}, 105U).absent(), "a time that runs back starts again");
+    FrameInterval worst{};
+    for (std::uint64_t refresh = 1U; refresh <= 600U; ++refresh) {
+        const FrameTime shown = FrameTime{1000ms} + std::chrono::microseconds(8333) * refresh;
+        const stxlib::Optional<DisplayTiming> taken = timing.take(shown, 105U + refresh);
+        require(taken.present(), "every advancing stamp gives timing");
+        const FrameInterval period = (*taken.value()).refresh_period;
+        const FrameInterval error = period > 8333us ? period - 8333us : 8333us - period;
+        worst = std::max(worst, error);
+    }
+    require(worst == FrameInterval::zero(), "the anchor moving on every 240 refreshes keeps the exact period");
+    timing.reset();
+    require(timing.take(FrameTime{5000ms}, 9U).absent(), "after reset the first stamp gives no timing");
 }
 
 // AnimationTimer on a window that knows its display's timing (design note
@@ -889,6 +922,9 @@ void test_animation_timer_paces_to_the_display() {
     require(window.set_display_timing(DisplayTiming::fixed_rate(16ms, FrameTime{phase + 100us})) &&
                 armed_wake(window) == steady,
             "a restated phase within the jitter tolerance leaves the deadline");
+    require(window.set_display_timing(DisplayTiming::fixed_rate(16ms + 2us, FrameTime{phase})) &&
+                window.display_timing().refresh_period == 16ms && armed_wake(window) == steady,
+            "a period within a thousandth of the held one keeps the held period");
 
     // Idle: a damaging tick left unpainted stops the timer, and the window
     // wants no display frames.
@@ -926,6 +962,7 @@ int main() {
         test_reduced_motion_remains_active_and_calm();
         test_animation_timer_is_paint_gated();
         test_display_timing_grid();
+        test_refresh_counter_timing();
         test_animation_timer_paces_to_the_display();
         test_progress_animation_and_hidden_suspension();
         test_progress_animation_damages_what_moves();
