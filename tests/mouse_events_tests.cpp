@@ -625,6 +625,24 @@ void test_pointer_settings() {
         refused = true;
     }
     require(refused, "a zero hover time is refused");
+    require(defaults.pointer.menu_show_milliseconds == default_menu_show_milliseconds &&
+                defaults.pointer.menu_show_origin == SettingOrigin::default_value,
+            "the menu show delay is Windows' default where no host reported");
+    PresentationSettings instant_menus = defaults;
+    instant_menus.pointer.menu_show_milliseconds = 0U;
+    window.set_presentation_settings(instant_menus);
+    require(window.presentation_settings().pointer.menu_show_milliseconds == 0U,
+            "a zero menu show delay is taken (submenus open at once)");
+    refused = false;
+    PresentationSettings slow_menus = defaults;
+    slow_menus.pointer.menu_show_milliseconds = maximum_menu_show_milliseconds + 1U;
+    try {
+        window.set_presentation_settings(slow_menus);
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused && window.presentation_settings().pointer.menu_show_milliseconds == 0U,
+            "a menu show delay past the maximum is refused");
 }
 
 // Notes each crossing raiser and the pointer location it reads.
