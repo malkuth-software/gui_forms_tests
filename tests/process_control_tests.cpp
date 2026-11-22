@@ -9,7 +9,9 @@
 // strip: each lamp's state cycled off, on, error and fault, the radio
 // lamps' colour set at run time, the coolant pinpoint, the Lamps toggle
 // that puts the status lamps and OK's lamp out, the keys' messages, and
-// --check's staging. Compositing a bake is covered by
+// --check's staging; its layout panels (the dialog growing with the
+// window, the strip keeping its width, the lamps and keys their sizes and
+// places). Compositing a bake is covered by
 // gui_forms_engine_light_planes_tests, the failing lamp and the sparkle by
 // gui_forms_indicator_lamp_tests and gui_forms_engine_light_planes_tests,
 // the enamel by gui_forms_engine_finish_tests.
@@ -30,6 +32,7 @@
 
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -42,7 +45,7 @@ namespace {
 
 using namespace gui_forms;
 
-void require(bool condition, const char* message) {
+void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
 }
 
@@ -247,11 +250,80 @@ void test_the_strip(Window& window) {
             "and Lamps on lights the status lamps again, FAULT failing, the keys dark at rest");
 }
 
+bool near_rect(Rect got, Rect expected) {
+    const bool near = std::abs(got.x - expected.x) < 1e-6 && std::abs(got.y - expected.y) < 1e-6 &&
+                      std::abs(got.width - expected.width) < 1e-6 && std::abs(got.height - expected.height) < 1e-6;
+    return near;
+}
+
+std::string described(Rect rect) {
+    return "{" + std::to_string(rect.x) + ", " + std::to_string(rect.y) + ", " + std::to_string(rect.width) + ", " +
+           std::to_string(rect.height) + "}";
+}
+
+// `id`'s bounds relative to the dialog's corner.
+Rect in_dialog(Window& window, std::string_view id) {
+    const Rect dialog = (*find<Control>(window, "process.dialog")).absolute_bounds();
+    const Rect bounds = (*find<Control>(window, id)).absolute_bounds();
+    const Rect relative{bounds.x - dialog.x, bounds.y - dialog.y, bounds.width, bounds.height};
+    return relative;
+}
+
+// The layout panels (owner, 2026-11-22: the controls follow the window):
+// at the first size the dialog is the study's 500 wide beside the strip;
+// resized, the dialog grows with the window and the strip keeps its width
+// at the right, the type and lamps keep their places and sizes from the
+// dialog's corner, and the keys keep their size at its lower right.
+void test_the_layout() {
+    std::unique_ptr<Window> held = process_control::make_process_control();
+    Window& window = *held;
+    window.perform_layout();
+    require(window.minimum_size.read() == process_control::window_size,
+            "the window is never smaller than its first size");
+    const Rect dialog = (*find<Control>(window, "process.dialog")).absolute_bounds();
+    const Rect strip = (*find<Control>(window, "process.strip")).absolute_bounds();
+    require(near_rect(dialog, Rect{16.0, 16.0, 500.0, 374.0}),
+            "the dialog fills its column at the first size: " + described(dialog));
+    require(near_rect(strip, Rect{532.0, 16.0, 292.0, 408.0}), "the strip beside it: " + described(strip));
+    require(near_rect(in_dialog(window, "process.status.pump-ready"), Rect{29.0, 138.0, 220.0, 14.0}) &&
+                near_rect(in_dialog(window, "process.status.fault"), Rect{29.0, 196.0, 220.0, 14.0}) &&
+                near_rect(in_dialog(window, "process.dialog.heading"), Rect{24.0, 62.0, 440.0, 30.0}),
+            "the type and the lamps are at the study's places");
+    require(near_rect(in_dialog(window, "process.key.cancel"), Rect{228.0, 301.0, 120.0, 53.0}) &&
+                near_rect(in_dialog(window, "process.key.ok"), Rect{360.0, 301.0, 120.0, 53.0}),
+            "the keys sit 20 in from the dialog's lower right: " +
+                described(in_dialog(window, "process.key.ok")));
+    const Rect band = in_dialog(window, "process.dialog.title-band");
+    require(near_rect(band, Rect{0.0, 0.0, 500.0, 39.0}), "the title band spans the dialog");
+    const Rect lamps_toggle = (*find<Control>(window, "process.lamps")).absolute_bounds();
+    require(lamps_toggle.bottom() <= strip.bottom() + 1e-6, "the strip's last row fits in the window");
+
+    window.resize(Size{1200.0, 700.0});
+    window.perform_layout();
+    const Rect grown = (*find<Control>(window, "process.dialog")).absolute_bounds();
+    const Rect moved = (*find<Control>(window, "process.strip")).absolute_bounds();
+    require(near_rect(grown, Rect{16.0, 16.0, 860.0, 634.0}), "the dialog grows with the window: " + described(grown));
+    require(near_rect(moved, Rect{892.0, 16.0, 292.0, 668.0}),
+            "the strip keeps its width at the window's right: " + described(moved));
+    require(near_rect(in_dialog(window, "process.dialog.title-band"), Rect{0.0, 0.0, 860.0, 39.0}),
+            "the title band spans the wider dialog");
+    require(near_rect(in_dialog(window, "process.status.heating"), Rect{29.0, 167.0, 220.0, 14.0}),
+            "the lamps keep their places and sizes");
+    require(near_rect(in_dialog(window, "process.key.ok"), Rect{720.0, 561.0, 120.0, 53.0}) &&
+                near_rect(in_dialog(window, "process.key.cancel"), Rect{588.0, 561.0, 120.0, 53.0}),
+            "the keys keep their size at the dialog's lower right: " +
+                described(in_dialog(window, "process.key.ok")));
+    const Rect message = (*find<Control>(window, "process.message")).absolute_bounds();
+    require(near_rect(message, Rect{16.0, 660.0, 860.0, 24.0}), "the message stays under the dialog: " +
+                                                                  described(message));
+}
+
 } // namespace
 
 int main() {
     try {
         test_the_sheet();
+        test_the_layout();
         std::unique_ptr<Window> window = process_control::make_process_control();
         (*window).set_active(true);
         (*window).perform_layout();
