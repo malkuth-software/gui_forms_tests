@@ -15,6 +15,7 @@
 #include "gui_forms/window.hpp"
 #include "src/controls/automation/control/automation_control.hpp"
 #include "src/controls/automation/core/automation_core.hpp"
+#include "src/controls/automation/presenter/stock_presenter.hpp"
 #include "src/controls/automation/tools/automation_tools.hpp"
 #include "support/named_callbacks.hpp"
 
@@ -66,6 +67,7 @@ public:
     std::size_t acts{};
     std::size_t user_steps{};
     std::size_t finished{};
+    std::size_t pointer_moves{};
 
     void window_attached(Window&) override {}
     void window_detached(Window&) noexcept override {}
@@ -78,6 +80,7 @@ public:
         ++acts;
     }
     void calls_finished() noexcept override { ++finished; }
+    void pointer_moved(Window&, Point, bool) noexcept override { ++pointer_moves; }
     void control_changed(ControlState, const ClientIdentity&) override {}
     void ask_consent(const ClientIdentity&) override { ++questions; }
     void user_step_needed(Window&, const SemanticNode&, std::string_view) override { ++user_steps; }
@@ -368,10 +371,34 @@ void inspect_traces_the_routed_events() {
     Fixture fixture(false);
     const ToolReply clicked = fixture.call("pointer", "{\"action\":\"click\",\"target\":\"auto.press\"}");
     require(clicked.success_value() != nullptr && fixture.presses == 1U, "a pointer click clicks the button");
+    require(fixture.presenter.pointer_moves != 0U, "the presenter hears where the pointer is (the tag line on hover)");
     const std::string trace =
         success_text(fixture.call("inspect", "{\"target\":\"auto.press\",\"what\":[\"events\"]}"));
     require(contains(trace, "pointer") && contains(trace, "auto.press"),
             "the events section shows the click routed to the button");
+}
+
+void the_stock_presenter_shows_the_tag_line_on_hover() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.tag.root"));
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    StockPresenter presenter{};
+    presenter.window_attached(window);
+    require(window.band_snapshot().declared, "the presenter declares the band the glint runs on");
+    ClientIdentity client{};
+    client.client_name = "Claude Code";
+    client.model_name = "Claude Opus 5.5";
+    presenter.client_changed(client);
+    // Entering the top border, moving along it, leaving it and entering
+    // again: each entry asks for the tag line, the moves along it do not.
+    presenter.pointer_moved(window, Point{40.0, 1.0}, false);
+    presenter.pointer_moved(window, Point{80.0, 1.0}, false);
+    presenter.pointer_moved(window, Point{80.0, 100.0}, false);
+    presenter.pointer_moved(window, Point{80.0, 1.0}, false);
+    presenter.pointer_moved(window, Point{80.0, 1.0}, true);
+    presenter.disconnected();
+    presenter.window_detached(window);
+    require(client_label(client) == "Claude Opus 5.5 via Claude Code", "the tag line names the model and client");
 }
 
 } // namespace
@@ -386,6 +413,7 @@ int main() {
     the_public_registry_adds_tools();
     a_program_tool_meets_the_dialog_rule();
     inspect_traces_the_routed_events();
+    the_stock_presenter_shows_the_tag_line_on_hover();
     std::cout << "automation core tests passed\n";
     return 0;
 }
