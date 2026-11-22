@@ -2,8 +2,8 @@
 // gui_forms' manifests/ic/blocks (the declarations' block stubs), manifests/abi/gf_abi.json and
 // tools/ic/abi_fuzz.toml; do not edit. Regenerate with `python3 -B tools/ic_abi_fuzz.py` there.
 //
-// 484 legal and 201 misuse blocks; 63 stubs of slots the engine never calls,
-// 233 that start in a state the engine cannot reach, 10 misuse stubs it cannot break on purpose.
+// 484 legal and 205 misuse blocks; 69 stubs of slots the engine never calls,
+// 233 that start in a state the engine cannot reach, 15 misuse stubs it cannot break on purpose.
 #pragma once
 
 #include "gui_forms/c/gf_abi.h"
@@ -3215,7 +3215,7 @@ inline constexpr gf_status block_40_declared[] = {GF_STATUS_OK, GF_STATUS_INVALI
 inline constexpr gf_status block_41_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_42_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_43_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_44_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND};
+inline constexpr gf_status block_44_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND};
 inline constexpr gf_status block_45_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_46_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_47_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
@@ -3466,431 +3466,435 @@ inline constexpr gf_status block_260_declared[] = {GF_STATUS_OK, GF_STATUS_INVAL
 inline constexpr Violation block_260_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_261_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_262_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_263_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL};
+inline constexpr gf_status block_263_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_264_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_265_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_266_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL};
-inline constexpr gf_status block_267_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_268_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_269_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_270_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_264_violations[] = {Violation{2U, no_parameter}, Violation{0U, 1U}};
+inline constexpr gf_status block_265_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_266_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_267_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_267_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_268_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_269_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_269_violations[] = {Violation{3U, no_parameter}, Violation{6U, no_parameter}, Violation{1U, 2U}, Violation{4U, 5U}};
+inline constexpr gf_status block_270_declared[] = {GF_STATUS_OK};
 inline constexpr gf_status block_271_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_272_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_273_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_274_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_274_violations[] = {Violation{0U, no_parameter}};
-inline constexpr gf_status block_275_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_276_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_277_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_278_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_279_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_272_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_273_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_273_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_274_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_275_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_276_declared[] = {GF_STATUS_OK};
+inline constexpr gf_status block_277_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_278_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_278_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_279_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_280_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_281_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_281_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_282_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_283_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_284_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_284_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_285_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_286_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_287_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_283_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_284_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_285_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_286_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_287_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_288_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_289_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_290_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_288_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_289_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_290_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_291_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_292_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_292_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_293_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_294_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_295_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_295_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_296_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_297_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_298_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_299_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_294_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_295_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_296_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_297_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_298_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_299_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_299_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_300_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_300_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
-inline constexpr gf_status block_301_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_302_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_303_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_304_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_305_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_306_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_301_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_302_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_303_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_304_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_304_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
+inline constexpr gf_status block_305_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_306_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_307_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_308_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_308_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_309_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_310_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_311_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_311_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_312_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_313_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_314_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_315_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_311_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_312_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_313_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_314_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_315_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_315_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_316_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_316_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_317_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_318_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_319_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_317_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_318_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_319_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_320_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_320_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_321_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_321_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_322_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_323_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_324_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_325_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_326_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_327_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_323_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_324_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_325_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_325_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_326_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_327_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_NOT_FOUND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_328_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_329_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_330_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_331_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_332_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_333_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_334_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_335_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_335_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_336_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND};
-inline constexpr gf_status block_337_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_338_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_338_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
-inline constexpr gf_status block_339_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND};
-inline constexpr gf_status block_340_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_341_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_342_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_343_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_344_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_345_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_346_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_347_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_347_violations[] = {Violation{5U, no_parameter}};
-inline constexpr gf_status block_348_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_349_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_350_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_351_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_352_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_353_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_354_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_355_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_356_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_357_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_358_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_331_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_332_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_333_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_334_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_335_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_336_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_337_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_338_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_339_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_339_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_340_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND};
+inline constexpr gf_status block_341_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_342_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_342_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
+inline constexpr gf_status block_343_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND};
+inline constexpr gf_status block_344_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_345_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_346_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_347_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_348_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_349_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_350_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_351_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_351_violations[] = {Violation{5U, no_parameter}};
+inline constexpr gf_status block_352_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_353_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_354_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_355_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_356_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_357_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_358_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_359_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_360_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_361_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_362_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_363_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_364_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_364_violations[] = {Violation{0U, no_parameter}};
-inline constexpr gf_status block_365_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_366_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_367_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_368_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_369_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_369_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_370_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_371_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_372_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_373_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_374_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_375_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_376_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_377_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_378_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_378_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_379_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_380_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_381_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_382_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_383_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_384_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_385_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_386_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_387_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_387_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_388_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_389_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_390_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_361_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_362_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_363_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_364_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_365_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_366_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_367_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_368_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_368_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_369_declared[] = {GF_STATUS_OK};
+inline constexpr gf_status block_370_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_371_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_372_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_373_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_373_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_374_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_375_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_376_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_377_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_378_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_379_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_380_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_381_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_382_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_382_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_383_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_384_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_385_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_386_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_387_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_388_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_389_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_390_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_391_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_392_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_392_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_393_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_394_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_395_declared[] = {GF_STATUS_OK, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_396_declared[] = {GF_STATUS_OK, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_397_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_398_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_399_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_399_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
-inline constexpr gf_status block_400_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_401_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_402_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_403_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_404_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_405_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_406_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_407_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_408_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_408_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_409_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_410_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_411_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_412_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_391_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_392_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_393_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_394_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_395_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_396_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_396_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_397_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_398_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_399_declared[] = {GF_STATUS_OK, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_400_declared[] = {GF_STATUS_OK, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_401_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_402_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_403_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_403_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
+inline constexpr gf_status block_404_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_405_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_406_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_407_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_408_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_409_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_410_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_411_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_412_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_412_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_413_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_414_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_415_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_416_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_417_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_418_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_418_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_419_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_420_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_421_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_422_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_415_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_416_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_417_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_418_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_419_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_420_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_421_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_422_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_422_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_423_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_424_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_425_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_426_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_427_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_427_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_428_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_429_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_430_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_431_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_432_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_433_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_434_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_435_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_436_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_437_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_438_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_438_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_439_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_425_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_426_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_427_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_428_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_429_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_430_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_431_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_431_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_432_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_433_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_434_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_435_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_436_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_437_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_438_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_439_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_440_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_441_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_441_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_442_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_442_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_443_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_444_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_444_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_445_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_445_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_445_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_446_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_446_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_447_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_447_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_448_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_449_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_450_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_451_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_452_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_453_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_454_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_455_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_448_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_448_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_449_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_450_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_450_violations[] = {Violation{3U, no_parameter}};
+inline constexpr gf_status block_451_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_451_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_452_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_453_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_454_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_455_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_456_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_457_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_458_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_459_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_460_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_461_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_462_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_462_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_463_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_464_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_465_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_466_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_467_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_458_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_459_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_460_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_461_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_462_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_463_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_464_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_465_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_466_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_466_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_467_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_468_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_469_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_469_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_470_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_471_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_472_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_472_violations[] = {Violation{7U, no_parameter}, Violation{5U, 6U}};
-inline constexpr gf_status block_473_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_474_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_475_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_476_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_477_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_478_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_479_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_480_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_481_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_471_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_472_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_473_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_474_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_475_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED, GF_STATUS_NOT_FOUND, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_476_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_476_violations[] = {Violation{7U, no_parameter}, Violation{5U, 6U}};
+inline constexpr gf_status block_477_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_478_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_479_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_480_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_481_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_482_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_483_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_484_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_484_violations[] = {Violation{3U, no_parameter}};
-inline constexpr gf_status block_485_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_484_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_485_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_486_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_487_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_487_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_488_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_488_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_489_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_490_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_490_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_491_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_491_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_491_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_492_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_493_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_493_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_494_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_495_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_495_violations[] = {Violation{0U, no_parameter}};
-inline constexpr gf_status block_496_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_494_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_495_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_496_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_497_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_497_violations[] = {Violation{0U, no_parameter}, Violation{3U, no_parameter}, Violation{1U, 2U}};
-inline constexpr gf_status block_498_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_499_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_500_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_501_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_502_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_497_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_498_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_499_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_499_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_500_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_501_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_501_violations[] = {Violation{0U, no_parameter}, Violation{3U, no_parameter}, Violation{1U, 2U}};
+inline constexpr gf_status block_502_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_503_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_504_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_505_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_506_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_507_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_508_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_508_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_509_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_510_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_511_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_512_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_512_violations[] = {Violation{0U, no_parameter}};
-inline constexpr gf_status block_513_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND};
+inline constexpr gf_status block_504_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_505_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_506_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_507_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_UNSUPPORTED_CAPABILITY, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_508_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_509_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_510_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_511_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_512_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_512_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_513_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_514_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_514_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_515_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_516_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_517_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_516_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_517_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_NOT_FOUND};
 inline constexpr gf_status block_518_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_518_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_519_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_519_violations[] = {Violation{4U, no_parameter}};
 inline constexpr gf_status block_520_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_521_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_521_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_522_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_523_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_523_violations[] = {Violation{4U, no_parameter}};
 inline constexpr gf_status block_524_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_525_declared[] = {GF_STATUS_OK};
+inline constexpr gf_status block_525_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_525_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_526_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_527_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_528_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_529_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_529_declared[] = {GF_STATUS_OK};
 inline constexpr gf_status block_530_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_530_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_531_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_532_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_532_violations[] = {Violation{0U, no_parameter}};
 inline constexpr gf_status block_533_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_534_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_534_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_535_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_535_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_536_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_536_violations[] = {Violation{0U, no_parameter}};
 inline constexpr gf_status block_537_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_538_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_539_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_539_violations[] = {Violation{0U, no_parameter}};
+inline constexpr Violation block_539_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_540_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_541_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
-inline constexpr gf_status block_542_declared[] = {GF_STATUS_OK, GF_STATUS_REMOVED, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_541_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_542_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_543_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_543_violations[] = {Violation{3U, no_parameter}};
-inline constexpr gf_status block_544_declared[] = {GF_STATUS_OK, GF_STATUS_REMOVED, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_545_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_545_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_546_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
-inline constexpr gf_status block_547_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
-inline constexpr gf_status block_548_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
-inline constexpr gf_status block_549_declared[] = {GF_STATUS_OK, GF_STATUS_REMOVED, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_550_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_550_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_551_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_552_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_553_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_553_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_554_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_555_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_556_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_556_violations[] = {Violation{1U, no_parameter}};
+inline constexpr Violation block_543_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_544_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_545_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
+inline constexpr gf_status block_546_declared[] = {GF_STATUS_OK, GF_STATUS_REMOVED, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_547_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_547_violations[] = {Violation{3U, no_parameter}};
+inline constexpr gf_status block_548_declared[] = {GF_STATUS_OK, GF_STATUS_REMOVED, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_549_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_549_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_550_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
+inline constexpr gf_status block_551_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
+inline constexpr gf_status block_552_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_REMOVED};
+inline constexpr gf_status block_553_declared[] = {GF_STATUS_OK, GF_STATUS_REMOVED, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_554_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_554_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_555_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_556_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_557_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_558_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_559_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_560_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_561_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_562_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_563_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_557_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_558_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_559_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_560_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_560_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_561_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_562_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_563_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_564_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_565_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_566_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_567_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_568_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_568_violations[] = {Violation{4U, no_parameter}};
 inline constexpr gf_status block_569_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_570_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_571_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_571_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_572_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_572_violations[] = {Violation{4U, no_parameter}};
 inline constexpr gf_status block_573_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_574_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_574_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_575_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_576_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_575_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_575_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_576_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_577_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_578_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_579_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_580_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_581_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_582_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_578_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_579_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_580_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_581_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_582_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_583_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_584_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_585_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_585_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_586_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_585_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_586_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_587_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_588_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_588_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_589_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_589_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_590_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_591_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_591_violations[] = {Violation{2U, no_parameter}};
 inline constexpr gf_status block_592_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_592_violations[] = {Violation{3U, no_parameter}};
 inline constexpr gf_status block_593_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_594_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_594_violations[] = {Violation{2U, no_parameter}};
-inline constexpr gf_status block_595_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED};
-inline constexpr gf_status block_596_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_597_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_598_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_599_declared[] = {GF_STATUS_OK};
-inline constexpr gf_status block_600_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
+inline constexpr gf_status block_595_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_595_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_596_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_597_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_598_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_598_violations[] = {Violation{2U, no_parameter}};
+inline constexpr gf_status block_599_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_LIMIT_EXCEEDED};
+inline constexpr gf_status block_600_declared[] = {GF_STATUS_OK};
 inline constexpr gf_status block_601_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_602_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_603_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
-inline constexpr gf_status block_604_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_604_violations[] = {Violation{2U, no_parameter}, Violation{0U, 1U}};
-inline constexpr gf_status block_605_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND};
-inline constexpr gf_status block_606_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
+inline constexpr gf_status block_603_declared[] = {GF_STATUS_OK};
+inline constexpr gf_status block_604_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
+inline constexpr gf_status block_605_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_606_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
 inline constexpr gf_status block_607_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
-inline constexpr gf_status block_608_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE};
-inline constexpr gf_status block_609_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr gf_status block_610_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
-inline constexpr Violation block_610_violations[] = {Violation{0U, no_parameter}};
-inline constexpr gf_status block_611_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_612_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_613_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_614_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_615_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_615_violations[] = {Violation{0U, no_parameter}};
-inline constexpr gf_status block_616_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_617_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_618_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_619_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_620_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_621_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_608_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_608_violations[] = {Violation{2U, no_parameter}, Violation{0U, 1U}};
+inline constexpr gf_status block_609_declared[] = {GF_STATUS_OK, GF_STATUS_NOT_FOUND};
+inline constexpr gf_status block_610_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
+inline constexpr gf_status block_611_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_LIMIT_EXCEEDED};
+inline constexpr gf_status block_612_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE};
+inline constexpr gf_status block_613_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr gf_status block_614_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT};
+inline constexpr Violation block_614_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_615_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_616_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_617_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_618_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_619_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_619_violations[] = {Violation{0U, no_parameter}};
+inline constexpr gf_status block_620_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_621_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_622_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_623_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_623_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_624_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_625_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_625_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_626_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_627_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_627_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_628_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_629_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_630_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_631_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_631_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_632_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_633_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_634_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
@@ -3898,60 +3902,64 @@ inline constexpr gf_status block_635_declared[] = {GF_STATUS_OK, GF_STATUS_INVAL
 inline constexpr gf_status block_636_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_637_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_638_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_639_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_639_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_640_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_641_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_641_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_642_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_643_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_643_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_644_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_645_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_646_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_646_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_647_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_648_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_649_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_649_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_645_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_646_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_647_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_648_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_649_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_650_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_651_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_652_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_653_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_654_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_655_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_650_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_651_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_652_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_653_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_653_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_654_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_655_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_STATE, GF_STATUS_NOT_FOUND, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_656_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_657_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_657_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_658_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_659_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_659_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_660_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_661_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_662_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_662_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_663_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_664_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_665_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_666_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_661_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_662_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_663_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_664_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_665_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_666_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_666_violations[] = {Violation{1U, no_parameter}};
 inline constexpr gf_status block_667_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_667_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_668_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_669_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_670_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_671_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_668_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_669_declared[] = {GF_STATUS_OK, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_670_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_STATE, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_671_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
 inline constexpr Violation block_671_violations[] = {Violation{1U, no_parameter}};
-inline constexpr gf_status block_672_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_673_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_674_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_675_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_676_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_672_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_DISPOSED, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_673_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_674_declared[] = {GF_STATUS_OK, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_675_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_675_violations[] = {Violation{1U, no_parameter}};
+inline constexpr gf_status block_676_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_WRONG_HANDLE_KIND, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_677_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr Violation block_677_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
 inline constexpr gf_status block_678_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_679_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_680_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_680_declared[] = {GF_STATUS_OK, GF_STATUS_BUFFER_TOO_SMALL, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_681_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr Violation block_681_violations[] = {Violation{3U, no_parameter}, Violation{1U, 2U}};
 inline constexpr gf_status block_682_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
-inline constexpr gf_status block_683_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_683_declared[] = {GF_STATUS_OK, GF_STATUS_STALE_HANDLE};
 inline constexpr gf_status block_684_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_685_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_686_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_687_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
+inline constexpr gf_status block_688_declared[] = {GF_STATUS_OK, GF_STATUS_INVALID_ARGUMENT, GF_STATUS_STALE_HANDLE};
 
-inline constexpr std::array<Block, 685U> abi_blocks{
+inline constexpr std::array<Block, 689U> abi_blocks{
     Block{"gf_abi.application.state", Mode::legal, 0U, Model::none, no_state, no_state, &invoke_application_state, "", std::span<const gf_status>(block_0_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
     Block{"gf_abi.application.state.misuse.state_state", Mode::misuse, 0U, Model::none, no_state, no_state, &invoke_application_state, "", std::span<const gf_status>(block_1_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_1_violations)},
     Block{"gf_abi.application.set_program_identity", Mode::legal, 0U, Model::none, no_state, no_state, &invoke_application_set_program_identity, "", std::span<const gf_status>(block_2_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
@@ -4216,427 +4224,431 @@ inline constexpr std::array<Block, 685U> abi_blocks{
     Block{"gf_abi.data_grid.cancel_edit.alive", Mode::legal, 6U, Model::object, 0U, no_state, &invoke_data_grid_cancel_edit, "data_grid_view", std::span<const gf_status>(block_261_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
     Block{"gf_abi.data_grid.cancel_edit.disposed", Mode::legal, 6U, Model::object, 2U, no_state, &invoke_data_grid_cancel_edit, "data_grid_view", std::span<const gf_status>(block_262_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
     Block{"gf_abi.diagnostics.shadow_frames", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_shadow_frames, "", std::span<const gf_status>(block_263_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.set_invalidation_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_set_invalidation_overlay, "", std::span<const gf_status>(block_264_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.invalidation_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_invalidation_overlay, "", std::span<const gf_status>(block_265_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.failure_snapshot", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_failure_snapshot, "", std::span<const gf_status>(block_266_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.clear_failure_snapshot", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_clear_failure_snapshot, "", std::span<const gf_status>(block_267_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.set_exception_reflection", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_set_exception_reflection, "", std::span<const gf_status>(block_268_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.exception_reflection", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_exception_reflection, "", std::span<const gf_status>(block_269_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.failure_detail", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_failure_detail, "", std::span<const gf_status>(block_270_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.set_diagnostic_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_set_diagnostic_overlay, "", std::span<const gf_status>(block_271_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.diagnostics.toggle_diagnostic_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_toggle_diagnostic_overlay, "", std::span<const gf_status>(block_272_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.dispatch.run_pending", Mode::legal, 8U, Model::none, no_state, no_state, &invoke_dispatch_run_pending, "", std::span<const gf_status>(block_273_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.dispatch.run_pending.misuse.run_pending_invoked", Mode::misuse, 8U, Model::none, no_state, no_state, &invoke_dispatch_run_pending, "", std::span<const gf_status>(block_274_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_274_violations)},
-    Block{"gf_abi.docking.register_panel.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_register_panel, "dock_workspace", std::span<const gf_status>(block_275_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.register_panel.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_register_panel, "dock_workspace", std::span<const gf_status>(block_276_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_panel_content.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_panel_content, "dock_workspace", std::span<const gf_status>(block_277_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_panel_content.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_panel_content, "dock_workspace", std::span<const gf_status>(block_278_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_panel_title.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_panel_title, "dock_workspace", std::span<const gf_status>(block_279_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_panel_title.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_panel_title, "dock_workspace", std::span<const gf_status>(block_280_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.apply_edit.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_apply_edit, "dock_workspace", std::span<const gf_status>(block_281_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.apply_edit.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_apply_edit, "dock_workspace", std::span<const gf_status>(block_282_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.locate.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_locate, "dock_workspace", std::span<const gf_status>(block_283_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.locate.misuse.locate_location", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_locate, "dock_workspace", std::span<const gf_status>(block_284_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_284_violations)},
-    Block{"gf_abi.docking.locate.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_locate, "dock_workspace", std::span<const gf_status>(block_285_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.save_layout.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_save_layout, "dock_workspace", std::span<const gf_status>(block_286_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.save_layout.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_save_layout, "dock_workspace", std::span<const gf_status>(block_287_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.load_layout.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_load_layout, "dock_workspace", std::span<const gf_status>(block_288_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.load_layout.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_load_layout, "dock_workspace", std::span<const gf_status>(block_289_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.activate_panel.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_activate_panel, "dock_workspace", std::span<const gf_status>(block_290_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.activate_panel.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_activate_panel, "dock_workspace", std::span<const gf_status>(block_291_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.attach_windows.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_attach_windows, "dock_workspace", std::span<const gf_status>(block_292_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.attach_windows.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_attach_windows, "dock_workspace", std::span<const gf_status>(block_293_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.document_area.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_document_area, "dock_workspace", std::span<const gf_status>(block_294_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.document_area.misuse.document_area_node", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_document_area, "dock_workspace", std::span<const gf_status>(block_295_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_295_violations)},
-    Block{"gf_abi.docking.document_area.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_document_area, "dock_workspace", std::span<const gf_status>(block_296_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.panel_at.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_panel_at, "dock_workspace", std::span<const gf_status>(block_297_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.panel_at.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_panel_at, "dock_workspace", std::span<const gf_status>(block_298_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.floating_sites.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_floating_sites, "dock_workspace", std::span<const gf_status>(block_299_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.floating_sites.misuse.floating_sites_sites", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_floating_sites, "dock_workspace", std::span<const gf_status>(block_300_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_300_violations)},
-    Block{"gf_abi.docking.floating_sites.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_floating_sites, "dock_workspace", std::span<const gf_status>(block_301_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.floating_site.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_floating_site, "dock_workspace", std::span<const gf_status>(block_302_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.floating_site.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_floating_site, "dock_workspace", std::span<const gf_status>(block_303_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.update_panel.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_update_panel, "dock_workspace", std::span<const gf_status>(block_304_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.update_panel.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_update_panel, "dock_workspace", std::span<const gf_status>(block_305_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_options.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_options, "dock_workspace", std::span<const gf_status>(block_306_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_options.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_options, "dock_workspace", std::span<const gf_status>(block_307_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_floating_window_visibility.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_floating_window_visibility, "dock_workspace", std::span<const gf_status>(block_308_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_floating_window_visibility.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_floating_window_visibility, "dock_workspace", std::span<const gf_status>(block_309_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.document_presentation.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_document_presentation, "dock_workspace", std::span<const gf_status>(block_310_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.document_presentation.misuse.document_presentation_presentation", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_document_presentation, "dock_workspace", std::span<const gf_status>(block_311_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_311_violations)},
-    Block{"gf_abi.docking.document_presentation.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_document_presentation, "dock_workspace", std::span<const gf_status>(block_312_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.arrange_frames.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_arrange_frames, "dock_workspace", std::span<const gf_status>(block_313_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.arrange_frames.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_arrange_frames, "dock_workspace", std::span<const gf_status>(block_314_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.frame_memory.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_frame_memory, "dock_workspace", std::span<const gf_status>(block_315_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.frame_memory.misuse.frame_memory_frame", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_frame_memory, "dock_workspace", std::span<const gf_status>(block_316_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_316_violations)},
-    Block{"gf_abi.docking.frame_memory.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_frame_memory, "dock_workspace", std::span<const gf_status>(block_317_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_frame_icons_at_bottom.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_frame_icons_at_bottom, "dock_workspace", std::span<const gf_status>(block_318_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_frame_icons_at_bottom.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_frame_icons_at_bottom, "dock_workspace", std::span<const gf_status>(block_319_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.area_document_count.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_area_document_count, "dock_workspace", std::span<const gf_status>(block_320_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.area_document_count.misuse.area_document_count_count", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_area_document_count, "dock_workspace", std::span<const gf_status>(block_321_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_321_violations)},
-    Block{"gf_abi.docking.area_document_count.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_area_document_count, "dock_workspace", std::span<const gf_status>(block_322_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.area_document_at.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_area_document_at, "dock_workspace", std::span<const gf_status>(block_323_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.area_document_at.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_area_document_at, "dock_workspace", std::span<const gf_status>(block_324_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.area_active_document.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_area_active_document, "dock_workspace", std::span<const gf_status>(block_325_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.area_active_document.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_area_active_document, "dock_workspace", std::span<const gf_status>(block_326_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_panel_menu_strip.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_panel_menu_strip, "dock_workspace", std::span<const gf_status>(block_327_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.set_panel_menu_strip.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_panel_menu_strip, "dock_workspace", std::span<const gf_status>(block_328_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.docking.merged_document.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_merged_document, "dock_workspace", std::span<const gf_status>(block_329_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.docking.merged_document.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_merged_document, "dock_workspace", std::span<const gf_status>(block_330_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.events.disconnect", Mode::legal, 10U, Model::none, no_state, no_state, &invoke_events_disconnect, "", std::span<const gf_status>(block_331_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.events.write_field", Mode::legal, 10U, Model::none, no_state, no_state, &invoke_events_write_field, "", std::span<const gf_status>(block_332_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.events.field_element", Mode::legal, 10U, Model::none, no_state, no_state, &invoke_events_field_element, "", std::span<const gf_status>(block_333_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.fonts.family_id", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_family_id, "", std::span<const gf_status>(block_334_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.fonts.family_id.misuse.family_id_family", Mode::misuse, 11U, Model::none, no_state, no_state, &invoke_fonts_family_id, "", std::span<const gf_status>(block_335_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_335_violations)},
-    Block{"gf_abi.fonts.family_name", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_family_name, "", std::span<const gf_status>(block_336_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.fonts.load_family", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_load_family, "", std::span<const gf_status>(block_337_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.fonts.load_family.misuse.load_family_faces", Mode::misuse, 11U, Model::none, no_state, no_state, &invoke_fonts_load_family, "", std::span<const gf_status>(block_338_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_338_violations)},
-    Block{"gf_abi.fonts.unload_family", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_unload_family, "", std::span<const gf_status>(block_339_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.attach.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_attach, "help_book_system", std::span<const gf_status>(block_340_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.attach.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_attach, "help_book_system", std::span<const gf_status>(block_341_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.help.detach.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_detach, "help_book_system", std::span<const gf_status>(block_342_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.detach.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_detach, "help_book_system", std::span<const gf_status>(block_343_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.help.load_built_in.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_load_built_in, "help_book_system", std::span<const gf_status>(block_344_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.load_built_in.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_load_built_in, "help_book_system", std::span<const gf_status>(block_345_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.resolve.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_resolve, "help_book_system", std::span<const gf_status>(block_346_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.resolve.misuse.resolve_home", Mode::misuse, 12U, Model::object, 0U, no_state, &invoke_help_resolve, "help_book_system", std::span<const gf_status>(block_347_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_347_violations)},
-    Block{"gf_abi.help.resolve.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_resolve, "help_book_system", std::span<const gf_status>(block_348_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.help.enter_help_mode.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_enter_help_mode, "help_book_system", std::span<const gf_status>(block_349_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.enter_help_mode.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_enter_help_mode, "help_book_system", std::span<const gf_status>(block_350_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.help.cancel_help_mode.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_cancel_help_mode, "help_book_system", std::span<const gf_status>(block_351_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.cancel_help_mode.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_cancel_help_mode, "help_book_system", std::span<const gf_status>(block_352_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.load_translation.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_load_translation, "help_book_system", std::span<const gf_status>(block_353_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.load_translation.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_load_translation, "help_book_system", std::span<const gf_status>(block_354_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.load_user_overrides.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_load_user_overrides, "help_book_system", std::span<const gf_status>(block_355_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.load_user_overrides.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_load_user_overrides, "help_book_system", std::span<const gf_status>(block_356_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.clear_user_overrides.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_clear_user_overrides, "help_book_system", std::span<const gf_status>(block_357_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.clear_user_overrides.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_clear_user_overrides, "help_book_system", std::span<const gf_status>(block_358_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.use_built_in_language.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_use_built_in_language, "help_book_system", std::span<const gf_status>(block_359_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.use_built_in_language.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_use_built_in_language, "help_book_system", std::span<const gf_status>(block_360_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.read_field.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_read_field, "help_book_system", std::span<const gf_status>(block_361_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.help.read_field.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_read_field, "help_book_system", std::span<const gf_status>(block_362_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.host.capabilities", Mode::legal, 13U, Model::none, no_state, no_state, &invoke_host_capabilities, "", std::span<const gf_status>(block_363_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.host.capabilities.misuse.capabilities_record", Mode::misuse, 13U, Model::none, no_state, no_state, &invoke_host_capabilities, "", std::span<const gf_status>(block_364_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_364_violations)},
-    Block{"gf_abi.host.platform_name", Mode::legal, 13U, Model::none, no_state, no_state, &invoke_host_platform_name, "", std::span<const gf_status>(block_365_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.host.dialog_path_at", Mode::legal, 13U, Model::none, no_state, no_state, &invoke_host_dialog_path_at, "", std::span<const gf_status>(block_366_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.column_count.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_column_count, "list_view", std::span<const gf_status>(block_367_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.column_count.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_column_count, "list_view", std::span<const gf_status>(block_368_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.column_count.misuse.column_count_count", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_column_count, "list_view", std::span<const gf_status>(block_369_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_369_violations)},
-    Block{"gf_abi.list_view.column_at.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_column_at, "list_view", std::span<const gf_status>(block_370_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.column_at.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_column_at, "list_view", std::span<const gf_status>(block_371_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_columns.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_columns, "list_view", std::span<const gf_status>(block_372_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_columns.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_columns, "list_view", std::span<const gf_status>(block_373_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_column_width.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_column_width, "list_view", std::span<const gf_status>(block_374_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_column_width.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_column_width, "list_view", std::span<const gf_status>(block_375_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.item_count.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_item_count, "list_view", std::span<const gf_status>(block_376_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.item_count.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_item_count, "list_view", std::span<const gf_status>(block_377_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.item_count.misuse.item_count_count", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_item_count, "list_view", std::span<const gf_status>(block_378_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_378_violations)},
-    Block{"gf_abi.list_view.item_at.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_item_at, "list_view", std::span<const gf_status>(block_379_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.item_at.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_item_at, "list_view", std::span<const gf_status>(block_380_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.item_sub_item.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_item_sub_item, "list_view", std::span<const gf_status>(block_381_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.item_sub_item.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_item_sub_item, "list_view", std::span<const gf_status>(block_382_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_items.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_items, "list_view", std::span<const gf_status>(block_383_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_items.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_items, "list_view", std::span<const gf_status>(block_384_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.index_of.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_index_of, "list_view", std::span<const gf_status>(block_385_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.index_of.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_index_of, "list_view", std::span<const gf_status>(block_386_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.index_of.misuse.index_of_index", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_index_of, "list_view", std::span<const gf_status>(block_387_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_387_violations)},
-    Block{"gf_abi.list_view.set_item_checked.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_item_checked, "list_view", std::span<const gf_status>(block_388_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_item_checked.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_item_checked, "list_view", std::span<const gf_status>(block_389_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.group_count.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_group_count, "list_view", std::span<const gf_status>(block_390_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.group_count.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_group_count, "list_view", std::span<const gf_status>(block_391_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.group_count.misuse.group_count_count", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_group_count, "list_view", std::span<const gf_status>(block_392_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_392_violations)},
-    Block{"gf_abi.list_view.group_at.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_group_at, "list_view", std::span<const gf_status>(block_393_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.group_at.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_group_at, "list_view", std::span<const gf_status>(block_394_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_groups.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_groups, "list_view", std::span<const gf_status>(block_395_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_groups.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_groups, "list_view", std::span<const gf_status>(block_396_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.selected_items.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_selected_items, "list_view", std::span<const gf_status>(block_397_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.selected_items.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_selected_items, "list_view", std::span<const gf_status>(block_398_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.selected_items.misuse.selected_items_indices", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_selected_items, "list_view", std::span<const gf_status>(block_399_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_399_violations)},
-    Block{"gf_abi.list_view.set_selected.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_selected, "list_view", std::span<const gf_status>(block_400_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_selected.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_selected, "list_view", std::span<const gf_status>(block_401_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.select_all.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_select_all, "list_view", std::span<const gf_status>(block_402_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.select_all.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_select_all, "list_view", std::span<const gf_status>(block_403_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.clear_selection.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_clear_selection, "list_view", std::span<const gf_status>(block_404_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.clear_selection.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_clear_selection, "list_view", std::span<const gf_status>(block_405_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.focused_item.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_focused_item, "list_view", std::span<const gf_status>(block_406_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.focused_item.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_focused_item, "list_view", std::span<const gf_status>(block_407_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.focused_item.misuse.focused_item_index", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_focused_item, "list_view", std::span<const gf_status>(block_408_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_408_violations)},
-    Block{"gf_abi.list_view.set_focused_item.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_focused_item, "list_view", std::span<const gf_status>(block_409_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_focused_item.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_focused_item, "list_view", std::span<const gf_status>(block_410_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.ensure_visible.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_ensure_visible, "list_view", std::span<const gf_status>(block_411_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.ensure_visible.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_ensure_visible, "list_view", std::span<const gf_status>(block_412_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_sort_indicator.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_sort_indicator, "list_view", std::span<const gf_status>(block_413_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.set_sort_indicator.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_sort_indicator, "list_view", std::span<const gf_status>(block_414_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.sort_items.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_sort_items, "list_view", std::span<const gf_status>(block_415_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.list_view.sort_items.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_sort_items, "list_view", std::span<const gf_status>(block_416_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.create", Mode::legal, 15U, Model::none, no_state, no_state, &invoke_objects_create, "", std::span<const gf_status>(block_417_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.create.misuse.create_object", Mode::misuse, 15U, Model::none, no_state, no_state, &invoke_objects_create, "", std::span<const gf_status>(block_418_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_418_violations)},
-    Block{"gf_abi.objects.retain.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_retain, "label", std::span<const gf_status>(block_419_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.retain.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_retain, "label", std::span<const gf_status>(block_420_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.release.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_release, "label", std::span<const gf_status>(block_421_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.release.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_release, "label", std::span<const gf_status>(block_422_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.dispose.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_dispose, "label", std::span<const gf_status>(block_423_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.dispose.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_dispose, "label", std::span<const gf_status>(block_424_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.state.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_state, "label", std::span<const gf_status>(block_425_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.state.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_state, "label", std::span<const gf_status>(block_426_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.state.misuse.state_state", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_state, "label", std::span<const gf_status>(block_427_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_427_violations)},
-    Block{"gf_abi.objects.type_id.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_type_id, "label", std::span<const gf_status>(block_428_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.type_id.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_type_id, "label", std::span<const gf_status>(block_429_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.stable_id.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_stable_id, "label", std::span<const gf_status>(block_430_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.stable_id.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_stable_id, "label", std::span<const gf_status>(block_431_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.insert_child.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_insert_child, "label", std::span<const gf_status>(block_432_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.insert_child.outside.disposed", Mode::misuse, 15U, Model::object, 2U, no_state, &invoke_objects_insert_child, "label", std::span<const gf_status>(block_433_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.objects.remove_child.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_remove_child, "label", std::span<const gf_status>(block_434_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.remove_child.outside.disposed", Mode::misuse, 15U, Model::object, 2U, no_state, &invoke_objects_remove_child, "label", std::span<const gf_status>(block_435_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.objects.child_count.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_child_count, "label", std::span<const gf_status>(block_436_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.child_count.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_child_count, "label", std::span<const gf_status>(block_437_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.child_count.misuse.child_count_count", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_child_count, "label", std::span<const gf_status>(block_438_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_438_violations)},
-    Block{"gf_abi.objects.child_at.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_child_at, "label", std::span<const gf_status>(block_439_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.child_at.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_child_at, "label", std::span<const gf_status>(block_440_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.child_at.misuse.child_at_child", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_child_at, "label", std::span<const gf_status>(block_441_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_441_violations)},
-    Block{"gf_abi.objects.parent.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_parent, "label", std::span<const gf_status>(block_442_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.parent.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_parent, "label", std::span<const gf_status>(block_443_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.parent.misuse.parent_parent", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_parent, "label", std::span<const gf_status>(block_444_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_444_violations)},
-    Block{"gf_abi.objects.create_with", Mode::legal, 15U, Model::none, no_state, no_state, &invoke_objects_create_with, "", std::span<const gf_status>(block_445_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.objects.create_with.misuse.create_with_object", Mode::misuse, 15U, Model::none, no_state, no_state, &invoke_objects_create_with, "", std::span<const gf_status>(block_446_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_446_violations)},
-    Block{"gf_abi.objects.create_with.misuse.create_with_arguments", Mode::misuse, 15U, Model::none, no_state, no_state, &invoke_objects_create_with, "", std::span<const gf_status>(block_447_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_447_violations)},
-    Block{"gf_abi.overlays.open_overlay.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_open_overlay, "panel", std::span<const gf_status>(block_448_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.open_overlay.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_open_overlay, "panel", std::span<const gf_status>(block_449_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.close_overlay.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_close_overlay, "panel", std::span<const gf_status>(block_450_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.close_overlay.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_close_overlay, "panel", std::span<const gf_status>(block_451_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.set_tool_tip.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_set_tool_tip, "panel", std::span<const gf_status>(block_452_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.set_tool_tip.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_set_tool_tip, "panel", std::span<const gf_status>(block_453_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.show_tool_tip.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_show_tool_tip, "panel", std::span<const gf_status>(block_454_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.show_tool_tip.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_show_tool_tip, "panel", std::span<const gf_status>(block_455_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.hide_tool_tip.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_hide_tool_tip, "panel", std::span<const gf_status>(block_456_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.hide_tool_tip.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_hide_tool_tip, "panel", std::span<const gf_status>(block_457_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.close_anchored.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_close_anchored, "panel", std::span<const gf_status>(block_458_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.close_anchored.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_close_anchored, "panel", std::span<const gf_status>(block_459_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.set_tool_tips_shown", Mode::legal, 16U, Model::none, no_state, no_state, &invoke_overlays_set_tool_tips_shown, "", std::span<const gf_status>(block_460_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.tool_tips_shown", Mode::legal, 16U, Model::none, no_state, no_state, &invoke_overlays_tool_tips_shown, "", std::span<const gf_status>(block_461_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.overlays.tool_tips_shown.misuse.tool_tips_shown_shown", Mode::misuse, 16U, Model::none, no_state, no_state, &invoke_overlays_tool_tips_shown, "", std::span<const gf_status>(block_462_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_462_violations)},
-    Block{"gf_abi.properties.get.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_get, "text_box", std::span<const gf_status>(block_463_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.get.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_get, "text_box", std::span<const gf_status>(block_464_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.properties.set.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_set, "text_box", std::span<const gf_status>(block_465_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.set.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_set, "text_box", std::span<const gf_status>(block_466_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.properties.reset.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_reset, "text_box", std::span<const gf_status>(block_467_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.reset.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_reset, "text_box", std::span<const gf_status>(block_468_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.properties.element_at.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_element_at, "text_box", std::span<const gf_status>(block_469_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.element_at.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_element_at, "text_box", std::span<const gf_status>(block_470_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.properties.read_elements.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_read_elements, "text_box", std::span<const gf_status>(block_471_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.read_elements.misuse.read_elements_text_buffer", Mode::misuse, 17U, Model::object, 0U, no_state, &invoke_properties_read_elements, "text_box", std::span<const gf_status>(block_472_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_472_violations)},
-    Block{"gf_abi.properties.read_elements.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_read_elements, "text_box", std::span<const gf_status>(block_473_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.properties.get_at.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_get_at, "text_box", std::span<const gf_status>(block_474_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.get_at.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_get_at, "text_box", std::span<const gf_status>(block_475_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.properties.set_at.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_set_at, "text_box", std::span<const gf_status>(block_476_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.properties.set_at.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_set_at, "text_box", std::span<const gf_status>(block_477_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.select_objects.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_select_objects, "property_grid", std::span<const gf_status>(block_478_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.select_objects.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_select_objects, "property_grid", std::span<const gf_status>(block_479_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.refresh.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_refresh, "property_grid", std::span<const gf_status>(block_480_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.refresh.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_refresh, "property_grid", std::span<const gf_status>(block_481_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.try_set_text.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_try_set_text, "property_grid", std::span<const gf_status>(block_482_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.try_set_text.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_try_set_text, "property_grid", std::span<const gf_status>(block_483_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.try_set_text.misuse.try_set_text_accepted", Mode::misuse, 18U, Model::object, 0U, no_state, &invoke_property_grid_try_set_text, "property_grid", std::span<const gf_status>(block_484_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_484_violations)},
-    Block{"gf_abi.property_grid.reset_property.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_reset_property, "property_grid", std::span<const gf_status>(block_485_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.reset_property.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_reset_property, "property_grid", std::span<const gf_status>(block_486_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.reset_property.misuse.reset_property_reset", Mode::misuse, 18U, Model::object, 0U, no_state, &invoke_property_grid_reset_property, "property_grid", std::span<const gf_status>(block_487_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_487_violations)},
-    Block{"gf_abi.property_grid.activate_editor.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_activate_editor, "property_grid", std::span<const gf_status>(block_488_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.activate_editor.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_activate_editor, "property_grid", std::span<const gf_status>(block_489_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.property_grid.activate_editor.misuse.activate_editor_activated", Mode::misuse, 18U, Model::object, 0U, no_state, &invoke_property_grid_activate_editor, "property_grid", std::span<const gf_status>(block_490_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_490_violations)},
-    Block{"gf_abi.rules.remove", Mode::legal, 19U, Model::none, no_state, no_state, &invoke_rules_remove, "", std::span<const gf_status>(block_491_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.rules.state", Mode::legal, 19U, Model::none, no_state, no_state, &invoke_rules_state, "", std::span<const gf_status>(block_492_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.rules.state.misuse.state_state", Mode::misuse, 19U, Model::none, no_state, no_state, &invoke_rules_state, "", std::span<const gf_status>(block_493_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_493_violations)},
-    Block{"gf_abi.runtime.version", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_version, "", std::span<const gf_status>(block_494_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.version.misuse.version_info", Mode::misuse, 20U, Model::none, no_state, no_state, &invoke_runtime_version, "", std::span<const gf_status>(block_495_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_495_violations)},
-    Block{"gf_abi.runtime.error_detail", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_error_detail, "", std::span<const gf_status>(block_496_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.error_detail.misuse.error_detail_buffer", Mode::misuse, 20U, Model::none, no_state, no_state, &invoke_runtime_error_detail, "", std::span<const gf_status>(block_497_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_497_violations)},
-    Block{"gf_abi.runtime.clear_error", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_clear_error, "", std::span<const gf_status>(block_498_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_show", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_splashscreen_show, "", std::span<const gf_status>(block_499_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_set_status.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_status, "", std::span<const gf_status>(block_500_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_set_status.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_status, "", std::span<const gf_status>(block_501_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_set_progress.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_progress, "", std::span<const gf_status>(block_502_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_set_progress.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_progress, "", std::span<const gf_status>(block_503_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_close.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_close, "", std::span<const gf_status>(block_504_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_close.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_close, "", std::span<const gf_status>(block_505_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_state.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_state, "", std::span<const gf_status>(block_506_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_state.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_state, "", std::span<const gf_status>(block_507_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.runtime.splashscreen_state.misuse.splashscreen_state_state", Mode::misuse, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_state, "", std::span<const gf_status>(block_508_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_508_violations)},
-    Block{"gf_abi.schema.vocabulary_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_vocabulary_count, "", std::span<const gf_status>(block_509_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.vocabulary_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_vocabulary_at, "", std::span<const gf_status>(block_510_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.type_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_type_count, "", std::span<const gf_status>(block_511_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.type_count.misuse.type_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_type_count, "", std::span<const gf_status>(block_512_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_512_violations)},
-    Block{"gf_abi.schema.find_type", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_find_type, "", std::span<const gf_status>(block_513_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.find_type.misuse.find_type_type", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_find_type, "", std::span<const gf_status>(block_514_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_514_violations)},
-    Block{"gf_abi.schema.type_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_type_at, "", std::span<const gf_status>(block_515_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.item_system_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_item_system_at, "", std::span<const gf_status>(block_516_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.part_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_part_at, "", std::span<const gf_status>(block_517_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_state_at, "", std::span<const gf_status>(block_518_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.state_at.misuse.state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_state_at, "", std::span<const gf_status>(block_519_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_519_violations)},
-    Block{"gf_abi.schema.custom_state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_custom_state_at, "", std::span<const gf_status>(block_520_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.custom_state_at.misuse.custom_state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_custom_state_at, "", std::span<const gf_status>(block_521_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_521_violations)},
-    Block{"gf_abi.schema.property_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_property_at, "", std::span<const gf_status>(block_522_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_choice_at, "", std::span<const gf_status>(block_523_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.interaction_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_interaction_at, "", std::span<const gf_status>(block_524_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.engine", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_engine, "", std::span<const gf_status>(block_525_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.primitive_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_primitive_at, "", std::span<const gf_status>(block_526_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.primitive_name_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_primitive_name_at, "", std::span<const gf_status>(block_527_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.parameter_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_parameter_at, "", std::span<const gf_status>(block_528_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.parameter_choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_parameter_choice_at, "", std::span<const gf_status>(block_529_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.parameter_choice_at.misuse.parameter_choice_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_parameter_choice_at, "", std::span<const gf_status>(block_530_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_530_violations)},
-    Block{"gf_abi.schema.effect_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_effect_count, "", std::span<const gf_status>(block_531_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.effect_count.misuse.effect_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_effect_count, "", std::span<const gf_status>(block_532_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_532_violations)},
-    Block{"gf_abi.schema.effect_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_effect_at, "", std::span<const gf_status>(block_533_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.child_property_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_child_property_count, "", std::span<const gf_status>(block_534_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.child_property_count.misuse.child_property_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_child_property_count, "", std::span<const gf_status>(block_535_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_535_violations)},
-    Block{"gf_abi.schema.child_property_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_child_property_at, "", std::span<const gf_status>(block_536_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.child_choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_child_choice_at, "", std::span<const gf_status>(block_537_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_count, "", std::span<const gf_status>(block_538_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_count.misuse.composite_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_count, "", std::span<const gf_status>(block_539_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_539_violations)},
-    Block{"gf_abi.schema.composite_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_at, "", std::span<const gf_status>(block_540_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_part_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_part_at, "", std::span<const gf_status>(block_541_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_state_at, "", std::span<const gf_status>(block_542_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_state_at.misuse.composite_state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_state_at, "", std::span<const gf_status>(block_543_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_543_violations)},
-    Block{"gf_abi.schema.composite_custom_state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_custom_state_at, "", std::span<const gf_status>(block_544_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_custom_state_at.misuse.composite_custom_state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_custom_state_at, "", std::span<const gf_status>(block_545_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_545_violations)},
-    Block{"gf_abi.schema.composite_property_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_property_at, "", std::span<const gf_status>(block_546_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_choice_at, "", std::span<const gf_status>(block_547_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_event_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_event_at, "", std::span<const gf_status>(block_548_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_command_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_command_at, "", std::span<const gf_status>(block_549_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.schema.composite_command_at.misuse.composite_command_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_command_at, "", std::span<const gf_status>(block_550_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_550_violations)},
-    Block{"gf_abi.subsurfaces.set_root", Mode::legal, 22U, Model::none, no_state, no_state, &invoke_subsurfaces_set_root, "", std::span<const gf_status>(block_551_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.subsurfaces.state.alive", Mode::legal, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_state, "panel", std::span<const gf_status>(block_552_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.subsurfaces.state.misuse.state_state", Mode::misuse, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_state, "panel", std::span<const gf_status>(block_553_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_553_violations)},
-    Block{"gf_abi.subsurfaces.state.outside.disposed", Mode::misuse, 22U, Model::object, 2U, no_state, &invoke_subsurfaces_state, "panel", std::span<const gf_status>(block_554_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.subsurfaces.content_epoch.alive", Mode::legal, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_content_epoch, "panel", std::span<const gf_status>(block_555_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.subsurfaces.content_epoch.misuse.content_epoch_epoch", Mode::misuse, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_content_epoch, "panel", std::span<const gf_status>(block_556_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_556_violations)},
-    Block{"gf_abi.subsurfaces.content_epoch.outside.disposed", Mode::misuse, 22U, Model::object, 2U, no_state, &invoke_subsurfaces_content_epoch, "panel", std::span<const gf_status>(block_557_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.subsurfaces.failure.alive", Mode::legal, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_failure, "panel", std::span<const gf_status>(block_558_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.subsurfaces.failure.outside.disposed", Mode::misuse, 22U, Model::object, 2U, no_state, &invoke_subsurfaces_failure, "panel", std::span<const gf_status>(block_559_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.select.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_select, "text_box", std::span<const gf_status>(block_560_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.select.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_select, "text_box", std::span<const gf_status>(block_561_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.selection.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_selection, "text_box", std::span<const gf_status>(block_562_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.selection.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_selection, "text_box", std::span<const gf_status>(block_563_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.grapheme_boundary.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_grapheme_boundary, "text_box", std::span<const gf_status>(block_564_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.grapheme_boundary.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_grapheme_boundary, "text_box", std::span<const gf_status>(block_565_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.replace_range.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_replace_range, "text_box", std::span<const gf_status>(block_566_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.replace_range.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_replace_range, "text_box", std::span<const gf_status>(block_567_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.replace_range.misuse.replace_range_changed", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_replace_range, "text_box", std::span<const gf_status>(block_568_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_568_violations)},
-    Block{"gf_abi.text_editing.undo.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_undo, "text_box", std::span<const gf_status>(block_569_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.undo.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_undo, "text_box", std::span<const gf_status>(block_570_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.undo.misuse.undo_changed", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_undo, "text_box", std::span<const gf_status>(block_571_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_571_violations)},
-    Block{"gf_abi.text_editing.redo.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_redo, "text_box", std::span<const gf_status>(block_572_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.redo.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_redo, "text_box", std::span<const gf_status>(block_573_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.redo.misuse.redo_changed", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_redo, "text_box", std::span<const gf_status>(block_574_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_574_violations)},
-    Block{"gf_abi.text_editing.clear_undo_history.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_clear_undo_history, "text_box", std::span<const gf_status>(block_575_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.clear_undo_history.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_clear_undo_history, "text_box", std::span<const gf_status>(block_576_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.set_decorations.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_set_decorations, "text_box", std::span<const gf_status>(block_577_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.set_decorations.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_set_decorations, "text_box", std::span<const gf_status>(block_578_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.replace_decorations.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_replace_decorations, "text_box", std::span<const gf_status>(block_579_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.replace_decorations.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_replace_decorations, "text_box", std::span<const gf_status>(block_580_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.clear_decorations.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_clear_decorations, "text_box", std::span<const gf_status>(block_581_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.clear_decorations.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_clear_decorations, "text_box", std::span<const gf_status>(block_582_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.decoration_count.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_count, "text_box", std::span<const gf_status>(block_583_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.decoration_count.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_decoration_count, "text_box", std::span<const gf_status>(block_584_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.decoration_count.misuse.decoration_count_count", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_count, "text_box", std::span<const gf_status>(block_585_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_585_violations)},
-    Block{"gf_abi.text_editing.decoration_at.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_at, "text_box", std::span<const gf_status>(block_586_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.decoration_at.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_decoration_at, "text_box", std::span<const gf_status>(block_587_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.decoration_at.misuse.decoration_at_decoration", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_at, "text_box", std::span<const gf_status>(block_588_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_588_violations)},
-    Block{"gf_abi.text_editing.utf8_to_utf16_offset.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf8_to_utf16_offset, "text_box", std::span<const gf_status>(block_589_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.utf8_to_utf16_offset.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_utf8_to_utf16_offset, "text_box", std::span<const gf_status>(block_590_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.utf8_to_utf16_offset.misuse.utf8_to_utf16_offset_utf16_offset", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf8_to_utf16_offset, "text_box", std::span<const gf_status>(block_591_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_591_violations)},
-    Block{"gf_abi.text_editing.utf16_to_utf8_offset.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf16_to_utf8_offset, "text_box", std::span<const gf_status>(block_592_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.utf16_to_utf8_offset.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_utf16_to_utf8_offset, "text_box", std::span<const gf_status>(block_593_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.text_editing.utf16_to_utf8_offset.misuse.utf16_to_utf8_offset_utf8_offset", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf16_to_utf8_offset, "text_box", std::span<const gf_status>(block_594_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_594_violations)},
-    Block{"gf_abi.themes.load", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load, "", std::span<const gf_status>(block_595_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.reset", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_reset, "", std::span<const gf_status>(block_596_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.diagnostic_at", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_diagnostic_at, "", std::span<const gf_status>(block_597_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.diagnostic_text", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_diagnostic_text, "", std::span<const gf_status>(block_598_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.theme_id", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_theme_id, "", std::span<const gf_status>(block_599_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.publish_value", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_publish_value, "", std::span<const gf_status>(block_600_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.withdraw_value", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_withdraw_value, "", std::span<const gf_status>(block_601_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.published_value", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_published_value, "", std::span<const gf_status>(block_602_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.load_image", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load_image, "", std::span<const gf_status>(block_603_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.load_image.misuse.load_image_bytes", Mode::misuse, 24U, Model::none, no_state, no_state, &invoke_themes_load_image, "", std::span<const gf_status>(block_604_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_604_violations)},
-    Block{"gf_abi.themes.remove_image", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_remove_image, "", std::span<const gf_status>(block_605_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.load_pixels", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load_pixels, "", std::span<const gf_status>(block_606_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.load_sheet", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load_sheet, "", std::span<const gf_status>(block_607_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.set_user_theme_policy", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_set_user_theme_policy, "", std::span<const gf_status>(block_608_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.theme_request", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_theme_request, "", std::span<const gf_status>(block_609_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.themes.theme_request.misuse.theme_request_outcome", Mode::misuse, 24U, Model::none, no_state, no_state, &invoke_themes_theme_request, "", std::span<const gf_status>(block_610_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_610_violations)},
-    Block{"gf_abi.windows.request_close.outside.created", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_request_close, "window", std::span<const gf_status>(block_611_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_STATE, std::span<const Violation>{}},
-    Block{"gf_abi.windows.request_close.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_request_close, "window", std::span<const gf_status>(block_612_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_STATE, std::span<const Violation>{}},
-    Block{"gf_abi.windows.create", Mode::legal, 25U, Model::none, no_state, no_state, &invoke_windows_create, "", std::span<const gf_status>(block_613_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.interaction_count", Mode::legal, 25U, Model::none, no_state, no_state, &invoke_windows_interaction_count, "", std::span<const gf_status>(block_614_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.interaction_count.misuse.interaction_count_count", Mode::misuse, 25U, Model::none, no_state, no_state, &invoke_windows_interaction_count, "", std::span<const gf_status>(block_615_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_615_violations)},
-    Block{"gf_abi.windows.interaction_at", Mode::legal, 25U, Model::none, no_state, no_state, &invoke_windows_interaction_at, "", std::span<const gf_status>(block_616_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.request_help.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_request_help, "window", std::span<const gf_status>(block_617_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.request_help.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_request_help, "window", std::span<const gf_status>(block_618_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.key_state.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_key_state, "window", std::span<const gf_status>(block_619_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.key_state.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_key_state, "window", std::span<const gf_status>(block_620_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.window_properties.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_window_properties, "window", std::span<const gf_status>(block_621_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.window_properties.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_window_properties, "window", std::span<const gf_status>(block_622_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.focused_control.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_focused_control, "window", std::span<const gf_status>(block_623_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.focused_control.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_focused_control, "window", std::span<const gf_status>(block_624_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.declare_band.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_declare_band, "window", std::span<const gf_status>(block_625_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.declare_band.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_declare_band, "window", std::span<const gf_status>(block_626_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.undeclare_band.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_undeclare_band, "window", std::span<const gf_status>(block_627_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.undeclare_band.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_undeclare_band, "window", std::span<const gf_status>(block_628_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_band_appearance.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_band_appearance, "window", std::span<const gf_status>(block_629_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_band_appearance.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_band_appearance, "window", std::span<const gf_status>(block_630_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.band_report.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_band_report, "window", std::span<const gf_status>(block_631_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.band_report.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_band_report, "window", std::span<const gf_status>(block_632_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_corner_preference.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_corner_preference, "window", std::span<const gf_status>(block_633_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_corner_preference.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_corner_preference, "window", std::span<const gf_status>(block_634_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.content_rect.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_content_rect, "window", std::span<const gf_status>(block_635_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.content_rect.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_content_rect, "window", std::span<const gf_status>(block_636_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.shaping.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_shaping, "window", std::span<const gf_status>(block_637_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.shaping.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_shaping, "window", std::span<const gf_status>(block_638_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.pointer_location.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_pointer_location, "window", std::span<const gf_status>(block_639_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.pointer_location.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_pointer_location, "window", std::span<const gf_status>(block_640_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.show_business_card.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_show_business_card, "window", std::span<const gf_status>(block_641_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.show_business_card.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_show_business_card, "window", std::span<const gf_status>(block_642_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_mdi_container.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_mdi_container, "window", std::span<const gf_status>(block_643_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_mdi_container.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_mdi_container, "window", std::span<const gf_status>(block_644_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_container.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_container, "window", std::span<const gf_status>(block_645_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_container.misuse.mdi_container_container", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_container, "window", std::span<const gf_status>(block_646_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_646_violations)},
-    Block{"gf_abi.windows.mdi_container.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_container, "window", std::span<const gf_status>(block_647_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_child_count.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_child_count, "window", std::span<const gf_status>(block_648_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_child_count.misuse.mdi_child_count_count", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_child_count, "window", std::span<const gf_status>(block_649_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_649_violations)},
-    Block{"gf_abi.windows.mdi_child_count.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_child_count, "window", std::span<const gf_status>(block_650_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_child_at.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_child_at, "window", std::span<const gf_status>(block_651_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_child_at.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_child_at, "window", std::span<const gf_status>(block_652_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.active_mdi_child.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_active_mdi_child, "window", std::span<const gf_status>(block_653_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.active_mdi_child.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_active_mdi_child, "window", std::span<const gf_status>(block_654_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.activate_mdi_child.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_activate_mdi_child, "window", std::span<const gf_status>(block_655_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.activate_mdi_child.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_activate_mdi_child, "window", std::span<const gf_status>(block_656_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.layout_mdi.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_layout_mdi, "window", std::span<const gf_status>(block_657_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.layout_mdi.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_layout_mdi, "window", std::span<const gf_status>(block_658_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_mdi_children_minimized_anchor_bottom.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_659_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_mdi_children_minimized_anchor_bottom.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_660_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_children_minimized_anchor_bottom.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_661_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.mdi_children_minimized_anchor_bottom.misuse.mdi_children_minimized_anchor_bottom_bottom", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_662_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_662_violations)},
-    Block{"gf_abi.windows.mdi_children_minimized_anchor_bottom.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_663_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_main_menu_strip.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_main_menu_strip, "window", std::span<const gf_status>(block_664_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.set_main_menu_strip.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_main_menu_strip, "window", std::span<const gf_status>(block_665_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.main_menu_strip.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_main_menu_strip, "window", std::span<const gf_status>(block_666_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.main_menu_strip.misuse.main_menu_strip_strip", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_main_menu_strip, "window", std::span<const gf_status>(block_667_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_667_violations)},
-    Block{"gf_abi.windows.main_menu_strip.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_main_menu_strip, "window", std::span<const gf_status>(block_668_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
-    Block{"gf_abi.windows.lifecycle.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_lifecycle, "window", std::span<const gf_status>(block_669_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.lifecycle.ended", Mode::legal, 25U, Model::window, 2U, no_state, &invoke_windows_lifecycle, "window", std::span<const gf_status>(block_670_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows.lifecycle.misuse.lifecycle_lifecycle", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_lifecycle, "window", std::span<const gf_status>(block_671_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_671_violations)},
-    Block{"gf_abi.windows_paint_endpoint.acquire", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_acquire, "", std::span<const gf_status>(block_672_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.configure", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_configure, "", std::span<const gf_status>(block_673_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.touch", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_touch, "", std::span<const gf_status>(block_674_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.drain", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_drain, "", std::span<const gf_status>(block_675_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.snapshot", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_snapshot, "", std::span<const gf_status>(block_676_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.snapshot.misuse.snapshot_buffer", Mode::misuse, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_snapshot, "", std::span<const gf_status>(block_677_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_677_violations)},
-    Block{"gf_abi.windows_paint_endpoint.submit_bgra", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_submit_bgra, "", std::span<const gf_status>(block_678_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.release", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_release, "", std::span<const gf_status>(block_679_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.get_dc", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_get_dc, "", std::span<const gf_status>(block_680_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.release_dc", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_release_dc, "", std::span<const gf_status>(block_681_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.publish_dc", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_publish_dc, "", std::span<const gf_status>(block_682_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.begin_write", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_begin_write, "", std::span<const gf_status>(block_683_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.windows_paint_endpoint.end_write", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_end_write, "", std::span<const gf_status>(block_684_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.shadow_frames.misuse.shadow_frames_buffer", Mode::misuse, 7U, Model::none, no_state, no_state, &invoke_diagnostics_shadow_frames, "", std::span<const gf_status>(block_264_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_264_violations)},
+    Block{"gf_abi.diagnostics.set_invalidation_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_set_invalidation_overlay, "", std::span<const gf_status>(block_265_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.invalidation_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_invalidation_overlay, "", std::span<const gf_status>(block_266_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.invalidation_overlay.misuse.invalidation_overlay_enabled", Mode::misuse, 7U, Model::none, no_state, no_state, &invoke_diagnostics_invalidation_overlay, "", std::span<const gf_status>(block_267_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_267_violations)},
+    Block{"gf_abi.diagnostics.failure_snapshot", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_failure_snapshot, "", std::span<const gf_status>(block_268_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.failure_snapshot.misuse.failure_snapshot_buffers", Mode::misuse, 7U, Model::none, no_state, no_state, &invoke_diagnostics_failure_snapshot, "", std::span<const gf_status>(block_269_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_269_violations)},
+    Block{"gf_abi.diagnostics.clear_failure_snapshot", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_clear_failure_snapshot, "", std::span<const gf_status>(block_270_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.set_exception_reflection", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_set_exception_reflection, "", std::span<const gf_status>(block_271_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.exception_reflection", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_exception_reflection, "", std::span<const gf_status>(block_272_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.exception_reflection.misuse.exception_reflection_enabled", Mode::misuse, 7U, Model::none, no_state, no_state, &invoke_diagnostics_exception_reflection, "", std::span<const gf_status>(block_273_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_273_violations)},
+    Block{"gf_abi.diagnostics.failure_detail", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_failure_detail, "", std::span<const gf_status>(block_274_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.set_diagnostic_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_set_diagnostic_overlay, "", std::span<const gf_status>(block_275_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.diagnostics.toggle_diagnostic_overlay", Mode::legal, 7U, Model::none, no_state, no_state, &invoke_diagnostics_toggle_diagnostic_overlay, "", std::span<const gf_status>(block_276_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.dispatch.run_pending", Mode::legal, 8U, Model::none, no_state, no_state, &invoke_dispatch_run_pending, "", std::span<const gf_status>(block_277_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.dispatch.run_pending.misuse.run_pending_invoked", Mode::misuse, 8U, Model::none, no_state, no_state, &invoke_dispatch_run_pending, "", std::span<const gf_status>(block_278_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_278_violations)},
+    Block{"gf_abi.docking.register_panel.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_register_panel, "dock_workspace", std::span<const gf_status>(block_279_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.register_panel.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_register_panel, "dock_workspace", std::span<const gf_status>(block_280_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_panel_content.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_panel_content, "dock_workspace", std::span<const gf_status>(block_281_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_panel_content.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_panel_content, "dock_workspace", std::span<const gf_status>(block_282_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_panel_title.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_panel_title, "dock_workspace", std::span<const gf_status>(block_283_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_panel_title.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_panel_title, "dock_workspace", std::span<const gf_status>(block_284_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.apply_edit.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_apply_edit, "dock_workspace", std::span<const gf_status>(block_285_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.apply_edit.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_apply_edit, "dock_workspace", std::span<const gf_status>(block_286_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.locate.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_locate, "dock_workspace", std::span<const gf_status>(block_287_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.locate.misuse.locate_location", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_locate, "dock_workspace", std::span<const gf_status>(block_288_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_288_violations)},
+    Block{"gf_abi.docking.locate.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_locate, "dock_workspace", std::span<const gf_status>(block_289_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.save_layout.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_save_layout, "dock_workspace", std::span<const gf_status>(block_290_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.save_layout.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_save_layout, "dock_workspace", std::span<const gf_status>(block_291_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.load_layout.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_load_layout, "dock_workspace", std::span<const gf_status>(block_292_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.load_layout.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_load_layout, "dock_workspace", std::span<const gf_status>(block_293_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.activate_panel.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_activate_panel, "dock_workspace", std::span<const gf_status>(block_294_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.activate_panel.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_activate_panel, "dock_workspace", std::span<const gf_status>(block_295_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.attach_windows.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_attach_windows, "dock_workspace", std::span<const gf_status>(block_296_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.attach_windows.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_attach_windows, "dock_workspace", std::span<const gf_status>(block_297_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.document_area.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_document_area, "dock_workspace", std::span<const gf_status>(block_298_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.document_area.misuse.document_area_node", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_document_area, "dock_workspace", std::span<const gf_status>(block_299_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_299_violations)},
+    Block{"gf_abi.docking.document_area.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_document_area, "dock_workspace", std::span<const gf_status>(block_300_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.panel_at.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_panel_at, "dock_workspace", std::span<const gf_status>(block_301_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.panel_at.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_panel_at, "dock_workspace", std::span<const gf_status>(block_302_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.floating_sites.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_floating_sites, "dock_workspace", std::span<const gf_status>(block_303_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.floating_sites.misuse.floating_sites_sites", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_floating_sites, "dock_workspace", std::span<const gf_status>(block_304_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_304_violations)},
+    Block{"gf_abi.docking.floating_sites.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_floating_sites, "dock_workspace", std::span<const gf_status>(block_305_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.floating_site.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_floating_site, "dock_workspace", std::span<const gf_status>(block_306_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.floating_site.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_floating_site, "dock_workspace", std::span<const gf_status>(block_307_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.update_panel.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_update_panel, "dock_workspace", std::span<const gf_status>(block_308_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.update_panel.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_update_panel, "dock_workspace", std::span<const gf_status>(block_309_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_options.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_options, "dock_workspace", std::span<const gf_status>(block_310_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_options.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_options, "dock_workspace", std::span<const gf_status>(block_311_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_floating_window_visibility.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_floating_window_visibility, "dock_workspace", std::span<const gf_status>(block_312_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_floating_window_visibility.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_floating_window_visibility, "dock_workspace", std::span<const gf_status>(block_313_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.document_presentation.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_document_presentation, "dock_workspace", std::span<const gf_status>(block_314_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.document_presentation.misuse.document_presentation_presentation", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_document_presentation, "dock_workspace", std::span<const gf_status>(block_315_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_315_violations)},
+    Block{"gf_abi.docking.document_presentation.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_document_presentation, "dock_workspace", std::span<const gf_status>(block_316_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.arrange_frames.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_arrange_frames, "dock_workspace", std::span<const gf_status>(block_317_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.arrange_frames.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_arrange_frames, "dock_workspace", std::span<const gf_status>(block_318_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.frame_memory.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_frame_memory, "dock_workspace", std::span<const gf_status>(block_319_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.frame_memory.misuse.frame_memory_frame", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_frame_memory, "dock_workspace", std::span<const gf_status>(block_320_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_320_violations)},
+    Block{"gf_abi.docking.frame_memory.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_frame_memory, "dock_workspace", std::span<const gf_status>(block_321_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_frame_icons_at_bottom.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_frame_icons_at_bottom, "dock_workspace", std::span<const gf_status>(block_322_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_frame_icons_at_bottom.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_frame_icons_at_bottom, "dock_workspace", std::span<const gf_status>(block_323_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.area_document_count.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_area_document_count, "dock_workspace", std::span<const gf_status>(block_324_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.area_document_count.misuse.area_document_count_count", Mode::misuse, 9U, Model::object, 0U, no_state, &invoke_docking_area_document_count, "dock_workspace", std::span<const gf_status>(block_325_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_325_violations)},
+    Block{"gf_abi.docking.area_document_count.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_area_document_count, "dock_workspace", std::span<const gf_status>(block_326_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.area_document_at.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_area_document_at, "dock_workspace", std::span<const gf_status>(block_327_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.area_document_at.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_area_document_at, "dock_workspace", std::span<const gf_status>(block_328_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.area_active_document.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_area_active_document, "dock_workspace", std::span<const gf_status>(block_329_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.area_active_document.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_area_active_document, "dock_workspace", std::span<const gf_status>(block_330_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_panel_menu_strip.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_set_panel_menu_strip, "dock_workspace", std::span<const gf_status>(block_331_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.set_panel_menu_strip.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_set_panel_menu_strip, "dock_workspace", std::span<const gf_status>(block_332_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.docking.merged_document.alive", Mode::legal, 9U, Model::object, 0U, no_state, &invoke_docking_merged_document, "dock_workspace", std::span<const gf_status>(block_333_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.docking.merged_document.outside.disposed", Mode::misuse, 9U, Model::object, 2U, no_state, &invoke_docking_merged_document, "dock_workspace", std::span<const gf_status>(block_334_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.events.disconnect", Mode::legal, 10U, Model::none, no_state, no_state, &invoke_events_disconnect, "", std::span<const gf_status>(block_335_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.events.write_field", Mode::legal, 10U, Model::none, no_state, no_state, &invoke_events_write_field, "", std::span<const gf_status>(block_336_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.events.field_element", Mode::legal, 10U, Model::none, no_state, no_state, &invoke_events_field_element, "", std::span<const gf_status>(block_337_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.fonts.family_id", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_family_id, "", std::span<const gf_status>(block_338_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.fonts.family_id.misuse.family_id_family", Mode::misuse, 11U, Model::none, no_state, no_state, &invoke_fonts_family_id, "", std::span<const gf_status>(block_339_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_339_violations)},
+    Block{"gf_abi.fonts.family_name", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_family_name, "", std::span<const gf_status>(block_340_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.fonts.load_family", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_load_family, "", std::span<const gf_status>(block_341_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.fonts.load_family.misuse.load_family_faces", Mode::misuse, 11U, Model::none, no_state, no_state, &invoke_fonts_load_family, "", std::span<const gf_status>(block_342_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_342_violations)},
+    Block{"gf_abi.fonts.unload_family", Mode::legal, 11U, Model::none, no_state, no_state, &invoke_fonts_unload_family, "", std::span<const gf_status>(block_343_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.attach.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_attach, "help_book_system", std::span<const gf_status>(block_344_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.attach.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_attach, "help_book_system", std::span<const gf_status>(block_345_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.help.detach.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_detach, "help_book_system", std::span<const gf_status>(block_346_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.detach.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_detach, "help_book_system", std::span<const gf_status>(block_347_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.help.load_built_in.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_load_built_in, "help_book_system", std::span<const gf_status>(block_348_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.load_built_in.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_load_built_in, "help_book_system", std::span<const gf_status>(block_349_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.resolve.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_resolve, "help_book_system", std::span<const gf_status>(block_350_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.resolve.misuse.resolve_home", Mode::misuse, 12U, Model::object, 0U, no_state, &invoke_help_resolve, "help_book_system", std::span<const gf_status>(block_351_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_351_violations)},
+    Block{"gf_abi.help.resolve.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_resolve, "help_book_system", std::span<const gf_status>(block_352_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.help.enter_help_mode.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_enter_help_mode, "help_book_system", std::span<const gf_status>(block_353_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.enter_help_mode.outside.disposed", Mode::misuse, 12U, Model::object, 2U, no_state, &invoke_help_enter_help_mode, "help_book_system", std::span<const gf_status>(block_354_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.help.cancel_help_mode.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_cancel_help_mode, "help_book_system", std::span<const gf_status>(block_355_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.cancel_help_mode.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_cancel_help_mode, "help_book_system", std::span<const gf_status>(block_356_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.load_translation.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_load_translation, "help_book_system", std::span<const gf_status>(block_357_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.load_translation.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_load_translation, "help_book_system", std::span<const gf_status>(block_358_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.load_user_overrides.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_load_user_overrides, "help_book_system", std::span<const gf_status>(block_359_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.load_user_overrides.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_load_user_overrides, "help_book_system", std::span<const gf_status>(block_360_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.clear_user_overrides.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_clear_user_overrides, "help_book_system", std::span<const gf_status>(block_361_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.clear_user_overrides.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_clear_user_overrides, "help_book_system", std::span<const gf_status>(block_362_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.use_built_in_language.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_use_built_in_language, "help_book_system", std::span<const gf_status>(block_363_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.use_built_in_language.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_use_built_in_language, "help_book_system", std::span<const gf_status>(block_364_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.read_field.alive", Mode::legal, 12U, Model::object, 0U, no_state, &invoke_help_read_field, "help_book_system", std::span<const gf_status>(block_365_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.help.read_field.disposed", Mode::legal, 12U, Model::object, 2U, no_state, &invoke_help_read_field, "help_book_system", std::span<const gf_status>(block_366_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.host.capabilities", Mode::legal, 13U, Model::none, no_state, no_state, &invoke_host_capabilities, "", std::span<const gf_status>(block_367_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.host.capabilities.misuse.capabilities_record", Mode::misuse, 13U, Model::none, no_state, no_state, &invoke_host_capabilities, "", std::span<const gf_status>(block_368_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_368_violations)},
+    Block{"gf_abi.host.platform_name", Mode::legal, 13U, Model::none, no_state, no_state, &invoke_host_platform_name, "", std::span<const gf_status>(block_369_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.host.dialog_path_at", Mode::legal, 13U, Model::none, no_state, no_state, &invoke_host_dialog_path_at, "", std::span<const gf_status>(block_370_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.column_count.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_column_count, "list_view", std::span<const gf_status>(block_371_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.column_count.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_column_count, "list_view", std::span<const gf_status>(block_372_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.column_count.misuse.column_count_count", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_column_count, "list_view", std::span<const gf_status>(block_373_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_373_violations)},
+    Block{"gf_abi.list_view.column_at.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_column_at, "list_view", std::span<const gf_status>(block_374_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.column_at.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_column_at, "list_view", std::span<const gf_status>(block_375_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_columns.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_columns, "list_view", std::span<const gf_status>(block_376_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_columns.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_columns, "list_view", std::span<const gf_status>(block_377_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_column_width.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_column_width, "list_view", std::span<const gf_status>(block_378_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_column_width.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_column_width, "list_view", std::span<const gf_status>(block_379_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.item_count.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_item_count, "list_view", std::span<const gf_status>(block_380_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.item_count.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_item_count, "list_view", std::span<const gf_status>(block_381_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.item_count.misuse.item_count_count", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_item_count, "list_view", std::span<const gf_status>(block_382_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_382_violations)},
+    Block{"gf_abi.list_view.item_at.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_item_at, "list_view", std::span<const gf_status>(block_383_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.item_at.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_item_at, "list_view", std::span<const gf_status>(block_384_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.item_sub_item.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_item_sub_item, "list_view", std::span<const gf_status>(block_385_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.item_sub_item.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_item_sub_item, "list_view", std::span<const gf_status>(block_386_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_items.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_items, "list_view", std::span<const gf_status>(block_387_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_items.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_items, "list_view", std::span<const gf_status>(block_388_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.index_of.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_index_of, "list_view", std::span<const gf_status>(block_389_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.index_of.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_index_of, "list_view", std::span<const gf_status>(block_390_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.index_of.misuse.index_of_index", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_index_of, "list_view", std::span<const gf_status>(block_391_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_391_violations)},
+    Block{"gf_abi.list_view.set_item_checked.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_item_checked, "list_view", std::span<const gf_status>(block_392_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_item_checked.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_item_checked, "list_view", std::span<const gf_status>(block_393_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.group_count.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_group_count, "list_view", std::span<const gf_status>(block_394_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.group_count.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_group_count, "list_view", std::span<const gf_status>(block_395_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.group_count.misuse.group_count_count", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_group_count, "list_view", std::span<const gf_status>(block_396_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_396_violations)},
+    Block{"gf_abi.list_view.group_at.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_group_at, "list_view", std::span<const gf_status>(block_397_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.group_at.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_group_at, "list_view", std::span<const gf_status>(block_398_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_groups.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_groups, "list_view", std::span<const gf_status>(block_399_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_groups.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_groups, "list_view", std::span<const gf_status>(block_400_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.selected_items.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_selected_items, "list_view", std::span<const gf_status>(block_401_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.selected_items.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_selected_items, "list_view", std::span<const gf_status>(block_402_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.selected_items.misuse.selected_items_indices", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_selected_items, "list_view", std::span<const gf_status>(block_403_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_403_violations)},
+    Block{"gf_abi.list_view.set_selected.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_selected, "list_view", std::span<const gf_status>(block_404_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_selected.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_selected, "list_view", std::span<const gf_status>(block_405_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.select_all.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_select_all, "list_view", std::span<const gf_status>(block_406_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.select_all.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_select_all, "list_view", std::span<const gf_status>(block_407_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.clear_selection.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_clear_selection, "list_view", std::span<const gf_status>(block_408_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.clear_selection.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_clear_selection, "list_view", std::span<const gf_status>(block_409_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.focused_item.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_focused_item, "list_view", std::span<const gf_status>(block_410_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.focused_item.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_focused_item, "list_view", std::span<const gf_status>(block_411_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.focused_item.misuse.focused_item_index", Mode::misuse, 14U, Model::object, 0U, no_state, &invoke_list_view_focused_item, "list_view", std::span<const gf_status>(block_412_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_412_violations)},
+    Block{"gf_abi.list_view.set_focused_item.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_focused_item, "list_view", std::span<const gf_status>(block_413_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_focused_item.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_focused_item, "list_view", std::span<const gf_status>(block_414_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.ensure_visible.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_ensure_visible, "list_view", std::span<const gf_status>(block_415_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.ensure_visible.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_ensure_visible, "list_view", std::span<const gf_status>(block_416_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_sort_indicator.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_set_sort_indicator, "list_view", std::span<const gf_status>(block_417_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.set_sort_indicator.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_set_sort_indicator, "list_view", std::span<const gf_status>(block_418_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.sort_items.alive", Mode::legal, 14U, Model::object, 0U, no_state, &invoke_list_view_sort_items, "list_view", std::span<const gf_status>(block_419_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.list_view.sort_items.disposed", Mode::legal, 14U, Model::object, 2U, no_state, &invoke_list_view_sort_items, "list_view", std::span<const gf_status>(block_420_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.create", Mode::legal, 15U, Model::none, no_state, no_state, &invoke_objects_create, "", std::span<const gf_status>(block_421_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.create.misuse.create_object", Mode::misuse, 15U, Model::none, no_state, no_state, &invoke_objects_create, "", std::span<const gf_status>(block_422_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_422_violations)},
+    Block{"gf_abi.objects.retain.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_retain, "label", std::span<const gf_status>(block_423_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.retain.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_retain, "label", std::span<const gf_status>(block_424_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.release.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_release, "label", std::span<const gf_status>(block_425_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.release.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_release, "label", std::span<const gf_status>(block_426_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.dispose.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_dispose, "label", std::span<const gf_status>(block_427_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.dispose.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_dispose, "label", std::span<const gf_status>(block_428_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.state.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_state, "label", std::span<const gf_status>(block_429_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.state.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_state, "label", std::span<const gf_status>(block_430_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.state.misuse.state_state", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_state, "label", std::span<const gf_status>(block_431_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_431_violations)},
+    Block{"gf_abi.objects.type_id.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_type_id, "label", std::span<const gf_status>(block_432_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.type_id.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_type_id, "label", std::span<const gf_status>(block_433_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.stable_id.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_stable_id, "label", std::span<const gf_status>(block_434_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.stable_id.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_stable_id, "label", std::span<const gf_status>(block_435_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.insert_child.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_insert_child, "label", std::span<const gf_status>(block_436_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.insert_child.outside.disposed", Mode::misuse, 15U, Model::object, 2U, no_state, &invoke_objects_insert_child, "label", std::span<const gf_status>(block_437_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.objects.remove_child.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_remove_child, "label", std::span<const gf_status>(block_438_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.remove_child.outside.disposed", Mode::misuse, 15U, Model::object, 2U, no_state, &invoke_objects_remove_child, "label", std::span<const gf_status>(block_439_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.objects.child_count.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_child_count, "label", std::span<const gf_status>(block_440_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.child_count.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_child_count, "label", std::span<const gf_status>(block_441_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.child_count.misuse.child_count_count", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_child_count, "label", std::span<const gf_status>(block_442_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_442_violations)},
+    Block{"gf_abi.objects.child_at.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_child_at, "label", std::span<const gf_status>(block_443_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.child_at.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_child_at, "label", std::span<const gf_status>(block_444_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.child_at.misuse.child_at_child", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_child_at, "label", std::span<const gf_status>(block_445_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_445_violations)},
+    Block{"gf_abi.objects.parent.alive", Mode::legal, 15U, Model::object, 0U, no_state, &invoke_objects_parent, "label", std::span<const gf_status>(block_446_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.parent.disposed", Mode::legal, 15U, Model::object, 2U, no_state, &invoke_objects_parent, "label", std::span<const gf_status>(block_447_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.parent.misuse.parent_parent", Mode::misuse, 15U, Model::object, 0U, no_state, &invoke_objects_parent, "label", std::span<const gf_status>(block_448_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_448_violations)},
+    Block{"gf_abi.objects.create_with", Mode::legal, 15U, Model::none, no_state, no_state, &invoke_objects_create_with, "", std::span<const gf_status>(block_449_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.objects.create_with.misuse.create_with_object", Mode::misuse, 15U, Model::none, no_state, no_state, &invoke_objects_create_with, "", std::span<const gf_status>(block_450_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_450_violations)},
+    Block{"gf_abi.objects.create_with.misuse.create_with_arguments", Mode::misuse, 15U, Model::none, no_state, no_state, &invoke_objects_create_with, "", std::span<const gf_status>(block_451_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_451_violations)},
+    Block{"gf_abi.overlays.open_overlay.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_open_overlay, "panel", std::span<const gf_status>(block_452_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.open_overlay.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_open_overlay, "panel", std::span<const gf_status>(block_453_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.close_overlay.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_close_overlay, "panel", std::span<const gf_status>(block_454_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.close_overlay.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_close_overlay, "panel", std::span<const gf_status>(block_455_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.set_tool_tip.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_set_tool_tip, "panel", std::span<const gf_status>(block_456_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.set_tool_tip.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_set_tool_tip, "panel", std::span<const gf_status>(block_457_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.show_tool_tip.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_show_tool_tip, "panel", std::span<const gf_status>(block_458_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.show_tool_tip.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_show_tool_tip, "panel", std::span<const gf_status>(block_459_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.hide_tool_tip.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_hide_tool_tip, "panel", std::span<const gf_status>(block_460_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.hide_tool_tip.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_hide_tool_tip, "panel", std::span<const gf_status>(block_461_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.close_anchored.alive", Mode::legal, 16U, Model::object, 0U, no_state, &invoke_overlays_close_anchored, "panel", std::span<const gf_status>(block_462_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.close_anchored.disposed", Mode::legal, 16U, Model::object, 2U, no_state, &invoke_overlays_close_anchored, "panel", std::span<const gf_status>(block_463_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.set_tool_tips_shown", Mode::legal, 16U, Model::none, no_state, no_state, &invoke_overlays_set_tool_tips_shown, "", std::span<const gf_status>(block_464_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.tool_tips_shown", Mode::legal, 16U, Model::none, no_state, no_state, &invoke_overlays_tool_tips_shown, "", std::span<const gf_status>(block_465_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.overlays.tool_tips_shown.misuse.tool_tips_shown_shown", Mode::misuse, 16U, Model::none, no_state, no_state, &invoke_overlays_tool_tips_shown, "", std::span<const gf_status>(block_466_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_466_violations)},
+    Block{"gf_abi.properties.get.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_get, "text_box", std::span<const gf_status>(block_467_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.get.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_get, "text_box", std::span<const gf_status>(block_468_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.properties.set.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_set, "text_box", std::span<const gf_status>(block_469_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.set.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_set, "text_box", std::span<const gf_status>(block_470_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.properties.reset.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_reset, "text_box", std::span<const gf_status>(block_471_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.reset.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_reset, "text_box", std::span<const gf_status>(block_472_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.properties.element_at.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_element_at, "text_box", std::span<const gf_status>(block_473_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.element_at.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_element_at, "text_box", std::span<const gf_status>(block_474_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.properties.read_elements.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_read_elements, "text_box", std::span<const gf_status>(block_475_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.read_elements.misuse.read_elements_text_buffer", Mode::misuse, 17U, Model::object, 0U, no_state, &invoke_properties_read_elements, "text_box", std::span<const gf_status>(block_476_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_476_violations)},
+    Block{"gf_abi.properties.read_elements.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_read_elements, "text_box", std::span<const gf_status>(block_477_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.properties.get_at.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_get_at, "text_box", std::span<const gf_status>(block_478_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.get_at.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_get_at, "text_box", std::span<const gf_status>(block_479_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.properties.set_at.alive", Mode::legal, 17U, Model::object, 0U, no_state, &invoke_properties_set_at, "text_box", std::span<const gf_status>(block_480_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.properties.set_at.outside.disposed", Mode::misuse, 17U, Model::object, 2U, no_state, &invoke_properties_set_at, "text_box", std::span<const gf_status>(block_481_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.select_objects.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_select_objects, "property_grid", std::span<const gf_status>(block_482_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.select_objects.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_select_objects, "property_grid", std::span<const gf_status>(block_483_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.refresh.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_refresh, "property_grid", std::span<const gf_status>(block_484_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.refresh.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_refresh, "property_grid", std::span<const gf_status>(block_485_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.try_set_text.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_try_set_text, "property_grid", std::span<const gf_status>(block_486_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.try_set_text.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_try_set_text, "property_grid", std::span<const gf_status>(block_487_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.try_set_text.misuse.try_set_text_accepted", Mode::misuse, 18U, Model::object, 0U, no_state, &invoke_property_grid_try_set_text, "property_grid", std::span<const gf_status>(block_488_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_488_violations)},
+    Block{"gf_abi.property_grid.reset_property.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_reset_property, "property_grid", std::span<const gf_status>(block_489_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.reset_property.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_reset_property, "property_grid", std::span<const gf_status>(block_490_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.reset_property.misuse.reset_property_reset", Mode::misuse, 18U, Model::object, 0U, no_state, &invoke_property_grid_reset_property, "property_grid", std::span<const gf_status>(block_491_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_491_violations)},
+    Block{"gf_abi.property_grid.activate_editor.alive", Mode::legal, 18U, Model::object, 0U, no_state, &invoke_property_grid_activate_editor, "property_grid", std::span<const gf_status>(block_492_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.activate_editor.disposed", Mode::legal, 18U, Model::object, 2U, no_state, &invoke_property_grid_activate_editor, "property_grid", std::span<const gf_status>(block_493_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.property_grid.activate_editor.misuse.activate_editor_activated", Mode::misuse, 18U, Model::object, 0U, no_state, &invoke_property_grid_activate_editor, "property_grid", std::span<const gf_status>(block_494_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_494_violations)},
+    Block{"gf_abi.rules.remove", Mode::legal, 19U, Model::none, no_state, no_state, &invoke_rules_remove, "", std::span<const gf_status>(block_495_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.rules.state", Mode::legal, 19U, Model::none, no_state, no_state, &invoke_rules_state, "", std::span<const gf_status>(block_496_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.rules.state.misuse.state_state", Mode::misuse, 19U, Model::none, no_state, no_state, &invoke_rules_state, "", std::span<const gf_status>(block_497_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_497_violations)},
+    Block{"gf_abi.runtime.version", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_version, "", std::span<const gf_status>(block_498_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.version.misuse.version_info", Mode::misuse, 20U, Model::none, no_state, no_state, &invoke_runtime_version, "", std::span<const gf_status>(block_499_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_499_violations)},
+    Block{"gf_abi.runtime.error_detail", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_error_detail, "", std::span<const gf_status>(block_500_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.error_detail.misuse.error_detail_buffer", Mode::misuse, 20U, Model::none, no_state, no_state, &invoke_runtime_error_detail, "", std::span<const gf_status>(block_501_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_501_violations)},
+    Block{"gf_abi.runtime.clear_error", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_clear_error, "", std::span<const gf_status>(block_502_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_show", Mode::legal, 20U, Model::none, no_state, no_state, &invoke_runtime_splashscreen_show, "", std::span<const gf_status>(block_503_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_set_status.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_status, "", std::span<const gf_status>(block_504_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_set_status.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_status, "", std::span<const gf_status>(block_505_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_set_progress.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_progress, "", std::span<const gf_status>(block_506_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_set_progress.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_set_progress, "", std::span<const gf_status>(block_507_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_close.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_close, "", std::span<const gf_status>(block_508_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_close.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_close, "", std::span<const gf_status>(block_509_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_state.shown", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_state, "", std::span<const gf_status>(block_510_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_state.handed_over", Mode::legal, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_state, "", std::span<const gf_status>(block_511_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.runtime.splashscreen_state.misuse.splashscreen_state_state", Mode::misuse, 20U, Model::splashscreen, no_state, no_state, &invoke_runtime_splashscreen_state, "", std::span<const gf_status>(block_512_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_512_violations)},
+    Block{"gf_abi.schema.vocabulary_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_vocabulary_count, "", std::span<const gf_status>(block_513_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.vocabulary_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_vocabulary_at, "", std::span<const gf_status>(block_514_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.type_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_type_count, "", std::span<const gf_status>(block_515_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.type_count.misuse.type_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_type_count, "", std::span<const gf_status>(block_516_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_516_violations)},
+    Block{"gf_abi.schema.find_type", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_find_type, "", std::span<const gf_status>(block_517_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.find_type.misuse.find_type_type", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_find_type, "", std::span<const gf_status>(block_518_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_518_violations)},
+    Block{"gf_abi.schema.type_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_type_at, "", std::span<const gf_status>(block_519_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.item_system_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_item_system_at, "", std::span<const gf_status>(block_520_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.part_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_part_at, "", std::span<const gf_status>(block_521_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_state_at, "", std::span<const gf_status>(block_522_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.state_at.misuse.state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_state_at, "", std::span<const gf_status>(block_523_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_523_violations)},
+    Block{"gf_abi.schema.custom_state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_custom_state_at, "", std::span<const gf_status>(block_524_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.custom_state_at.misuse.custom_state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_custom_state_at, "", std::span<const gf_status>(block_525_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_525_violations)},
+    Block{"gf_abi.schema.property_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_property_at, "", std::span<const gf_status>(block_526_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_choice_at, "", std::span<const gf_status>(block_527_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.interaction_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_interaction_at, "", std::span<const gf_status>(block_528_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.engine", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_engine, "", std::span<const gf_status>(block_529_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.primitive_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_primitive_at, "", std::span<const gf_status>(block_530_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.primitive_name_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_primitive_name_at, "", std::span<const gf_status>(block_531_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.parameter_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_parameter_at, "", std::span<const gf_status>(block_532_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.parameter_choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_parameter_choice_at, "", std::span<const gf_status>(block_533_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.parameter_choice_at.misuse.parameter_choice_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_parameter_choice_at, "", std::span<const gf_status>(block_534_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_534_violations)},
+    Block{"gf_abi.schema.effect_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_effect_count, "", std::span<const gf_status>(block_535_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.effect_count.misuse.effect_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_effect_count, "", std::span<const gf_status>(block_536_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_536_violations)},
+    Block{"gf_abi.schema.effect_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_effect_at, "", std::span<const gf_status>(block_537_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.child_property_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_child_property_count, "", std::span<const gf_status>(block_538_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.child_property_count.misuse.child_property_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_child_property_count, "", std::span<const gf_status>(block_539_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_539_violations)},
+    Block{"gf_abi.schema.child_property_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_child_property_at, "", std::span<const gf_status>(block_540_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.child_choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_child_choice_at, "", std::span<const gf_status>(block_541_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_count", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_count, "", std::span<const gf_status>(block_542_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_count.misuse.composite_count_count", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_count, "", std::span<const gf_status>(block_543_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_543_violations)},
+    Block{"gf_abi.schema.composite_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_at, "", std::span<const gf_status>(block_544_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_part_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_part_at, "", std::span<const gf_status>(block_545_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_state_at, "", std::span<const gf_status>(block_546_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_state_at.misuse.composite_state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_state_at, "", std::span<const gf_status>(block_547_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_547_violations)},
+    Block{"gf_abi.schema.composite_custom_state_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_custom_state_at, "", std::span<const gf_status>(block_548_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_custom_state_at.misuse.composite_custom_state_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_custom_state_at, "", std::span<const gf_status>(block_549_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_549_violations)},
+    Block{"gf_abi.schema.composite_property_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_property_at, "", std::span<const gf_status>(block_550_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_choice_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_choice_at, "", std::span<const gf_status>(block_551_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_event_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_event_at, "", std::span<const gf_status>(block_552_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_command_at", Mode::legal, 21U, Model::none, no_state, no_state, &invoke_schema_composite_command_at, "", std::span<const gf_status>(block_553_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.schema.composite_command_at.misuse.composite_command_at_name", Mode::misuse, 21U, Model::none, no_state, no_state, &invoke_schema_composite_command_at, "", std::span<const gf_status>(block_554_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_554_violations)},
+    Block{"gf_abi.subsurfaces.set_root", Mode::legal, 22U, Model::none, no_state, no_state, &invoke_subsurfaces_set_root, "", std::span<const gf_status>(block_555_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.subsurfaces.state.alive", Mode::legal, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_state, "panel", std::span<const gf_status>(block_556_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.subsurfaces.state.misuse.state_state", Mode::misuse, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_state, "panel", std::span<const gf_status>(block_557_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_557_violations)},
+    Block{"gf_abi.subsurfaces.state.outside.disposed", Mode::misuse, 22U, Model::object, 2U, no_state, &invoke_subsurfaces_state, "panel", std::span<const gf_status>(block_558_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.subsurfaces.content_epoch.alive", Mode::legal, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_content_epoch, "panel", std::span<const gf_status>(block_559_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.subsurfaces.content_epoch.misuse.content_epoch_epoch", Mode::misuse, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_content_epoch, "panel", std::span<const gf_status>(block_560_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_560_violations)},
+    Block{"gf_abi.subsurfaces.content_epoch.outside.disposed", Mode::misuse, 22U, Model::object, 2U, no_state, &invoke_subsurfaces_content_epoch, "panel", std::span<const gf_status>(block_561_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.subsurfaces.failure.alive", Mode::legal, 22U, Model::object, 0U, no_state, &invoke_subsurfaces_failure, "panel", std::span<const gf_status>(block_562_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.subsurfaces.failure.outside.disposed", Mode::misuse, 22U, Model::object, 2U, no_state, &invoke_subsurfaces_failure, "panel", std::span<const gf_status>(block_563_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.select.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_select, "text_box", std::span<const gf_status>(block_564_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.select.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_select, "text_box", std::span<const gf_status>(block_565_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.selection.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_selection, "text_box", std::span<const gf_status>(block_566_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.selection.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_selection, "text_box", std::span<const gf_status>(block_567_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.grapheme_boundary.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_grapheme_boundary, "text_box", std::span<const gf_status>(block_568_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.grapheme_boundary.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_grapheme_boundary, "text_box", std::span<const gf_status>(block_569_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.replace_range.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_replace_range, "text_box", std::span<const gf_status>(block_570_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.replace_range.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_replace_range, "text_box", std::span<const gf_status>(block_571_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.replace_range.misuse.replace_range_changed", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_replace_range, "text_box", std::span<const gf_status>(block_572_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_572_violations)},
+    Block{"gf_abi.text_editing.undo.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_undo, "text_box", std::span<const gf_status>(block_573_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.undo.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_undo, "text_box", std::span<const gf_status>(block_574_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.undo.misuse.undo_changed", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_undo, "text_box", std::span<const gf_status>(block_575_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_575_violations)},
+    Block{"gf_abi.text_editing.redo.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_redo, "text_box", std::span<const gf_status>(block_576_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.redo.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_redo, "text_box", std::span<const gf_status>(block_577_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.redo.misuse.redo_changed", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_redo, "text_box", std::span<const gf_status>(block_578_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_578_violations)},
+    Block{"gf_abi.text_editing.clear_undo_history.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_clear_undo_history, "text_box", std::span<const gf_status>(block_579_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.clear_undo_history.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_clear_undo_history, "text_box", std::span<const gf_status>(block_580_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.set_decorations.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_set_decorations, "text_box", std::span<const gf_status>(block_581_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.set_decorations.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_set_decorations, "text_box", std::span<const gf_status>(block_582_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.replace_decorations.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_replace_decorations, "text_box", std::span<const gf_status>(block_583_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.replace_decorations.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_replace_decorations, "text_box", std::span<const gf_status>(block_584_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.clear_decorations.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_clear_decorations, "text_box", std::span<const gf_status>(block_585_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.clear_decorations.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_clear_decorations, "text_box", std::span<const gf_status>(block_586_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.decoration_count.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_count, "text_box", std::span<const gf_status>(block_587_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.decoration_count.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_decoration_count, "text_box", std::span<const gf_status>(block_588_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.decoration_count.misuse.decoration_count_count", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_count, "text_box", std::span<const gf_status>(block_589_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_589_violations)},
+    Block{"gf_abi.text_editing.decoration_at.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_at, "text_box", std::span<const gf_status>(block_590_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.decoration_at.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_decoration_at, "text_box", std::span<const gf_status>(block_591_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.decoration_at.misuse.decoration_at_decoration", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_decoration_at, "text_box", std::span<const gf_status>(block_592_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_592_violations)},
+    Block{"gf_abi.text_editing.utf8_to_utf16_offset.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf8_to_utf16_offset, "text_box", std::span<const gf_status>(block_593_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.utf8_to_utf16_offset.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_utf8_to_utf16_offset, "text_box", std::span<const gf_status>(block_594_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.utf8_to_utf16_offset.misuse.utf8_to_utf16_offset_utf16_offset", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf8_to_utf16_offset, "text_box", std::span<const gf_status>(block_595_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_595_violations)},
+    Block{"gf_abi.text_editing.utf16_to_utf8_offset.alive", Mode::legal, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf16_to_utf8_offset, "text_box", std::span<const gf_status>(block_596_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.utf16_to_utf8_offset.disposed", Mode::legal, 23U, Model::object, 2U, no_state, &invoke_text_editing_utf16_to_utf8_offset, "text_box", std::span<const gf_status>(block_597_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.text_editing.utf16_to_utf8_offset.misuse.utf16_to_utf8_offset_utf8_offset", Mode::misuse, 23U, Model::object, 0U, no_state, &invoke_text_editing_utf16_to_utf8_offset, "text_box", std::span<const gf_status>(block_598_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_598_violations)},
+    Block{"gf_abi.themes.load", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load, "", std::span<const gf_status>(block_599_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.reset", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_reset, "", std::span<const gf_status>(block_600_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.diagnostic_at", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_diagnostic_at, "", std::span<const gf_status>(block_601_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.diagnostic_text", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_diagnostic_text, "", std::span<const gf_status>(block_602_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.theme_id", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_theme_id, "", std::span<const gf_status>(block_603_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.publish_value", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_publish_value, "", std::span<const gf_status>(block_604_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.withdraw_value", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_withdraw_value, "", std::span<const gf_status>(block_605_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.published_value", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_published_value, "", std::span<const gf_status>(block_606_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.load_image", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load_image, "", std::span<const gf_status>(block_607_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.load_image.misuse.load_image_bytes", Mode::misuse, 24U, Model::none, no_state, no_state, &invoke_themes_load_image, "", std::span<const gf_status>(block_608_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_608_violations)},
+    Block{"gf_abi.themes.remove_image", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_remove_image, "", std::span<const gf_status>(block_609_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.load_pixels", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load_pixels, "", std::span<const gf_status>(block_610_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.load_sheet", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_load_sheet, "", std::span<const gf_status>(block_611_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.set_user_theme_policy", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_set_user_theme_policy, "", std::span<const gf_status>(block_612_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.theme_request", Mode::legal, 24U, Model::none, no_state, no_state, &invoke_themes_theme_request, "", std::span<const gf_status>(block_613_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.themes.theme_request.misuse.theme_request_outcome", Mode::misuse, 24U, Model::none, no_state, no_state, &invoke_themes_theme_request, "", std::span<const gf_status>(block_614_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_614_violations)},
+    Block{"gf_abi.windows.request_close.outside.created", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_request_close, "window", std::span<const gf_status>(block_615_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_STATE, std::span<const Violation>{}},
+    Block{"gf_abi.windows.request_close.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_request_close, "window", std::span<const gf_status>(block_616_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_STATE, std::span<const Violation>{}},
+    Block{"gf_abi.windows.create", Mode::legal, 25U, Model::none, no_state, no_state, &invoke_windows_create, "", std::span<const gf_status>(block_617_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.interaction_count", Mode::legal, 25U, Model::none, no_state, no_state, &invoke_windows_interaction_count, "", std::span<const gf_status>(block_618_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.interaction_count.misuse.interaction_count_count", Mode::misuse, 25U, Model::none, no_state, no_state, &invoke_windows_interaction_count, "", std::span<const gf_status>(block_619_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_619_violations)},
+    Block{"gf_abi.windows.interaction_at", Mode::legal, 25U, Model::none, no_state, no_state, &invoke_windows_interaction_at, "", std::span<const gf_status>(block_620_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.request_help.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_request_help, "window", std::span<const gf_status>(block_621_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.request_help.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_request_help, "window", std::span<const gf_status>(block_622_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.key_state.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_key_state, "window", std::span<const gf_status>(block_623_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.key_state.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_key_state, "window", std::span<const gf_status>(block_624_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.window_properties.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_window_properties, "window", std::span<const gf_status>(block_625_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.window_properties.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_window_properties, "window", std::span<const gf_status>(block_626_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.focused_control.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_focused_control, "window", std::span<const gf_status>(block_627_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.focused_control.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_focused_control, "window", std::span<const gf_status>(block_628_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.declare_band.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_declare_band, "window", std::span<const gf_status>(block_629_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.declare_band.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_declare_band, "window", std::span<const gf_status>(block_630_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.undeclare_band.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_undeclare_band, "window", std::span<const gf_status>(block_631_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.undeclare_band.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_undeclare_band, "window", std::span<const gf_status>(block_632_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_band_appearance.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_band_appearance, "window", std::span<const gf_status>(block_633_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_band_appearance.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_band_appearance, "window", std::span<const gf_status>(block_634_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.band_report.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_band_report, "window", std::span<const gf_status>(block_635_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.band_report.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_band_report, "window", std::span<const gf_status>(block_636_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_corner_preference.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_corner_preference, "window", std::span<const gf_status>(block_637_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_corner_preference.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_corner_preference, "window", std::span<const gf_status>(block_638_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.content_rect.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_content_rect, "window", std::span<const gf_status>(block_639_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.content_rect.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_content_rect, "window", std::span<const gf_status>(block_640_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.shaping.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_shaping, "window", std::span<const gf_status>(block_641_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.shaping.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_shaping, "window", std::span<const gf_status>(block_642_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.pointer_location.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_pointer_location, "window", std::span<const gf_status>(block_643_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.pointer_location.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_pointer_location, "window", std::span<const gf_status>(block_644_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.show_business_card.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_show_business_card, "window", std::span<const gf_status>(block_645_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.show_business_card.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_show_business_card, "window", std::span<const gf_status>(block_646_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_mdi_container.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_mdi_container, "window", std::span<const gf_status>(block_647_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_mdi_container.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_mdi_container, "window", std::span<const gf_status>(block_648_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_container.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_container, "window", std::span<const gf_status>(block_649_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_container.misuse.mdi_container_container", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_container, "window", std::span<const gf_status>(block_650_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_650_violations)},
+    Block{"gf_abi.windows.mdi_container.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_container, "window", std::span<const gf_status>(block_651_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_child_count.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_child_count, "window", std::span<const gf_status>(block_652_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_child_count.misuse.mdi_child_count_count", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_child_count, "window", std::span<const gf_status>(block_653_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_653_violations)},
+    Block{"gf_abi.windows.mdi_child_count.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_child_count, "window", std::span<const gf_status>(block_654_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_child_at.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_child_at, "window", std::span<const gf_status>(block_655_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_child_at.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_child_at, "window", std::span<const gf_status>(block_656_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.active_mdi_child.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_active_mdi_child, "window", std::span<const gf_status>(block_657_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.active_mdi_child.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_active_mdi_child, "window", std::span<const gf_status>(block_658_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.activate_mdi_child.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_activate_mdi_child, "window", std::span<const gf_status>(block_659_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.activate_mdi_child.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_activate_mdi_child, "window", std::span<const gf_status>(block_660_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.layout_mdi.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_layout_mdi, "window", std::span<const gf_status>(block_661_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.layout_mdi.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_layout_mdi, "window", std::span<const gf_status>(block_662_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_mdi_children_minimized_anchor_bottom.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_663_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_mdi_children_minimized_anchor_bottom.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_664_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_children_minimized_anchor_bottom.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_665_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.mdi_children_minimized_anchor_bottom.misuse.mdi_children_minimized_anchor_bottom_bottom", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_666_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_666_violations)},
+    Block{"gf_abi.windows.mdi_children_minimized_anchor_bottom.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_mdi_children_minimized_anchor_bottom, "window", std::span<const gf_status>(block_667_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_main_menu_strip.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_set_main_menu_strip, "window", std::span<const gf_status>(block_668_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.set_main_menu_strip.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_set_main_menu_strip, "window", std::span<const gf_status>(block_669_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.main_menu_strip.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_main_menu_strip, "window", std::span<const gf_status>(block_670_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.main_menu_strip.misuse.main_menu_strip_strip", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_main_menu_strip, "window", std::span<const gf_status>(block_671_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_671_violations)},
+    Block{"gf_abi.windows.main_menu_strip.outside.ended", Mode::misuse, 25U, Model::window, 2U, no_state, &invoke_windows_main_menu_strip, "window", std::span<const gf_status>(block_672_declared), std::span<const gf_status>{}, GF_STATUS_DISPOSED, std::span<const Violation>{}},
+    Block{"gf_abi.windows.lifecycle.created", Mode::legal, 25U, Model::window, 0U, no_state, &invoke_windows_lifecycle, "window", std::span<const gf_status>(block_673_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.lifecycle.ended", Mode::legal, 25U, Model::window, 2U, no_state, &invoke_windows_lifecycle, "window", std::span<const gf_status>(block_674_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows.lifecycle.misuse.lifecycle_lifecycle", Mode::misuse, 25U, Model::window, 0U, no_state, &invoke_windows_lifecycle, "window", std::span<const gf_status>(block_675_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_675_violations)},
+    Block{"gf_abi.windows_paint_endpoint.acquire", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_acquire, "", std::span<const gf_status>(block_676_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.configure", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_configure, "", std::span<const gf_status>(block_677_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.touch", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_touch, "", std::span<const gf_status>(block_678_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.drain", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_drain, "", std::span<const gf_status>(block_679_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.snapshot", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_snapshot, "", std::span<const gf_status>(block_680_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.snapshot.misuse.snapshot_buffer", Mode::misuse, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_snapshot, "", std::span<const gf_status>(block_681_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_681_violations)},
+    Block{"gf_abi.windows_paint_endpoint.submit_bgra", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_submit_bgra, "", std::span<const gf_status>(block_682_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.release", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_release, "", std::span<const gf_status>(block_683_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.get_dc", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_get_dc, "", std::span<const gf_status>(block_684_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.release_dc", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_release_dc, "", std::span<const gf_status>(block_685_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.publish_dc", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_publish_dc, "", std::span<const gf_status>(block_686_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.begin_write", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_begin_write, "", std::span<const gf_status>(block_687_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
+    Block{"gf_abi.windows_paint_endpoint.end_write", Mode::legal, 26U, Model::none, no_state, no_state, &invoke_windows_paint_endpoint_end_write, "", std::span<const gf_status>(block_688_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
 };
 
 } // namespace gui_forms_tests::ic
