@@ -117,8 +117,21 @@ include(cmake/sections/desktop_tests.cmake)
 # checkout (its consumer projects, probes and generated sources) through
 # GUI_FORMS_TESTS_ROOT (gui_forms tools/tests_checkout.py); a test script
 # finds gui_forms' tools in the cache's source tree through GUI_FORMS_SOURCE_DIR.
+# On macOS the window-host tests (label area_host) share the one desktop:
+# they order windows front, take key focus and capture the screen, so two at
+# once (ctest --parallel, as CI runs) take each other's focus or front place
+# (macos_message_dialog_key, macos_compositor_probe and
+# macos_damage_rectangles failed that way, and pass one at a time). They take
+# the desktop_foreground lock the desktop launchers take; X11 tests each have
+# their own Xvfb display.
 get_property(_gf_tests_all DIRECTORY PROPERTY TESTS)
 foreach(_gf_tests_one IN LISTS _gf_tests_all)
     set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT
         "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "GUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}")
+    if(APPLE)
+        get_test_property(${_gf_tests_one} LABELS _gf_tests_labels)
+        if(_gf_tests_labels AND "area_host" IN_LIST _gf_tests_labels)
+            set_property(TEST ${_gf_tests_one} APPEND PROPERTY RESOURCE_LOCK desktop_foreground)
+        endif()
+    endif()
 endforeach()
