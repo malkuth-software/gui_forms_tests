@@ -75,8 +75,6 @@
 #include "gui_forms/controls/ribbon_font_control.hpp"
 #include "gui_forms/controls/ribbon_gallery.hpp"
 #include "gui_forms/controls/rich_text_box.hpp"
-#include "gui_forms/controls/scaled_group_box.hpp"
-#include "gui_forms/controls/scaled_panel.hpp"
 #include "gui_forms/controls/scroll_bar.hpp"
 #include "gui_forms/controls/scrollable_control.hpp"
 #include "gui_forms/controls/search_field.hpp"
@@ -2559,30 +2557,6 @@ void test_rich_text_box_properties() {
     }
 }
 
-void test_scaled_group_box_properties() {
-    std::shared_ptr<ScaledGroupBox> control = make_control<ScaledGroupBox>(StableId("generated.scaledgroupbox"));
-    {
-        const Size sample = Size{640.0, 480.0};
-        (*control).design_size = sample;
-        expect((*control).design_size.read() == sample, "ScaledGroupBox.design_size: a write stores");
-        const std::optional<BindingValue> by_name = (*control).property_value("design_size");
-        expect(by_name && *by_name == PropertyValueTraits<Size>::to_binding(sample),
-               "ScaledGroupBox.design_size: the table reads the cell");
-    }
-}
-
-void test_scaled_panel_properties() {
-    std::shared_ptr<ScaledPanel> control = make_control<ScaledPanel>(StableId("generated.scaledpanel"));
-    {
-        const Size sample = Size{640.0, 480.0};
-        (*control).design_size = sample;
-        expect((*control).design_size.read() == sample, "ScaledPanel.design_size: a write stores");
-        const std::optional<BindingValue> by_name = (*control).property_value("design_size");
-        expect(by_name && *by_name == PropertyValueTraits<Size>::to_binding(sample),
-               "ScaledPanel.design_size: the table reads the cell");
-    }
-}
-
 void test_scroll_bar_properties() {
     std::shared_ptr<ScrollBar> control = make_control<ScrollBar>(StableId("generated.scrollbar"));
     {
@@ -3536,8 +3510,6 @@ int main() {
     test_ribbon_font_control_properties();
     test_ribbon_gallery_properties();
     test_rich_text_box_properties();
-    test_scaled_group_box_properties();
-    test_scaled_panel_properties();
     test_scroll_bar_properties();
     test_scrollable_control_properties();
     test_search_field_properties();
