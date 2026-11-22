@@ -1,13 +1,16 @@
 // The process-control demonstrator (owner, 2026-11-22; skeudoindustrial
 // surfaces, phase 3; demo/process_control/process_control.hpp): its dialog
 // (the enamel classes, the three status lamps lit from the shipped jewel,
-// FAULT failing, the CANCEL and OK keys as light-map buttons with no text
-// but their names), its theme sheet (compiled on the root, rebuilt for the
-// paint and the seed), and its strip: each lamp's state cycled off, on,
-// error and fault, the radio lamps' colour set at run time, the coolant
-// pinpoint, the Lamps toggle that puts the status lamps and OK out, the
-// keys' messages, and --check's staging. Drawing the light map is covered
-// by gui_forms_engine_primitive_tests, the failing lamp by
+// FAULT failing, the CANCEL and OK keys as LampKeys with no text but their
+// names, OK dark at rest and lit only while held, its lamp striking and
+// cooling, CANCEL lit throughout, the presses moving on the engine's
+// motion), its theme sheet
+// (compiled on the root, rebuilt for the paint and the seed), and its
+// strip: each lamp's state cycled off, on, error and fault, the radio
+// lamps' colour set at run time, the coolant pinpoint, the Lamps toggle
+// that puts the status lamps and OK's lamp out, the keys' messages,
+// and --check's staging. Compositing a bake is covered by
+// gui_forms_engine_light_planes_tests, the failing lamp by
 // gui_forms_indicator_lamp_tests and gui_forms_engine_light_planes_tests,
 // the enamel by gui_forms_engine_finish_tests.
 
@@ -19,12 +22,14 @@
 #include "gui_forms/controls/indicator_lamp.hpp"
 #include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/radio_button.hpp"
+#include "gui_forms/engine/motion_clock/motion_clock.hpp"
 #include "gui_forms/events/input_events/input_events.hpp"
 #include "gui_forms/theme/theme/theme.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/window/window.hpp"
 
 #include <array>
+#include <chrono>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -39,6 +44,27 @@ using namespace gui_forms;
 
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
+}
+
+// The test's time for the window's motion: moves start at it and frames are
+// polled at it, never at the wall clock.
+class ManualTime final : public MotionTimeSource {
+public:
+    [[nodiscard]] FrameTime now() const noexcept override { return time; }
+    FrameTime time{std::chrono::seconds(1000)};
+};
+
+// Advances the test's time by `step` and polls the window's frames there.
+void run_for(Window& window, ManualTime& time, std::chrono::milliseconds step) {
+    time.time += step;
+    static_cast<void>(window.poll_frame_schedule(time.time));
+}
+
+// The control's centre in window coordinates.
+Point centre_of(const Control& control) {
+    const Rect bounds = control.absolute_bounds();
+    const Point centre{bounds.x + bounds.width * 0.5, bounds.y + bounds.height * 0.5};
+    return centre;
 }
 
 template <typename Found>
@@ -63,10 +89,8 @@ void test_the_sheet() {
     require(sheet.find("finish(blasted-enamel-glint, #4d676d, #a3a3a3, 11)") != std::string::npos &&
                 sheet.find("finish(blasted-enamel-heavy-glint, #656f74, #a3a3a3, 11)") != std::string::npos,
             "the study's paint: ГОСТ 397 under ГОСТ 832's band, seed 11");
-    require(sheet.find("primitive: light-map; bake: dialog-ok") != std::string::npos &&
-                sheet.find("primitive: light-map; bake: dialog-cancel") != std::string::npos &&
-                sheet.find(".lit-key:active::part(face) { primitive: light-map; press: 1; }") != std::string::npos,
-            "the keys are light maps, pressed while held");
+    require(sheet.find("light-map") == std::string::npos && sheet.find("lamp-power") == std::string::npos,
+            "the sheet lights no key: the keys draw and animate their own bakes");
     require(process_control::process_control_sheet(process_control::enamel_paints.size(), 3U) ==
                 process_control::process_control_sheet(0U, 3U),
             "the paint index wraps");
@@ -92,13 +116,54 @@ void test_the_dialog(Window& window) {
     require((*find<IndicatorLamp>(window, "process.status.pump-ready")).state.read() == IndicatorLampState::on &&
                 (*find<IndicatorLamp>(window, "process.status.fault")).state.read() == IndicatorLampState::fault,
             "PUMP READY starts lit and FAULT failing");
-    const std::shared_ptr<Button> ok = find<Button>(window, "process.key.ok");
-    const std::shared_ptr<Button> cancel = find<Button>(window, "process.key.cancel");
-    require((*ok).has_class("lit-key") && (*ok).has_class("lit-ok") && (*cancel).has_class("lit-cancel"),
-            "the keys take the light-map classes");
+    const std::shared_ptr<process_control::LampKey> ok = find<process_control::LampKey>(window, "process.key.ok");
+    const std::shared_ptr<process_control::LampKey> cancel =
+        find<process_control::LampKey>(window, "process.key.cancel");
     require((*ok).text.read().empty() && (*ok).semantic_descriptor().name == "OK" &&
                 (*cancel).semantic_descriptor().name == "Cancel",
             "the bakes carry the legends: the keys have only their names");
+    require((*ok).lamp_power() == 0.0 && (*ok).press_share() == 0.0,
+            "at rest OK is not lit: the room's light alone");
+    require((*cancel).lamp_power() == process_control::key_lit_power && (*cancel).press_share() == 0.0,
+            "CANCEL is lit throughout, as in the study");
+
+    // Held, OK's lamp strikes (40% at once, full after 60 ms) and the key
+    // goes down; released, it comes up and the lamp cools out.
+    ManualTime time{};
+    window.motion_clock().set_time_source(&time);
+    const Point on_ok = centre_of(*ok);
+    require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_ok}),
+            "the press on OK is delivered");
+    require((*ok).lamp_power() >= 0.4 * process_control::key_lit_power - 1e-9 &&
+                (*ok).lamp_power() < process_control::key_lit_power,
+            "a held key's lamp strikes at 40%");
+    run_for(window, time, std::chrono::milliseconds(30));
+    const double rising = (*ok).lamp_power();
+    require(rising > 0.4 * process_control::key_lit_power && rising < process_control::key_lit_power,
+            "the strike rises on the engine's frames");
+    for (int frame = 0; frame < 10; ++frame) run_for(window, time, std::chrono::milliseconds(16));
+    require((*ok).lamp_power() == process_control::key_lit_power && (*ok).press_share() == 1.0,
+            "held, the key is down and fully lit");
+    require(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_ok}),
+            "the release is delivered");
+    require((*ok).lamp_power() == process_control::key_lit_power, "the lamp does not go out in one step");
+    for (int frame = 0; frame < 16; ++frame) run_for(window, time, std::chrono::milliseconds(16));
+    require((*ok).lamp_power() == 0.0 && (*ok).press_share() == 0.0,
+            "released, the lamp cools out and the key comes up");
+
+    // CANCEL goes down and up, its lamp lit all the while.
+    const Point on_cancel = centre_of(*cancel);
+    require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_cancel}),
+            "the press on CANCEL is delivered");
+    for (int frame = 0; frame < 10; ++frame) run_for(window, time, std::chrono::milliseconds(16));
+    require((*cancel).press_share() == 1.0 && (*cancel).lamp_power() == process_control::key_lit_power,
+            "held, CANCEL is down and still lit");
+    require(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_cancel}),
+            "the release on CANCEL is delivered");
+    for (int frame = 0; frame < 16; ++frame) run_for(window, time, std::chrono::milliseconds(16));
+    require((*cancel).press_share() == 0.0 && (*cancel).lamp_power() == process_control::key_lit_power,
+            "released, CANCEL comes up lit");
+    window.motion_clock().set_time_source(nullptr);
     const std::shared_ptr<Label> message = find<Label>(window, "process.message");
     click(window, ok);
     require((*message).text.read() == "Transfer started: pump to reserve tank.", "OK starts the transfer");
@@ -152,17 +217,29 @@ void test_the_strip(Window& window) {
     require(!process_control::check_process_control_box(window, "process.no-such-box"), "an unknown box is refused");
 
     const std::shared_ptr<CheckBox> lamps = find<CheckBox>(window, "process.lamps");
-    const std::shared_ptr<Button> ok = find<Button>(window, "process.key.ok");
+    const std::shared_ptr<process_control::LampKey> ok = find<process_control::LampKey>(window, "process.key.ok");
     click(window, lamps);
     require((*pump).state.read() == IndicatorLampState::off &&
-                (*find<IndicatorLamp>(window, "process.status.fault")).state.read() == IndicatorLampState::off &&
-                (*ok).has_class("lamp-off") && !(*find<Button>(window, "process.key.cancel")).has_class("lamp-off"),
-            "Lamps off puts the status lamps and OK out, CANCEL staying lit");
+                (*find<IndicatorLamp>(window, "process.status.fault")).state.read() == IndicatorLampState::off,
+            "Lamps off puts the status lamps out");
+    require((*find<process_control::LampKey>(window, "process.key.cancel")).lamp_power() ==
+                process_control::key_lit_power,
+            "and leaves CANCEL lit");
+    ManualTime time{};
+    window.motion_clock().set_time_source(&time);
+    const Point on_ok = centre_of(*ok);
+    require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_ok}), "OK is pressed");
+    for (int frame = 0; frame < 10; ++frame) run_for(window, time, std::chrono::milliseconds(16));
+    require((*ok).press_share() == 1.0 && (*ok).lamp_power() == 0.0,
+            "with the lamps off a held key goes down but does not light");
+    require(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_ok}), "and released");
+    for (int frame = 0; frame < 10; ++frame) run_for(window, time, std::chrono::milliseconds(16));
+    window.motion_clock().set_time_source(nullptr);
     click(window, lamps);
     require((*pump).state.read() == IndicatorLampState::on &&
                 (*find<IndicatorLamp>(window, "process.status.fault")).state.read() == IndicatorLampState::fault &&
-                !(*ok).has_class("lamp-off"),
-            "and Lamps on lights them again, FAULT failing");
+                (*ok).lamp_power() == 0.0,
+            "and Lamps on lights the status lamps again, FAULT failing, the keys dark at rest");
 }
 
 } // namespace

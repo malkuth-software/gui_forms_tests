@@ -442,6 +442,23 @@ void test_lamp_colour_and_kept_composite() {
     const std::shared_ptr<const PartRaster> scaled = kept.composite(bake, dimmer, settings, DeviceExtent{8U, 8U},
                                                                     DeviceScale{2.0});
     require(scaled != nullptr && kept.composites() == 3U, "a new extent and scale composite again");
+
+    // A key's pressed bake: a null one is the up bake, so nothing new; a
+    // distinct one composites again, and is kept like the rest.
+    const std::shared_ptr<const PartRaster> no_down =
+        kept.composite(bake, nullptr, dimmer, settings, DeviceExtent{8U, 8U}, DeviceScale{2.0});
+    require(no_down == scaled && kept.composites() == 3U, "a null pressed bake is the up bake");
+    std::shared_ptr<engine_light::LightPlanes> pressed = std::make_shared<engine_light::LightPlanes>(*planes);
+    (*pressed).room.assign(12U, 0.4F);
+    const std::shared_ptr<const engine_light::LightPlanes> down = pressed;
+    engine_light::LightComposite held = settings;
+    held.press_mix = 1.0;
+    const std::shared_ptr<const PartRaster> down_first =
+        kept.composite(bake, down, dimmer, held, DeviceExtent{8U, 8U}, DeviceScale{2.0});
+    const std::shared_ptr<const PartRaster> down_again =
+        kept.composite(bake, down, dimmer, held, DeviceExtent{8U, 8U}, DeviceScale{2.0});
+    require(down_first != nullptr && down_first == down_again && kept.composites() == 4U,
+            "a distinct pressed bake composites once and is kept");
     require(kept.composite(bake, dimmer, settings, DeviceExtent{0U, 4U}, DeviceScale{1.0}) == nullptr,
             "an empty extent composites nothing");
     require(kept.composite(nullptr, dimmer, settings, extent, DeviceScale{1.0}) == nullptr, "no bake composites nothing");
