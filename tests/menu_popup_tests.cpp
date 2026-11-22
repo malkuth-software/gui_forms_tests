@@ -27,7 +27,10 @@
 // - The ribbon's two-pane application menu shows its panel in the picker
 //   Popup, and its submenu rows open their items in a menu Popup beside
 //   the row; a submenu command runs with the application menu's event and
-//   closes both.
+//   closes both. Its submenu rows follow the menu rule too: resting opens,
+//   resting on another row closes, the safe triangle keeps the submenu.
+// - The menu show delay is 300 ms on every host; a separator is a row that
+//   closes the submenu of another row.
 #include "gui_forms/application.hpp"
 #include "gui_forms/commands.hpp"
 #include "gui_forms/components/context_menu/context_menu.hpp"
@@ -40,6 +43,7 @@
 #include "gui_forms/theme/part_painting/part_painting.hpp"
 #include "gui_forms/window.hpp"
 #include "application/headless_application.hpp"
+#include "src/controls/ribbon/ribbon_application_menu.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -647,8 +651,9 @@ void submenus_wait_for_the_menu_show_delay() {
     Desk desk(true);
     Commands commands;
     (*desk.strip).set_items(strip_items(commands));
-    require((*desk.model).presentation_settings().pointer.menu_show_milliseconds == default_menu_show_milliseconds,
-            "the headless host reports no menu show delay");
+    require((*desk.model).presentation_settings().pointer.menu_show_milliseconds == default_menu_show_milliseconds &&
+                default_menu_show_milliseconds == 300U,
+            "the menu show delay is 300 ms, the same on every host");
     require((*desk.strip).open(0U, MenuOpenMode::pointer), "the File menu opens");
     hover_row(*desk.model, 0U, "file.background");
     require(desk.popups().size() == 1U, "the submenu waits for the delay");
@@ -730,6 +735,151 @@ void the_safe_triangle_keeps_the_submenu() {
     (*desk.strip).close();
 }
 
+// A separator is a row like any other for the rule: resting on it closes
+// the submenu another row of the panel opened, not before, and it never
+// turns hot.
+void a_separator_closes_the_submenu_after_the_delay() {
+    Desk desk(true);
+    Commands commands;
+    (*desk.strip).set_items(strip_items(commands));
+    require((*desk.strip).open(0U, MenuOpenMode::pointer), "the File menu opens");
+    hover_row(*desk.model, 0U, "file.background");
+    rest(*desk.model);
+    require(desk.popups().size() == 2U, "the submenu opens");
+    // The rule's middle line: away from the submenu's edge.
+    const Rect rule = row_bounds(*desk.model, 0U, "file.rule");
+    move_pointer(*desk.model, 0U, Point{rule.x + 4.0, rule.y + rule.height / 2.0});
+    require(desk.popups().size() == 2U, "the submenu waits for the delay");
+    require(row_focused(*desk.model, 0U, "file.background"), "the separator does not take the hot row");
+    rest(*desk.model);
+    require(desk.popups().size() == 1U && (*desk.strip).is_open(), "resting on the separator closes the submenu");
+    (*desk.strip).close();
+}
+
+// The two-pane menu's panel (Open, a rule, Background with Tile and Fill,
+// Exit; one recent item) in the picker Popup.
+std::vector<MenuItemSpec> two_pane_items(const Commands& commands) {
+    std::vector<MenuItemSpec> background;
+    background.emplace_back("file.background.tile", MenuItemKind::command, commands.tile);
+    background.emplace_back("file.background.fill", MenuItemKind::command, commands.fill);
+    std::vector<MenuItemSpec> file;
+    file.emplace_back("file.open", MenuItemKind::command, commands.open);
+    file.emplace_back("file.rule", MenuItemKind::separator);
+    file.emplace_back("file.background", MenuItemKind::submenu, std::shared_ptr<Command>{}, "Background",
+                      std::move(background));
+    file.emplace_back("file.quit", MenuItemKind::command, commands.quit);
+    return file;
+}
+
+// The two-pane rows, by their index in its layout: Open, the rule,
+// Background, Exit.
+constexpr std::size_t two_pane_open = 0U;
+constexpr std::size_t two_pane_background = 2U;
+constexpr std::size_t two_pane_quit = 3U;
+
+// The bounds of the two-pane panel's row `row` in its picker Popup
+// window's coordinates.
+Rect application_row_bounds(Window& owner, const std::size_t row) {
+    Window* const popup = owner.popup_window_model(Window::picker_popup_window_slot);
+    require(popup != nullptr, "the two-pane panel's Popup window shows");
+    const Control::Ptr found = (*popup).find("ribbon.application-menu.panel");
+    require(found != nullptr, "the panel is in its Popup window");
+    const std::shared_ptr<RibbonApplicationMenu> panel = std::static_pointer_cast<RibbonApplicationMenu>(found);
+    const RibbonApplicationMenu::Layout placed = (*panel).layout();
+    require(row < placed.rows.size(), "the panel lays out the row");
+    const Rect origin = (*panel).absolute_bounds();
+    const Rect local = placed.rows[row].bounds;
+    const Rect bounds{origin.x + local.x, origin.y + local.y, local.width, local.height};
+    return bounds;
+}
+
+// Moves the pointer to `point` in the two-pane panel's Popup window.
+void move_over_application_panel(Window& owner, const Point point) {
+    Window* const popup = owner.popup_window_model(Window::picker_popup_window_slot);
+    require(popup != nullptr, "the two-pane panel's Popup window shows");
+    static_cast<void>((*popup).dispatch_pointer({PointerAction::move, PointerButton::none, point}));
+    (*popup).perform_layout();
+}
+
+void hover_application_row(Window& owner, const std::size_t row) {
+    const Rect bounds = application_row_bounds(owner, row);
+    move_over_application_panel(owner, Point{bounds.x + bounds.width / 2.0, bounds.y + bounds.height / 2.0});
+}
+
+// Moves the pointer to the middle of the ribbon's menu's row `row` (its
+// submenu of the two-pane menu) in its Popup window of depth 0.
+void hover_ribbon_menu_row(Window& owner, const char* const row) {
+    Window* const popup = owner.popup_window_model(0U);
+    require(popup != nullptr, "the submenu's Popup window shows");
+    const std::shared_ptr<Control> target = (*popup).find(std::string("ribbon.menu.overlay.row.") + row);
+    require(target != nullptr, "the submenu's row is in its Popup window");
+    const Rect bounds = (*target).absolute_bounds();
+    static_cast<void>((*popup).dispatch_pointer(
+        {PointerAction::move, PointerButton::none, Point{bounds.x + bounds.width / 2.0, bounds.y + bounds.height / 2.0}}));
+    (*popup).perform_layout();
+}
+
+// Owner, 2026-11-22 (decisions 5 and 6): the ribbon's two-pane application
+// menu opened its submenus only on a press and never closed them by
+// itself. Now: resting on Background for the menu show delay opens its
+// submenu, not before; resting on Open closes it, not before, and the menu
+// stays; a submenu row passed over opens nothing; a move from Background
+// toward the submenu across Exit leaves it open, and reaching it keeps it
+// however long the pointer rests; a move across Exit away from it closes
+// it after the delay.
+void the_two_pane_menu_follows_the_menu_rule() {
+    Desk desk(true);
+    Commands commands;
+    (*desk.ribbon).set_application_menu(two_pane_items(commands));
+    (*desk.ribbon).set_recent_items({{"recent.report", "Report.png", "C:\\Pictures"}});
+    (*desk.model).perform_layout();
+    require((*desk.ribbon).show_application_menu(MenuOpenMode::pointer), "the two-pane menu opens");
+    require(desk.popups().size() == 1U, "its panel shows in the picker Popup");
+    hover_application_row(*desk.model, two_pane_background);
+    require(desk.popups().size() == 1U, "the submenu waits for the delay");
+    rest(*desk.model);
+    require(desk.popups().size() == 2U, "resting on Background opens its submenu");
+    hover_application_row(*desk.model, two_pane_open);
+    require(desk.popups().size() == 2U, "the submenu stays while the pointer has not rested on Open");
+    rest(*desk.model);
+    require(desk.popups().size() == 1U && (*desk.ribbon).menu_open(),
+            "resting on Open closes the submenu and leaves the menu open");
+    hover_application_row(*desk.model, two_pane_background);
+    hover_application_row(*desk.model, two_pane_open);
+    rest(*desk.model);
+    require(desk.popups().size() == 1U, "a submenu row passed over opens nothing");
+
+    // The safe triangle.
+    hover_application_row(*desk.model, two_pane_background);
+    rest(*desk.model);
+    require(desk.popups().size() == 2U, "the submenu opens again");
+    const Rect background = application_row_bounds(*desk.model, two_pane_background);
+    const Rect quit = application_row_bounds(*desk.model, two_pane_quit);
+    move_over_application_panel(*desk.model, Point{quit.x + quit.width - 6.0, quit.y + 4.0});
+    require(desk.popups().size() == 2U, "aiming at the submenu leaves it open");
+    hover_ribbon_menu_row(*desk.model, "file.background.tile");
+    rest(*desk.model);
+    require(desk.popups().size() == 2U, "reaching the submenu keeps it");
+    hover_application_row(*desk.model, two_pane_background);
+    const Point away{quit.x + 4.0, quit.y + quit.height / 2.0};
+    require(away.x < background.x + background.width / 2.0, "the far left of Exit is behind Background's middle");
+    move_over_application_panel(*desk.model, away);
+    require(desk.popups().size() == 2U, "a move away from the submenu waits for the delay");
+    rest(*desk.model);
+    require(desk.popups().size() == 1U && (*desk.ribbon).menu_open(), "resting on Exit closes the submenu");
+
+    // A zero delay opens and closes at once.
+    PresentationSettings settings = (*desk.model).presentation_settings();
+    settings.pointer.menu_show_milliseconds = 0U;
+    (*desk.model).set_presentation_settings(settings);
+    hover_application_row(*desk.model, two_pane_background);
+    require(desk.popups().size() == 2U, "with no delay the submenu opens as the pointer enters its row");
+    hover_application_row(*desk.model, two_pane_open);
+    require(desk.popups().size() == 1U, "and closes as the pointer enters Open");
+    (*desk.ribbon).close_menus();
+    require(!(*desk.ribbon).menu_open() && desk.popups().empty(), "the menu closes");
+}
+
 // Contention fuzzer seed 1 (tools/contention_fuzz.py, replay: the File menu
 // with its Background submenu open, then a button that shows a context menu
 // activated through automation, past the menu's outside-press layer). The
@@ -779,6 +929,8 @@ int main() {
         submenus_wait_for_the_menu_show_delay();
         a_zero_delay_opens_submenus_at_once();
         the_safe_triangle_keeps_the_submenu();
+        a_separator_closes_the_submenu_after_the_delay();
+        the_two_pane_menu_follows_the_menu_rule();
         a_menu_opening_closes_the_open_chain();
     } catch (const std::exception& error) {
         std::cerr << "menu popup tests failed: " << error.what() << '\n';

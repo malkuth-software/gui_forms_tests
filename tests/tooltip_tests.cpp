@@ -24,8 +24,12 @@
 #include "gui_forms/visual_inspection/types/visual_inspection_types.hpp"
 #include "gui_forms/window/tool_tips/tool_tips.hpp"
 #include "gui_forms/window/window.hpp"
+#include "src/core/window/tool_tips/tool_tip_width.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <cstddef>
 #include <exception>
 #include <iostream>
 #include <memory>
@@ -33,6 +37,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <stxlib/optional.hpp>
 
 namespace {
@@ -433,6 +438,121 @@ void test_maximum_width_is_bounded_and_shapes_overlay() {
     const SemanticNode* tip = find_role(snapshot.roots, SemanticRole::tool_tip);
     require(tip && (*tip).bounds.width <= 140.0 && (*tip).bounds.height > 30.0,
             "ToolTip bubble must honor maximum text width plus chrome, wrapping onto more lines");
+}
+
+// The tooltip width rule (owner, 2026-11-22; tool_tip_width.hpp): the
+// range, the candidates and the golden-box error.
+void test_the_width_rule_picks_candidates_round_the_golden_box() {
+    const detail::ToolTipWrapRange range = detail::tool_tip_wrap_range(12.0, 2048.0, 1000.0);
+    require(range.minimum == 192.0 && range.one_line == 288.0 && range.maximum == 1000.0,
+            "at 12 units the text wraps no narrower than 16 ems, stays one line to 24 ems, and stops at the room");
+    const detail::ToolTipWrapRange capped = detail::tool_tip_wrap_range(12.0, 120.0, 1000.0);
+    require(capped.minimum == 120.0 && capped.one_line == 120.0 && capped.maximum == 120.0,
+            "a program cap below the minimum wins");
+    const detail::ToolTipWrapRange roomless = detail::tool_tip_wrap_range(12.0, 2048.0, 0.0);
+    require(roomless.maximum == 2048.0, "an unknown room leaves the cap");
+
+    detail::ToolTipWrapInput short_text{};
+    short_text.total_width = 250.0;
+    short_text.widest_width = 250.0;
+    short_text.line_height = 15.0;
+    short_text.chrome = {18.0, 10.0};
+    short_text.range = range;
+    const detail::ToolTipWrapCandidates one = detail::tool_tip_wrap_candidates(short_text);
+    require(one.count == 1U && one.widths[0] == range.one_line, "text that fits the one-line width stays one line");
+
+    detail::ToolTipWrapInput long_text = short_text;
+    long_text.total_width = 2400.0;
+    long_text.widest_width = 2400.0;
+    const detail::ToolTipWrapCandidates several = detail::tool_tip_wrap_candidates(long_text);
+    require(several.count >= 4U && several.count <= detail::maximum_tool_tip_wrap_candidates,
+            "long text tries several widths");
+    double best = 1.0e9;
+    for (std::size_t index = 0U; index < several.count; ++index) {
+        const double width = several.widths[index];
+        require(width >= range.minimum && width <= range.maximum, "every candidate lies in the range");
+        const double lines = std::ceil(long_text.total_width / width);
+        const Size face{width + long_text.chrome.width, lines * long_text.line_height + long_text.chrome.height};
+        best = std::min(best, detail::tool_tip_aspect_error(face));
+    }
+    require(best < std::log(1.15), "one candidate's face lies within 15 percent of the golden box");
+
+    const double golden = detail::tool_tip_aspect_error(Size{detail::tool_tip_golden_ratio * 100.0, 100.0});
+    const double wide = detail::tool_tip_aspect_error(Size{detail::tool_tip_golden_ratio * 200.0, 100.0});
+    const double tall = detail::tool_tip_aspect_error(Size{detail::tool_tip_golden_ratio * 50.0, 100.0});
+    require(golden < 1.0e-12 && std::abs(wide - tall) < 1.0e-12 && wide > 0.6,
+            "the error is 0 for the golden box and the same for too wide and too tall by one factor");
+    require(std::isinf(detail::tool_tip_aspect_error(Size{0.0, 10.0})), "an empty face is infinitely far");
+}
+
+// Text of exactly `length` characters: plain English words, repeated.
+std::string help_text(std::size_t length) {
+    const std::string_view words =
+        "Shows the help for this command, which changes the open picture and keeps the colour you chose last. ";
+    std::string text;
+    while (text.size() < length) text.append(words);
+    text.resize(length);
+    if (text.back() == ' ') text.back() = 'x';
+    return text;
+}
+
+// A window wide enough that no tooltip below reaches its edges.
+struct WideFixture final {
+    WideFixture() : window(root, {1000.0, 700.0}) {
+        (*root).set_requested_bounds({0.0, 0.0, 1000.0, 700.0});
+        (*button).set_requested_bounds({40.0, 45.0, 130.0, 34.0});
+        (*root).add_child(button);
+        window.perform_layout();
+    }
+
+    Control::Ptr root = make_control<Control>(StableId("tooltip.wide.root"));
+    std::shared_ptr<Button> button = make_control<Button>(StableId("tooltip.wide.target"), "Hover target");
+    Window window;
+};
+
+// The face of the tooltip `tips` shows on the fixture's button for `text`.
+Size shown_face(WideFixture& fixture, ToolTip& tips, const std::string& text) {
+    tips.set_tool_tip(fixture.button, text);
+    tips.show(fixture.button, 0ms);
+    fixture.window.perform_layout();
+    const SemanticSnapshot snapshot = fixture.window.semantic_snapshot();
+    const SemanticNode* tip = find_role(snapshot.roots, SemanticRole::tool_tip);
+    require(tip != nullptr && (*tip).name == text, "the tooltip shows its text");
+    const Size face{(*tip).bounds.width, (*tip).bounds.height};
+    tips.hide();
+    return face;
+}
+
+// Owner, 2026-11-22 (decision 7): a tooltip's width follows its text. One
+// and 40 characters stay on one line, as wide as they need; 120 characters
+// wrap at no less than the readable minimum (wider than golden, since the
+// minimum governs); 400 characters wrap to a box near the golden ratio.
+void test_tooltip_width_follows_its_text() {
+    WideFixture fixture;
+    ToolTip tips(fixture.window);
+    const std::string one = help_text(1U);
+    const std::string forty = help_text(40U);
+    const std::string hundred_twenty = help_text(120U);
+    const std::string four_hundred = help_text(400U);
+    require(one.size() == 1U && forty.size() == 40U && hundred_twenty.size() == 120U && four_hundred.size() == 400U,
+            "the texts have their lengths");
+    const Size one_face = shown_face(fixture, tips, one);
+    const Size forty_face = shown_face(fixture, tips, forty);
+    const Size wrapped_face = shown_face(fixture, tips, hundred_twenty);
+    const Size long_face = shown_face(fixture, tips, four_hundred);
+    require(one_face.width > 0.0 && one_face.width < 60.0, "one character makes a small box");
+    require(forty_face.height == one_face.height && forty_face.width > one_face.width * 3.0,
+            "40 characters stay on one line, as wide as they need");
+    const double line = one_face.height - 10.0;
+    require(wrapped_face.height >= one_face.height + line * 0.9, "120 characters wrap");
+    require(wrapped_face.width >= 16.0 * 12.0 * 0.8 && wrapped_face.width <= 24.0 * 12.0 + 18.0 + 1.0,
+            "120 characters wrap between the readable minimum and the one-line width");
+    require(wrapped_face.width / wrapped_face.height >= detail::tool_tip_golden_ratio,
+            "the minimum keeps 120 characters wider than golden");
+    const double aspect = long_face.width / long_face.height;
+    require(aspect > detail::tool_tip_golden_ratio / 1.25 && aspect < detail::tool_tip_golden_ratio * 1.25,
+            "400 characters wrap to a box near the golden ratio");
+    require(long_face.width > wrapped_face.width * 0.8, "long text is no narrower than the readable minimum allows");
 }
 
 void test_window_and_program_switches() {
@@ -856,6 +976,8 @@ int main() {
         test_mapping_removal_and_provider_disposal_are_quiescent();
         test_show_always_supports_a_disabled_visible_owner();
         test_maximum_width_is_bounded_and_shapes_overlay();
+        test_the_width_rule_picks_candidates_round_the_golden_box();
+        test_tooltip_width_follows_its_text();
         test_window_and_program_switches();
         test_blank_text_and_open_scopes();
         test_press_hides_and_text_changes_follow();
