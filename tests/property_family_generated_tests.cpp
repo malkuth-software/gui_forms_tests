@@ -1326,6 +1326,14 @@ void test_indicator_lamp_properties() {
         expect(by_name && *by_name == PropertyValueTraits<stxlib::Optional<Color>>::to_binding(sample),
                "IndicatorLamp.lamp_color: the table reads the cell");
     }
+    {
+        const IndicatorLampStyle sample = IndicatorLampStyle::pinpoint;
+        (*control).lamp_style = sample;
+        expect((*control).lamp_style.read() == sample, "IndicatorLamp.lamp_style: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("lamp_style");
+        expect(by_name && *by_name == PropertyValueTraits<IndicatorLampStyle>::to_binding(sample),
+               "IndicatorLamp.lamp_style: the table reads the cell");
+    }
 }
 
 void test_info_banner_properties() {

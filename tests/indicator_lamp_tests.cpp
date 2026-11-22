@@ -112,12 +112,12 @@ void test_states_and_semantics() {
             "the accessible name wins, and error is spoken, not only coloured");
     require(IndicatorLamp::state_name(IndicatorLampState::on) == "on", "on is named on");
 
-    // The anatomy: three parts besides the region, two custom states.
+    // The anatomy: three parts besides the region, three custom states.
     const ControlAnatomy& anatomy = (*lamp).anatomy();
     require(anatomy.control_id == "indicator_lamp" && anatomy.parts.size() == 4U &&
-                anatomy.custom_states.size() == 2U && anatomy.custom_states[0].name == "on" &&
-                anatomy.custom_states[1].name == "error",
-            "the anatomy declares region, bezel, lens and label, and the states on and error");
+                anatomy.custom_states.size() == 3U && anatomy.custom_states[0].name == "on" &&
+                anatomy.custom_states[1].name == "error" && anatomy.custom_states[2].name == "pinpoint",
+            "the anatomy declares region, bezel, lens and label, and the states on, error and pinpoint");
     const AnatomyStateSet error_states = (*lamp).anatomy_states();
     require(error_states.contains(CustomStateIndex{1U}) && !error_states.contains(CustomStateIndex{0U}),
             "an error lamp takes the error state alone");
@@ -210,6 +210,48 @@ void test_parts() {
             "a lens alone fills the shorter side and publishes no legend");
 }
 
+// The pinpoint (owner, 2026-11-21): a tiny accent light for status, a dot
+// 6 units across with no bezel and the legend 4 units after it; it takes
+// the pinpoint state, lights and is named as a lens does, is never hit,
+// and measures to its dot and legend.
+void test_pinpoint() {
+    const std::shared_ptr<IndicatorLamp> detached = make_control<IndicatorLamp>(StableId("pinpoint"));
+    require((*detached).lamp_style.read() == IndicatorLampStyle::lens, "a lamp starts as a lens");
+    require((*detached).measure(Size{1000.0, 1000.0}) == Size{16.0, 16.0}, "a lens alone measures its bezel");
+    (*detached).lamp_style = IndicatorLampStyle::pinpoint;
+    require((*detached).measure(Size{1000.0, 1000.0}) == Size{6.0, 6.0}, "a pinpoint alone measures its dot");
+    require((*detached).anatomy_states().contains(CustomStateIndex{2U}) &&
+                !(*detached).anatomy_states().contains(CustomStateIndex{0U}),
+            "a dark pinpoint takes the pinpoint state alone");
+    (*detached).state = IndicatorLampState::on;
+    require((*detached).anatomy_states().contains(CustomStateIndex{2U}) &&
+                (*detached).anatomy_states().contains(CustomStateIndex{0U}),
+            "a lit pinpoint takes the pinpoint and on states");
+    require(!(*detached).hit_test_local(Point{3.0, 3.0}), "a pinpoint is never hit either");
+    require((*detached).semantic_descriptor().value == "on", "a pinpoint speaks its state as a lens does");
+    bool refused = false;
+    try {
+        (*detached).lamp_style = static_cast<IndicatorLampStyle>(5);
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused && (*detached).lamp_style.read() == IndicatorLampStyle::pinpoint,
+            "a style outside the enumeration is refused, keeping the old one");
+
+    LampWindow made = lamp_window(Size{120.0, 24.0}, "Link");
+    (*made.lamp).lamp_style = IndicatorLampStyle::pinpoint;
+    (*made.window).perform_layout();
+    const IndicatorLamp::Parts parts = (*made.lamp).parts();
+    require(!parts.bezel.present, "a pinpoint publishes no bezel");
+    require(parts.lens.bounds == Rect{0.0, 9.0, 6.0, 6.0}, "the dot is 6 units at the start, centred down");
+    require(parts.label.bounds == Rect{10.0, 0.0, 110.0, 24.0}, "the legend follows the dot 4 units after it");
+    (*made.lamp).layout_direction = LayoutDirection::right_to_left;
+    (*made.window).perform_layout();
+    const IndicatorLamp::Parts mirrored = (*made.lamp).parts();
+    require(mirrored.lens.bounds == Rect{114.0, 9.0, 6.0, 6.0} && mirrored.label.bounds == Rect{0.0, 0.0, 110.0, 24.0},
+            "right to left, the dot moves to the right and the legend before it");
+}
+
 std::optional<WindowCapture> capture_lamp(OffscreenAttachment& attached, const LampWindow& made) {
     OffscreenCaptureOptions options{};
     options.scale = 1.0;
@@ -259,17 +301,16 @@ void write_preview(const WindowCapture& picture, const std::string& name) {
 }
 
 // In `theme` (none: the default theme), the lit lens differs from the dark
-// one and nothing outside the lens changes, for on and for error.
+// one and nothing outside `lens` (capture pixels) changes, for on and for
+// error.
 void check_lights_only_the_lens(OffscreenAttachment& attached, LampWindow& made,
-                                const std::shared_ptr<const Theme>& theme, const std::string& name) {
+                                const std::shared_ptr<const Theme>& theme, const std::string& name, Rect lens) {
     (*made.window).set_theme_override(theme);
     (*made.lamp).state = IndicatorLampState::off;
     const std::optional<WindowCapture> dark = capture_lamp(attached, made);
     require(dark.has_value(), name + ": the dark lamp is captured");
     if (!dark) return;
     write_preview(*dark, "indicator_lamp_" + name + "_off");
-    // The lens in the capture's pixels: the margin, then two units in.
-    const Rect lens{4.0 + 2.0, 4.0 + 2.0, 20.0, 20.0};
     const std::array<IndicatorLampState, 2> lit_states{IndicatorLampState::on, IndicatorLampState::error};
     for (const IndicatorLampState state : lit_states) {
         (*made.lamp).state = state;
@@ -295,10 +336,23 @@ void test_lights_only_the_lens() {
     // Settled lamps only: the comparison is of end states.
     set_reduced_motion(*made.window, true);
     OffscreenAttachment attached(*raster, *made.window);
-    check_lights_only_the_lens(attached, made, nullptr, "gui_forms");
+    // The lens in the capture's pixels: the margin, then two units in.
+    const Rect lens{4.0 + 2.0, 4.0 + 2.0, 20.0, 20.0};
+    check_lights_only_the_lens(attached, made, nullptr, "gui_forms", lens);
     for (std::size_t index = 0U; index < familiar_theme_count; ++index) {
         const FamiliarTheme theme = static_cast<FamiliarTheme>(index);
-        check_lights_only_the_lens(attached, made, familiar_theme(theme), std::string(familiar_theme_id(theme)));
+        check_lights_only_the_lens(attached, made, familiar_theme(theme), std::string(familiar_theme_id(theme)), lens);
+    }
+    // A pinpoint lights only its dot: the margin, then the 6-unit dot at
+    // the start, centred down the 24-unit lamp.
+    (*made.lamp).lamp_style = IndicatorLampStyle::pinpoint;
+    (*made.window).perform_layout();
+    const Rect dot{4.0, 4.0 + 9.0, 6.0, 6.0};
+    check_lights_only_the_lens(attached, made, nullptr, "gui_forms_pinpoint", dot);
+    for (std::size_t index = 0U; index < familiar_theme_count; ++index) {
+        const FamiliarTheme theme = static_cast<FamiliarTheme>(index);
+        check_lights_only_the_lens(attached, made, familiar_theme(theme),
+                                   std::string(familiar_theme_id(theme)) + "_pinpoint", dot);
     }
 }
 
@@ -531,6 +585,11 @@ void test_baked_lens() {
     (*made.window).perform_layout();
     require((*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 0.0, 30.0, 20.0},
             "and setting it again the bake's aspect");
+    // A pinpoint is the theme's dot: it never shows the bake.
+    (*made.lamp).lamp_style = IndicatorLampStyle::pinpoint;
+    (*made.window).perform_layout();
+    require(!(*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 7.0, 6.0, 6.0},
+            "a pinpoint shows its dot, not the bake");
     test_support::remove_temporary_directory(directory);
 }
 
@@ -541,6 +600,7 @@ int main() {
     test_detached_changes_at_once();
     test_warm_up_and_cool_down();
     test_parts();
+    test_pinpoint();
     test_lights_only_the_lens();
     test_lamp_colour_and_kept_composite();
     test_light_plane_properties();
