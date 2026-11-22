@@ -1245,6 +1245,10 @@ endforeach()
 target_link_libraries(gui_forms_winforms_converter_tests PRIVATE gui_forms_controls)
 target_include_directories(gui_forms_winforms_converter_tests PRIVATE ${GUI_FORMS_SOURCE_DIR})
 add_test(NAME gui_forms_winforms_converter_tests COMMAND gui_forms_winforms_converter_tests)
+# MCP G6: the inspect additions and the forms tools' registry.
+add_executable(gui_forms_model_inspection_tests tests/model_inspection/model_inspection_tests.cpp)
+target_link_libraries(gui_forms_model_inspection_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_model_inspection_tests COMMAND gui_forms_model_inspection_tests)
 add_executable(gui_forms_form_generator_tests tests/form_language/form_generator_tests.cpp
     ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_catalog.cpp ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_lab_catalog.cpp)
 target_link_libraries(gui_forms_form_generator_tests PRIVATE gui_forms_lab gui_forms_demo_controls)
