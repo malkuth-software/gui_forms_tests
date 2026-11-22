@@ -188,7 +188,14 @@ void test_builtin_registry() {
     for (const char* const name : names) {
         const PrimitiveDescriptor& descriptor = builtin(name).descriptor();
         require(descriptor.name == name, "a primitive is found under its own name");
-        require(descriptor.roles.size() == 1U && descriptor.roles[0] == PartRole::face, "the bulge paints faces");
+        // The dithered form also paints a ribbon split's arrow half (an
+        // actuator), which hovers as the soft dither too.
+        const bool dithered = descriptor.name == "dithered_bulge";
+        const std::size_t roles = dithered ? 2U : 1U;
+        require(descriptor.roles.size() == roles && descriptor.roles[0] == PartRole::face, "the bulge paints faces");
+        if (dithered && descriptor.roles.size() == 2U) {
+            require(descriptor.roles[1] == PartRole::actuator, "the dithered bulge paints actuators too");
+        }
         std::set<AnatomyState> read(descriptor.states_read.begin(), descriptor.states_read.end());
         require(read.size() == 2U && read.count(AnatomyState::pressed) == 1U &&
                     read.count(AnatomyState::active_tool) == 1U,
@@ -608,6 +615,85 @@ void test_rescaled_light_default_uses_every_step() {
     }
 }
 
+// The selected look reads as a plate (owner, 2026-11-22; rendering
+// reference §1 "active tool"): the gold form draws the gold plate, #FFEDBA
+// to #FFCF66 inside a one-keyline border #C49332 with radius 2, and its dots
+// shade the plate. Every face pixel is opaque; off the lattice a pixel is
+// the plate's own colour for its row, so the dots fall only on the lattice
+// and the body between them is the plate, not the plane. Pressed, the plate
+// takes the gold plate's pressed face.
+std::array<std::uint8_t, 4> border_pixel() {
+    const std::array<std::uint8_t, 4> border{196U, 147U, 50U, 255U};
+    return border;
+}
+
+void check_gold_plate(const TestRaster& raster, std::uint32_t side, std::uint32_t line, std::string_view where) {
+    const std::uint32_t width = raster.extent.width;
+    const std::uint32_t height = raster.extent.height;
+    require(raster.pixel(width / 2U, 0U) == border_pixel() && raster.pixel(0U, height / 2U) == border_pixel() &&
+                raster.pixel(width / 2U, height - 1U) == border_pixel() &&
+                raster.pixel(width - 1U, height / 2U) == border_pixel(),
+            (std::string(where) + ": the plate's border runs along every side").c_str());
+    require(raster.pixel(0U, 0U)[3] < 255U, (std::string(where) + ": the corners are rounded").c_str());
+    bool opaque = true;
+    bool plate_between = true;
+    std::size_t dots = 0U;
+    // Outside the corner squares (radius 2 logical), with a reference
+    // column off the lattice: lattice column index 1 is device column 2·side.
+    const std::uint32_t corner = 2U * side;
+    const std::uint32_t reference_column = 2U * side;
+    for (std::uint32_t row = corner; row + corner < height; ++row) {
+        const std::array<std::uint8_t, 4> plate = raster.pixel(reference_column, row);
+        const bool lattice_row = (row / side) % 2U == 1U;
+        for (std::uint32_t column = line; column + line < width; ++column) {
+            const std::array<std::uint8_t, 4> pixel = raster.pixel(column, row);
+            if (pixel[3] != 255U) opaque = false;
+            const bool lattice_column = (column / side) % 2U == 1U;
+            if (lattice_row && lattice_column) {
+                if (pixel != plate) ++dots;
+                continue;
+            }
+            if (column >= corner && column + corner < width && pixel != plate) plate_between = false;
+        }
+    }
+    require(opaque, (std::string(where) + ": every face pixel is opaque").c_str());
+    require(plate_between,
+            (std::string(where) + ": off the lattice every pixel is the plate's colour for its row").c_str());
+    require(dots > 0U, (std::string(where) + ": the dots shade the plate").c_str());
+}
+
+void test_gold_form_draws_its_plate() {
+    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
+    const double scales[] = {1.0, 2.0};
+    for (const double scale : scales) {
+        const std::uint32_t side = static_cast<std::uint32_t>(scale);
+        TestRaster gold = make_raster(large_button, scale);
+        require(draw(dithered, parameters, gold, large_button, scale, states_of(false, true)) == RasterOutcome::painted,
+                "the gold dither paints");
+        check_gold_plate(gold, side, side, scale == 1.0 ? "gold at scale 1" : "gold at scale 2");
+        require(padding_untouched(gold), "row padding is never written");
+        TestRaster dent = make_raster(large_button, scale);
+        require(draw(dithered, parameters, dent, large_button, scale, states_of(true, true)) == RasterOutcome::painted,
+                "the gold dent paints");
+        check_gold_plate(dent, side, side, scale == 1.0 ? "the gold dent at scale 1" : "the gold dent at scale 2");
+        // Row 2·side, off the lattice: the face's colour near the top.
+        const std::uint32_t row = 2U * side;
+        require(gold.pixel(2U * side, row) != dent.pixel(2U * side, row),
+                "pressed, the plate takes the gold plate's pressed face");
+    }
+    // The plate's colours are parameters: a theme may recolour it.
+    PrimitiveParameterBlock recoloured = parameters;
+    require(set_colour_parameter(recoloured, dithered.descriptor(), "gold_plate_border", Color{10, 20, 30, 255}) ==
+                ParameterAssignment::assigned,
+            "the plate's border is a parameter");
+    TestRaster themed = make_raster(large_button, 1.0);
+    require(draw(dithered, recoloured, themed, large_button, 1.0, states_of(false, true)) == RasterOutcome::painted,
+            "the recoloured plate paints");
+    const std::array<std::uint8_t, 4> themed_border{10U, 20U, 30U, 255U};
+    require(themed.pixel(20U, 0U) == themed_border, "the border takes the parameter's colour");
+}
+
 // The dark variant's gains reach all three steps of both sides (they did
 // before the rescaling too).
 void apply_dark_palette(PrimitiveParameterBlock& parameters, const PrimitiveDescriptor& descriptor);
@@ -722,8 +808,10 @@ void test_integer_scales_reproduce_the_studies_lattice() {
         bool dark;
         double amplitude;
     };
-    const Variant variants[] = {{false, false, false, 1.0}, {true, false, false, 1.0}, {false, true, false, 1.0},
-                                {false, false, true, 1.0},  {false, false, false, 0.5}, {false, true, false, 0.5}};
+    // The gold form draws its plate under the dots, which is no lattice
+    // (test_gold_form_draws_its_plate); the plain forms are the studies' rule.
+    const Variant variants[] = {{false, false, false, 1.0}, {true, false, false, 1.0}, {false, false, true, 1.0},
+                                {false, false, false, 0.5}};
     const std::uint32_t factors[] = {2U, 3U, 4U};
     for (const Size size : sizes) {
         for (const Variant& variant : variants) {
@@ -815,10 +903,12 @@ struct OldReferenceCase final {
     std::uint64_t scale_2;
 };
 
-constexpr std::array<OldReferenceCase, 5> old_reference_cases{{
+// The old rule drew the gold form's dots on the plane; the gold form now
+// draws its plate under them (owner, 2026-11-22), so its old hashes no
+// longer apply and only the plain forms are compared.
+constexpr std::array<OldReferenceCase, 4> old_reference_cases{{
     {"rest", false, false, 1.0, false, 0x53cca0febc6ccef7ULL, 0xe7555604ef50bcf5ULL},
     {"pressed", true, false, 1.0, false, 0x5ecafcd3609907c7ULL, 0x64067dc3a4ee299dULL},
-    {"active", false, true, 1.0, false, 0xad170a954e2e3b4cULL, 0xd840f9e4182893d5ULL},
     {"half", false, false, 0.5, false, 0x2c3fc566a9e7e9d2ULL, 0x82b6a73be196ccadULL},
     {"dark", false, false, 1.0, true, 0x5208613e5af59721ULL, 0x30da795d91c6d9c5ULL},
 }};
@@ -991,6 +1081,7 @@ int main() {
     test_dithered_lattice_and_tones();
     test_gold_parameter_is_the_active_tool();
     test_rescaled_light_default_uses_every_step();
+    test_gold_form_draws_its_plate();
     test_dark_variant_reaches_every_step();
     test_dot_count_grows_with_amplitude();
     test_integer_scales_reproduce_the_studies_lattice();

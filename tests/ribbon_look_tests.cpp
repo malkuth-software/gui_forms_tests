@@ -949,6 +949,13 @@ void test_overlapping_tabs() {
 // split whose Command is checked (a selected tool on a split, as Paint's
 // Select) stand in the gold bulge at rest; an unchecked command is flat at
 // rest; a tab held under the pointer shows the dent on its hover layer.
+//
+// The cp36 captures (owner, 2026-11-22) showed both looks still off: the
+// gold was a sparse field of dots with no body, and a split pressed on its
+// arrow half showed the button's flat light-blue hover plate on that half
+// alone. Now the gold stands on its plate (a covered face with a border),
+// a press shows the dent at once, without a settled hover, and a split
+// whose menu is open shows the dent over the whole button, both halves.
 
 // The largest face drawn within `bounds` (one unit of slack), if any.
 std::optional<RasterFace> face_within(const LookPainter& painter, Rect bounds) {
@@ -985,11 +992,31 @@ Rect command_face_of(const Ribbon& ribbon, std::string_view id) {
     return Rect{};
 }
 
+// A command's published parts (empty when it is not realized).
+Ribbon::CommandParts command_parts_of(const Ribbon& ribbon, std::string_view id) {
+    for (const Ribbon::CommandItem& item : ribbon.realized_commands()) {
+        if (item.stable_id == id) return item.parts;
+    }
+    return Ribbon::CommandParts{};
+}
+
+// Whether `face` lies over `bounds`, to a unit at each side.
+bool covers(const RasterFace& face, Rect bounds) {
+    const bool left = face.bounds.x <= bounds.x + 1.0;
+    const bool top = face.bounds.y <= bounds.y + 1.0;
+    const bool right = face.bounds.x + face.bounds.width >= bounds.x + bounds.width - 1.0;
+    const bool bottom = face.bounds.y + face.bounds.height >= bounds.y + bounds.height - 1.0;
+    const bool over = left && top && right && bottom;
+    return over;
+}
+
 void test_pressed_dent_and_checked_gold() {
     const std::shared_ptr<Command> paste = std::make_shared<Command>("paste", "Paste");
     const std::shared_ptr<Command> pencil = std::make_shared<Command>("pencil", "Pencil");
     const std::shared_ptr<Command> select = std::make_shared<Command>("select", "Select");
     const std::shared_ptr<Command> region = std::make_shared<Command>("region", "Rectangular selection");
+    const std::shared_ptr<Command> brush = std::make_shared<Command>("brush", "Brush");
+    const std::shared_ptr<Command> round_brush = std::make_shared<Command>("round", "Round brush");
     (*pencil).set_checked(true);
     (*select).set_checked(true);
     std::vector<RibbonTabSpec> tabs = two_tabs();
@@ -1001,6 +1028,10 @@ void test_pressed_dent_and_checked_gold() {
                               .image = ImageId{7}};
     chooser.drop_down = {MenuItemSpec("select.region", MenuItemKind::command, region, "Rectangular selection")};
     tools.commands.push_back(chooser);
+    RibbonCommandSpec brushes{.stable_id = "brush", .kind = RibbonCommandKind::split, .command = brush,
+                              .image = ImageId{8}};
+    brushes.drop_down = {MenuItemSpec("brush.round", MenuItemKind::command, round_brush, "Round brush")};
+    tools.commands.push_back(brushes);
     tabs[0].groups.push_back(std::move(tools));
     std::shared_ptr<Ribbon> ribbon = ribbon_with(std::move(tabs));
     (*ribbon).set_theme_override(gui_forms_theme());
@@ -1034,6 +1065,12 @@ void test_pressed_dent_and_checked_gold() {
             "a checked toggle stands in the gold dithered bulge at rest");
     require(select_face && (*select_face).covered > 0.0 && (*select_face).warm > 0U,
             "a selected tool on a split stands in the gold dithered bulge at rest");
+    // The gold has a body: its plate covers the face, inside a border of
+    // one colour along the rim (rendering reference §1, "active tool").
+    require(pencil_face && (*pencil_face).covered > 0.9 && (*pencil_face).rim > 0.5,
+            "the checked gold reads as a plate with its border, not a field of dots");
+    require(select_face && (*select_face).covered > 0.9 && (*select_face).rim > 0.5,
+            "and so does a selected tool on a split");
     require(!paste_face || (*paste_face).covered == 0.0, "an unchecked command is flat at rest");
 
     const Rect paste_bounds = command_face_of(*ribbon, "paste");
@@ -1054,6 +1091,44 @@ void test_pressed_dent_and_checked_gold() {
             "pressed, it is the dithered dent, lit on the far slope");
     static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_paste}));
     settle(window, time);
+
+    // A press that arrives with the pointer shows the dent at once: no
+    // frame runs between the move and the press.
+    static_cast<void>(window.dispatch_pointer({PointerAction::move, PointerButton::none, Point{690.0, 190.0}}));
+    settle(window, time);
+    static_cast<void>(window.dispatch_pointer({PointerAction::move, PointerButton::none, on_paste}));
+    static_cast<void>(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_paste}));
+    LookPainter quick;
+    static_cast<void>(window.paint(quick, {0.0, 0.0, 700.0, 200.0}));
+    const std::optional<RasterFace> quick_dent = face_within(quick, paste_bounds);
+    require(quick_dent && (*quick_dent).lit_lower_right > (*quick_dent).lit_upper_left,
+            "a press shows the dent at once, without waiting for the hover's rise");
+    static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_paste}));
+    settle(window, time);
+
+    // A split pressed on its arrow half opens its menu, and the dent covers
+    // the whole button, both halves; the arrow half paints no plate of its
+    // own.
+    const Ribbon::CommandParts brush_parts = command_parts_of(*ribbon, "brush");
+    require(brush_parts.command_arrow.present && brush_parts.command_face.present, "the split shows both halves");
+    if (brush_parts.command_arrow.present) {
+        const Point on_arrow = centre(brush_parts.command_arrow.bounds);
+        static_cast<void>(window.dispatch_pointer({PointerAction::move, PointerButton::none, on_arrow}));
+        static_cast<void>(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_arrow}));
+        require((*ribbon).menu_open(), "a press on the split's arrow half opens its menu");
+        LookPainter opened;
+        static_cast<void>(window.paint(opened, {0.0, 0.0, 700.0, 200.0}));
+        const Rect whole = brush_parts.command_focus.bounds;
+        const std::optional<RasterFace> split_dent = face_within(opened, whole);
+        require(split_dent && covers(*split_dent, whole) && (*split_dent).warm == 0U &&
+                    (*split_dent).lit_lower_right > (*split_dent).lit_upper_left,
+                "with its menu open the split shows the dent over the whole button");
+        const std::optional<RasterFace> arrow_face = face_within(opened, brush_parts.command_arrow.bounds);
+        require(!arrow_face, "and its arrow half draws nothing of its own over it");
+        static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_arrow}));
+        (*ribbon).close_menus();
+        settle(window, time);
+    }
 
     // A tab held under the pointer: its hover layer is the dent.
     const std::vector<Ribbon::Tab> realized = (*ribbon).realized_tabs();
