@@ -107,6 +107,19 @@ void test_unusable_reports() {
     require(!idle.has_gesture && !idle.has_wheel, "inertia with nothing begun sends nothing");
 }
 
+void test_engagement() {
+    require(direct_manipulation_allowed(nullptr), "unset, the window decides");
+    require(!direct_manipulation_allowed("0"), "GUI_FORMS_DIRECT_MANIPULATION=0 turns it off");
+    require(direct_manipulation_allowed("1") && direct_manipulation_allowed("") && direct_manipulation_allowed("00"),
+            "any other value leaves it to the window");
+    require(!direct_manipulation_wanted(true, false, false, false),
+            "a window without a gesture handler keeps the plain wheel path");
+    require(direct_manipulation_wanted(true, true, false, false), "a gesture handler engages it");
+    require(!direct_manipulation_wanted(false, true, true, true), "the switch overrides every request");
+    require(direct_manipulation_wanted(true, false, true, true), "a running gesture finishes after the request ends");
+    require(!direct_manipulation_wanted(true, false, true, false), "then it is released");
+}
+
 } // namespace
 
 int main() {
@@ -115,6 +128,7 @@ int main() {
         test_pan_is_a_precise_wheel();
         test_pan_turning_into_pinch();
         test_unusable_reports();
+        test_engagement();
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';
         return EXIT_FAILURE;

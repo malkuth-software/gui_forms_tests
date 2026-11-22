@@ -228,6 +228,32 @@ void test_headless_simulation() {
     wheel_token.disconnect();
 }
 
+// What the Windows host engages DirectManipulation by: a window's opt-in,
+// or an attached control that asked; nothing else.
+void test_gesture_input_request() {
+    std::string trace;
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("request.root"));
+    Window window(root, Size{100.0, 100.0});
+    require(!window.gesture_input_requested(), "a window with no gesture handler asks for nothing");
+    window.set_gesture_input(true);
+    require(window.gesture_input_requested(), "the window's own opt-in asks");
+    window.set_gesture_input(false);
+    std::shared_ptr<GestureProbe> probe =
+        make_control<GestureProbe>(StableId("request.probe"), std::string("probe"), trace);
+    (*probe).set_gesture_input(true);
+    require(!window.gesture_input_requested(), "a detached control does not ask");
+    (*root).add_child(probe);
+    require(window.gesture_input_requested(), "attached, it asks");
+    (*probe).set_gesture_input(true);
+    (*probe).set_gesture_input(false);
+    require(!window.gesture_input_requested(), "and stops asking (a repeated set counts once)");
+    (*probe).set_gesture_input(true);
+    require(window.gesture_input_requested(), "asks again");
+    static_cast<void>((*root).remove_child((*probe).runtime_id()));
+    require(!window.gesture_input_requested() && (*probe).gesture_input(),
+            "detached, its request leaves the window, the control keeps its own");
+}
+
 } // namespace
 
 int main() {
@@ -236,6 +262,7 @@ int main() {
         test_dispatch_order();
         test_latching_and_capture();
         test_headless_simulation();
+        test_gesture_input_request();
     } catch (const std::exception& error) {
         std::cerr << "gui_forms_gesture_event_tests: " << error.what() << '\n';
         return EXIT_FAILURE;
