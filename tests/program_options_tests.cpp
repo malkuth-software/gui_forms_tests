@@ -135,6 +135,15 @@ void test_scheme_and_staging_options_parse() {
     std::array<char*, 2> missing{const_cast<char*>("gallery"), const_cast<char*>("--reveal")};
     require(!demo::parse_program_options(static_cast<int>(missing.size()), missing.data()).has_value(),
             "--reveal without a control is refused");
+    std::array<char*, 3> checked{const_cast<char*>("gallery"), const_cast<char*>("--check"),
+                                 const_cast<char*>("gallery.industrial.theme")};
+    const std::optional<demo::ProgramOptions> checking =
+        demo::parse_program_options(static_cast<int>(checked.size()), checked.data());
+    require(checking.has_value() && (*checking).check == "gallery.industrial.theme",
+            "--check parses into its field");
+    std::array<char*, 2> unchecked{const_cast<char*>("gallery"), const_cast<char*>("--check")};
+    require(!demo::parse_program_options(static_cast<int>(unchecked.size()), unchecked.data()).has_value(),
+            "--check without a control is refused");
 }
 
 // The user-theme options are the library's: the demos pass them over, and

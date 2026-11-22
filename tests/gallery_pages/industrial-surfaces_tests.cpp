@@ -7,60 +7,91 @@
 #include "gui_forms/controls/radio_button.hpp"
 #include "gui_forms/controls/scaled_group_box.hpp"
 
+#include <array>
+#include <memory>
+#include <string_view>
+#include <vector>
+
 namespace gallery_pages_tests {
 
-// The industrial-surfaces page (skeudoindustrial surfaces, phase 5): its
-// finish and glint swatches, the lamps (IndicatorLamps naming their bakes,
-// each with its colour; a lamp whose bake is missing shows the theme's
-// lens), their status line (no bakes are shipped, so it says where they
-// are made), the Lamps check box that switches them, and the industrial
-// theme over the GOST paints, put on the preview group and taken off; the
-// preview's indicator lamps (Start and Stop switch Running, the Coolant
-// check box its flow lamp, a pinpoint, and none is hit), its feed choice
-// drawn with lamps (the row takes the click), and its danger key; the
-// carbon fibre and brushed metal swatches beside the glints.
+// The industrial-surfaces page (skeudoindustrial surfaces, phase 5),
+// rebuilt around the owner's process-control dialog (owner, 2026-11-22):
+// the dialog's blasted enamel and its title band, its three status lamps
+// (jewels lit from the shipped indicator bake, each in its colour, FAULT
+// in its error state) and its CANCEL and OK keys lit from the shipped key
+// bakes, all shown with no light-plane directory set; the Lamps check box
+// that switches the status lamps and OK while CANCEL stays lit; the retired
+// finish swatches gone; the industrial theme over the GOST paints, put on
+// the preview group and taken off; the preview's indicator lamps (Start
+// and Stop switch Running, the Coolant check box its flow lamp, a
+// pinpoint, and none is hit), its feed choice drawn with lamps (the row
+// takes the click), and its danger key; the carbon fibre swatch.
 // Compositing the lamps is covered by gui_forms_engine_light_planes_tests
-// and the baked lens by gui_forms_indicator_lamp_tests, and the industrial
-// package's compile by gui_forms_theme_gost_palette_tests.
+// and the baked lens by gui_forms_indicator_lamp_tests, the enamel by
+// gui_forms_engine_finish_tests, and the industrial package's compile by
+// gui_forms_theme_gost_palette_tests.
 void test_industrial_surfaces(gui_forms::Window& window) {
     select_page(window, "industrial-surfaces");
     require(window.find("gallery.industrial-surfaces.heading") != nullptr,
             "industrial-surfaces page shows its heading");
-    require(window.find("gallery.industrial.finish.hammertone") != nullptr &&
-                window.find("gallery.industrial.finish.cloth-weave") != nullptr &&
-                window.find("gallery.industrial.glint.painted-sand") != nullptr,
-            "the page shows the finish and glint swatches");
-    require(window.find("gallery.industrial.pattern.carbon-fibre") != nullptr &&
-                window.find("gallery.industrial.pattern.brushed-metal") != nullptr,
-            "the page shows the carbon fibre and brushed metal swatches");
+    require(window.find("gallery.industrial.dialog") != nullptr &&
+                window.find("gallery.industrial.dialog.title-band") != nullptr &&
+                window.find("gallery.industrial.dialog.heading") != nullptr,
+            "the page shows the owner's dialog");
+    require(window.find("gallery.industrial.finish.hammertone") == nullptr &&
+                window.find("gallery.industrial.glint.painted-sand") == nullptr &&
+                window.find("gallery.industrial.pattern.brushed-metal") == nullptr,
+            "the finish swatches are retired");
+    require(window.find("gallery.industrial.pattern.carbon-fibre") != nullptr,
+            "the page shows the carbon fibre swatch");
 
-    const std::shared_ptr<Label> bakes = std::dynamic_pointer_cast<Label>(window.find("gallery.industrial.bakes"));
-    require(bakes != nullptr && !(*bakes).text.read().empty(), "the lamps' status line says what is shown");
-    const std::shared_ptr<IndicatorLamp> ok_lamp =
-        std::dynamic_pointer_cast<IndicatorLamp>(window.find("gallery.industrial.lamp.dialog-ok"));
-    const std::shared_ptr<IndicatorLamp> clear_lamp =
-        std::dynamic_pointer_cast<IndicatorLamp>(window.find("gallery.industrial.lamp.indicator-clear"));
-    require(ok_lamp != nullptr && clear_lamp != nullptr, "the page places its lamps as indicator lamps");
-    if (ok_lamp == nullptr || clear_lamp == nullptr) return;
-    require((*ok_lamp).light_planes.read() == "dialog_ok_up" && (*clear_lamp).light_planes.read() == "indicator_clear_up",
-            "each lamp names its bake");
-    require((*ok_lamp).lamp_color.read().present() && (*ok_lamp).lamp_color.read() != (*clear_lamp).lamp_color.read(),
-            "each lamp carries its own colour, so one bake serves every colour");
-    const bool baked = (*ok_lamp).light_planes_shown();
-    require(baked || (*bakes).text.read().find("No light-plane bakes") != std::string::npos,
-            "without bakes the status line says where they are made");
+    constexpr std::array<std::string_view, 3> status_ids{"gallery.industrial.status.pump-ready",
+                                                         "gallery.industrial.status.heating",
+                                                         "gallery.industrial.status.fault"};
+    std::vector<std::shared_ptr<IndicatorLamp>> status{};
+    for (const std::string_view id : status_ids) {
+        const std::shared_ptr<IndicatorLamp> lamp = std::dynamic_pointer_cast<IndicatorLamp>(window.find(id));
+        require(lamp != nullptr, "the dialog shows each status lamp as an indicator lamp");
+        if (lamp == nullptr) return;
+        status.push_back(lamp);
+    }
+    for (const std::shared_ptr<IndicatorLamp>& lamp : status) {
+        require((*lamp).light_planes.read() == "indicator_backed_up" && (*lamp).light_planes_shown(),
+                "each status lamp is the shipped jewel, shown with no light-plane directory");
+        require((*lamp).lamp_color.read().present(), "and carries its own colour");
+    }
+    require((*status[0]).lamp_color.read() != (*status[1]).lamp_color.read() &&
+                (*status[1]).lamp_color.read() != (*status[2]).lamp_color.read(),
+            "PUMP READY, HEATING and FAULT each take their own colour");
+    require((*status[0]).state.read() == IndicatorLampState::on && (*status[1]).state.read() == IndicatorLampState::on &&
+                (*status[2]).state.read() == IndicatorLampState::error,
+            "the status lamps start lit, FAULT in its error state");
+    require(!(*status[0]).hit_test_local(Point{4.0, 4.0}), "a status lamp is never hit");
+
+    const std::shared_ptr<IndicatorLamp> cancel =
+        std::dynamic_pointer_cast<IndicatorLamp>(window.find("gallery.industrial.key.cancel"));
+    const std::shared_ptr<IndicatorLamp> ok = std::dynamic_pointer_cast<IndicatorLamp>(window.find("gallery.industrial.key.ok"));
+    require(cancel != nullptr && ok != nullptr, "the dialog shows its CANCEL and OK keys");
+    if (cancel == nullptr || ok == nullptr) return;
+    require((*cancel).light_planes.read() == "dialog_cancel_up" && (*ok).light_planes.read() == "dialog_ok_up",
+            "each key names its bake");
+    require((*cancel).light_planes_shown() && (*ok).light_planes_shown(), "the keys are lit from the shipped bakes");
+    require((*cancel).state.read() == IndicatorLampState::on && (*ok).state.read() == IndicatorLampState::on,
+            "both keys start lit");
 
     const std::shared_ptr<CheckBox> lamps = std::dynamic_pointer_cast<CheckBox>(window.find("gallery.industrial.lamps"));
-    require(lamps != nullptr && !(*lamps).checked.read(), "the lamps start out");
-    require((*ok_lamp).state.read() == IndicatorLampState::off, "and dark");
+    require(lamps != nullptr && (*lamps).checked.read(), "the lamps start on");
     click(window, lamps);
     window.perform_layout();
-    require((*lamps).checked.read() && (*ok_lamp).state.read() == IndicatorLampState::on &&
-                (*clear_lamp).state.read() == IndicatorLampState::on,
-            "the Lamps check box switches them on");
+    require(!(*lamps).checked.read() && (*status[0]).state.read() == IndicatorLampState::off &&
+                (*status[2]).state.read() == IndicatorLampState::off && (*ok).state.read() == IndicatorLampState::off,
+            "the Lamps check box puts the status lamps and OK out");
+    require((*cancel).state.read() == IndicatorLampState::on, "while CANCEL stays lit");
     click(window, lamps);
     window.perform_layout();
-    require(!(*lamps).checked.read() && (*ok_lamp).state.read() == IndicatorLampState::off, "and off");
+    require((*lamps).checked.read() && (*status[0]).state.read() == IndicatorLampState::on &&
+                (*status[2]).state.read() == IndicatorLampState::error && (*ok).state.read() == IndicatorLampState::on,
+            "and lights them again, FAULT in its error state");
 
     const std::shared_ptr<ScaledGroupBox> preview =
         std::dynamic_pointer_cast<ScaledGroupBox>(window.find("gallery.industrial.preview"));

@@ -25,9 +25,13 @@
 //   budget refuses a finish too large to paint.
 // - The glint (phase 2): each preset repaints in bands to its whole bytes;
 //   presets differ; the iridescent one is coloured, the sand blast grey;
-//   only the painted sand reads the paint; its bake bound refuses large
+//   only the painted presets read the paint; its bake bound refuses large
 //   faces. Its bytes are not compared with the JavaScript reference, which
-//   calls Math.exp and Math.log (finish_kernel.cpp, "glints").
+//   calls Math.exp and Math.log (finish_kernel.cpp, "glints"); the owner's
+//   blasted enamel matches the reference's means over the study dialog's
+//   areas within half a level, and keeps its light in the room's corner.
+// - A refused glint is painted from the window's world finish tiles,
+//   anchored at the part's corner.
 // - The theme language's finish() compiles, and its refusals.
 //
 // `--measure` prints what each finish's effort weight (finish_kernel.hpp)
@@ -41,6 +45,7 @@
 #include "gui_forms/control.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/engine.hpp"
+#include "gui_forms/engine/part_table/engine_part_table.hpp"
 #include "gui_forms/resources/image_registry/image_registry.hpp"
 #include "gui_forms/surface_root/surface_root.hpp"
 #include "gui_forms/theme.hpp"
@@ -49,6 +54,7 @@
 #include "gui_forms/window.hpp"
 
 #include "src/core/engine/primitives/finish/finish_kernel.hpp"
+#include "src/core/engine/primitives/finish/finish_world.hpp"
 #include "gui_forms/surface_material/painting/surface_material_painting.hpp"
 #include "src/core/engine/primitives/material/material_bake_policy.hpp"
 #include "support/rgba_order.hpp"
@@ -95,9 +101,9 @@ constexpr std::array<FinishKind, 9> finish_kinds{
     FinishKind::flat,        FinishKind::cloth_weave, FinishKind::glint,
 };
 
-constexpr std::array<GlintPreset, 5> glint_presets{
-    GlintPreset::bead_blast, GlintPreset::sand_blast, GlintPreset::iridescent, GlintPreset::coarse_grit,
-    GlintPreset::painted_sand,
+constexpr std::array<GlintPreset, 7> glint_presets{
+    GlintPreset::bead_blast,   GlintPreset::sand_blast,     GlintPreset::iridescent,           GlintPreset::coarse_grit,
+    GlintPreset::painted_sand, GlintPreset::blasted_enamel, GlintPreset::blasted_enamel_heavy,
 };
 
 const char* kind_name(FinishKind kind) {
@@ -508,7 +514,9 @@ void glint_presets_hold() {
             FinishFill repainted = fill;
             repainted.paint = Color::rgba(0x8a, 0x20, 0x10);
             const bool reads_paint = raster_hash(*whole_finish(repainted, scale, width, height)) != hash;
-            require(reads_paint == (preset == GlintPreset::painted_sand), "only the painted sand reads the paint");
+            const bool painted = preset == GlintPreset::painted_sand || preset == GlintPreset::blasted_enamel ||
+                                 preset == GlintPreset::blasted_enamel_heavy;
+            require(reads_paint == painted, "only the painted presets read the paint");
         }
     }
     FinishFill iridescent = study_fill(FinishKind::glint);
@@ -535,6 +543,96 @@ void glint_presets_hold() {
     FinishFill seeded = sand;
     seeded.seed = 8;
     require(raster_hash(*whole_finish(seeded, 2.0, 96U, 64U)) != raster_hash(*grey), "the seed moves the glints");
+}
+
+// The mean of each channel, in RGBA order, over a raster's live pixels.
+std::array<double, 3> mean_colour(const PartRaster& raster) {
+    std::array<double, 3> sums{};
+    const std::span<const std::uint8_t> pixels = raster.pixels();
+    const std::size_t live = static_cast<std::size_t>(raster.extent().width) * 4U;
+    for (std::uint32_t row = 0U; row < raster.extent().height; ++row) {
+        const std::size_t start = static_cast<std::size_t>(row) * raster.row_bytes();
+        const std::vector<std::uint8_t> ordered = gui_forms::test_support::rgba_order(pixels.subspan(start, live));
+        for (std::size_t at = 0U; at < ordered.size(); at = at + 4U) {
+            sums[0] = sums[0] + ordered[at];
+            sums[1] = sums[1] + ordered[at + 1U];
+            sums[2] = sums[2] + ordered[at + 2U];
+        }
+    }
+    const double count = static_cast<double>(raster.extent().width) * raster.extent().height;
+    const std::array<double, 3> mean{sums[0] / count, sums[1] / count, sums[2] / count};
+    return mean;
+}
+
+bool near_colour(const std::array<double, 3>& found, const std::array<double, 3>& expected, double tolerance) {
+    for (std::size_t channel = 0U; channel < 3U; ++channel) {
+        if (std::fabs(found[channel] - expected[channel]) > tolerance) return false;
+    }
+    return true;
+}
+
+// The study's process-control dialog body (owner, 2026-11-22: the owner's
+// paint), 1000 x 620 device pixels at scale 2, seed 11, metal #a3a3a3:
+// the body #4d676d and its title band #656f74 under the heavy coat. The
+// expected means are the JavaScript reference's (glint_kernel.js with
+// finish_kernel.js; demo.html's settings: painted_sand, film 0.55 and
+// specular 1.6, the light at (100, 15.5, 900) and the eye at (250, 155,
+// 700) logical units), printed by node over the same device areas:
+// - the body's upper left, x 0 to 256 and y 156 to 412: (97.147, 116.119,
+//   120.797);
+// - its upper right, x 744 to 1000, same rows: (87.742, 107.921, 112.819);
+// - the title band's left, x 0 to 256 and y 0 to 78: (110.888, 119.085,
+//   123.26).
+// The kernel's exponential and logarithm are not the reference's
+// Math.exp and Math.log, so bytes are not compared; means over tens of
+// thousands of pixels agree within half a level. The sheen falls away
+// from the upper left, the light's side.
+std::shared_ptr<PartRaster> dialog_area(GlintPreset preset, Color paint, std::int64_t x, std::int64_t y,
+                                        std::uint32_t width, std::uint32_t height) {
+    FinishFill fill{};
+    fill.kind = FinishKind::glint;
+    fill.glint = preset;
+    fill.seed = 11;
+    fill.paint = paint;
+    fill.secondary = Color::rgba(0xa3, 0xa3, 0xa3);
+    std::shared_ptr<PartRaster> raster = make_raster(width, height);
+    FinishScratch scratch{};
+    engine_primitives::reserve_finish_scratch(scratch, width);
+    const FinishRect surface{-x, -y, 1000, 620};
+    const FinishRect whole{0, 0, static_cast<std::int64_t>(width), static_cast<std::int64_t>(height)};
+    const std::size_t painted = paint_into(fill, 2.0, surface, whole, *raster, scratch);
+    require(painted == static_cast<std::size_t>(width) * height, "the dialog's area is painted whole");
+    return raster;
+}
+
+void blasted_enamel_matches_the_study() {
+    const Color body = Color::rgba(0x4d, 0x67, 0x6d);
+    const Color band = Color::rgba(0x65, 0x6f, 0x74);
+    const std::array<double, 3> left = mean_colour(*dialog_area(GlintPreset::blasted_enamel, body, 0, 156, 256U, 256U));
+    const std::array<double, 3> right =
+        mean_colour(*dialog_area(GlintPreset::blasted_enamel, body, 744, 156, 256U, 256U));
+    const std::array<double, 3> title =
+        mean_colour(*dialog_area(GlintPreset::blasted_enamel_heavy, band, 0, 0, 256U, 78U));
+    require(near_colour(left, {97.147, 116.119, 120.797}, 0.5), "the enamel's upper left is the study's");
+    require(near_colour(right, {87.742, 107.921, 112.819}, 0.5), "the enamel's upper right is the study's");
+    require(near_colour(title, {110.888, 119.085, 123.26}, 0.5), "the heavy enamel's title band is the study's");
+    require(left[1] > right[1] + 5.0, "the sheen falls away from the light's side");
+
+    // In the room: the light stays over the room's upper left whatever the
+    // surface's size, where the other presets light the centre.
+    FinishFill fill = study_fill(FinishKind::glint);
+    fill.glint = GlintPreset::blasted_enamel;
+    const std::uint32_t corner = 64U;
+    const std::shared_ptr<PartRaster> small = whole_finish(fill, 2.0, 128U, 128U);
+    const std::shared_ptr<PartRaster> large = whole_finish(fill, 2.0, 512U, 512U);
+    require(same_area(*small, 0U, 0U, *large, 0U, 0U, corner, corner),
+            "an in-room enamel's corner is the same on a small surface and a large one");
+    FinishFill centred = fill;
+    centred.glint = GlintPreset::painted_sand;
+    const std::shared_ptr<PartRaster> small_centred = whole_finish(centred, 2.0, 128U, 128U);
+    const std::shared_ptr<PartRaster> large_centred = whole_finish(centred, 2.0, 512U, 512U);
+    require(!same_area(*small_centred, 0U, 0U, *large_centred, 0U, 0U, corner, corner),
+            "a centred preset's light moves with the surface's size");
 }
 
 // -- through the engine ------------------------------------------------------------
@@ -693,6 +791,40 @@ void bake_budget_refuses_large_finishes() {
     require(!(*primitive).accepts(parameters, target), "a large glint is refused");
 }
 
+// A refused glint (owner, 2026-11-22: the owner's painted dialog panel is
+// far past the glint's bake bound) is painted from the window's world
+// finish tiles over its built-in recipe, anchored at the part's corner:
+// the first paint queues the tiles and draws none; idle frames paint them;
+// the next paint draws each, and the last (world tile column 2, row 1 of a
+// 300 x 200 face at scale 1) holds the world bake's bytes there.
+void refused_glint_paints_world_tiles() {
+    FinishFill fill = study_fill(FinishKind::glint);
+    fill.glint = GlintPreset::blasted_enamel;
+    std::unique_ptr<Fixture> fixture = make_fixture(fill, Size{300.0, 200.0}, 1.0);
+    Fixture& made = *fixture;
+    Window& window = *made.window;
+    require(window.metrics_snapshot().engine_primitive_refusals >= 1U, "the large glint is refused");
+    require(window.engine_parts().finish_tiles_waiting(), "the refused glint queues its world tiles");
+    FrameTime now = made.time.time;
+    for (std::size_t frame = 0U; frame < 32U && window.engine_parts().finish_tiles_waiting(); ++frame) {
+        static_cast<void>(window.take_damage());
+        now += std::chrono::milliseconds(16);
+        static_cast<void>(window.poll_frame_schedule(now));
+    }
+    require(!window.engine_parts().finish_tiles_waiting(), "idle frames paint the face's tiles");
+    const std::size_t before = made.painter.rasters;
+    window.paint(made.painter);
+    require(made.painter.rasters >= before + 6U, "the next paint draws the six tiles over the face");
+    require(made.painter.last != nullptr, "a tile is drawn");
+    std::shared_ptr<PartRaster> expected = make_raster(finish_tile_side, finish_tile_side);
+    FinishScratch scratch{};
+    engine_primitives::reserve_finish_scratch(scratch, finish_tile_side);
+    const std::int64_t tile = static_cast<std::int64_t>(finish_tile_side);
+    static_cast<void>(engine_primitives::paint_world_finish(fill, 1.0, 2 * tile, tile, (*expected).view(), scratch));
+    require(same_area(*made.painter.last, 0U, 0U, *expected, 0U, 0U, finish_tile_side, finish_tile_side),
+            "the last tile is the world's finish there, its origin at the face's corner");
+}
+
 // -- the theme language ------------------------------------------------------------
 
 bool sheet_compiles_cleanly(std::string_view sheet) {
@@ -834,8 +966,10 @@ int main(int argc, char** argv) {
     parameters_change_bytes();
     cloth_shows_warp_and_weft();
     glint_presets_hold();
+    blasted_enamel_matches_the_study();
     material_shows_the_finish();
     bake_budget_refuses_large_finishes();
+    refused_glint_paints_world_tiles();
     theme_language_finish();
     horizon_without_ambient_is_refused();
     std::cout << "gui_forms_engine_finish_tests passed\n";

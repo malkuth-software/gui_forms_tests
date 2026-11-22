@@ -9,7 +9,9 @@
 // offscreen raster a lens composited from a bake written here (it takes the
 // bake's aspect, lights only inside the lens, never past the bake's
 // coverage, and changes colour with lamp_color), and the theme's lens where
-// the bake is missing, no directory is set, or high contrast is forced.
+// the bake is missing, no directory is set, or high contrast is forced;
+// the pinpoint as the shipped jewel's light in its dot, with no bake named
+// and no directory.
 // With GUI_FORMS_PREVIEW_DIR set, the test also writes preview shots of
 // each state in each theme.
 
@@ -585,11 +587,32 @@ void test_baked_lens() {
     (*made.window).perform_layout();
     require((*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 0.0, 30.0, 20.0},
             "and setting it again the bake's aspect");
-    // A pinpoint is the theme's dot: it never shows the bake.
+    // A pinpoint (owner, 2026-11-22: a small point of light from the
+    // jewel lamps' light model) is the shipped jewel's light in its dot,
+    // with no bake named and in no directory of its own; in forced high
+    // contrast it is the theme's dot.
+    (*made.lamp).light_planes = std::string{};
     (*made.lamp).lamp_style = IndicatorLampStyle::pinpoint;
     (*made.window).perform_layout();
-    require(!(*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 7.0, 6.0, 6.0},
-            "a pinpoint shows its dot, not the bake");
+    require((*made.lamp).light_planes_shown() && (*made.lamp).parts().lens.bounds == Rect{0.0, 7.0, 6.0, 6.0},
+            "a pinpoint shows the jewel's light in its dot");
+    (*(*made.window).resources()).set_light_plane_directory(std::filesystem::path{});
+    (*made.window).perform_layout();
+    require((*made.lamp).light_planes_shown(), "the pinpoint's light is shipped, whatever the directory");
+    const Rect point{4.0, 4.0 + 7.0, 6.0, 6.0};
+    (*made.lamp).state = IndicatorLampState::off;
+    const std::optional<WindowCapture> point_dark = capture_lamp(attached, made);
+    (*made.lamp).state = IndicatorLampState::on;
+    const std::optional<WindowCapture> point_lit = capture_lamp(attached, made);
+    require(point_dark.has_value() && point_lit.has_value(), "the pinpoint is captured");
+    if (point_dark && point_lit) {
+        const Difference glowing = compare(*point_dark, *point_lit, point);
+        require(glowing.any && !glowing.outside, "the pinpoint lights within its dot only");
+    }
+    set_high_contrast(*made.window, true);
+    (*made.window).perform_layout();
+    require(!(*made.lamp).light_planes_shown(), "in forced high contrast the pinpoint is the theme's dot");
+    set_high_contrast(*made.window, false);
     test_support::remove_temporary_directory(directory);
 }
 
