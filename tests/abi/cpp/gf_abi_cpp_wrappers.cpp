@@ -176,7 +176,7 @@ void self_owned_subscription(const ObjectsTable& objects, const EventsTable& eve
 // GF_STATUS_UNSUPPORTED_VERSION from a table a 1.0 library served.
 void window_slots(const ObjectsTable& objects, const WindowsTable& windows) {
     std::uint64_t count = 0u;
-    require(windows.interaction_count(&count) == GF_STATUS_OK && count == 11u, "a window raises eleven interactions");
+    require(windows.interaction_count(&count) == GF_STATUS_OK && count == 12u, "a window raises twelve interactions");
     gf_schema_interaction interaction{};
     interaction.struct_size = static_cast<std::uint32_t>(sizeof(interaction));
     require(windows.interaction_at(0u, &interaction) == GF_STATUS_OK && interaction.name.size > 0u,

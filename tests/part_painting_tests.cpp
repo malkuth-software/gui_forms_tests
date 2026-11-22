@@ -686,6 +686,52 @@ void w4_vocabulary(Control& control) {
     }
 }
 
+// The window-state marks (the MDI follow-up to DK decisions 60 to 63): a
+// frame's minimize, maximize and restore buttons draw marks of their own,
+// registered by name, inked in glyph ink inside the part's box, each a
+// different drawing; maximize and restore share the two-unit caption band.
+void window_state_marks(Control& control) {
+    require(part_mark_name(PartMark::minimize) == "minimize" && part_mark_name(PartMark::maximize) == "maximize" &&
+                part_mark_name(PartMark::restore) == "restore",
+            "the window-state marks are registered by name");
+    const PartMark marks[] = {PartMark::minimize, PartMark::maximize, PartMark::restore};
+    std::vector<std::size_t> counts{};
+    for (const PartMark mark : marks) {
+        RecordingPainter painter;
+        PartPaint part{};
+        part.role = PartRole::glyph;
+        part.mark = mark;
+        part.bounds = Rect{4.0, 6.0, 16.0, 16.0};
+        paint_part(painter, control, part);
+        require(!painter.operations.empty(), "a window-state mark draws");
+        std::size_t drawn = 0U;
+        for (const Operation& operation : painter.operations) {
+            if (operation.kind == "save" || operation.kind == "restore" || operation.kind == "clip") continue;
+            ++drawn;
+            require(operation.bounds.x >= 4.0 && operation.bounds.y >= 6.0 &&
+                        operation.bounds.x + operation.bounds.width <= 20.0 &&
+                        operation.bounds.y + operation.bounds.height <= 22.0,
+                    "a window-state mark stays in its box");
+        }
+        counts.push_back(drawn);
+    }
+    require(counts[0] == 1U, "minimize is one rule");
+    require(counts[1] == 4U, "maximize is a caption band and three edges");
+    require(counts[2] > counts[1], "restore draws the front outline and the back one's visible edges");
+    RecordingPainter tiny;
+    PartPaint small{};
+    small.role = PartRole::glyph;
+    small.mark = PartMark::restore;
+    small.bounds = Rect{0.0, 0.0, 6.0, 6.0};
+    paint_part(tiny, control, small);
+    std::size_t tiny_drawn = 0U;
+    for (const Operation& operation : tiny.operations) {
+        if (operation.kind == "save" || operation.kind == "restore" || operation.kind == "clip") continue;
+        ++tiny_drawn;
+    }
+    require(tiny_drawn == 0U, "a box too small for two outlines draws no restore mark");
+}
+
 } // namespace
 
 // A dotted focus ring (design language: the default theme's ring) is square
@@ -803,8 +849,9 @@ int main() {
     control_colors();
     families();
     w4_vocabulary(*control);
+    window_state_marks(*control);
     pointed_faces(*control);
     std::cout << "by-role paint path: silent roles, surfaces, cues, marks, text, states, overlay shadow, "
-                 "content colours, authored colours, control colours, families and pointed faces passed\n";
+                 "content colours, authored colours, control colours, families, window-state marks and pointed faces passed\n";
     return 0;
 }
