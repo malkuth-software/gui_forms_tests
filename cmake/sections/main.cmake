@@ -1835,6 +1835,13 @@ target_include_directories(gui_forms_xsettings_parse_tests PRIVATE ${GUI_FORMS_S
 # marker in a checked build, which only the core library defines.
 target_link_libraries(gui_forms_xsettings_parse_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_xsettings_parse_tests COMMAND gui_forms_xsettings_parse_tests)
+# The X11 host's compositor frame synchronisation takes plain numbers and
+# no Xlib, so it is tested on every platform.
+add_executable(gui_forms_x11_frame_sync_tests
+    tests/x11_frame_sync_tests.cpp ${GUI_FORMS_SOURCE_DIR}/src/host/linux/frame_sync/x11_frame_sync.cpp)
+target_include_directories(gui_forms_x11_frame_sync_tests PRIVATE ${GUI_FORMS_SOURCE_DIR}/include)
+target_link_libraries(gui_forms_x11_frame_sync_tests PRIVATE gui_forms_core)
+add_test(NAME gui_forms_x11_frame_sync_tests COMMAND gui_forms_x11_frame_sync_tests)
 # The hosts' locale pattern conversions (UTS #35 for macOS, strftime for
 # Linux, format pictures for Windows) take plain text, so they are tested
 # on every platform; each platform's own reader is compiled in where it

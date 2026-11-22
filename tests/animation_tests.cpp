@@ -1,6 +1,7 @@
 #include "gui_forms/animation.hpp"
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/diagnostic_controls.hpp"
+#include "gui_forms/live_surface.hpp"
 #include "gui_forms/range_controls.hpp"
 #include "gui_forms/window.hpp"
 #include "gui_forms_demo/easing_preview.hpp"
@@ -854,6 +855,123 @@ void test_refresh_counter_timing() {
     require(timing.take(FrameTime{5000ms}, 9U).absent(), "after reset the first stamp gives no timing");
 }
 
+// Display timing measured from presentation completions alone: nothing
+// before eight agreeing intervals, the median period phased at the latest
+// completion, skipped refreshes counted as whole refreshes, a stall off the
+// grid dropped, a doubled stamp ignored, a rest kept, and a clock running
+// back starting again.
+void test_display_timing_estimator() {
+    DisplayTimingEstimator estimator;
+    const FrameInterval period = 16667us;
+    FrameTime completed{2000ms};
+    require(estimator.take(completed).absent(), "the first completion gives no timing");
+    for (int interval = 1; interval < 8; ++interval) {
+        // Jitter of a few hundred microseconds either way.
+        const FrameInterval jitter = interval % 2 == 0 ? 300us : -250us;
+        completed = completed + period + jitter;
+        require(estimator.take(completed).absent(), "fewer than eight intervals give no timing");
+        completed = completed - jitter;
+    }
+    completed = completed + period;
+    const stxlib::Optional<DisplayTiming> first = estimator.take(completed);
+    require(first.present() && (*first.value()).source == DisplayTimingSource::measured &&
+                (*first.value()).presentation_phase == completed,
+            "eight agreeing intervals give measured timing phased at the latest completion");
+    const FrameInterval measured = (*first.value()).refresh_period;
+    require(measured >= period - 300us && measured <= period + 300us, "the median is the refresh period");
+
+    // Three refreshes the window drew nothing in count as three.
+    completed = completed + period * 3;
+    const stxlib::Optional<DisplayTiming> skipped = estimator.take(completed);
+    require(skipped.present() && (*skipped.value()).refresh_period >= period - 300us &&
+                (*skipped.value()).refresh_period <= period + 300us,
+            "a span of whole refreshes is divided into them");
+    const std::size_t held = estimator.interval_count();
+    // Two and a half refreshes is not on the grid: dropped.
+    completed = completed + period * 5 / 2;
+    require(estimator.take(completed).absent() && estimator.interval_count() == held,
+            "a stall off the grid is dropped");
+    // A second stamp for one refresh is ignored.
+    require(estimator.take(completed + 200us).absent() && estimator.interval_count() == held,
+            "a completion within a millisecond of the last is ignored");
+    completed = completed + period;
+    require(estimator.take(completed).present() && estimator.interval_count() == held + 1U,
+            "the next refresh after a dropped stall measures again");
+    // A rest of two seconds keeps the intervals and restarts from the stamp.
+    completed = completed + 2s;
+    require(estimator.take(completed).absent() && estimator.interval_count() == held + 1U,
+            "a completion after a rest starts the next interval");
+    completed = completed + period;
+    require(estimator.take(completed).present(), "and the one after it reports at once");
+    // Sixteen intervals at a new rate move the median over.
+    const FrameInterval faster = 8333us;
+    stxlib::Optional<DisplayTiming> latest;
+    for (int interval = 0; interval < 16; ++interval) {
+        completed = completed + faster;
+        latest = estimator.take(completed);
+    }
+    require(latest.present() && (*latest.value()).refresh_period == faster,
+            "a new rate replaces the old one once it fills the intervals");
+    require(estimator.take(completed - 1s).absent() && estimator.interval_count() == 0U,
+            "a clock running back forgets every interval");
+    estimator.reset();
+    require(estimator.take(FrameTime{9s}).absent() && estimator.interval_count() == 0U,
+            "after reset the first completion gives no timing");
+}
+
+// A window measuring its timing from noted completions: measured timing
+// replaces assumed timing, but never a fixed or display timing, and a reset
+// forgets the completions.
+void test_window_measures_presentation_completions() {
+    std::shared_ptr<TimerProbe> probe = make_control<TimerProbe>(StableId("animation.timer.measured"));
+    (*probe).set_requested_bounds({0.0, 0.0, 40.0, 20.0});
+    Window window(probe, {40.0, 20.0});
+    FrameTime completed{1s};
+    bool set = false;
+    for (int stamp = 0; stamp < 9; ++stamp) {
+        set = window.note_presentation_completed(completed);
+        completed = completed + 10ms;
+    }
+    require(set && window.display_timing().source == DisplayTimingSource::measured &&
+                window.display_timing().refresh_period == 10ms,
+            "nine completions ten milliseconds apart set measured timing on an assumed window");
+    require(window.set_display_timing(DisplayTiming::fixed_rate(8ms)), "a fixed rate is accepted");
+    require(!window.note_presentation_completed(completed) &&
+                window.display_timing().source == DisplayTimingSource::fixed,
+            "a measurement never overrides a fixed timing");
+    require(window.set_display_timing(DisplayTiming::reported(DisplayTimingSource::nominal, 16ms, FrameTime{})),
+            "a nominal rate is accepted");
+    completed = completed + 10ms;
+    require(window.note_presentation_completed(completed) &&
+                window.display_timing().source == DisplayTimingSource::measured,
+            "a measurement replaces a nominal rate, which has no phase");
+    window.reset_presentation_estimate();
+    completed = completed + 10ms;
+    require(!window.note_presentation_completed(completed) &&
+                window.display_timing().source == DisplayTimingSource::measured,
+            "after a reset the completions start again and the held timing stays");
+}
+
+// A host reporting a live surface shown passes the window's display timing
+// to the surface, so its producer paces to the window's frame source.
+void test_live_surface_reports_carry_the_window_timing() {
+    std::shared_ptr<TimerProbe> probe = make_control<TimerProbe>(StableId("animation.timer.live"));
+    (*probe).set_requested_bounds({0.0, 0.0, 40.0, 20.0});
+    Window window(probe, {40.0, 20.0});
+    std::shared_ptr<LiveSurface> surface = LiveSurface::create({8U, 4U});
+    window.report_live_surface_shown(*surface, 0U);
+    require((*surface).presentation_record().timing.source == LiveTimingSource::none &&
+                (*surface).presentation_record().presents == 1U,
+            "an assumed window reports a presentation without timing");
+    require(window.set_display_timing(DisplayTiming::fixed_rate(8ms, FrameTime{2ms})), "a fixed rate is accepted");
+    window.report_live_surface_shown(*surface, 0U);
+    const LivePresentationRecord record = (*surface).presentation_record();
+    require(record.timing.source == LiveTimingSource::phased_timer && record.timing.refresh_period == 8ms &&
+                (record.timing.last_vblank.time_since_epoch() - 2ms) % 8ms == FrameInterval{} &&
+                record.timing.last_vblank <= FrameClock::now() && record.presents == 2U,
+            "a paced window reports its period and a refresh on its grid");
+}
+
 // AnimationTimer on a window that knows its display's timing (design note
 // frame-source, section 5): periods in whole refreshes on the display's
 // grid, a shorter interval at one refresh, every refresh for
@@ -963,6 +1081,9 @@ int main() {
         test_animation_timer_is_paint_gated();
         test_display_timing_grid();
         test_refresh_counter_timing();
+        test_display_timing_estimator();
+        test_window_measures_presentation_completions();
+        test_live_surface_reports_carry_the_window_timing();
         test_animation_timer_paces_to_the_display();
         test_progress_animation_and_hidden_suspension();
         test_progress_animation_damages_what_moves();
