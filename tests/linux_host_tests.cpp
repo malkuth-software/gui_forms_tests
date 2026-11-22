@@ -3,6 +3,8 @@
 #include "gui_forms/live_surface.hpp"
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/controls/scrollable_control.hpp"
+#include "gui_forms/event/subscription_token/subscription_token.hpp"
+#include "gui_forms/timer/timer/timer.hpp"
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -1086,6 +1088,48 @@ void xdnd_source_helpers() {
           "without copy the first allowed is a move");
 }
 
+// Counts a timer's ticks.
+struct CountTicks final {
+  // The test's counter (observing).
+  int &ticks;
+  void operator()() const { ++ticks; }
+};
+
+// Timers run under a drag (audit: a Linux drag froze animations, the FAULT
+// lamp, caret blink and drag-hover auto-scroll): the drag loop's turn,
+// xdnd_drag_turn, fires a window's due timer without the run loop, its wait
+// is the timer's deadline, and the wait for XdndFinished bounds it.
+void timer_fires_during_drag(Runtime &runtime) {
+  const std::shared_ptr<Control> root = make_control<Control>(StableId("drag.timer.root"));
+  host::LinuxApplicationWindow entry;
+  entry.stable_id = "drag.timer";
+  entry.options.title = "GUI.Forms drag timer check";
+  entry.options.initial_size = {80, 60};
+  entry.model = std::make_unique<gui_forms::Window>(root, entry.options.initial_size);
+  const std::shared_ptr<NativeWindow> window = runtime.add(std::move(entry));
+  (*window).ready();
+  for (int tick = 0; tick < 8; ++tick)
+    runtime.step(10);
+  int ticks = 0;
+  Timer timer(*(*window).entry.model, std::chrono::milliseconds(200));
+  const SubscriptionToken subscription = timer.tick().subscribe(CountTicks{ticks});
+  timer.start_at(std::chrono::steady_clock::now() + std::chrono::milliseconds(40));
+  const int first_wait = xdnd_drag_turn(runtime, -1);
+  require(first_wait >= 0 && first_wait <= 41, "a drag turn waits for the timer's deadline");
+  require(xdnd_drag_turn(runtime, 5) <= 5, "the wait for XdndFinished bounds a drag turn's wait");
+  const std::chrono::steady_clock::time_point give_up =
+      std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  while (ticks == 0 && std::chrono::steady_clock::now() < give_up) {
+    const int wait = xdnd_drag_turn(runtime, 100);
+    if (ticks == 0 && wait > 0)
+      runtime.wait_for_work(wait);
+  }
+  require(ticks == 1, "a timer fires during a drag");
+  timer.stop();
+  (*window).close(HostCloseReason::application, true);
+  runtime.step(0);
+}
+
 int main() {
   try {
     require(host::linux_capabilities().supports(HostCapability::accessibility),
@@ -1275,6 +1319,7 @@ int main() {
     scroll_copy_gate(runtime);
     client_size_request(runtime);
     first_frame_show_gate(runtime);
+    timer_fires_during_drag(runtime);
     (*window).close(HostCloseReason::application, true);
     std::cout << "X11 services: cross-process text and PNG INCR, preserved "
                  "input, local file drops, open/save dialogs, live frame sequence, client size request, first-frame show passed\n";
