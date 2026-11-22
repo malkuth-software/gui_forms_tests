@@ -75,6 +75,8 @@
 #include "gui_forms/controls/ribbon_font_control.hpp"
 #include "gui_forms/controls/ribbon_gallery.hpp"
 #include "gui_forms/controls/rich_text_box.hpp"
+#include "gui_forms/controls/scaled_group_box.hpp"
+#include "gui_forms/controls/scaled_panel.hpp"
 #include "gui_forms/controls/scroll_bar.hpp"
 #include "gui_forms/controls/scrollable_control.hpp"
 #include "gui_forms/controls/search_field.hpp"
@@ -2557,6 +2559,30 @@ void test_rich_text_box_properties() {
     }
 }
 
+void test_scaled_group_box_properties() {
+    std::shared_ptr<ScaledGroupBox> control = make_control<ScaledGroupBox>(StableId("generated.scaledgroupbox"));
+    {
+        const ScaledAspect sample = ScaledAspect::uniform;
+        (*control).aspect = sample;
+        expect((*control).aspect.read() == sample, "ScaledGroupBox.aspect: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("aspect");
+        expect(by_name && *by_name == PropertyValueTraits<ScaledAspect>::to_binding(sample),
+               "ScaledGroupBox.aspect: the table reads the cell");
+    }
+}
+
+void test_scaled_panel_properties() {
+    std::shared_ptr<ScaledPanel> control = make_control<ScaledPanel>(StableId("generated.scaledpanel"));
+    {
+        const ScaledAspect sample = ScaledAspect::uniform;
+        (*control).aspect = sample;
+        expect((*control).aspect.read() == sample, "ScaledPanel.aspect: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("aspect");
+        expect(by_name && *by_name == PropertyValueTraits<ScaledAspect>::to_binding(sample),
+               "ScaledPanel.aspect: the table reads the cell");
+    }
+}
+
 void test_scroll_bar_properties() {
     std::shared_ptr<ScrollBar> control = make_control<ScrollBar>(StableId("generated.scrollbar"));
     {
@@ -3510,6 +3536,8 @@ int main() {
     test_ribbon_font_control_properties();
     test_ribbon_gallery_properties();
     test_rich_text_box_properties();
+    test_scaled_group_box_properties();
+    test_scaled_panel_properties();
     test_scroll_bar_properties();
     test_scrollable_control_properties();
     test_search_field_properties();

@@ -468,6 +468,36 @@ void test_safe_insets_and_the_root_slot() {
     require(window.safe_insets() == SafeInsets{10.0, 20.0, 0.0, 30.0}, "a refused report changes nothing");
 }
 
+// Decision 10: a scaled panel stays an explicit, recorded stretch, and its
+// aspect setting keeps the design's proportions in its uniform mode.
+void test_scaled_panel_aspect() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("va.aspect"));
+    const std::shared_ptr<ScaledPanel> face = make_control<ScaledPanel>(StableId("va.aspect.face"), Size{100.0, 100.0});
+    (*face).set_requested_bounds({0.0, 0.0, 400.0, 200.0});
+    const std::shared_ptr<Label> square = make_control<Label>(StableId("va.aspect.square"), "Square");
+    (*face).add_at(square, Rect{0.0, 0.0, 100.0, 100.0});
+    (*root).add_child(face);
+    Window window(root, {400.0, 200.0});
+    window.perform_layout();
+    require((*face).aspect.read() == ScaledAspect::stretch, "a scaled panel stretches by default");
+    require(near_rect((*square).arranged_bounds(), Rect{0.0, 0.0, 400.0, 200.0}),
+            "a stretch fills both axes: " + describe((*square).arranged_bounds()));
+
+    (*face).aspect = ScaledAspect::uniform;
+    window.perform_layout();
+    require(near_rect((*square).arranged_bounds(), Rect{100.0, 0.0, 200.0, 200.0}),
+            "uniform keeps the proportions, centred: " + describe((*square).arranged_bounds()));
+    ViewportFit left = (*face).viewport_fit.read();
+    left.alignment = ContentAlignment::top_left;
+    (*face).viewport_fit = left;
+    window.perform_layout();
+    require(near_rect((*square).arranged_bounds(), Rect{0.0, 0.0, 200.0, 200.0}),
+            "the alignment comes from viewport_fit: " + describe((*square).arranged_bounds()));
+    require((*face).applied_viewport_scale().present() && near(*(*face).applied_viewport_scale().value(), 2.0),
+            "the scale is reported");
+    require(window.unanswered_overflow_count() == 0U, "a scaled panel's content is never an unanswered overflow");
+}
+
 // -- the in-tree scale frame ----------------------------------------------------------------
 
 // The owner's case: a game's root taller than its window, and a browser
@@ -739,6 +769,7 @@ int main() {
         test_fitting_window_has_no_overflow();
         test_root_larger_than_its_slot();
         test_design_sizes();
+        test_scaled_panel_aspect();
         test_safe_insets_and_the_root_slot();
         test_owner_game_case();
         test_design_size_layout_and_contain();
