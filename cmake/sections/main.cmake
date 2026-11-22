@@ -2966,6 +2966,17 @@ if(TARGET gui_forms_custom_chrome_lab_model)
              COMMAND gui_forms_custom_chrome_lab_tests)
 endif()
 
+if(TARGET gui_forms_code_zoom_model)
+    # The code-zoom demonstrator: its C++ language, its zoom, its bench's
+    # report and its sheet.
+    add_executable(gui_forms_code_zoom_tests
+        tests/code_zoom_tests.cpp)
+    target_link_libraries(gui_forms_code_zoom_tests PRIVATE
+        gui_forms_code_zoom_model)
+    add_test(NAME gui_forms_code_zoom_tests
+             COMMAND gui_forms_code_zoom_tests)
+endif()
+
 if(TARGET gui_forms_typography_scale_lab_model)
     add_executable(gui_forms_typography_scale_lab_tests
         tests/typography_scale_lab_tests.cpp)
