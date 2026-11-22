@@ -187,7 +187,7 @@ void capability_report() {
                 json.find("\"pointer_confinement\"") != std::string::npos &&
                 json.find("\"pointer_warp\"") != std::string::npos,
             "the capability report names the four relative capabilities");
-    require(HostCapabilities::current_protocol_version == 15U, "relative pointer mode is host protocol 15");
+    require(host_protocol_revisions[7].version == 15U, "relative pointer mode is host protocol 15");
 
     // A window with no host derives deltas from positions and nothing else.
     Scene bare;
