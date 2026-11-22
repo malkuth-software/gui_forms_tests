@@ -403,6 +403,8 @@ void test_bench() {
     require(lines[0].rfind("code_zoom bench: 11 frames, 0.10x to 40.00x, src/example.cpp, 1280x800 at scale 2.00", 0) ==
                 0U,
             "the header names the frames, the zooms, the file and the window: " + lines[0]);
+    require(lines[0].size() >= 30U && lines[0].substr(lines[0].size() - 30U) == ", refresh: unknown (offscreen)",
+            "and says the refresh is unknown offscreen: " + lines[0]);
     require(lines[1] == "label zoom_from zoom_to frames median_ms p95_ms glyphs", "the column line");
     for (std::size_t index = 2U; index < lines.size(); ++index) {
         const std::vector<std::string> fields = split_fields(lines[index]);
