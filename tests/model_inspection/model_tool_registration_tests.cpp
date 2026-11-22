@@ -3,9 +3,9 @@
 // the forms.* tools with their marks; and a forms call on a window whose
 // form is not registered is refused, naming the build toggle.
 
+#include "src/controls/automation/model_extensions/model_form_tools.hpp"
 #include "src/controls/automation/model_extensions/model_inspect_sections.hpp"
 #include "src/controls/automation/tools/automation_tools.hpp"
-#include "tools/model_tools/model_tools.hpp"
 
 #include "gui_forms/automation/tools/model_tools.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
@@ -49,8 +49,8 @@ void test_inspect_sections() {
 
 void test_forms_tools() {
     automation::ToolRegistry tools{};
-    require(automation::register_model_tools(tools) == 4U, "forms tools: four are added");
-    require(automation::register_model_tools(tools) == 0U, "forms tools: a second call adds none");
+    require(automation::register_model_form_tools(tools) == 4U, "forms tools: four are added");
+    require(automation::register_model_form_tools(tools) == 0U, "forms tools: a second call adds none");
     const char* const names[] = {"forms.export", "forms.validate", "forms.apply", "forms.revert"};
     for (const char* const name : names) {
         automation::ToolEntry entry{};
