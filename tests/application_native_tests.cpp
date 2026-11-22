@@ -1,4 +1,5 @@
 #include "gui_forms/application.hpp"
+#include "gui_forms/components/context_menu/context_menu.hpp"
 #include "gui_forms/control.hpp"
 #include "gui_forms/controls/text_box.hpp"
 #include "gui_forms/window/native_popup/native_popup.hpp"
@@ -9,6 +10,7 @@
 #include <cstdint>
 #include <cwchar>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -879,6 +881,85 @@ void check_automation_interleaving() {
 }
 #endif
 #endif
+// Queue items M1, M2, L1 of 2026-11-10 (owner, 2026-11-22): a menu chain
+// shown in the owner's Popup windows closes when the owner window moves on
+// the screen, as on Windows (WM_MOVE). The menu opens once the window has
+// settled (a first timer, so that the host knows where the window is: X11
+// learns it from a ConfigureNotify), the window is moved by 40 by 30, and a
+// second timer reads the menu after the move had time to arrive. Where the
+// run shows menus on its overlay (X11 without a compositing manager) the
+// menu does not follow the owner's moves and nothing is checked.
+struct MenuMoveProbe final {
+    ApplicationWindowHandle handle{};
+    Window* window{};
+    std::shared_ptr<ContextMenu> menu{};
+    FrameRequestToken timer{};
+    bool opened{};
+    bool popup_mode{};
+    HostServiceStatus moved{};
+    bool checked{};
+    bool open_after_move{true};
+};
+struct MenuMoveCheck final {
+    MenuMoveProbe* probe{};
+    void operator()(FrameTime) const {
+        MenuMoveProbe& state = *probe;
+        state.timer.disconnect();
+        state.checked = true;
+        state.open_after_move = (*state.menu).is_open();
+        (*state.menu).close();
+        static_cast<void>(state.handle.request_close());
+    }
+};
+struct MenuMoveOpen final {
+    MenuMoveProbe* probe{};
+    void operator()(FrameTime) const {
+        MenuMoveProbe& state = *probe;
+        state.timer.disconnect();
+        Window& window = *state.window;
+        (*state.menu).show(window.root(), Point{20.0, 20.0}, MenuOpenMode::pointer);
+        state.opened = (*state.menu).is_open();
+        state.popup_mode = window.popup_window_model(0U) != nullptr;
+        const HostWindowFrameResult frame = state.handle.frame();
+        if (frame.status.accepted()) {
+            const Rect content = frame.frame.content;
+            const Rect moved{content.x + 40.0, content.y + 30.0, content.width, content.height};
+            state.moved = state.handle.request_frame(moved);
+        }
+        state.timer = window.schedule_ui_timer(*state.menu, std::chrono::hours(24),
+                                               FrameClock::now() + std::chrono::milliseconds(500), MenuMoveCheck{probe});
+    }
+};
+struct MenuMoveReady final {
+    MenuMoveProbe* probe{};
+    void operator()(Window& window, ApplicationWindowHandle handle) const {
+        MenuMoveProbe& state = *probe;
+        state.handle = handle;
+        state.window = &window;
+        state.menu = std::make_shared<ContextMenu>("native.move.menu");
+        std::vector<MenuItemSpec> items;
+        items.emplace_back("native.move.menu.first", MenuItemKind::command, std::shared_ptr<Command>{}, "First");
+        items.emplace_back("native.move.menu.second", MenuItemKind::command, std::shared_ptr<Command>{}, "Second");
+        (*state.menu).set_items(std::move(items));
+        state.timer = window.schedule_ui_timer(*state.menu, std::chrono::hours(24),
+                                               FrameClock::now() + std::chrono::milliseconds(300), MenuMoveOpen{probe});
+    }
+};
+void check_menu_closes_when_the_owner_moves() {
+    MenuMoveProbe probe{};
+    ApplicationWindowOptions options{};
+    options.title = "GUI.Forms menu owner move fixture";
+    options.initial_size = {360, 240};
+    options.print_metrics_on_close = false;
+    options.ready = MenuMoveReady{&probe};
+    const ApplicationResult result = test_application().run(make_window(), std::move(options));
+    if (result.callback_exception) std::rethrow_exception(result.callback_exception);
+    require(result.accepted(), "menu owner move fixture failed");
+    require(probe.opened && probe.checked, "the menu opened and was read after the move");
+    if (!probe.popup_mode) return;
+    require(probe.moved.accepted(), "the owner window's move was accepted");
+    require(!probe.open_after_move, "the owner window moving closes the menu shown in its Popup windows");
+}
 #if defined(__APPLE__)
 struct ForeignShutdown final {
     ApplicationResult* result{};
@@ -943,6 +1024,7 @@ void run_checks() {
     require(failed_dispatch.error == ApplicationError::callback_failure && failed_dispatch.callback_exception,
             "dispatch exception escaped the portable application boundary");
     check_runtime_windows();
+    check_menu_closes_when_the_owner_moves();
 #if defined(_WIN32)
     check_automation_needs_opt_in();
 #if defined(GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONMENT)

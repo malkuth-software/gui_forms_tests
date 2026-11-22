@@ -213,8 +213,8 @@ void test_card_with_action() {
     require(model.children[1].parent == std::size_t{0U} && model.children[2].parent == std::size_t{0U},
             "the title and the action are the header's");
     require(model.children[3].slot && model.children[3].local_id == "content", "the slot");
-    require(model.children[2].attributes.size() == 3U && model.children[2].attributes[1].name == "command" &&
-                model.children[2].attributes[1].bound,
+    require(model.children[2].attributes.size() == 1U && model.children[2].bindings.size() == 2U &&
+                model.children[2].bindings[1].property == "command",
             "the action's command is bound to the composite");
     require(model.focus && (*model.focus).target == ControlFocusTarget::none, "the card is no Tab stop");
     require(model.semantics && (*model.semantics).children_exposed, "its children are exposed");
@@ -237,10 +237,11 @@ void test_stepper_field() {
     if (workspace.diagnostics.error_count() != 1U) print_diagnostics(workspace.diagnostics);
     // Without the converter it builds.
     std::string bound = text;
-    const std::size_t converter = bound.find(", convert number");
+    const std::string_view written_converter = " converter=\"number\"";
+    const std::size_t converter = bound.find(written_converter);
     require(converter != std::string::npos, "the converter is written");
     if (converter == std::string::npos) return;
-    bound.erase(converter, std::string_view(", convert number").size());
+    bound.erase(converter, written_converter.size());
     const ControlModelOutcome without = build(workspace, bound, schema, model);
     require(without == ControlModelOutcome::model_built, "the stepper builds without its converter");
     print_diagnostics(workspace.diagnostics);
@@ -421,7 +422,8 @@ void test_reference_codes() {
                    DiagnosticCode::control_reference_unknown, "an undeclared change event");
     expect_refused(schema, document("<part name=\"p\" role=\"face\" box=\"below(@missing, 0)\"/>"),
                    DiagnosticCode::control_reference_unknown, "an unknown child");
-    expect_refused(schema, document("<children><label id=\"@title\" text=\"bind(self.missing)\"/></children>"),
+    expect_refused(schema, document("<children><label id=\"@title\"><bind property=\"text\" to=\"self.missing\"/></label>"
+                            "</children>"),
                    DiagnosticCode::control_reference_unknown, "a binding to no property");
     // E919.
     expect_refused(schema, document("<property name=\"a\" alias=\"b\"/><property name=\"b\" alias=\"a\"/>"),
@@ -490,9 +492,39 @@ void test_reference_codes() {
                    DiagnosticCode::control_expression_over_budget, "seventeen levels");
     // E999 in a child's binding.
     expect_refused(schema,
-                   document("<property name=\"n\" kind=\"number\"/><children><text-box id=\"@f\" "
-                            "text=\"bind(self.n, convert number)\"/></children>"),
+                   document("<property name=\"n\" kind=\"number\"/><children><text-box id=\"@f\">"
+                            "<bind property=\"text\" to=\"self.n\" converter=\"number\"/></text-box></children>"),
                    DiagnosticCode::not_yet_built, "a converter is reserved");
+    // Child bind elements: placement, repetition, source and options.
+    expect_refused(schema, document("<children><bind property=\"text\" to=\"self.accessible-name\"/></children>"),
+                   DiagnosticCode::control_child_invalid, "a bind outside a child");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\" text=\"x\"><bind property=\"text\" "
+                            "to=\"self.accessible-name\"/></label></children>"),
+                   DiagnosticCode::control_child_invalid, "a property both written and bound");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\"><bind property=\"text\" to=\"self.accessible-name\"/>"
+                            "<bind property=\"text\" to=\"self.accessible-name\"/></label></children>"),
+                   DiagnosticCode::control_child_invalid, "a property bound twice");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\"><bind property=\"no-such\" "
+                            "to=\"self.accessible-name\"/></label></children>"),
+                   DiagnosticCode::control_child_invalid, "a bind to a property the child lacks");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\"><bind property=\"text\" to=\"accessible-name\"/>"
+                            "</label></children>"),
+                   DiagnosticCode::form_binding_invalid, "a source outside self");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\"><bind property=\"text\" to=\"self.accessible-name\" "
+                            "mode=\"sideways\"/></label></children>"),
+                   DiagnosticCode::form_binding_option_invalid, "an unknown mode");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\"><bind property=\"text\" to=\"self.accessible-name\" "
+                            "update=\"sometimes\"/></label></children>"),
+                   DiagnosticCode::form_binding_option_invalid, "an unknown update");
+    expect_refused(schema,
+                   document("<children><label id=\"@t\"><bind property=\"text\"/></label></children>"),
+                   DiagnosticCode::control_attribute_missing, "a bind without a source");
 }
 
 void test_warning_and_all_at_once() {

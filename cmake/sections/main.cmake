@@ -1,6 +1,16 @@
 enable_testing()
+# The cached gui_forms_lamp_keys names its legend font by the absolute path of
+# the tree that built it (GUI_FORMS_LEGEND_FONT, GUI.Forms' CI workspace), which
+# no other machine has; the legend test builds the same program from the cache's
+# source, as GUI.Forms does, naming the font the cache carries.
 if(TARGET gui_forms_lamp_keys)
-    add_test(NAME gui_forms_lamp_keys_legend_tests COMMAND gui_forms_lamp_keys --legend-test)
+    add_executable(gui_forms_tests_lamp_keys
+        "${GUI_FORMS_SOURCE_DIR}/tools/industrial_surfaces/lamp_keys.cpp"
+        $<TARGET_OBJECTS:gui_forms_sealed_pages_objects>)
+    target_link_libraries(gui_forms_tests_lamp_keys PRIVATE gui_drawing_skia gui_forms_core)
+    target_compile_definitions(gui_forms_tests_lamp_keys PRIVATE
+        GUI_FORMS_LEGEND_FONT="${GUI_FORMS_SOURCE_DIR}/assets/fonts/PortsmouthMono.ttf")
+    add_test(NAME gui_forms_lamp_keys_legend_tests COMMAND gui_forms_tests_lamp_keys --legend-test)
 endif()
 if(TARGET gui_forms_text_masks_impl)
     add_executable(gui_forms_text_mask_cost_probe EXCLUDE_FROM_ALL tests/text_mask_cost_probe.cpp)
@@ -500,6 +510,10 @@ if(Python3_Interpreter_FOUND)
     add_test(NAME gui_forms_naming_audit_unit
         COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
             -p test_naming_audit.py)
+    # The ThreadSanitizer run's selection (tools/abi_tsan.py).
+    add_test(NAME gui_forms_abi_tsan_selection_unit
+        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
+            -p test_abi_tsan.py)
     add_test(NAME gui_forms_exit_statics_check_unit
         COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${GUI_FORMS_SOURCE_DIR}/tools
             -p test_check_exit_statics.py)
@@ -661,20 +675,21 @@ add_test(NAME gui_drawing_trace_equivalence_tests
 add_test(NAME gui_forms_stx_digest
          COMMAND ${CMAKE_COMMAND} -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/stx_digest_test
                  -DGUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/stx_digest_test.cmake)
-# Public headers name no renderer or platform type; comments may
-# (cmake/check_public_header_tokens.cmake). The fixtures prove a comment
+# Public headers name no renderer or platform type; comments may. The check
+# is gui_forms' own (its cmake/check_public_header_tokens.cmake, which its
+# renderer boundary audit includes too). The fixtures prove a comment
 # passes and a token in code fails.
 add_test(NAME gui_forms_public_header_tokens
          COMMAND ${CMAKE_COMMAND} -DPUBLIC_INCLUDE_DIRECTORY=${GUI_FORMS_SOURCE_DIR}/include
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
+                 -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
 add_test(NAME gui_forms_public_header_tokens_comments_pass
          COMMAND ${CMAKE_COMMAND}
                  -DPUBLIC_INCLUDE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/public_header_tokens/comments_only
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
+                 -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
 add_test(NAME gui_forms_public_header_tokens_code_fails
          COMMAND ${CMAKE_COMMAND}
                  -DPUBLIC_INCLUDE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/public_header_tokens/in_code
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
+                 -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
 set_tests_properties(gui_forms_public_header_tokens_code_fails PROPERTIES
     PASS_REGULAR_EXPRESSION "exposes renderer/platform token: CGContext")
 
@@ -1520,6 +1535,9 @@ gui_forms_theme_request_case(gui_forms_theme_request_app_misspelt_effect PROGRAM
 add_executable(gui_forms_dock_layout_tests tests/dock_layout_tests.cpp)
 target_link_libraries(gui_forms_dock_layout_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_dock_layout_tests COMMAND gui_forms_dock_layout_tests)
+add_executable(gui_forms_dock_layout_frames_tests tests/dock_layout_frames_tests.cpp)
+target_link_libraries(gui_forms_dock_layout_frames_tests PRIVATE gui_forms_core)
+add_test(NAME gui_forms_dock_layout_frames_tests COMMAND gui_forms_dock_layout_frames_tests)
 
 add_executable(gui_forms_grapheme_conformance_tests
     tests/grapheme_conformance_tests.cpp
@@ -1896,6 +1914,9 @@ add_test(NAME gui_forms_navigation_pane_tests COMMAND gui_forms_navigation_pane_
 add_executable(gui_forms_dock_site_tests tests/dock_site_tests.cpp)
 target_link_libraries(gui_forms_dock_site_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_dock_site_tests COMMAND gui_forms_dock_site_tests)
+add_executable(gui_forms_mdi_tests tests/mdi_tests.cpp)
+target_link_libraries(gui_forms_mdi_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_mdi_tests COMMAND gui_forms_mdi_tests)
 add_executable(gui_forms_dock_auto_hide_tests tests/dock_auto_hide_tests.cpp)
 target_link_libraries(gui_forms_dock_auto_hide_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_dock_auto_hide_tests COMMAND gui_forms_dock_auto_hide_tests)
@@ -1937,7 +1958,7 @@ add_executable(gui_forms_hostile_handlers_tests tests/hostile_handlers/hostile_h
 target_link_libraries(gui_forms_hostile_handlers_tests PRIVATE gui_forms_controls)
 foreach(_gui_hostile_subject IN ITEMS list_view list_box checked_list_box combo_box tree_view tab_control
         split_container track_bar h_scroll_bar numeric_up_down data_grid_view menu_strip context_menu
-        tree_list_view virtual_rows_view)
+        tree_list_view virtual_rows_view window_keys)
     add_test(NAME gui_forms_hostile_handlers_${_gui_hostile_subject}
              COMMAND gui_forms_hostile_handlers_tests --subject ${_gui_hostile_subject} --actions mutate)
     add_test(NAME gui_forms_hostile_handlers_${_gui_hostile_subject}_release
@@ -2608,7 +2629,8 @@ set_tests_properties(gui_forms_dispatcher_tests PROPERTIES TIMEOUT 60)
 # ThreadSanitizer's set beyond the C ABI (gap P2): the event stack and
 # the sub-surface and live-surface machinery whose threads the C ABI's
 # sub-surface table reaches. tools/abi_tsan.py runs the tests labelled
-# c_abi or tsan in its instrumented tree; the c_abi conformance kit
+# c_abi or tsan against a tsan test cache (gui_forms' tools/abi_tsan.py
+# builds and packs it); the c_abi conformance kit
 # already covers the ABI's sub-surface part (gf_conformance_subsurfaces.c).
 set_property(TEST
     gui_forms_sub_surface_tests
@@ -2989,11 +3011,14 @@ if(TARGET gui_forms_seam_proximity_lab_model)
 endif()
 endif()
 
+# The Gallery and the labs come from the test cache as IMPORTED targets, for
+# which CMake refuses TARGET_BUNDLE_DIR: their fonts are found from the
+# executable's directory, <bundle>/Contents/MacOS.
 if(TARGET gui_forms_gallery)
     add_test(
         NAME gui_forms_gallery_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_gallery>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_gallery>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3002,7 +3027,7 @@ if(TARGET gui_forms_visual_inspector_lab)
     add_test(
         NAME gui_forms_visual_inspector_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_visual_inspector_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_visual_inspector_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3011,7 +3036,7 @@ if(TARGET gui_forms_layered_material_lab)
     add_test(
         NAME gui_forms_layered_material_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_layered_material_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_layered_material_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3020,7 +3045,7 @@ if(TARGET gui_forms_custom_chrome_lab)
     add_test(
         NAME gui_forms_custom_chrome_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_custom_chrome_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_custom_chrome_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3029,7 +3054,7 @@ if(TARGET gui_forms_typography_scale_lab)
     add_test(
         NAME gui_forms_typography_scale_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_typography_scale_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_typography_scale_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3038,7 +3063,7 @@ if(TARGET gui_forms_responsive_tracks_lab)
     add_test(
         NAME gui_forms_responsive_tracks_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_responsive_tracks_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_responsive_tracks_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3047,7 +3072,7 @@ if(TARGET gui_forms_connected_controls_lab)
     add_test(
         NAME gui_forms_connected_controls_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_connected_controls_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_connected_controls_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3056,7 +3081,7 @@ if(TARGET gui_forms_seam_proximity_lab)
     add_test(
         NAME gui_forms_seam_proximity_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_seam_proximity_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_seam_proximity_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()

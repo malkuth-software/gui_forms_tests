@@ -265,7 +265,8 @@ if(TARGET gui_forms_abi)
     add_test(NAME gui_forms_abi_csharp
         COMMAND ${CMAKE_COMMAND} -DDOTNET=${GUI_FORMS_DOTNET} -DPYTHON=${Python3_EXECUTABLE}
             -DSANITIZED=${_gf_abi_csharp_sanitized}
-            -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DLIBRARY_DIR=$<TARGET_FILE_DIR:gui_forms_abi>
+            -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DGUI_FORMS_DIR=${GUI_FORMS_SOURCE_DIR}
+            -DLIBRARY_DIR=$<TARGET_FILE_DIR:gui_forms_abi>
             -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/gf_abi_csharp
             -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/abi/csharp/gf_abi_csharp.cmake)
     set_tests_properties(gui_forms_abi_csharp PROPERTIES TIMEOUT 600

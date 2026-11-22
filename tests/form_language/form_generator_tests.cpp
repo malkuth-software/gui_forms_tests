@@ -372,7 +372,7 @@ void test_refusals() {
                                       "  <button id=\"app.ok\"/>\n"
                                       "  <button id=\"app-ok\"/>\n"
                                       "  <button id=\"1st.button\"/>\n"
-                                      "  <button id=\"delete\" command=\"bind(class)\"/>\n"
+                                      "  <button id=\"delete\"><bind property=\"command\" to=\"class\"/></button>\n"
                                       "</user-control>\n";
     Workspace workspace{};
     const bool read = read_document(workspace, "test.form", document, schema);
@@ -734,14 +734,17 @@ void test_string_escapes() {
             "escapes: the generated literal spells the decoded text");
 }
 
-// A field binding and a narrowed Value binding, spelled as the library
-// calls the generated code makes.
+// A field binding and a narrowed Value binding (`bind` elements), spelled
+// as the library calls the generated code makes.
 void test_binding_spelling() {
     const FormSchema schema = gui_forms::form_compiler::registry_form_schema();
     const std::string_view document = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"
-                                      "  <text-box id=\"app.name\"\n"
-                                      "      text=\"bind(records_, 'name', update on-change)\"/>\n"
-                                      "  <check-box id=\"app.flag\" checked=\"bind(flag_, one_way)\"/>\n"
+                                      "  <text-box id=\"app.name\">\n"
+                                      "    <bind property=\"text\" to=\"records_\" field=\"name\" update=\"on-change\"/>\n"
+                                      "  </text-box>\n"
+                                      "  <check-box id=\"app.flag\" tab-index=\"3\">\n"
+                                      "    <bind property=\"checked\" to=\"flag_\" mode=\"one-way\"/>\n"
+                                      "  </check-box>\n"
                                       "</user-control>\n";
     Workspace workspace{};
     const bool read = read_document(workspace, "bound.form", document, schema);
@@ -764,6 +767,11 @@ void test_binding_spelling() {
             "binding spelling: the Value, narrowed to one way, with the property's kind");
     require(generated.find("#include \"gui_forms/binding/form_binding/form_binding.hpp\"") != std::string::npos,
             "binding spelling: the generated header includes the binding calls");
+    // A bind element is bound at its place: after its object's attributes.
+    const std::size_t tab_index = generated.find("(*made.app_flag).tab_index = ");
+    const std::size_t flag_binding = generated.find("(*made.app_flag, \"checked\", owner.flag_");
+    require(tab_index != std::string::npos && flag_binding != std::string::npos && tab_index < flag_binding,
+            "binding spelling: the binding made after the object's attribute");
 }
 
 // CLOSURE P-6: a property on a capability is assigned through its cell

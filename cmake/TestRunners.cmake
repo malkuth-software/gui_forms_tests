@@ -298,6 +298,13 @@ int main(int argument_count, char** arguments) {
 ")
         file(CONFIGURE OUTPUT "${registry}" CONTENT "${registry_text}" @ONLY)
         add_executable(${runner} "${registry}" ${objects})
+        # The renamed mains keep their own signatures (most are int()), which the
+        # call through int (*)(int, char**) does not match, and the sanitizer
+        # tree's -fsanitize=function aborts every such call. The call is valid on
+        # every host (above), so the registry alone compiles without that check.
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            set_source_files_properties("${registry}" PROPERTIES COMPILE_OPTIONS "-fno-sanitize=function")
+        endif()
         set_source_files_properties(${objects} PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
         set_property(TARGET ${runner} PROPERTY LINK_LIBRARIES "${runner_links_${runner}}")
     endforeach()

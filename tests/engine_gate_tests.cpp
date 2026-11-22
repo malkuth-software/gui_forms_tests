@@ -884,6 +884,7 @@ std::string_view pattern_name(ProceduralPattern pattern) {
     case ProceduralPattern::fresco: return "fresco";
     case ProceduralPattern::checker: return "checker";
     case ProceduralPattern::hatch: return "hatch";
+    case ProceduralPattern::carbon_fibre: return "carbon_fibre";
     }
     return {};
 }

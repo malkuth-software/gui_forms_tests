@@ -664,6 +664,14 @@ struct PageDigest final {
 // first time. Recorded once by the integrator on the gated head (plain M4
 // tree, STXlib e549318), both tables.
 //
+// cp35 (lamps-carbon-fibre, 2026-11-22): the industrial-surfaces page gains
+// the carbon-fibre tile beside brushed metal, and its new controls raise the
+// live control count states-and-diagnostics shows (1855 to 1859). The
+// page-by-page diffs against the cp34 traces show those changes alone.
+// Recorded again by the integrator on the cp35 head: industrial-surfaces in
+// both tables, states-and-diagnostics in the first (the second does not
+// check it).
+//
 // typography-and-inspection's entry is the trace with the RuntimeId the
 // specimen has when this test runs first (#1328 since L8a on main); the digest
 // changes whenever a page made before it makes a control more or less.
@@ -676,7 +684,7 @@ constexpr std::array<PageDigest, 42> expected_digests{{
     {"ranges-and-progress", 0x2c9149d495316c22ULL},
     {"containers-and-focus", 0x71463b87d25c5d57ULL},
     {"animation-laboratory", 0x85015f21adebe249ULL},
-    {"states-and-diagnostics", 0xa319481ebc0445a6ULL},
+    {"states-and-diagnostics", 0x620f6059d35e20d2ULL},
     {"text-and-input", 0xec92c5af07e45825ULL},
     {"collections-and-overlays", 0xfc4a5b45328a472aULL},
     {"values-and-spinners", 0xcddbaa4e9f5002d1ULL},
@@ -706,7 +714,7 @@ constexpr std::array<PageDigest, 42> expected_digests{{
     {"instruments", 0xef863277afb09cd0ULL},
     {"guided-tasks", 0xf2c172da8c8620f9ULL},
     {"help-book", 0x13a076e34c04a876ULL},
-    {"industrial-surfaces", 0x2a776630fefe8c3dULL},
+    {"industrial-surfaces", 0xaa953e3982bfa7feULL},
     {"node-graphs", 0x9eccd50bdb07e17fULL},
     {"composite-controls", 0xb85cb6b968929ad1ULL},
     {"controls-inspection", 0x0aac599752dacc1bULL},
@@ -764,7 +772,7 @@ constexpr std::array<PageDigest, 42> professional_digests{{
     {"instruments", 0x75a20ade3e8c4834ULL},
     {"guided-tasks", 0x3e88e64a660412fbULL},
     {"help-book", 0x7f3cf836f15bcef2ULL},
-    {"industrial-surfaces", 0x8815c3ea957db763ULL},
+    {"industrial-surfaces", 0xf63f09b91eb6446eULL},
     {"node-graphs", 0xfabe69c388887b8fULL},
     {"composite-controls", 0xc1d7b042a2ff9913ULL},
     {"controls-inspection", 0x242bfaf879d15677ULL},

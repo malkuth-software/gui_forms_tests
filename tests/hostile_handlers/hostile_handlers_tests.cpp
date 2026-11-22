@@ -20,7 +20,8 @@
 // (A-gf-controls-08-F2), DataGridView's pressed row (A-gf-controls-02-F6),
 // SplitContainer's keyboard step past the edge (A-gf-controls-12-F1) and the
 // range controls' refusals from input (A-gf-controls-11-F8); then the other
-// stock controls that raise events while they change.
+// stock controls that raise events while they change, and the window's own
+// key and focus-scope events (window_keys).
 //
 // One run: subject x event x action, each on a fresh window. The handler
 // acts on the event's first emission only; later emissions (including those
@@ -859,6 +860,10 @@ void check_split_container(Stage& stage, Findings& findings) {
 const HostileEvent split_container_events[] = {
     {"focus_observed", &attach_focus},
     {"splitter_changed", &attach_to_subject<SplitContainer, Event<const SplitChangeEvent&>, &SplitContainer::splitter_changed>},
+    // The drag engine raises these from inside its own session (the plan's
+    // start, the end's report): a destroyed window takes the engine with it.
+    {"drag_started", &attach_to_subject<SplitContainer, Event<const DragInteraction&>, &SplitContainer::drag_started>},
+    {"drag_ended", &attach_to_subject<SplitContainer, Event<const DragInteraction&>, &SplitContainer::drag_ended>},
 };
 
 // --- Range controls: TrackBar, HScrollBar (A-gf-controls-11-F8) -------------
@@ -1392,6 +1397,58 @@ const HostileEvent virtual_rows_view_events[] = {
     {"row_activated", &attach_to_subject<VirtualRowsView, Event<VirtualRowIndex>, &VirtualRowsView::row_activated>},
 };
 
+// --- The window's own key and scope events -----------------------------------
+// The window raises key_state_changed and key_down while it routes a key,
+// and focus_scope_changed while it opens a scope; a handler that destroys
+// the window there must leave dispatch reading nothing of it afterwards
+// (the key route's tooltip notice read the freed window, 933b63464). The
+// subject is a track bar, so the key also reaches a focused control.
+
+template <typename EventType, EventAccessor<SurfaceRoot, EventType> accessor>
+void attach_to_window(Stage& stage) {
+    EventType& event = ((*stage.window).*accessor)();
+    on(event, stage.handler, &HostileHandler::fire);
+}
+
+void build_window_keys(Stage& stage) {
+    std::shared_ptr<TrackBar> track = make_control<TrackBar>(StableId("hostile.window-keys"));
+    (*track).set_range(0.0, 10.0);
+    (*track).value = 5.0;
+    (*track).set_requested_bounds({0.0, 0.0, 300.0, 40.0});
+    stage.subject = track;
+    stage.clear_items = &range_clear;
+    stage.replace_items = &range_replace;
+}
+
+// Opens a focus scope on the subject while it is still on the window.
+void open_focus_scope(Stage& stage) {
+    Window* const window = stage.window.get();
+    if (window == nullptr) return;
+    const std::shared_ptr<Control> control = stage.watched.lock();
+    if (control == nullptr) return;
+    const Window* const attached = (*control).attached_window();
+    if (attached != window) return;
+    static_cast<void>((*window).begin_focus_scope(control));
+}
+
+void drive_window_keys(Stage& stage) {
+    // A plain key (the tooltip's key notice), then Escape (its dismissal),
+    // then a scope over the subject and a key inside it.
+    focus_subject(stage);
+    press_key(stage, PhysicalKey::right);
+    press_key(stage, PhysicalKey::escape);
+    open_focus_scope(stage);
+    press_key(stage, PhysicalKey::left);
+}
+
+const HostileEvent window_keys_events[] = {
+    {"key_state_changed",
+     &attach_to_window<Event<const KeyStateChange&>, &SurfaceRoot::key_state_changed>},
+    {"key_down", &attach_to_window<Event<KeyEventArgs&>, &SurfaceRoot::key_down>},
+    {"focus_scope_changed",
+     &attach_to_window<Event<const FocusScopeChange&>, &SurfaceRoot::focus_scope_changed>},
+};
+
 // --- The subjects -----------------------------------------------------------------
 
 const Subject subjects[] = {
@@ -1415,6 +1472,7 @@ const Subject subjects[] = {
     {"tree_list_view", &build_tree_list_view, tree_list_view_events, &drive_tree_list_view, &check_tree_list_view},
     {"virtual_rows_view", &build_virtual_rows_view, virtual_rows_view_events, &drive_virtual_rows_view,
      &check_virtual_rows_view},
+    {"window_keys", &build_window_keys, window_keys_events, &drive_window_keys, &check_range},
 };
 
 // --- One case ---------------------------------------------------------------------

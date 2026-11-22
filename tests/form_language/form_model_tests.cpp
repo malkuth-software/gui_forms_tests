@@ -1,6 +1,7 @@
-// Form documents' model (stage FD, phase FD2; XML since cp34): a read
-// document checked against a schema the run-time registry describes. Gate: a valid document
-// becomes objects, properties of their kinds and bindings (FD-6); every
+// Form documents' model (stage FD, phase FD2; XML since cp34; binding
+// elements since 2026-11-21): a read document checked against a schema the
+// run-time registry describes. Gate: a valid document becomes objects,
+// properties of their kinds and bindings (FD-6, `bind` elements); every
 // defect is reported at its place, all of them in one pass, and a refused
 // document leaves the previous model as it was.
 
@@ -174,7 +175,7 @@ void test_valid_document() {
         "        tab-index=\"1\"/>\n"
         "  </group-box>\n"
         "  <!-- a comment between objects -->\n"
-        "  <button id=\"settings.ok\" text=\"OK\" bounds=\"10 20 80 24\" command=\"bind(accept_)\"/>\n"
+        "  <button id=\"settings.ok\" text=\"OK\" bounds=\"10 20 80 24\"><bind property=\"command\" to=\"accept_\"/></button>\n"
         "  <command id=\"settings.save\"/>\n"
         "</user-control>\n";
     Workspace workspace{};
@@ -192,8 +193,10 @@ void test_valid_document() {
     const std::vector<ObjectIndex> expected_children{ObjectIndex{1U}, ObjectIndex{3U}, ObjectIndex{4U}};
     require(model.objects[0].children == expected_children, "valid: the root's children in document order");
     require(model.objects[2].parent && (*model.objects[2].parent).value == 1U, "valid: the check box's parent");
-    require(model.objects[0].element == 0U && model.objects[2].element == 2U && model.objects[4].element == 4U,
-            "valid: each object's element in document order");
+    // The button's `bind` element (4) is no object, so the command is the
+    // sixth element.
+    require(model.objects[0].element == 0U && model.objects[2].element == 2U && model.objects[4].element == 5U,
+            "valid: each object's element in document order, a bind among them");
     require(model.objects[0].position.line.value == 3U && model.objects[0].position.column.value == 1U &&
                 model.objects[2].position.line.value == 6U && model.objects[2].position.column.value == 5U,
             "valid: each object located at its start tag");
@@ -230,6 +233,9 @@ void test_valid_document() {
     require(command != nullptr && (*command).binding && (*(*command).binding).source == "accept_" &&
                 (*(*command).binding).field.empty(),
             "valid: the button's Command slot, bound");
+    require(command != nullptr && (*command).binding && (*(*command).binding).element == 4U &&
+                (*command).position.line.value == 14U && (*command).position.column.value == 59U,
+            "valid: a binding located at its bind element");
 }
 
 struct ExpectedDiagnostic final {
@@ -273,8 +279,8 @@ void test_defects_reported_together() {
         "  <check-box id=\"app.a\" checked=\"maybe\"/>\n"                     // 4 E807
         "  <check-box id=\"app.a\" text=\"x\"/>\n"                            // 5 E803
         "  <check-box id=\"app.b\" on-explode=\"boom\"/>\n"                   // 6 E816
-        "  <check-box id=\"app.c\" checked=\"bind(two words)\"/>\n"           // 7 E817
-        "  <check-box id=\"app.d\" checked=\"bind(on, sometimes)\"/>\n"       // 8 E818
+        "  <check-box id=\"app.c\"><bind property=\"checked\" to=\"two words\"/></check-box>\n"           // 7 E817
+        "  <check-box id=\"app.d\"><bind property=\"checked\" to=\"on\" mode=\"sometimes\"/></check-box>\n"  // 8 E818
         "  <command id=\"app.e\"><button id=\"app.f\"/></command>\n"          // 9 E809
         "  <sealed-box id=\"app.g\" text=\"no\"/>\n"                          // 10 E805
         "  <check-box id=\"app.h\"><style/></check-box>\n"                     // 11 E810
@@ -292,8 +298,8 @@ void test_defects_reported_together() {
         {DiagnosticCode::form_value_invalid, 4U, 34U},
         {DiagnosticCode::form_identity_repeated, 5U, 3U},
         {DiagnosticCode::form_handler_removed, 6U, 25U},
-        {DiagnosticCode::form_binding_invalid, 7U, 43U},
-        {DiagnosticCode::form_binding_option_invalid, 8U, 43U},
+        {DiagnosticCode::form_binding_invalid, 7U, 54U},
+        {DiagnosticCode::form_binding_option_invalid, 8U, 64U},
         {DiagnosticCode::form_children_not_admitted, 9U, 23U},
         {DiagnosticCode::form_property_read_only, 10U, 26U},
         {DiagnosticCode::form_style_block, 11U, 25U},
@@ -311,38 +317,48 @@ void test_defects_reported_together() {
             "defects: the previous model is kept");
 }
 
-// Bindings (owner rulings FD-6 R1 and R6): the direction is the property's
-// default unless the document narrows it to one way; a two-way text bound
-// to a field takes an update trigger; a Command slot takes its source alone.
+// Bindings (owner rulings FD-6 R1 and R6; binding elements, owner
+// 2026-11-21): a `bind` element inside the object names the property and
+// the source; the direction is the property's default unless `mode`
+// narrows it; a two-way text bound to a field takes an update trigger; a
+// Command slot takes its source alone; a field is the attribute's text, no
+// string escapes read; an object's bindings follow its attributes, before
+// the properties of its children, wherever the `bind` is written.
 void test_bindings() {
     const FormSchema schema = sample_schema();
     const std::string_view document =
         "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"
-        "  <check-box id=\"app.a\" checked=\"bind(flag_)\"/>\n"
-        "  <check-box id=\"app.b\" checked=\"bind(flag_, one_way)\"/>\n"
-        "  <button id=\"app.c\" command=\"bind(save_)\"/>\n"
-        "  <text-box id=\"app.d\" text=\"bind(names_, 'name', update on-change)\"/>\n"
-        "  <check-box id=\"app.e\" text='bind(names_, \"title\")'/>\n"
+        "  <check-box id=\"app.a\"><bind property=\"checked\" to=\"flag_\"/></check-box>\n"
+        "  <check-box id=\"app.b\"><bind property=\"checked\" to=\"flag_\" mode=\"one-way\"/></check-box>\n"
+        "  <button id=\"app.c\"><bind property=\"command\" to=\"save_\"/></button>\n"
+        "  <text-box id=\"app.d\"><bind property=\"text\" to=\"names_\" field=\"name\" mode=\"two-way\" "
+        "update=\"on-change\"/></text-box>\n"
+        "  <check-box id=\"app.e\"><bind property=\"text\" to=\"names_\" field=\"title \\q\"/></check-box>\n"
+        "  <group-box id=\"app.f\" tab-index=\"2\">\n"
+        "    <check-box id=\"app.g\" text=\"G\"/>\n"
+        "    <bind property=\"visible\" to=\"shown_\" mode=\"one-way\"/>\n"
+        "  </group-box>\n"
         "</user-control>\n";
     Workspace workspace{};
     FormModel model{};
     const FormModelOutcome outcome = build(workspace, document, schema, model);
     const std::array<ExpectedDiagnostic, 0> none{};
     check_diagnostics(workspace, none, "bindings: no diagnostics");
-    require(outcome == FormModelOutcome::model_built && model.objects.size() == 6U, "bindings: built");
-    if (outcome != FormModelOutcome::model_built || model.objects.size() != 6U) return;
+    require(outcome == FormModelOutcome::model_built && model.objects.size() == 8U, "bindings: built, binds no objects");
+    if (outcome != FormModelOutcome::model_built || model.objects.size() != 8U) return;
     const FormProperty* two_way = find_property(model, schema, 1U, "checked");
     const FormProperty* narrowed = find_property(model, schema, 2U, "checked");
     const FormProperty* command = find_property(model, schema, 3U, "command");
     const FormProperty* edited = find_property(model, schema, 4U, "text");
     const FormProperty* shown = find_property(model, schema, 5U, "text");
+    const FormProperty* visible = find_property(model, schema, 6U, "visible");
     require(two_way != nullptr && narrowed != nullptr && command != nullptr && edited != nullptr && shown != nullptr &&
-                (*two_way).binding && (*narrowed).binding && (*command).binding && (*edited).binding &&
-                (*shown).binding,
+                visible != nullptr && (*two_way).binding && (*narrowed).binding && (*command).binding &&
+                (*edited).binding && (*shown).binding && (*visible).binding,
             "bindings: each bound property recorded with its binding");
     if (two_way == nullptr || narrowed == nullptr || command == nullptr || edited == nullptr || shown == nullptr ||
-        !(*two_way).binding || !(*narrowed).binding || !(*command).binding || !(*edited).binding ||
-        !(*shown).binding) {
+        visible == nullptr || !(*two_way).binding || !(*narrowed).binding || !(*command).binding ||
+        !(*edited).binding || !(*shown).binding || !(*visible).binding) {
         return;
     }
     using gui_forms::FormUpdateTrigger;
@@ -355,37 +371,81 @@ void test_bindings() {
     require((*(*edited).binding).field == "name" &&
                 (*(*edited).binding).direction == PropertyBindingDirection::two_way &&
                 (*(*edited).binding).trigger == FormUpdateTrigger::on_change,
-            "bindings: a field, two way by the text box's default, written back on every change");
-    require((*(*shown).binding).field == "title" &&
+            "bindings: a field, two way as written and by the text box's default, written back on every change");
+    require((*(*shown).binding).field == "title \\q" &&
                 (*(*shown).binding).direction == PropertyBindingDirection::one_way &&
                 (*(*shown).binding).trigger == FormUpdateTrigger::on_validate,
-            "bindings: a field, one way by the check box text's default");
+            "bindings: a field read as written, one way by the check box text's default");
+    // The group box's elements: 11, its check box 12, its bind 13 (line 9).
+    require((*(*visible).binding).element == 13U && (*visible).position.line.value == 9U &&
+                (*visible).position.column.value == 5U,
+            "bindings: located at the bind element, after a child object");
+    // The group box's properties stay together, its tab index before its
+    // binding, ahead of its child's.
+    std::size_t tab_index = model.properties.size();
+    std::size_t bound_visible = model.properties.size();
+    std::size_t child_text = model.properties.size();
+    for (std::size_t index = 0U; index < model.properties.size(); ++index) {
+        if (&model.properties[index] == visible) bound_visible = index;
+        if (&model.properties[index] == find_property(model, schema, 6U, "tab_index")) tab_index = index;
+        if (&model.properties[index] == find_property(model, schema, 7U, "text")) child_text = index;
+    }
+    require(tab_index + 1U == bound_visible && bound_visible + 1U == child_text,
+            "bindings: an object's attributes, then its bindings, then its children's properties");
 
     const std::string_view defects =
-        "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"                  // 1
-        "  <check-box id=\"app.a\" on-checked-changed=\"changed\"/>\n"                     // 2 E816
-        "  <check-box id=\"app.b\" text=\"bind(names_)\"/>\n"                              // 3 E817
-        "  <check-box id=\"app.c\" checked=\"bind(flag_, one_way, one_way)\"/>\n"          // 4 E818
-        "  <check-box id=\"app.d\" text=\"bind(names_, 'n', update on-change)\"/>\n"       // 5 E818
-        "  <button id=\"app.e\" command=\"bind(save_, 'field')\"/>\n"                      // 6 E817
-        "  <check-box id=\"app.f\" checked=\"bind(flag_, convert x)\"/>\n"                 // 7 E999
-        "  <check-box id=\"app.g\" checked=\"bind(flag_, update sometimes)\"/>\n"          // 8 E818
-        "  <check-box id=\"app.h\" tab-index=\"bind(n_)\"/>\n"                             // 9 E817, not bindable
-        "  <check-box id=\"app.i\" checked=\"bind(flag_, 'bad \\q')\"/>\n"               // 10 E815
+        "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"                                     // 1
+        "  <check-box id=\"app.a\" on-checked-changed=\"changed\"/>\n"                                        // 2 E816
+        "  <check-box id=\"app.b\"><bind property=\"text\" to=\"names_\"/></check-box>\n"                     // 3 E817
+        "  <check-box id=\"app.c\"><bind property=\"checked\" to=\"flag_\" mode=\"sideways\"/></check-box>\n"  // 4 E818
+        "  <check-box id=\"app.d\"><bind property=\"text\" to=\"names_\" field=\"n\" update=\"on-change\"/>"
+        "</check-box>\n"                                                                                         // 5 E818
+        "  <button id=\"app.e\"><bind property=\"command\" to=\"save_\" field=\"f\"/></button>\n"             // 6 E817
+        "  <check-box id=\"app.f\"><bind property=\"checked\" to=\"flag_\" converter=\"x\"/></check-box>\n"   // 7 E999
+        "  <check-box id=\"app.g\"><bind property=\"tab-index\" to=\"n_\"/></check-box>\n"                    // 8 E817
+        "  <check-box id=\"app.h\"><bind property=\"checked\" to=\"flag_\" mode=\"two-way\"/>"
+        "<bind property=\"checked\" to=\"other_\"/></check-box>\n"                                             // 9 E806
+        "  <check-box id=\"app.i\" checked=\"true\"><bind property=\"checked\" to=\"flag_\"/></check-box>\n"  // 10 E806
+        "  <check-box id=\"app.j\"><bind property=\"frobnicate\" to=\"x_\"/></check-box>\n"                   // 11 E804
+        "  <check-box id=\"app.k\"><bind to=\"flag_\"/></check-box>\n"                                        // 12 E817
+        "  <check-box id=\"app.l\"><bind property=\"checked\"/></check-box>\n"                                // 13 E817
+        "  <check-box id=\"app.m\"><bind property=\"checked\" to=\"flag_\" id=\"x\"/></check-box>\n"          // 14 E818
+        "  <check-box id=\"app.n\"><bind property=\"checked\" to=\"flag_\"><button id=\"app.o\"/></bind>"
+        "</check-box>\n"                                                                                         // 15 E809
+        "  <text-box id=\"app.p\"><bind property=\"text\" to=\"names_\" field=\"\"/></text-box>\n"            // 16 E817
+        "  <group-box id=\"app.q\"><check-box id=\"app.r\"><bind property=\"column-span\" to=\"n_\"/>"
+        "</check-box></group-box>\n"                                                                             // 17 E817
+        "  <command id=\"app.s\"><bind property=\"enabled\" to=\"on_\"/></command>\n"                         // 18 E804
+        "  <check-box id=\"app.t\"><bind property=\"checked\" to=\"flag_\" mode=\"two-way\"/></check-box>\n"  // 19
+        "  <check-box id=\"app.u\"><bind property=\"text\" to=\"names_\" field=\"t\" mode=\"two-way\"/>"
+        "</check-box>\n"                                                                                         // 20 E818
+        "  <check-box id=\"app.v\"><bind property=\"layout-direction\" to=\"d_\"/></check-box>\n"             // 21 E820
+        "  <check-box id=\"app.w\"><bind property=\"fore-color\" to=\"c_\"/></check-box>\n"                   // 22 E813
         "</user-control>\n";
-    const std::array<ExpectedDiagnostic, 9> expected{{
+    const std::array<ExpectedDiagnostic, 20> expected{{
         {DiagnosticCode::form_handler_removed, 2U, 25U},
-        {DiagnosticCode::form_binding_invalid, 3U, 36U},
-        {DiagnosticCode::form_binding_option_invalid, 4U, 55U},
-        {DiagnosticCode::form_binding_option_invalid, 5U, 49U},
-        {DiagnosticCode::form_binding_invalid, 6U, 36U},
-        {DiagnosticCode::not_yet_built, 7U, 46U},
-        {DiagnosticCode::form_binding_option_invalid, 8U, 53U},
-        {DiagnosticCode::form_binding_invalid, 9U, 36U},
-        {DiagnosticCode::form_escape_invalid, 10U, 46U},
+        {DiagnosticCode::form_binding_invalid, 3U, 25U},
+        {DiagnosticCode::form_binding_option_invalid, 4U, 67U},
+        {DiagnosticCode::form_binding_option_invalid, 5U, 77U},
+        {DiagnosticCode::form_binding_invalid, 6U, 22U},
+        {DiagnosticCode::not_yet_built, 7U, 61U},
+        {DiagnosticCode::form_binding_invalid, 8U, 41U},
+        {DiagnosticCode::form_member_repeated, 9U, 93U},
+        {DiagnosticCode::form_member_repeated, 10U, 56U},
+        {DiagnosticCode::form_property_unknown, 11U, 41U},
+        {DiagnosticCode::form_binding_invalid, 12U, 25U},
+        {DiagnosticCode::form_binding_invalid, 13U, 25U},
+        {DiagnosticCode::form_binding_option_invalid, 14U, 61U},
+        {DiagnosticCode::form_children_not_admitted, 15U, 25U},
+        {DiagnosticCode::form_binding_invalid, 16U, 65U},
+        {DiagnosticCode::form_binding_invalid, 17U, 63U},
+        {DiagnosticCode::form_property_unknown, 18U, 39U},
+        {DiagnosticCode::form_binding_option_invalid, 20U, 75U},
+        {DiagnosticCode::form_property_renamed, 21U, 41U},
+        {DiagnosticCode::form_presentation_property, 22U, 41U},
     }};
     require(build(workspace, defects, schema, model) == FormModelOutcome::refused, "bindings: defects refused");
-    check_diagnostics(workspace, expected, "bindings: every defect at its token, in order");
+    check_diagnostics(workspace, expected, "bindings: every defect at its element or attribute, in order");
 }
 
 // Whether the diagnostics are one E821 (form_xml_invalid), wherever the
@@ -526,9 +586,10 @@ void test_spans() {
 }
 
 // Text (form_model.hpp): an attribute value as XML decodes it, entities
-// and character references included, less one backslash before `bind(`.
+// and character references included; an attribute is always a literal, so
+// a text that begins with `bind(` is that text, a backslash before it kept.
 // String escapes (form_model.hpp, Strings) apply to a collection's quoted
-// items and a binding's field: \n, \r, \t, the quotes, the backslash and
+// items: \n, \r, \t, the quotes, the backslash and
 // \u{H} read as their characters; any other escape refuses the document
 // with E815 at the string, its detail the escape as written;
 // quote_form_string writes what read_form_string reads back.
@@ -540,8 +601,8 @@ void test_string_escapes() {
         "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"
         "  <button id=\"app.ok\" text=\"One&#10;two&#9;&quot;q&quot; \\ &#x3A9;&#x1F680;&amp;&lt;\"/>\n"
         "  <button id=\"app.single\" text='it&apos;s \"fine\"'/>\n"
-        "  <button id=\"app.call\" text=\"\\bind(x) is a call\"/>\n"
-        "  <button id=\"app.calls\" text=\"\\\\bind(y)\"/>\n"
+        "  <button id=\"app.call\" text=\"bind(x) is a call\"/>\n"
+        "  <button id=\"app.calls\" text=\"\\bind(y)\"/>\n"
         "  <button id=\"app.items\" classes=\"plain 'two words' 'it\\'s' '\\u{3A9}' &quot;q&quot;\"/>\n"
         "</user-control>\n";
     require(build(workspace, document, schema, model) == FormModelOutcome::model_built, "escapes: built");
@@ -553,11 +614,11 @@ void test_string_escapes() {
     require(single != nullptr && std::get<std::string>((*single).value) == "it's \"fine\"",
             "escapes: a single-quoted attribute");
     const FormProperty* call = find_property(model, schema, 3U, "text");
-    require(call != nullptr && std::get<std::string>((*call).value) == "bind(x) is a call",
-            "escapes: one backslash before bind( removed");
+    require(call != nullptr && !(*call).binding && std::get<std::string>((*call).value) == "bind(x) is a call",
+            "escapes: a text beginning with bind( is that text, not a binding");
     const FormProperty* calls = find_property(model, schema, 4U, "text");
     require(calls != nullptr && std::get<std::string>((*calls).value) == "\\bind(y)",
-            "escapes: one of two backslashes removed");
+            "escapes: a backslash before bind( kept");
     const FormProperty* items = find_property(model, schema, 5U, "classes");
     bool listed = items != nullptr;
     if (listed) {
@@ -658,7 +719,7 @@ int main() {
         std::cerr << failures << " form model checks failed\n";
         return 1;
     }
-    std::cout << "form model: XML objects, values of every expressible kind, bindings, located defects, refusal, "
+    std::cout << "form model: XML objects, values of every expressible kind, bind elements, located defects, refusal, "
                  "roots and namespaces, text and string escapes and the RightToLeft spelling passed\n";
     return 0;
 }

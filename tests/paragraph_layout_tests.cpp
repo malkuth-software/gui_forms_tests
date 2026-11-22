@@ -580,6 +580,35 @@ void test_matches_greedy_reference() {
     }
 }
 
+// A-gf-controls-13-F2: at an unbounded width each segment between line
+// ends is measured once, and the lines are the ones a large bounded width
+// gives through the candidate loop.
+void test_unbounded_width_measures_each_segment_once() {
+    std::string paragraph;
+    for (int word = 0; word < 400; ++word) paragraph += "word ";
+    paragraph += "\nsecond line\n\nlast";
+    const std::array<bool, 2> kernings{false, true};
+    for (const bool kerning : kernings) {
+        FixedMetrics metrics(kerning);
+        std::size_t unbounded_measurements = 0U;
+        const std::vector<line_wrapping_detail::WrappedLine> unbounded =
+            reference_lines(metrics, paragraph, practical_unbounded_extent, unbounded_measurements);
+        std::size_t bounded_measurements = 0U;
+        const std::vector<line_wrapping_detail::WrappedLine> bounded =
+            reference_lines(metrics, paragraph, 1.0e8, bounded_measurements);
+        require(unbounded.size() == 4U && unbounded_measurements == 4U,
+                "an unbounded width measures each of the four segments once");
+        require(bounded_measurements > 400U, "a bounded width measures every candidate");
+        bool same = unbounded.size() == bounded.size();
+        for (std::size_t index = 0U; same && index < unbounded.size(); ++index) {
+            same = unbounded[index].begin_byte == bounded[index].begin_byte &&
+                   unbounded[index].end_byte == bounded[index].end_byte &&
+                   unbounded[index].width == bounded[index].width;
+        }
+        require(same, "the unbounded lines are the candidate loop's lines");
+    }
+}
+
 // Kerning narrows "AVAV AVAV" below its advance sum: at its kerned width
 // the estimate (sums) breaks it and the verified fit, measuring the run
 // whole, keeps it on one line as TextBlock would.
@@ -1143,6 +1172,7 @@ void test_deprecated_line_box_form() {
 int main() {
     try {
         test_matches_greedy_reference();
+        test_unbounded_width_measures_each_segment_once();
         test_verified_fit_sees_kerning();
         test_shaping_cost();
         test_matches_text_block();

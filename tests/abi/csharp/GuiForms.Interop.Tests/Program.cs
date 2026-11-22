@@ -180,7 +180,7 @@ internal static unsafe class Program
     {
         ulong count = 0;
         Abi.check(Abi.windows.interaction_count(&count));
-        expect(count == 11u, "a window raises eleven interactions");
+        expect(count == 12u, "a window raises twelve interactions (mdi_child_activate since 1.6)");
         using ObjectHandle root = ObjectHandle.create("Panel"u8, "csharp.window"u8);
         gf_object made = 0;
         Abi.check(Abi.windows.create(root.value, &made));
@@ -404,7 +404,7 @@ internal static unsafe class Program
         "  <part name=\"face\" role=\"face\" box=\"inset(region, 0)\"/>\n" +
         "  <children>\n" +
         "    <flex-panel id=\"@header\" dock=\"top\">\n" +
-        "      <label id=\"@title\" text=\"bind(self.title, one_way)\"/>\n" +
+        "      <label id=\"@title\"><bind property=\"text\" to=\"self.title\" mode=\"one-way\"/></label>\n" +
         "    </flex-panel>\n" +
         "  </children>\n" +
         "  <focus target=\"none\"/>\n" +
@@ -1194,6 +1194,100 @@ internal static unsafe class Program
         }
     }
 
+    // The multiple document interface (C ABI 1.6) through Mdi and DockFrames:
+    // a window over a plain root keeps its MDI settings with no area bound
+    // and holds its main menu strip weakly; a workspace's document shows as
+    // a frame, is placed, minimized and maximized, and the area lists it.
+    private static void mdi()
+    {
+        using ObjectHandle root = ObjectHandle.create("Panel"u8, "csharp.mdi"u8);
+        gf_object made = 0;
+        Abi.check(Abi.windows.create(root.value, &made));
+        using ObjectHandle window = ObjectHandle.adopt(made);
+        expect(!Mdi.is_mdi_container(window), "a window is not an MDI container by default");
+        Mdi.set_mdi_container(window, true);
+        expect(Mdi.is_mdi_container(window), "the container switch is kept with no area bound");
+        expect(Mdi.mdi_children(window).Length == 0 && Mdi.active_mdi_child(window) == null,
+               "no area, no children and no active child");
+        expect(!Mdi.activate_mdi_child(window, "csharp.document") &&
+                   !Mdi.layout_mdi(window, Constants.GF_MDI_LAYOUT_CASCADE),
+               "nothing to activate or arrange");
+        expect(Mdi.minimized_anchor_bottom(window), "minimized children line the bottom by default");
+        Mdi.set_minimized_anchor_bottom(window, false);
+        expect(!Mdi.minimized_anchor_bottom(window), "the anchor is kept");
+        using ObjectHandle strip = ObjectHandle.create("menu_strip"u8, "csharp.mdi.menu"u8);
+        Mdi.set_main_menu_strip(window, strip);
+        using (ObjectHandle? held = Mdi.main_menu_strip(window))
+        {
+            expect(held != null, "the window gives its main menu strip back");
+        }
+        bool refused = false;
+        try
+        {
+            Mdi.set_main_menu_strip(window, root);
+        }
+        catch (GuiFormsException error)
+        {
+            refused = error.status == Constants.GF_STATUS_WRONG_HANDLE_KIND;
+        }
+        expect(refused, "a panel is not a menu strip");
+        Mdi.set_main_menu_strip(window, null);
+        expect(Mdi.main_menu_strip(window) == null, "the main menu strip is cleared");
+
+        using ObjectHandle workspace = ObjectHandle.create("dock_workspace"u8, "csharp.dock"u8);
+        gf_docking_table docking = DockFrames.docking();
+        expect(docking.struct_size >= (uint)sizeof(gf_docking_table), "the docking table is served whole");
+        fixed (byte* id = "csharp.document"u8)
+        fixed (byte* title = "Document"u8)
+        {
+            gf_dock_panel panel = default;
+            panel.struct_size = (uint)sizeof(gf_dock_panel);
+            panel.kind = Constants.GF_DOCK_PANEL_KIND_DOCUMENT;
+            panel.allowed = Constants.GF_DOCK_ALLOWED_ALL;
+            panel.default_placement = Constants.GF_DOCK_PLACEMENT_DOCKED;
+            panel.default_ratio = 0.25;
+            panel.default_extent = 200.0;
+            panel.default_frame.width = 320.0;
+            panel.default_frame.height = 240.0;
+            panel.id = Utf8.view(id, 15);
+            panel.title = Utf8.view(title, 8);
+            Abi.check(docking.register_panel(workspace.value, &panel));
+            gf_dock_edit show = default;
+            show.struct_size = (uint)sizeof(gf_dock_edit);
+            show.kind = Constants.GF_DOCK_EDIT_SHOW;
+            show.panel = Utf8.view(id, 15);
+            gf_dock_refusal refusal = 0;
+            Abi.check(docking.apply_edit(workspace.value, &show, &refusal));
+        }
+        expect(DockFrames.presentation(workspace) == Constants.GF_DOCK_DOCUMENT_PRESENTATION_TABS,
+               "documents show as tabs by default");
+        DockFrames.set_presentation(workspace, Constants.GF_DOCK_DOCUMENT_PRESENTATION_FRAMES);
+        expect(DockFrames.presentation(workspace) == Constants.GF_DOCK_DOCUMENT_PRESENTATION_FRAMES,
+               "the area shows frames");
+        string[] documents = DockFrames.area_documents(workspace);
+        expect(documents.Length == 1 && documents[0] == "csharp.document" &&
+                   DockFrames.active_document(workspace) == "csharp.document",
+               "the area lists its one document, the active one");
+        gf_logical_rect bounds = default;
+        bounds.x = 10.0;
+        bounds.y = 20.0;
+        bounds.width = 300.0;
+        bounds.height = 200.0;
+        DockFrames.set_frame_bounds(workspace, "csharp.document", bounds);
+        DockFrames.set_frame_state(workspace, "csharp.document", Constants.GF_DOCK_FRAME_STATE_MINIMIZED);
+        gf_dock_frame_memory frame = DockFrames.frame(workspace, "csharp.document");
+        expect(frame.present == 1u && frame.state == Constants.GF_DOCK_FRAME_STATE_MINIMIZED &&
+                   frame.bounds.width == 300.0 && frame.icon_slot == 0u,
+               "the frame is minimized to the first slot, its bounds kept");
+        DockFrames.set_frame_state(workspace, "csharp.document", Constants.GF_DOCK_FRAME_STATE_MAXIMIZED);
+        expect(DockFrames.frame(workspace, "csharp.document").state == Constants.GF_DOCK_FRAME_STATE_MAXIMIZED,
+               "the frame is maximized");
+        DockFrames.arrange(workspace, Constants.GF_DOCK_FRAME_ARRANGEMENT_CASCADE);
+        DockFrames.set_icons_at_bottom(workspace, false);
+        DockFrames.set_panel_menu_strip(workspace, "csharp.document", strip);
+        DockFrames.set_panel_menu_strip(workspace, "csharp.document", null);
+    }
+
     private static int Main()
     {
         Console.OutputEncoding = Encoding.UTF8;
@@ -1216,6 +1310,7 @@ internal static unsafe class Program
         app_font_families();
         content();
         list_view_items();
+        mdi();
         event_field_arrays();
         composites();
         expect(unhandled_raised == 0, "no failure in these checks ran under an event loop");

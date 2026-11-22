@@ -287,7 +287,9 @@ constexpr std::string_view base_binding = R"xml(<?xml version="1.0" encoding="UT
 <control xmlns="urn:gui-forms:control:1" name="base-binding" version="1.0" base="user-control" family="card">
   <part name="face" role="face" box="inset(region, 0)"/>
   <children>
-    <label id="@caption" dock="fill" text="bind(self.accessible-name, one_way)"/>
+    <label id="@caption" dock="fill">
+      <bind property="text" to="self.accessible-name" mode="one-way"/>
+    </label>
   </children>
   <focus target="none"/>
   <semantics role="group" name="property(accessible-name)" children="exposed"/>
@@ -361,8 +363,12 @@ constexpr std::string_view echo_field = R"xml(<?xml version="1.0" encoding="UTF-
   <property name="query" kind="text" default="" bindable="two-way"/>
   <part name="face" role="face" box="inset(region, 0)"/>
   <children>
-    <text-box id="@entry" dock="top" text="bind(self.query)"/>
-    <label id="@echo" dock="top" text="bind(self.query, one_way)"/>
+    <text-box id="@entry" dock="top">
+      <bind property="text" to="self.query"/>
+    </text-box>
+    <label id="@echo" dock="top">
+      <bind property="text" to="self.query" mode="one-way"/>
+    </label>
   </children>
   <focus target="child(@entry)" visible-cue="part(focus)"/>
   <semantics role="group" name="property(accessible-name)" children="exposed"/>

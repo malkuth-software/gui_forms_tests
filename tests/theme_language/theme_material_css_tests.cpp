@@ -1461,6 +1461,20 @@ std::vector<GateRow> gate_rows(const GateImages& images) {
     crossed.accent = red;
     rows.push_back(filled("background: pattern(hatch-cross, red, blue)",
                           {MaterialFillLayer::procedural_pattern(crossed)}));
+    // Carbon fibre (owner, 2026-11-22): its default tile is 32 units, two
+    // twill repeats; a written tile is kept as written.
+    ProceduralFill woven{};
+    woven.pattern = ProceduralPattern::carbon_fibre;
+    woven.tile = 32.0;
+    woven.strength = 1.0;
+    woven.ground = red;
+    woven.figure = blue;
+    woven.accent = red;
+    rows.push_back(filled("background: pattern(carbon-fibre, red, blue)", {MaterialFillLayer::procedural_pattern(woven)}));
+    ProceduralFill fine_weave = woven;
+    fine_weave.tile = 16.0;
+    rows.push_back(filled("background: pattern(carbon-fibre, red, blue, 16px)",
+                          {MaterialFillLayer::procedural_pattern(fine_weave)}));
     rows.push_back(filled("background: conic-gradient(from 90deg, red, blue)",
                           {MaterialFillLayer::conic(Point{0.5, 0.5}, 90.0, red_blue)}));
     rows.push_back(filled("background: repeating-conic-gradient(red 0deg, blue 90deg)",
