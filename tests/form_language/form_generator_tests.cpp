@@ -774,6 +774,49 @@ void test_binding_spelling() {
             "binding spelling: the binding made after the object's attribute");
 }
 
+// MCP G6's build toggle: with export_document the generated code registers
+// the document's bytes and each bound member once, after the bindings; off,
+// it writes nothing of it.
+void test_export_document() {
+    const FormSchema schema = gui_forms::form_compiler::registry_form_schema();
+    const std::string_view document = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"
+                                      "  <text-box id=\"app.name\">\n"
+                                      "    <bind property=\"text\" to=\"records_\" field=\"name\"/>\n"
+                                      "  </text-box>\n"
+                                      "  <check-box id=\"app.flag\"><bind property=\"checked\" to=\"flag_\"/></check-box>\n"
+                                      "  <check-box id=\"app.mirror\"><bind property=\"checked\" to=\"flag_\"/></check-box>\n"
+                                      "</user-control>\n";
+    Workspace workspace{};
+    const bool read = read_document(workspace, "exported.form", document, schema);
+    require(read, "export: the model builds");
+    if (!read) return;
+    FormGeneratorOptions options = sample_options();
+    options.class_name = "ExportedForm";
+    options.source_name = "exported.form";
+    std::string plain{};
+    require(generate(workspace, schema, options, plain) == FormGenerateOutcome::generated, "export: off, generated");
+    require(plain.find("register_form_document") == std::string::npos, "export: off, nothing registers");
+    options.export_document = true;
+    std::string exported{};
+    require(generate(workspace, schema, options, exported) == FormGenerateOutcome::generated, "export: on, generated");
+    require(exported.find("#include \"gui_forms/binding/form_document_export/form_document_export.hpp\"") !=
+                std::string::npos,
+            "export: the registration header is included");
+    require(exported.find("gui_forms::form_document_source(\"records_\", 8U, *owner.records_),") != std::string::npos,
+            "export: a BindingSource is registered through its object");
+    require(exported.find("gui_forms::form_document_source(\"flag_\", 5U, owner.flag_),") != std::string::npos,
+            "export: a Value is registered");
+    const std::size_t first = exported.find("\"flag_\", 5U");
+    require(first != std::string::npos && exported.find("\"flag_\", 5U", first + 1U) == std::string::npos,
+            "export: a member bound twice is registered once");
+    require(exported.find("gui_forms::register_form_document(root_control(), \"exported.form\", 13U, "
+                          "gui_forms_document, " + std::to_string(document.size()) + "U, gui_forms_sources, 2U)") !=
+                std::string::npos,
+            "export: the root, the file, the document's size and the two sources");
+    require(exported.find("static constexpr char gui_forms_document[] = {\n            60, 117,") != std::string::npos,
+            "export: the document's bytes, from its first");
+}
+
 // CLOSURE P-6: a property on a capability is assigned through its cell
 // (a child property through the parent's child view); one not yet migrated
 // is still written by name. The descriptors say which.
@@ -993,6 +1036,7 @@ int main() {
     test_refusals();
     test_member_names();
     test_binding_spelling();
+    test_export_document();
     test_string_escapes();
     test_capability_assignment();
     test_panel_scroll_properties();

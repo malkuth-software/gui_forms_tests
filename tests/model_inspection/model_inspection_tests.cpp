@@ -3,6 +3,7 @@
 // registry (src/core/form_language/form_export: export, validate, apply,
 // revert).
 
+#include "src/controls/form_document_export/process_form_exports.hpp"
 #include "src/core/form_language/form_export/form_export.hpp"
 #include "src/core/form_language/form_loader/form_loader.hpp"
 #include "src/core/form_language/form_model/form_model.hpp"
@@ -12,6 +13,7 @@
 #include "src/core/theme_language/source_text/theme_source_text.hpp"
 
 #include "gui_forms/allocation/statistics/allocation_statistics.hpp"
+#include "gui_forms/binding/form_document_export/form_document_export.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"
@@ -168,7 +170,7 @@ void test_form_export() {
     std::string exported{};
     require(registry.export_document(*root, exported) == fl::FormExportOutcome::not_registered,
             "forms: an unregistered window is reported");
-    require(registry.add(root, "app.form", original, schema, sources), "forms: registered");
+    require(registry.add(root, "app.form", original, sources), "forms: registered");
     require(registry.export_document(*root, exported) == fl::FormExportOutcome::done && exported == original,
             "forms: export returns the registered document");
     const std::string candidate = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app\">\n"
@@ -176,7 +178,7 @@ void test_form_export() {
                                   "  <button id=\"app.go\" text=\"Go\"/>\n"
                                   "</user-control>\n";
     ThemeDiagnosticList diagnostics{};
-    require(registry.apply(*root, "candidate.form", candidate, std::string_view(), diagnostics) ==
+    require(registry.apply(*root, schema, "candidate.form", candidate, std::string_view(), diagnostics) ==
                 fl::FormExportOutcome::done,
             "forms: a valid candidate applies");
     require((*root).children().size() == 2U, "forms: the window has the candidate's children");
@@ -194,26 +196,64 @@ void test_form_export() {
                                        "  <check-box id=\"app.x\"><bind property=\"checked\" to=\"secret_\"/></check-box>\n"
                                        "</user-control>\n";
     ThemeDiagnosticList refused{};
-    require(registry.apply(*root, "bad.form", unsourced, std::string_view(), refused) == fl::FormExportOutcome::refused,
+    require(registry.apply(*root, schema, "bad.form", unsourced, std::string_view(), refused) == fl::FormExportOutcome::refused,
             "forms: a binding to an unexposed source is refused");
     require((*root).children().size() == 2U, "forms: a refused candidate leaves the window as it was");
     const std::string_view renamed = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"other\"/>\n";
     ThemeDiagnosticList refused_root{};
-    require(registry.apply(*root, "bad.form", renamed, std::string_view(), refused_root) ==
+    require(registry.apply(*root, schema, "bad.form", renamed, std::string_view(), refused_root) ==
                 fl::FormExportOutcome::refused,
             "forms: a candidate whose root has another stable ID is refused");
     // A part named by a stable ID that is not under the window's root.
     ThemeDiagnosticList missing{};
-    require(registry.apply(*root, "part.form", candidate, "app.nothing", missing) ==
+    require(registry.apply(*root, schema, "part.form", candidate, "app.nothing", missing) ==
                 fl::FormExportOutcome::target_not_found,
             "forms: a target that names no control");
     ThemeDiagnosticList reverted{};
-    require(registry.revert(*root, reverted) == fl::FormExportOutcome::done, "forms: revert");
+    require(registry.revert(*root, schema, reverted) == fl::FormExportOutcome::done, "forms: revert");
     require((*root).children().size() == 1U && !registry.replaced(*root), "forms: back to the registered form");
     registry.forget(*root);
     require(!registry.registered(*root), "forms: forgotten");
     require(mi::forms_tool_specs[2].destructive && mi::forms_tool_specs[0].read_only,
             "forms: apply is destructive, export read-only");
+}
+
+// The build toggle's entry point: generated code's register_form_document
+// lands in the process registry the forms tools read.
+void test_register_form_document() {
+    const fl::FormSchema schema = sample_schema();
+    gui_forms::Value<bool> autosave{true};
+    fl::FormSources sources{};
+    sources.add("autosave_", autosave);
+    const std::string document = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"reg\">\n"
+                                 "  <check-box id=\"reg.autosave\"><bind property=\"checked\" to=\"autosave_\"/></check-box>\n"
+                                 "</user-control>\n";
+    fl::LoadedForm loaded{};
+    const gui_forms::Control::Ptr root = load(document, schema, sources, loaded);
+    require(root != nullptr, "register: the form loads");
+    if (root == nullptr) return;
+    const gui_forms::FormDocumentSource registered[] = {gui_forms::form_document_source("autosave_", 9U, autosave)};
+    require(gui_forms::register_form_document(root, "reg.form", 8U, document.data(), document.size(), registered, 1U) ==
+                gui_forms::FormDocumentRegistration::registered,
+            "register: registered");
+    std::string exported{};
+    require(fl::process_form_exports().export_document(*root, exported) == fl::FormExportOutcome::done &&
+                exported == document,
+            "register: the process registry exports it");
+    ThemeDiagnosticList diagnostics{};
+    require(fl::process_form_exports().validate(*root, schema, "reg.form", document, diagnostics) ==
+                fl::FormExportOutcome::done,
+            "register: its own document validates against its registered sources");
+    const gui_forms::FormDocumentSource twice[] = {gui_forms::form_document_source("autosave_", 9U, autosave),
+                                                   gui_forms::form_document_source("autosave_", 9U, autosave)};
+    require(gui_forms::register_form_document(root, "reg.form", 8U, document.data(), document.size(), twice, 2U) ==
+                gui_forms::FormDocumentRegistration::refused,
+            "register: a name given twice is refused");
+    const char broken[] = {static_cast<char>(0xC3)};
+    require(gui_forms::register_form_document(root, "reg.form", 8U, broken, 1U, nullptr, 0U) ==
+                gui_forms::FormDocumentRegistration::refused,
+            "register: a document that is not UTF-8 is refused");
+    fl::process_form_exports().forget(*root);
 }
 
 } // namespace
@@ -222,6 +262,7 @@ int main() {
     test_state_summary();
     test_layout_and_resources();
     test_form_export();
+    test_register_form_document();
     if (failures != 0) {
         std::cerr << failures << " model inspection checks failed\n";
         return 1;
