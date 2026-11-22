@@ -537,6 +537,45 @@ void test_dithered_lattice_and_tones() {
     require(dent.lit_lower_right > dent.lit_upper_left, "the dent is lit on the far slope");
 }
 
+// The selected look (owner, 2026-11-22; reference §2 "Active tool"): the
+// `gold` parameter, which the built-in rules set for a checked ribbon
+// command and a selected gallery item, draws exactly what the active_tool
+// state draws, bulge or dent, in both forms; at its default 0 nothing
+// changes.
+void test_gold_parameter_is_the_active_tool() {
+    const char* const names[] = {"bulge", "dithered_bulge"};
+    for (const char* const name : names) {
+        const EnginePrimitive& primitive = builtin(name);
+        const PrimitiveDescriptor& descriptor = primitive.descriptor();
+        const stxlib::Optional<std::size_t> found = find_parameter(descriptor, "gold");
+        require(found.present() && !descriptor.parameters[*found.value()].animated &&
+                    descriptor.parameters[*found.value()].default_number == 0.0,
+                "the bulge has a gold parameter, 0 by default and not animated");
+        if (!found.present()) continue;
+        const PrimitiveParameterBlock defaults = default_parameters(descriptor);
+        PrimitiveParameterBlock gold = defaults;
+        gold.values[*found.value()].number = 1.0;
+        require(validate_parameters(descriptor, gold).defect == ParameterDefect::none, "gold 1 validates");
+        const bool dents[] = {false, true};
+        for (const bool dent : dents) {
+            TestRaster by_state = make_raster(large_button, 1.0);
+            TestRaster by_parameter = make_raster(large_button, 1.0);
+            TestRaster plain = make_raster(large_button, 1.0);
+            require(draw(primitive, defaults, by_state, large_button, 1.0, states_of(dent, true)) ==
+                        RasterOutcome::painted,
+                    "the active tool paints");
+            require(draw(primitive, gold, by_parameter, large_button, 1.0, states_of(dent, false)) ==
+                        RasterOutcome::painted,
+                    "the gold parameter paints");
+            require(draw(primitive, defaults, plain, large_button, 1.0, states_of(dent, false)) ==
+                        RasterOutcome::painted,
+                    "the plain bulge paints");
+            require(by_state.bytes == by_parameter.bytes, "gold draws exactly the active tool's pixels");
+            require(plain.bytes != by_parameter.bytes, "and differs from the plain bulge");
+        }
+    }
+}
+
 // GIVEN G1-3: each side of the tone is rescaled to the part's own extreme.
 // Before it, the light default's tone never fell below about −0.63, short
 // of the −0.68 the third shaded step needed; now the darkest dots of each
@@ -1066,6 +1105,7 @@ int main() {
     test_amplitude_zero_is_the_plane();
     test_smooth_bulge_is_premultiplied_and_edgeless();
     test_dithered_lattice_and_tones();
+    test_gold_parameter_is_the_active_tool();
     test_rescaled_light_default_uses_every_step();
     test_dark_variant_reaches_every_step();
     test_dot_count_grows_with_amplitude();
