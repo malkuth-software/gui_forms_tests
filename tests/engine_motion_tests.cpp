@@ -267,7 +267,7 @@ void machines_are_rule_data() {
                 (*toggle.primitive).descriptor().name == "dithered_bulge" &&
                 toggle.parameters.values[gold_parameter].number == 1.0 && toggle.transition_count == 1U &&
                 (*toggle.transitions[0]).parameter == 0U && (*toggle.transitions[0]).states.size() == 1U &&
-                (*toggle.transitions[0]).states[0].when.empty() && (*toggle.transitions[0]).states[0].target == 1.0,
+                (*toggle.transitions[0]).states[0].when == AnatomyStateSet{} && (*toggle.transitions[0]).states[0].target == 1.0,
             "a checked toggle is the gold dithered bulge, standing at full amplitude");
     require(face.parameters.values[gold_parameter].number == 0.0, "an unchecked command face is not gold");
     AnatomyStateSet chosen{};

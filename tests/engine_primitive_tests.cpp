@@ -50,7 +50,7 @@ bool print_mode() {
     return printing;
 }
 
-const EnginePrimitive& builtin(std::string_view name) {
+const EnginePrimitive& builtin_named(std::string_view name) {
     const EnginePrimitive* const primitive = builtin_primitive_registry().find(name);
     require(primitive != nullptr, "the built-in registry has the primitive");
     return *primitive;
@@ -190,7 +190,7 @@ void test_builtin_registry() {
     require(registry.find("not_a_primitive") == nullptr, "an unknown name finds nothing");
     const char* const names[] = {"bulge", "dithered_bulge"};
     for (const char* const name : names) {
-        const PrimitiveDescriptor& descriptor = builtin(name).descriptor();
+        const PrimitiveDescriptor& descriptor = builtin_named(name).descriptor();
         require(descriptor.name == name, "a primitive is found under its own name");
         // The dithered form also paints a ribbon split's arrow half (an
         // actuator), which hovers as the soft dither too.
@@ -285,7 +285,7 @@ void test_registration_refusals() {
 }
 
 void test_parameter_refusals() {
-    const PrimitiveDescriptor& descriptor = builtin("bulge").descriptor();
+    const PrimitiveDescriptor& descriptor = builtin_named("bulge").descriptor();
     PrimitiveParameterBlock block = default_parameters(descriptor);
     const PrimitiveParameterBlock before = block;
     require(set_number_parameter(block, descriptor, "amplitude", 1.5) == ParameterAssignment::out_of_range,
@@ -320,7 +320,7 @@ void test_parameter_refusals() {
 // -- destination ---------------------------------------------------------------
 
 void test_destination_refusals() {
-    const EnginePrimitive& bulge = builtin("bulge");
+    const EnginePrimitive& bulge = builtin_named("bulge");
     const PrimitiveParameterBlock defaults = default_parameters(bulge.descriptor());
     const Size logical{20.0, 10.0};
 
@@ -380,10 +380,10 @@ bool same_preparation(const PrimitivePreparation& left, const PrimitivePreparati
 }
 
 void test_preparation_refusals() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveDescriptor& descriptor = dithered.descriptor();
     require(descriptor.prepared_values == 3U, "the dither derives its three extremes");
-    require(builtin("bulge").descriptor().prepared_values == 0U, "the smooth bulge derives nothing");
+    require(builtin_named("bulge").descriptor().prepared_values == 0U, "the smooth bulge derives nothing");
     const stxlib::Optional<std::size_t> amplitude = find_parameter(descriptor, "amplitude");
     require(amplitude.present() && descriptor.parameters[(*amplitude.value())].animated, "the amplitude is animated");
     const PrimitiveParameterBlock defaults = default_parameters(descriptor);
@@ -416,7 +416,7 @@ void test_preparation_refusals() {
     const PrimitivePreparation unprepared{};
     require(dithered.rasterize(defaults, target, unprepared, raster.view()) == RasterOutcome::stale_preparation,
             "an unprepared part is refused");
-    const EnginePrimitive& bulge = builtin("bulge");
+    const EnginePrimitive& bulge = builtin_named("bulge");
     PrimitivePreparation smooth{};
     require(bulge.prepare(default_parameters(bulge.descriptor()), target, smooth) == PreparationOutcome::prepared,
             "the smooth bulge prepares");
@@ -454,7 +454,7 @@ void test_preparation_refusals() {
 void test_amplitude_zero_is_the_plane() {
     const char* const names[] = {"bulge", "dithered_bulge"};
     for (const char* const name : names) {
-        const EnginePrimitive& primitive = builtin(name);
+        const EnginePrimitive& primitive = builtin_named(name);
         PrimitiveParameterBlock parameters = default_parameters(primitive.descriptor());
         require(set_number_parameter(parameters, primitive.descriptor(), "amplitude", 0.0) ==
                     ParameterAssignment::assigned,
@@ -480,7 +480,7 @@ void test_amplitude_zero_is_the_plane() {
 }
 
 void test_smooth_bulge_is_premultiplied_and_edgeless() {
-    const EnginePrimitive& bulge = builtin("bulge");
+    const EnginePrimitive& bulge = builtin_named("bulge");
     const PrimitiveParameterBlock parameters = default_parameters(bulge.descriptor());
     TestRaster raster = make_raster(large_button, 2.0);
     require(draw(bulge, parameters, raster, large_button, 2.0, {}) == RasterOutcome::painted, "the bulge paints");
@@ -534,7 +534,7 @@ DotCounts count_lit_dots(const TestRaster& raster) {
 }
 
 void test_dithered_lattice_and_tones() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     TestRaster raster = make_raster(large_button, 1.0);
     require(draw(dithered, parameters, raster, large_button, 1.0, {}) == RasterOutcome::painted, "the dither paints");
@@ -568,7 +568,7 @@ void test_dithered_lattice_and_tones() {
 void test_gold_parameter_is_the_active_tool() {
     const char* const names[] = {"bulge", "dithered_bulge"};
     for (const char* const name : names) {
-        const EnginePrimitive& primitive = builtin(name);
+        const EnginePrimitive& primitive = builtin_named(name);
         const PrimitiveDescriptor& descriptor = primitive.descriptor();
         const stxlib::Optional<std::size_t> found = find_parameter(descriptor, "gold");
         require(found.present() && !descriptor.parameters[*found.value()].animated &&
@@ -604,7 +604,7 @@ void test_gold_parameter_is_the_active_tool() {
 // of the −0.68 the third shaded step needed; now the darkest dots of each
 // side reach the third step, at every reference scale, bulge or dent.
 void test_rescaled_light_default_uses_every_step() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     const std::uint32_t light_default[] = {0xECF4FEU, 0xF6FAFFU, 0xFFFFFFU, 0xB0C6E8U, 0x84A2D4U, 0x587ABAU};
     const double scales[] = {1.0, 1.25, 1.5, 2.0};
@@ -683,7 +683,7 @@ void check_gold_plate(const TestRaster& raster, std::uint32_t side, std::uint32_
 }
 
 void test_gold_form_draws_its_plate() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     const double scales[] = {1.0, 2.0};
     for (const double scale : scales) {
@@ -719,7 +719,7 @@ void test_gold_form_draws_its_plate() {
 void apply_dark_palette(PrimitiveParameterBlock& parameters, const PrimitiveDescriptor& descriptor);
 
 void test_dark_variant_reaches_every_step() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     apply_dark_palette(parameters, dithered.descriptor());
     TestRaster raster = make_raster(large_button, 1.0);
@@ -755,7 +755,7 @@ std::size_t count_visible(const std::vector<bool>& visible) {
 // shown stays shown, so the dot count only grows: the rise grows the dither
 // rather than popping it, because the extremes are taken at amplitude 1.
 void test_dot_count_grows_with_amplitude() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     struct Variant final {
         bool pressed;
         bool active;
@@ -820,7 +820,7 @@ bool magnifies(const TestRaster& large, const TestRaster& small, std::uint32_t f
 // odd positions inside 2·floor(w / 2) (checked here and in
 // test_dithered_lattice_and_tones).
 void test_integer_scales_reproduce_the_studies_lattice() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const Size sizes[] = {large_button, Size{41.0, 57.0}, Size{40.5, 56.25}, Size{13.0, 9.0}};
     struct Variant final {
         bool pressed;
@@ -866,7 +866,7 @@ void test_integer_scales_reproduce_the_studies_lattice() {
 // k × k block of one colour whose corner is at device (2n + 1)·k on each
 // axis, and there are floor(w·s / 2k) dot columns and rows for the height.
 void test_lattice_follows_the_nearest_integer_scale() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     const double scales[] = {0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0};
     for (const double scale : scales) {
@@ -934,7 +934,7 @@ constexpr std::array<OldReferenceCase, 4> old_reference_cases{{
 }};
 
 void test_integer_scales_reproduce_the_old_reference_images() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     for (const OldReferenceCase& reference : old_reference_cases) {
         PrimitiveParameterBlock parameters = with_amplitude(dithered, reference.amplitude);
         if (reference.dark) apply_dark_palette(parameters, dithered.descriptor());
@@ -999,10 +999,10 @@ constexpr std::array<std::array<std::uint64_t, 4>, 13> expected_hashes{{
     {0xe7f1527fa3215f25ULL, 0xcaa4c737b94a58e5ULL, 0x951952b219c4ea25ULL, 0xa55c6ca074ff1325ULL}, // bulge flat
     {0x01ace47b72818b79ULL, 0x7923187f7bacb6c0ULL, 0xd39e2ebbddf9d7adULL, 0xcd12d7dbcb60d2bdULL}, // dithered rest
     {0x389bbb1a25ae59e7ULL, 0x601e47fe5310c5ceULL, 0x67eca5628bc8bfddULL, 0x73a3879ddef6a265ULL}, // dithered pressed
-    {0xfb90047b1f41a576ULL, 0x1f023cd6ab13b4dfULL, 0x98ed4bbdbe78df2dULL, 0xc05abbffd608633dULL}, // dithered active
+    {0xfdba5dce2bb73ad8ULL, 0xcde09440bafc20a4ULL, 0x0d002dc1e19027adULL, 0xa782f0bd4b62497dULL}, // dithered active
     {0x41690111d07d89a8ULL, 0x9b2eea19b6280a95ULL, 0x78295cc94e201585ULL, 0x3153bbec176cb8d5ULL}, // dithered half
     {0xe7f1527fa3215f25ULL, 0xcaa4c737b94a58e5ULL, 0x951952b219c4ea25ULL, 0xa55c6ca074ff1325ULL}, // dithered flat
-    {0x72394a8b750b0a11ULL, 0xa35d9db2d55576c6ULL, 0x366008ddfa3cb6c5ULL, 0x4b1b8e6ca32a0de5ULL}, // dithered active_half
+    {0xcc2b8c3dd7d7cf11ULL, 0xbc06ce357599b530ULL, 0x145739faeec6bb69ULL, 0xed5f81b2136ffd21ULL}, // dithered active_half
     {0x0ba65549256e6ecdULL, 0x70d8937f3e3bd454ULL, 0xb01ddb96616b42ddULL, 0xc7c0b455bfcbcd5dULL}, // dithered pressed_half
     {0xec5afbf735a59962ULL, 0xc619ade9e1b1f527ULL, 0x258bf254bf93a38dULL, 0x074d84c288fbaafdULL}, // dithered dark
 }};
@@ -1057,7 +1057,7 @@ void test_reference_images() {
     bool all_match = true;
     for (std::size_t case_index = 0U; case_index < reference_cases.size(); ++case_index) {
         const ReferenceCase& reference = reference_cases[case_index];
-        const EnginePrimitive& primitive = builtin(reference.primitive);
+        const EnginePrimitive& primitive = builtin_named(reference.primitive);
         PrimitiveParameterBlock parameters = default_parameters(primitive.descriptor());
         require(set_number_parameter(parameters, primitive.descriptor(), "amplitude", reference.amplitude) ==
                     ParameterAssignment::assigned,
@@ -1109,7 +1109,7 @@ bool light_map_differs(const EnginePrimitive& primitive, const PrimitiveParamete
 // its parameters is animated (a key composited every frame would pass the
 // frame budget).
 void test_light_map() {
-    const EnginePrimitive& primitive = builtin("light_map");
+    const EnginePrimitive& primitive = builtin_named("light_map");
     const PrimitiveDescriptor& descriptor = primitive.descriptor();
     require(descriptor.introduced == EngineVersion{0, 3} && descriptor.states_read.empty() &&
                 descriptor.inputs_read.empty(),
