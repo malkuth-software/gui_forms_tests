@@ -580,9 +580,17 @@ void hover_row(Window& owner, const std::size_t depth, const char* const row) {
 }
 
 // Lets the pointer rest past any menu show delay: the owner's timers fire
-// as if two seconds had passed (the menu's settle timer runs on the owner).
+// as if two seconds had passed (the menu's settle timer runs on the owner),
+// and so do the menu's Popup windows' own, which run each panel's reveal.
+// Until its reveal ends a panel is shorter than its face and its last row
+// partly clipped, so a point low in that row reaches no row.
 void rest(Window& owner) {
-    static_cast<void>(owner.poll_frame_schedule(FrameClock::now() + std::chrono::seconds(2)));
+    const FrameTime later = FrameClock::now() + std::chrono::seconds(2);
+    static_cast<void>(owner.poll_frame_schedule(later));
+    for (std::size_t slot = 0U; slot < Window::picker_popup_window_slot; ++slot) {
+        Window* const popup = owner.popup_window_model(slot);
+        if (popup != nullptr) static_cast<void>((*popup).poll_frame_schedule(later));
+    }
 }
 
 // Whether the row `row` of the Popup window of `depth` holds the menu's

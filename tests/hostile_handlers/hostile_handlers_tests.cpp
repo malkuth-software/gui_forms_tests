@@ -860,6 +860,10 @@ void check_split_container(Stage& stage, Findings& findings) {
 const HostileEvent split_container_events[] = {
     {"focus_observed", &attach_focus},
     {"splitter_changed", &attach_to_subject<SplitContainer, Event<const SplitChangeEvent&>, &SplitContainer::splitter_changed>},
+    // The drag engine raises these from inside its own session (the plan's
+    // start, the end's report): a destroyed window takes the engine with it.
+    {"drag_started", &attach_to_subject<SplitContainer, Event<const DragInteraction&>, &SplitContainer::drag_started>},
+    {"drag_ended", &attach_to_subject<SplitContainer, Event<const DragInteraction&>, &SplitContainer::drag_ended>},
 };
 
 // --- Range controls: TrackBar, HScrollBar (A-gf-controls-11-F8) -------------
