@@ -208,8 +208,8 @@ PropertyTransition transition_on(std::string property, double target) {
 void machines_are_rule_data() {
     const CompiledThemeRules built_in =
         CompiledThemeRules::compile_with_built_in(ThemeRuleSheet{}, builtin_primitive_registry());
-    require(built_in.diagnostics().empty() && built_in.built_in_rule_count() == 15U && built_in.rule_count() == 15U,
-            "the engine's fifteen built-in rules compile cleanly");
+    require(built_in.diagnostics().empty() && built_in.built_in_rule_count() == 16U && built_in.rule_count() == 16U,
+            "the engine's sixteen built-in rules compile cleanly");
     const CompiledThemeRules::Resolution face =
         built_in.resolve(facts_of("ribbon", "command_face", PartRole::face));
     require(face.outcome == CompiledThemeRules::Outcome::primitive &&
@@ -230,8 +230,37 @@ void machines_are_rule_data() {
     checked.insert(AnatomyState::checked);
     const CompiledThemeRules::Resolution toggle =
         built_in.resolve(facts_of("ribbon", "command_face", PartRole::face, checked));
-    require(toggle.outcome == CompiledThemeRules::Outcome::built_in_selected && toggle.transition_count == 0U,
-            "a checked toggle keeps today's plate");
+    // The selected look (owner, 2026-11-22; rendering reference §2 "Active
+    // tool"): a checked command is the dithered bulge in gold, standing at
+    // full amplitude at rest; the `gold` parameter is the dithered bulge's
+    // last.
+    const PrimitiveDescriptor& dithered = (*builtin_primitive_registry().find("dithered_bulge")).descriptor();
+    const std::size_t gold_parameter = dithered.parameters.size() - 1U;
+    require(dithered.parameters[gold_parameter].name == "gold", "the dithered bulge's last parameter is gold");
+    require(toggle.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*toggle.primitive).descriptor().name == "dithered_bulge" &&
+                toggle.parameters.values[gold_parameter].number == 1.0 && toggle.transition_count == 1U &&
+                (*toggle.transitions[0]).parameter == 0U && (*toggle.transitions[0]).states.size() == 1U &&
+                (*toggle.transitions[0]).states[0].when.empty() && (*toggle.transitions[0]).states[0].target == 1.0,
+            "a checked toggle is the gold dithered bulge, standing at full amplitude");
+    require(face.parameters.values[gold_parameter].number == 0.0, "an unchecked command face is not gold");
+    AnatomyStateSet chosen{};
+    chosen.insert(AnatomyState::selected);
+    const CompiledThemeRules::Resolution chosen_item =
+        built_in.resolve(facts_of("ribbon_gallery", "item_face", PartRole::face, chosen));
+    require(chosen_item.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*chosen_item.primitive).descriptor().name == "dithered_bulge" &&
+                chosen_item.parameters.values[gold_parameter].number == 1.0 && chosen_item.transition_count == 1U,
+            "a selected gallery item is the gold dithered bulge, standing");
+    AnatomyStateSet pressed{};
+    pressed.insert(AnatomyState::pressed);
+    pressed.insert(AnatomyState::hot);
+    const CompiledThemeRules::Resolution dent =
+        built_in.resolve(facts_of("ribbon", "command_face", PartRole::face, pressed));
+    require(dent.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*dent.primitive).descriptor().name == "dithered_bulge" &&
+                dent.parameters.values[gold_parameter].number == 0.0,
+            "a pressed command is the dithered bulge, which reads pressed as the dent");
     const CompiledThemeRules::Resolution tile = built_in.resolve(facts_of("dock_site", "tile", PartRole::actuator));
     require(tile.outcome == CompiledThemeRules::Outcome::primitive &&
                 (*tile.primitive).descriptor().name == "pill_plate" && tile.transition_count == 1U &&

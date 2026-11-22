@@ -407,9 +407,12 @@ void authored_layouts_collapse() {
     Fixture fixture = make_fixture(std::move(tabs), {2000.0, 300.0}, metrics);
     Ribbon& ribbon = *fixture.ribbon;
     const std::span<const RibbonGroupLayout> paired = ribbon.group_layouts(0U, 0U);
-    require(paired.size() == 2U && paired[0].size == RibbonGroupSize::large &&
-                paired[1].size == RibbonGroupSize::collapsed && paired[1].rows == 2U,
-            "a single authored layout gains the collapsed button as its last step");
+    require(paired.size() == 3U && paired[0].size == RibbonGroupSize::large &&
+                paired[1].size == RibbonGroupSize::medium && paired[1].rows == 2U &&
+                paired[1].command_sizes.size() == 2U && paired[1].command_sizes[0] == RibbonCommandSize::compact &&
+                paired[1].command_sizes[1] == RibbonCommandSize::compact &&
+                paired[2].size == RibbonGroupSize::collapsed && paired[2].rows == 2U,
+            "a single authored layout continues by automatic compaction and ends in the collapsed button");
     require(ribbon.group_layouts(0U, 4U).size() == 1U, "an authored group of one command still never collapses");
     const std::vector<RibbonLadderEntry> ladder = ribbon.reduction_ladder(0U);
     const RibbonLadderEntry& narrowest = ladder.back();
@@ -421,6 +424,80 @@ void authored_layouts_collapse() {
     resize(fixture, {narrowest.width + 1.0, 300.0});
     require(!ribbon.scrolling() && ribbon.realized_groups().size() == 5U,
             "where the collapsed buttons fit, every group shows and nothing scrolls");
+}
+
+// Automatic compaction by group (RIBBON_SCALING_STUDY.md §1.1; owner
+// decisions 5, 6 and 27): authored layouts that stop short of the collapsed
+// button continue by image size, then by rows, then the collapsed button; a
+// row of commands side by side (`beside_previous`) stays one row; layouts
+// that end in the collapsed button are the author's whole ladder.
+void automatic_compaction() {
+    FixedMetrics metrics;
+    std::vector<RibbonTabSpec> tabs;
+    RibbonTabSpec tab{.stable_id = "tools-tab", .text = "Tools"};
+    RibbonGroupSpec tools{.stable_id = "tools", .caption = ""};
+    for (int index = 0; index < 9; ++index) {
+        tools.commands.push_back(icon_toggle("tool" + std::to_string(index), "Tool " + std::to_string(index)));
+    }
+    tools.layouts = {layout_of(RibbonGroupSize::large, 2U)};
+    RibbonGroupSpec rows{.stable_id = "rows", .caption = "Rows"};
+    rows.commands.push_back(small_button("rows.save", "Save"));
+    RibbonCommandSpec undo = icon_toggle("rows.undo", "Undo");
+    undo.beside_previous = true;
+    rows.commands.push_back(undo);
+    rows.commands.push_back(small_button("rows.cut", "Cut"));
+    rows.commands.push_back(small_button("rows.copy", "Copy"));
+    rows.layouts = {layout_of(RibbonGroupSize::large, 1U)};
+    RibbonGroupSpec mixed{.stable_id = "mixed", .caption = "Mixed"};
+    mixed.commands.push_back(large_button("mixed.a", "Alpha"));
+    mixed.commands.push_back(large_button("mixed.b", "Beta"));
+    mixed.commands.push_back(small_button("mixed.c", "Gamma"));
+    mixed.commands.push_back(small_button("mixed.d", "Delta"));
+    mixed.commands.push_back(small_button("mixed.e", "Epsilon"));
+    mixed.layouts = {layout_of(RibbonGroupSize::large, 2U)};
+    RibbonGroupSpec ended{.stable_id = "ended", .caption = "Ended"};
+    ended.commands.push_back(large_button("ended.a", "Alpha"));
+    ended.commands.push_back(large_button("ended.b", "Beta"));
+    ended.commands.push_back(large_button("ended.c", "Gamma"));
+    ended.layouts = {layout_of(RibbonGroupSize::large), layout_of(RibbonGroupSize::collapsed)};
+    tab.groups.push_back(std::move(tools));
+    tab.groups.push_back(std::move(rows));
+    tab.groups.push_back(std::move(mixed));
+    tab.groups.push_back(std::move(ended));
+    tabs.push_back(std::move(tab));
+    Fixture fixture = make_fixture(std::move(tabs), {2000.0, 300.0}, metrics);
+    const Ribbon& ribbon = *fixture.ribbon;
+
+    const std::span<const RibbonGroupLayout> tool_layouts = ribbon.group_layouts(0U, 0U);
+    require(tool_layouts.size() == 3U && tool_layouts[0].rows == 2U &&
+                tool_layouts[1].size == RibbonGroupSize::compact && tool_layouts[1].rows == 3U &&
+                tool_layouts[2].size == RibbonGroupSize::collapsed && tool_layouts[2].rows == 3U,
+            "compact commands in two rows take a three-row step before the collapsed button");
+    const std::span<const RibbonGroupLayout> row_layouts = ribbon.group_layouts(0U, 1U);
+    require(row_layouts.size() == 4U && row_layouts[1].rows == 2U && row_layouts[2].rows == 3U &&
+                row_layouts[3].size == RibbonGroupSize::collapsed,
+            "one row at a time, up to three, while the rows (Save and Undo side by side are one) do not fit");
+    const std::span<const RibbonGroupLayout> mixed_layouts = ribbon.group_layouts(0U, 2U);
+    require(mixed_layouts.size() == 4U && mixed_layouts[1].size == RibbonGroupSize::medium &&
+                mixed_layouts[1].rows == 2U && mixed_layouts[1].command_sizes[0] == RibbonCommandSize::compact &&
+                mixed_layouts[1].command_sizes[1] == RibbonCommandSize::compact &&
+                mixed_layouts[2].size == RibbonGroupSize::compact && mixed_layouts[2].rows == 3U &&
+                mixed_layouts[3].size == RibbonGroupSize::collapsed,
+            "image size first, then rows, then the collapsed button");
+    require(ribbon.group_layouts(0U, 3U).size() == 2U, "layouts that end in the collapsed button take no automatic step");
+
+    // The three-row step narrows the group: five columns of icons become three.
+    const std::vector<RibbonLadderEntry> ladder = ribbon.reduction_ladder(0U);
+    bool row_step = false;
+    for (std::size_t entry = 1; entry < ladder.size(); ++entry) {
+        require(ladder[entry].width < ladder[entry - 1U].width, "ladder widths strictly decrease");
+        const bool tools_packed = ladder[entry].groups[0].layout == 1U && ladder[entry - 1U].groups[0].layout == 0U;
+        row_step = row_step || tools_packed;
+    }
+    require(row_step, "the ladder holds the tools group's three-row step as an entry of its own");
+    require(ladder.back().groups[0].size == RibbonGroupSize::collapsed &&
+                ladder.back().groups[2].size == RibbonGroupSize::collapsed,
+            "the narrowest entry collapses the automatically compacted groups");
 }
 
 void default_cycle() {
@@ -1311,6 +1388,7 @@ void labels_keep_their_fields() {
 int main() {
     generated_layouts();
     authored_layouts_collapse();
+    automatic_compaction();
     default_cycle();
     authored_order();
     refusals();
@@ -1325,7 +1403,7 @@ int main() {
     field_labels();
     labels_keep_their_fields();
     panel_tab();
-    std::cout << "Ribbon scaling: generated layouts, authored layouts collapse, the default cycle, the authored order, refusals, gallery "
+    std::cout << "Ribbon scaling: generated layouts, authored layouts collapse, automatic compaction, the default cycle, the authored order, refusals, gallery "
                  "columns, the WordPad ladders, golden layouts at text scales 1 and 1.5, labels kept, scrolling at "
                  "any width, the hide rule with hysteresis, group overlays, caches, theme following, field labels, "
                  "labels kept above their fields and panel tabs passed\n";

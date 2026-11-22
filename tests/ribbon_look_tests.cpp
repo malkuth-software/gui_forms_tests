@@ -15,6 +15,7 @@
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/commands/command/command.hpp"
+#include "gui_forms/components/context_menu/context_menu.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/backstage_view.hpp"
@@ -78,12 +79,21 @@ void require(bool condition, std::string_view message) {
 // ring's commonest colour, when that colour is covered and differs from
 // the commonest one (0 otherwise). A flat fill with an outline has all
 // three near 1; a dithered rise covers a fraction of its pixels.
+// `warm` counts covered pixels of the gold palette (red well above blue);
+// `lit_upper_left` and `lit_lower_right` count the light side's dots
+// (near-white, blue at least 250) in those quadrants, which tell a bulge
+// (lit toward the upper-left light) from a dent (lit on the far slope);
+// `hash` is over every pixel.
 struct RasterFace final {
     Rect bounds{};
     DeviceExtent extent{};
     double covered{};
     double dominant{};
     double rim{};
+    std::size_t warm{};
+    std::size_t lit_upper_left{};
+    std::size_t lit_lower_right{};
+    std::uint64_t hash{};
 };
 
 std::uint32_t pixel_word(std::span<const std::uint8_t> pixels, std::size_t offset) {
@@ -118,6 +128,7 @@ RasterFace raster_face(const PartRaster& raster, Rect bounds) {
     RasterFace face{};
     face.bounds = bounds;
     face.extent = raster.extent();
+    face.hash = 14695981039346656037ULL;
     const std::span<const std::uint8_t> pixels = raster.pixels();
     const std::size_t row_bytes = raster.row_bytes();
     std::vector<std::uint32_t> inside;
@@ -130,6 +141,17 @@ RasterFace raster_face(const PartRaster& raster, Rect bounds) {
             const bool edge = row == 0U || column == 0U || row + 1U == face.extent.height ||
                               column + 1U == face.extent.width;
             ++total;
+            face.hash = (face.hash ^ word) * 1099511628211ULL;
+            // BGRA8: blue is the low byte, red the third.
+            const std::uint32_t blue = word & 0xFFU;
+            const std::uint32_t red = (word >> 16U) & 0xFFU;
+            if ((word >> 24U) != 0U && red > blue + 40U) ++face.warm;
+            if ((word >> 24U) != 0U && red >= 230U && blue >= 250U) {
+                const bool left = column * 2U < face.extent.width;
+                const bool upper = row * 2U < face.extent.height;
+                if (left && upper) ++face.lit_upper_left;
+                if (!left && !upper) ++face.lit_lower_right;
+            }
             if (edge) {
                 ring.push_back(word);
             } else if ((word >> 24U) != 0U) {
@@ -919,6 +941,139 @@ void test_overlapping_tabs() {
     require(near(second.x, first.x + first.width - deepest), "an overlap stops at half the narrower tab");
 }
 
+// The two departures from the dithered look study the owner saw
+// (2026-11-22; rendering reference §2 and §3; ledger R12, R13, R43):
+// pressed is a dent, and a checked command shows its state. In the default
+// theme: a hot command is the dithered bulge, lit toward the upper-left
+// light; pressed, the dent, lit on the far slope; a checked toggle and a
+// split whose Command is checked (a selected tool on a split, as Paint's
+// Select) stand in the gold bulge at rest; an unchecked command is flat at
+// rest; a tab held under the pointer shows the dent on its hover layer.
+
+// The largest face drawn within `bounds` (one unit of slack), if any.
+std::optional<RasterFace> face_within(const LookPainter& painter, Rect bounds) {
+    std::optional<RasterFace> found{};
+    for (const RasterFace& face : painter.faces) {
+        const bool within = face.bounds.x >= bounds.x - 1.0 && face.bounds.y >= bounds.y - 1.0 &&
+                            face.bounds.x + face.bounds.width <= bounds.x + bounds.width + 1.0 &&
+                            face.bounds.y + face.bounds.height <= bounds.y + bounds.height + 1.0;
+        if (!within) continue;
+        if (!found || face.bounds.width * face.bounds.height > (*found).bounds.width * (*found).bounds.height) {
+            found = face;
+        }
+    }
+    return found;
+}
+
+// Runs 16 ms frames well past the rise, painting what each damages.
+void settle(Window& window, ManualTime& time) {
+    LookPainter frames;
+    frames.record_faces = false;
+    for (int frame = 0; frame < 40; ++frame) {
+        time.time += std::chrono::milliseconds(16);
+        static_cast<void>(window.poll_frame_schedule(time.time));
+        window.perform_layout();
+        const DamageRegion damage = window.take_damage();
+        if (!damage.empty()) static_cast<void>(window.paint(frames, damage.bounds()));
+    }
+}
+
+Rect command_face_of(const Ribbon& ribbon, std::string_view id) {
+    for (const Ribbon::CommandItem& item : ribbon.realized_commands()) {
+        if (item.stable_id == id) return item.parts.command_face.bounds;
+    }
+    return Rect{};
+}
+
+void test_pressed_dent_and_checked_gold() {
+    const std::shared_ptr<Command> paste = std::make_shared<Command>("paste", "Paste");
+    const std::shared_ptr<Command> pencil = std::make_shared<Command>("pencil", "Pencil");
+    const std::shared_ptr<Command> select = std::make_shared<Command>("select", "Select");
+    const std::shared_ptr<Command> region = std::make_shared<Command>("region", "Rectangular selection");
+    (*pencil).set_checked(true);
+    (*select).set_checked(true);
+    std::vector<RibbonTabSpec> tabs = two_tabs();
+    tabs[0].groups[0].commands[0].command = paste;
+    RibbonGroupSpec tools{.stable_id = "tools", .caption = "Tools"};
+    tools.commands.push_back({.stable_id = "pencil", .kind = RibbonCommandKind::toggle, .command = pencil,
+                              .image = ImageId{6}});
+    RibbonCommandSpec chooser{.stable_id = "select", .kind = RibbonCommandKind::split, .command = select,
+                              .image = ImageId{7}};
+    chooser.drop_down = {MenuItemSpec("select.region", MenuItemKind::command, region, "Rectangular selection")};
+    tools.commands.push_back(chooser);
+    tabs[0].groups.push_back(std::move(tools));
+    std::shared_ptr<Ribbon> ribbon = ribbon_with(std::move(tabs));
+    (*ribbon).set_theme_override(gui_forms_theme());
+    Window window(ribbon, {700.0, 200.0});
+    ManualTime time{};
+    window.motion_clock().set_time_source(&time);
+    window.perform_layout();
+
+    bool split_checked = false;
+    for (const Ribbon::CommandItem& item : (*ribbon).realized_commands()) {
+        if (item.stable_id == "select") split_checked = item.states.checked;
+    }
+    require(split_checked, "a split whose Command is checked publishes checked");
+    bool semantic_checked = false;
+    for (const SemanticNode& tab : (*ribbon).semantic_virtual_children()) {
+        for (const SemanticNode& group : tab.children) {
+            for (const SemanticNode& node : group.children) {
+                const bool checked = has_semantic_state(node.states, SemanticState::checked);
+                if (node.name == "Select" && checked) semantic_checked = true;
+            }
+        }
+    }
+    require(semantic_checked, "and assistive technology reads it as checked");
+
+    LookPainter rest;
+    static_cast<void>(window.paint(rest, {0.0, 0.0, 700.0, 200.0}));
+    const std::optional<RasterFace> pencil_face = face_within(rest, command_face_of(*ribbon, "pencil"));
+    const std::optional<RasterFace> select_face = face_within(rest, command_face_of(*ribbon, "select"));
+    const std::optional<RasterFace> paste_face = face_within(rest, command_face_of(*ribbon, "paste"));
+    require(pencil_face && (*pencil_face).covered > 0.0 && (*pencil_face).warm > 0U,
+            "a checked toggle stands in the gold dithered bulge at rest");
+    require(select_face && (*select_face).covered > 0.0 && (*select_face).warm > 0U,
+            "a selected tool on a split stands in the gold dithered bulge at rest");
+    require(!paste_face || (*paste_face).covered == 0.0, "an unchecked command is flat at rest");
+
+    const Rect paste_bounds = command_face_of(*ribbon, "paste");
+    const Point on_paste = centre(paste_bounds);
+    static_cast<void>(window.dispatch_pointer({PointerAction::move, PointerButton::none, on_paste}));
+    settle(window, time);
+    LookPainter hot;
+    static_cast<void>(window.paint(hot, {0.0, 0.0, 700.0, 200.0}));
+    const std::optional<RasterFace> raised = face_within(hot, paste_bounds);
+    require(raised && (*raised).warm == 0U && (*raised).lit_upper_left > (*raised).lit_lower_right,
+            "a hot command is the dithered bulge, lit toward the upper-left light");
+    static_cast<void>(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_paste}));
+    settle(window, time);
+    LookPainter pressed;
+    static_cast<void>(window.paint(pressed, {0.0, 0.0, 700.0, 200.0}));
+    const std::optional<RasterFace> dent = face_within(pressed, paste_bounds);
+    require(dent && raised && (*dent).hash != (*raised).hash && (*dent).lit_lower_right > (*dent).lit_upper_left,
+            "pressed, it is the dithered dent, lit on the far slope");
+    static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_paste}));
+    settle(window, time);
+
+    // A tab held under the pointer: its hover layer is the dent.
+    const std::vector<Ribbon::Tab> realized = (*ribbon).realized_tabs();
+    require(realized.size() == 2U, "two tabs are realized");
+    if (realized.size() != 2U) return;
+    const Point on_view = centre(realized[1].parts.tab.bounds);
+    static_cast<void>(window.dispatch_pointer({PointerAction::move, PointerButton::none, on_view}));
+    static_cast<void>(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_view}));
+    settle(window, time);
+    LookPainter held;
+    static_cast<void>(window.paint(held, {0.0, 0.0, 700.0, 200.0}));
+    const std::optional<RasterFace> tab_dent = face_within(held, (*ribbon).realized_tabs()[1].parts.tab_hover.bounds);
+    require(tab_dent && (*tab_dent).lit_lower_right > (*tab_dent).lit_upper_left,
+            "a tab held under the pointer shows the dithered dent on its hover layer");
+    static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_view}));
+    const MetricsSnapshot metrics = window.metrics_snapshot();
+    require(metrics.engine_primitive_refusals == 0U && metrics.engine_built_in_fallbacks == 0U,
+            "every face bakes through its rule");
+}
+
 // RB decision 26: in the default theme Backstage's column takes the
 // command plane's blue against the white page.
 void test_backstage_column() {
@@ -1014,6 +1169,7 @@ int main() {
     test_selected_tool_tab();
     test_overlapping_tabs();
     test_backstage_column();
+    test_pressed_dent_and_checked_gold();
     if (failures != 0) {
         std::cerr << failures << " ribbon look check(s) failed\n";
         return 1;
