@@ -234,7 +234,7 @@ void test_valid_document() {
                 (*(*command).binding).field.empty(),
             "valid: the button's Command slot, bound");
     require(command != nullptr && (*command).binding && (*(*command).binding).element == 4U &&
-                (*command).position.line.value == 10U && (*command).position.column.value == 59U,
+                (*command).position.line.value == 14U && (*command).position.column.value == 59U,
             "valid: a binding located at its bind element");
 }
 

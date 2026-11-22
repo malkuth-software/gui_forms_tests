@@ -524,7 +524,7 @@ void test_reference_codes() {
                    DiagnosticCode::form_binding_option_invalid, "an unknown update");
     expect_refused(schema,
                    document("<children><label id=\"@t\"><bind property=\"text\"/></label></children>"),
-                   DiagnosticCode::control_xml_invalid, "a bind without a source");
+                   DiagnosticCode::control_attribute_missing, "a bind without a source");
 }
 
 void test_warning_and_all_at_once() {
