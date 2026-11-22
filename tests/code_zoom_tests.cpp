@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -403,8 +404,12 @@ void test_bench() {
     require(lines[0].rfind("code_zoom bench: 11 frames, 0.10x to 40.00x, src/example.cpp, 1280x800 at scale 2.00", 0) ==
                 0U,
             "the header names the frames, the zooms, the file and the window: " + lines[0]);
-    require(lines[0].size() >= 30U && lines[0].substr(lines[0].size() - 30U) == ", refresh: unknown (offscreen)",
-            "and says the refresh is unknown offscreen: " + lines[0]);
+    require(lines[0].ends_with(", refresh: unknown (assumed)"),
+            "and says the refresh is unknown while the timing is assumed: " + lines[0]);
+    const BenchSetting paced{"src/example.cpp", 1280.0, 800.0, 2.0, 120.0, "display"};
+    const std::vector<std::string> paced_lines = split_lines(format_bench_report(paced, bands, whole));
+    require(!paced_lines.empty() && paced_lines[0].ends_with(", refresh: 120.0 Hz (display)"),
+            "and names the display's refresh and its source when the window knows it: " + paced_lines[0]);
     require(lines[1] == "label zoom_from zoom_to frames median_ms p95_ms glyphs", "the column line");
     for (std::size_t index = 2U; index < lines.size(); ++index) {
         const std::vector<std::string> fields = split_fields(lines[index]);
@@ -598,6 +603,47 @@ void test_sheet_keys_and_wheel(Window& window, CodeSheet& sheet) {
             "the wheel alone scrolls down");
 }
 
+// A glide on a window whose display runs at 125 Hz (a fixed rate, as a
+// host would report one): one tick a refresh, each at the time its frame is
+// shown, with a paint between; it ends at its target.
+void test_sheet_glides_every_refresh(Window& window, CodeSheet& sheet) {
+    using namespace gui_forms::code_zoom;
+    using namespace std::chrono_literals;
+    window.set_presentation_overrides(PresentationOverrides{});
+    require(window.set_display_timing(DisplayTiming::fixed_rate(8ms)), "a fixed 125 Hz rate is accepted");
+    const Size size = window.client_size();
+    const Rect client{0.0, 0.0, size.width, size.height};
+    sheet.show_at(1.0, sheet.content_point(capture_line, 0U), Point{size.width * 0.5, size.height * 0.5});
+    RunsPainter painter{};
+    sheet.on_paint(painter, client);
+    KeyEvent plus{};
+    plus.action = KeyAction::down;
+    plus.physical_key = PhysicalKey::equal;
+    static_cast<void>(window.dispatch_key(plus));
+    require(sheet.zoom_model().gliding() && window.wants_display_frames(),
+            "= starts a glide that asks for display frames");
+    const stxlib::Optional<FrameTime> first_wake = window.next_wake();
+    require(first_wake.present(), "the glide's first frame is armed");
+    // The glide's first tick is the first point of the 8 ms grid after now;
+    // nothing else in the window is due sooner.
+    FrameTime due = *first_wake.value();
+    require(due.time_since_epoch() % 8ms == FrameInterval{}, "the first frame is on the display's grid");
+    std::size_t frames = 0U;
+    while (sheet.zoom_model().gliding() && frames < 100U) {
+        const FramePollResult polled = window.poll_frame_schedule(due);
+        require(polled.ui_timer_ticks >= 1U && polled.presentation_time == due + 8ms,
+                "each refresh ticks the glide at the time its frame is shown");
+        sheet.on_paint(painter, client);
+        ++frames;
+        due += 8ms;
+    }
+    require(!sheet.zoom_model().gliding() && near(sheet.zoom_model().zoom(), zoom_step, 1e-12),
+            "the glide ends at its target");
+    require(frames >= 23U && frames <= 25U,
+            "a 180 ms glide takes a frame for each 8 ms refresh: " + std::to_string(frames));
+    require(window.set_display_timing(DisplayTiming::assumed()), "assumed timing is restored");
+}
+
 void test_window() {
     using namespace gui_forms::code_zoom;
     const std::string_view text = embedded_source_text();
@@ -613,6 +659,7 @@ void test_window() {
     require((*sheet).source_name() == embedded_source_name(), "named for its file");
     test_sheet_paints_at_the_true_size(*window, *sheet);
     test_sheet_keys_and_wheel(*window, *sheet);
+    test_sheet_glides_every_refresh(*window, *sheet);
 }
 
 } // namespace
