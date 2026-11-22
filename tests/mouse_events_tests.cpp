@@ -627,7 +627,8 @@ void test_pointer_settings() {
     require(refused, "a zero hover time is refused");
     require(defaults.pointer.menu_show_milliseconds == default_menu_show_milliseconds &&
                 defaults.pointer.menu_show_origin == SettingOrigin::default_value,
-            "the menu show delay is Windows' default where no host reported");
+            "the menu show delay is GUI.Forms' own default");
+    require(default_menu_show_milliseconds == 300U, "the menu show delay is 300 ms on every host");
     PresentationSettings instant_menus = defaults;
     instant_menus.pointer.menu_show_milliseconds = 0U;
     window.set_presentation_settings(instant_menus);

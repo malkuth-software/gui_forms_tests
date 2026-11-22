@@ -22,6 +22,7 @@
 #include "gui_forms/window/window.hpp"
 
 #include <chrono>
+#include <cstddef>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -295,8 +296,49 @@ void plain_text_and_covering() {
 
 } // namespace
 
+// Text of exactly `length` characters: plain English words, repeated.
+std::string help_text(std::size_t length) {
+    const std::string description =
+        "Copies the formatting of the selection and applies it to the next text you click or drag across. ";
+    std::string text;
+    while (text.size() < length) text.append(description);
+    text.resize(length);
+    if (text.back() == ' ') text.back() = 'x';
+    return text;
+}
+
+// The overlay `tips` shows on the fixture's button for `description`.
+Rect shown_overlay(Fixture& fixture, RibbonToolTip& tips, const std::string& description) {
+    tips.set_tool_tip(fixture.button, {.title = "Format Painter", .description = description});
+    tips.show(fixture.button);
+    fixture.window.perform_layout();
+    require(tips.visible(), "the tooltip shows");
+    const Rect overlay = tips.overlay_bounds();
+    tips.hide();
+    return overlay;
+}
+
+// Owner, 2026-11-22 (decision 7): one rule sizes every tooltip, ribbon
+// tooltips included; the fixed 318-unit bubble is gone. A one-character
+// and a 40-character description stay on one line; a 400-character one
+// wraps to a box near the golden ratio.
+void width_follows_the_description() {
+    Fixture fixture;
+    RibbonToolTip tips(fixture.window);
+    const Rect short_box = shown_overlay(fixture, tips, help_text(1U));
+    const Rect forty_box = shown_overlay(fixture, tips, help_text(40U));
+    const Rect long_box = shown_overlay(fixture, tips, help_text(400U));
+    require(short_box.width > 0.0 && forty_box.height == short_box.height,
+            "a 40-character description stays on one line");
+    require(forty_box.width < 318.0, "a short description makes a box narrower than the old fixed width");
+    const double aspect = long_box.width / long_box.height;
+    require(aspect > 1.618 / 1.25 && aspect < 1.618 * 1.25, "a 400-character description wraps near the golden ratio");
+    require(long_box.width <= fixture.window.client_size().width, "the box stays inside the client");
+}
+
 int main() {
     content_from_commands_and_hover();
+    width_follows_the_description();
     keyboard_and_help();
     validation_and_removal();
     plain_text_and_covering();
