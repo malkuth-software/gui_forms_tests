@@ -131,6 +131,11 @@ void test_tree_and_object_views(gui_forms::Window& window) {
                 (*tree_list).sort_column() == stxlib::Optional<std::size_t>::of(0U) && (*tree_list).row_node_id(1U) == "assets" &&
                 (*status).text.read().find("TreeListView siblings sorted by Name ascending") == 0U,
             "pressing a TreeListView header must sort the siblings and report it");
+    require((*tree_list).check_boxes.read() && (*tree_list).on_semantic_child_action("root", SemanticAction::press, {}) &&
+                (*tree_list).check_state("root") == CheckState::checked &&
+                (*tree_list).check_state("assets") == CheckState::checked &&
+                (*status).text.read().find("TreeListView node ") == 0U,
+            "the TreeListView shows check boxes, and pressing a node checks its subtree and reports it");
 
     // DataGridView's image column: the Gallery's fixtures install the test
     // card as the preview of the one PNG file; the other files have none.

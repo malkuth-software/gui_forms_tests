@@ -3199,6 +3199,22 @@ void test_tree_list_view_properties() {
         (*control).font = sample;
         expect((*control).font.read() == sample, "TreeListView.font: a write stores");
     }
+    {
+        const bool sample = !(*control).check_boxes.read();
+        (*control).check_boxes = sample;
+        expect((*control).check_boxes.read() == sample, "TreeListView.check_boxes: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("check_boxes");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "TreeListView.check_boxes: the table reads the cell");
+    }
+    {
+        const bool sample = !(*control).cascading_checks.read();
+        (*control).cascading_checks = sample;
+        expect((*control).cascading_checks.read() == sample, "TreeListView.cascading_checks: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("cascading_checks");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "TreeListView.cascading_checks: the table reads the cell");
+    }
 }
 
 void test_tree_view_properties() {

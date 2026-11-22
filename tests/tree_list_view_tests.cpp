@@ -1,7 +1,8 @@
 // TreeListView (stage W): a tree with tabular columns. Its published parts
 // and states, expansion over virtualized rows, column layout, resizing and
 // moving, sorting within siblings, keyboard traces, selection kept by node
-// ID, semantics, the realization bound and refusals.
+// ID, semantics, node check boxes with their cascade, the realization bound
+// and refusals.
 
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
@@ -106,6 +107,15 @@ struct RecordWidth final {
 struct RecordMove final {
     std::vector<TreeListColumnMove>* seen{};
     void operator()(const TreeListColumnMove& change) const { (*seen).push_back(change); }
+};
+
+struct RecordCheck final {
+    std::vector<std::string>* seen{};
+    void operator()(const TreeListCheckChange& change) const {
+        const char* mark = change.check_state == CheckState::checked ? "+" : "-";
+        if (change.check_state == CheckState::indeterminate) mark = "~";
+        (*seen).push_back(mark + change.node_id);
+    }
 };
 
 Point centre(Rect bounds) {
@@ -601,6 +611,121 @@ void semantics() {
             "a hidden node refuses actions");
 }
 
+// Node check boxes (TreeView.CheckBoxes): a check slot after the expander, a
+// cascade down the subtree and up through the ancestors, one event per
+// changed node in a stated order, click, Space and the semantic press.
+void check_boxes() {
+    std::shared_ptr<TreeListView> view = sample_view();
+    Window window(view, {420.0, 260.0});
+    window.perform_layout();
+    require(!(*view).check_boxes.read() && (*view).cascading_checks.read(),
+            "check boxes are off and cascade by default");
+    std::vector<TreeListView::Row> rows = (*view).realized_rows();
+    require(!row_named(rows, "src").parts.check_well.present, "without check boxes no row publishes a check well");
+    const double plain_text = row_named(rows, "beta").parts.text.bounds.x;
+    (*view).check_boxes = true;
+    window.perform_layout();
+    rows = (*view).realized_rows();
+    const TreeListView::Row& lib = row_named(rows, "lib");
+    require(find_item_part((*view).anatomy().item_systems[0], "check_well").present() &&
+                find_item_part((*view).anatomy().item_systems[0], "check").present(),
+            "the row system declares the check well and its mark");
+    require(lib.parts.check_well.present && lib.parts.check.present &&
+                lib.parts.expander.bounds.x + lib.parts.expander.bounds.width <= lib.parts.check_well.bounds.x &&
+                lib.parts.check_well.bounds.x + lib.parts.check_well.bounds.width <= lib.parts.text.bounds.x &&
+                row_named(rows, "beta").parts.text.bounds.x > plain_text,
+            "the check box sits between the expander and the text, moving the text");
+    require(!lib.states.checked && !lib.states.indeterminate, "a node starts unchecked");
+
+    std::vector<std::string> checks;
+    SubscriptionToken checked = (*view).check_state_changed().subscribe(RecordCheck{&checks});
+    (*view).set_check_state("src", CheckState::checked);
+    require(checks == std::vector<std::string>({"+src", "+beta", "+lib", "+zeta", "+eta", "+delta"}) &&
+                (*view).check_state("eta") == CheckState::checked &&
+                (*view).check_state("docs") == CheckState::unchecked,
+            "checking a node checks its subtree, the node first, then its descendants in model order");
+    checks.clear();
+    (*view).set_check_state("zeta", CheckState::unchecked);
+    require(checks == std::vector<std::string>({"-zeta", "~lib", "~src"}) &&
+                (*view).check_state("lib") == CheckState::indeterminate,
+            "unchecking one child makes its ancestors indeterminate, nearest first");
+    rows = (*view).realized_rows();
+    require(row_named(rows, "lib").states.indeterminate && row_named(rows, "beta").states.checked,
+            "rows publish checked and indeterminate");
+    checks.clear();
+    (*view).set_check_state("eta", CheckState::unchecked);
+    require(checks == std::vector<std::string>({"-eta", "-lib"}) &&
+                (*view).check_state("src") == CheckState::indeterminate,
+            "an ancestor whose children all agree takes their state; an unchanged one raises nothing");
+    checks.clear();
+    (*view).set_check_state("eta", CheckState::unchecked);
+    require(checks.empty(), "setting the state a node has raises nothing");
+
+    bool refused = false;
+    try {
+        (*view).set_check_state("lib", CheckState::indeterminate);
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused && checks.empty(), "a cascading view refuses an indeterminate write");
+    refused = false;
+    try {
+        (*view).set_check_state("missing", CheckState::checked);
+    } catch (const std::out_of_range&) {
+        refused = true;
+    }
+    require(refused, "an unknown node is refused");
+    refused = false;
+    try {
+        (*view).set_check_state("beta", static_cast<CheckState>(7));
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused && (*view).check_state("beta") == CheckState::checked, "a state outside CheckState is refused");
+    std::vector<TreeListNode> bad = sample_nodes();
+    bad[1].check_state = static_cast<CheckState>(9);
+    refused = false;
+    try {
+        (*view).set_nodes(bad);
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused && (*view).check_state("lib") == CheckState::unchecked,
+            "set_nodes refuses a state outside CheckState and keeps the old nodes");
+
+    std::vector<std::string> selections;
+    SubscriptionToken selected = (*view).selection_changed().subscribe(RecordSelection{&selections});
+    rows = (*view).realized_rows();
+    click(window, to_window(*view, centre(row_named(rows, "docs").parts.check_well.bounds)));
+    require(checks == std::vector<std::string>({"+docs", "+manual"}) && selections.empty(),
+            "a click on a check box toggles it and its hidden subtree without selecting");
+    checks.clear();
+    require(window.request_focus(view) && (*view).current_id() == stxlib::Optional<std::string_view>::of("src"),
+            "focus puts the current node on the first row");
+    require(key(window, PhysicalKey::space) &&
+                checks == std::vector<std::string>({"+src", "+lib", "+zeta", "+eta"}) && selections.empty(),
+            "Space checks the current node (an indeterminate one becomes checked)");
+    checks.clear();
+
+    std::vector<SemanticNode> children = (*view).semantic_virtual_children();
+    const SemanticNode& delta = children[3U + 5U];
+    require(delta.stable_id == "delta" && has_semantic_state(delta.states, SemanticState::checkable) &&
+                has_semantic_state(delta.states, SemanticState::checked),
+            "a row is checkable and publishes its check");
+    require((*view).on_semantic_child_action("delta", SemanticAction::press, {}) &&
+                checks == std::vector<std::string>({"-delta", "~src"}),
+            "the semantic press toggles the check box");
+    children = (*view).semantic_virtual_children();
+    require(has_semantic_state(children[3U].states, SemanticState::mixed), "an indeterminate node is mixed");
+
+    checks.clear();
+    (*view).cascading_checks = false;
+    (*view).set_check_state("lib", CheckState::indeterminate);
+    (*view).set_check_state("beta", CheckState::unchecked);
+    require(checks == std::vector<std::string>({"~lib", "-beta"}) && (*view).check_state("zeta") == CheckState::checked,
+            "without the cascade a write changes one node, indeterminate included");
+}
+
 void refusals() {
     std::shared_ptr<TreeListView> view = make_control<TreeListView>(StableId("refusals"));
     (*view).set_columns(sample_columns());
@@ -934,10 +1059,11 @@ int main() {
     keyboard_traces();
     selection_kept_by_id();
     semantics();
+    check_boxes();
     refusals();
     virtual_million_rows();
     focus_handler_shrinks_the_tree();
     std::cout << "TreeListView: parts, expansion with virtualization, sorting within siblings, column layout, "
-                 "keyboard, selection by ID, semantics and refusals passed\n";
+                 "keyboard, selection by ID, semantics, check boxes and refusals passed\n";
     return 0;
 }
