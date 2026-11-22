@@ -539,6 +539,18 @@ void example() {
 }
 }  // namespace doc_example_CheckBox_2
 
+namespace doc_example_CheckedComboBox_1 {
+void example() {
+    std::shared_ptr<gf::CheckedComboBox> days = gf::make_control<gf::CheckedComboBox>(gf::StableId("task.days"));
+    (*days).set_items({{.stable_id = "mon", .text = "Monday", .checked = true},
+                       {.stable_id = "tue", .text = "Tuesday", .checked = false},
+                       {.stable_id = "wed", .text = "Wednesday", .checked = false}});
+    (*days).set_item_checked("wed", true);
+    const std::string shown = (*days).text();
+    // shown is "Monday, Wednesday"
+}
+}  // namespace doc_example_CheckedComboBox_1
+
 namespace doc_example_CheckedListBox_1 {
 void example() {
     std::shared_ptr<gf::CheckedListBox> features =
@@ -4206,6 +4218,7 @@ int main() {
     failures += run("Card example 2", &doc_example_Card_2::example);
     failures += run("CheckBox example 1", &doc_example_CheckBox_1::example);
     failures += run("CheckBox example 2", &doc_example_CheckBox_2::example);
+    failures += run("CheckedComboBox example 1", &doc_example_CheckedComboBox_1::example);
     failures += run("CheckedListBox example 1", &doc_example_CheckedListBox_1::example);
     failures += run("CheckedListBox example 2", &doc_example_CheckedListBox_2::example);
     failures += run("ChoiceGroup example 1", &doc_example_ChoiceGroup_1::example);

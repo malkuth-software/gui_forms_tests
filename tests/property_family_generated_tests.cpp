@@ -13,6 +13,7 @@
 #include "gui_forms/controls/callout.hpp"
 #include "gui_forms/controls/card.hpp"
 #include "gui_forms/controls/check_box.hpp"
+#include "gui_forms/controls/checked_combo_box.hpp"
 #include "gui_forms/controls/checked_list_box.hpp"
 #include "gui_forms/controls/choice_group.hpp"
 #include "gui_forms/controls/color_picker.hpp"
@@ -478,6 +479,34 @@ void test_check_box_properties() {
         const std::optional<BindingValue> by_name = (*control).property_value("indicator_style");
         expect(by_name && *by_name == PropertyValueTraits<ChoiceIndicatorStyle>::to_binding(sample),
                "CheckBox.indicator_style: the table reads the cell");
+    }
+}
+
+void test_checked_combo_box_properties() {
+    std::shared_ptr<CheckedComboBox> control = make_control<CheckedComboBox>(StableId("generated.checkedcombobox"));
+    {
+        const std::string sample = std::string(" + ");
+        (*control).separator = sample;
+        expect((*control).separator.read() == sample, "CheckedComboBox.separator: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("separator");
+        expect(by_name && *by_name == PropertyValueTraits<std::string>::to_binding(sample),
+               "CheckedComboBox.separator: the table reads the cell");
+    }
+    {
+        const std::string sample = std::string("codemod.hint");
+        (*control).placeholder_text = sample;
+        expect((*control).placeholder_text.read() == sample, "CheckedComboBox.placeholder_text: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("placeholder_text");
+        expect(by_name && *by_name == PropertyValueTraits<std::string>::to_binding(sample),
+               "CheckedComboBox.placeholder_text: the table reads the cell");
+    }
+    {
+        const std::uint32_t sample = std::uint32_t{5U};
+        (*control).max_drop_down_items = sample;
+        expect((*control).max_drop_down_items.read() == sample, "CheckedComboBox.max_drop_down_items: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("max_drop_down_items");
+        expect(by_name && *by_name == PropertyValueTraits<std::uint32_t>::to_binding(sample),
+               "CheckedComboBox.max_drop_down_items: the table reads the cell");
     }
 }
 
@@ -3551,6 +3580,7 @@ int main() {
     test_callout_properties();
     test_card_properties();
     test_check_box_properties();
+    test_checked_combo_box_properties();
     test_checked_list_box_properties();
     test_choice_group_properties();
     test_color_picker_properties();
