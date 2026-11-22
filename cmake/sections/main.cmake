@@ -510,6 +510,10 @@ if(Python3_Interpreter_FOUND)
     add_test(NAME gui_forms_naming_audit_unit
         COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
             -p test_naming_audit.py)
+    # The ThreadSanitizer run's selection (tools/abi_tsan.py).
+    add_test(NAME gui_forms_abi_tsan_selection_unit
+        COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tools
+            -p test_abi_tsan.py)
     add_test(NAME gui_forms_exit_statics_check_unit
         COMMAND ${Python3_EXECUTABLE} -B -m unittest discover -s ${GUI_FORMS_SOURCE_DIR}/tools
             -p test_check_exit_statics.py)
@@ -671,20 +675,21 @@ add_test(NAME gui_drawing_trace_equivalence_tests
 add_test(NAME gui_forms_stx_digest
          COMMAND ${CMAKE_COMMAND} -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/stx_digest_test
                  -DGUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/stx_digest_test.cmake)
-# Public headers name no renderer or platform type; comments may
-# (cmake/check_public_header_tokens.cmake). The fixtures prove a comment
+# Public headers name no renderer or platform type; comments may. The check
+# is gui_forms' own (its cmake/check_public_header_tokens.cmake, which its
+# renderer boundary audit includes too). The fixtures prove a comment
 # passes and a token in code fails.
 add_test(NAME gui_forms_public_header_tokens
          COMMAND ${CMAKE_COMMAND} -DPUBLIC_INCLUDE_DIRECTORY=${GUI_FORMS_SOURCE_DIR}/include
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
+                 -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
 add_test(NAME gui_forms_public_header_tokens_comments_pass
          COMMAND ${CMAKE_COMMAND}
                  -DPUBLIC_INCLUDE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/public_header_tokens/comments_only
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
+                 -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
 add_test(NAME gui_forms_public_header_tokens_code_fails
          COMMAND ${CMAKE_COMMAND}
                  -DPUBLIC_INCLUDE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/public_header_tokens/in_code
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
+                 -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_public_header_tokens.cmake)
 set_tests_properties(gui_forms_public_header_tokens_code_fails PROPERTIES
     PASS_REGULAR_EXPRESSION "exposes renderer/platform token: CGContext")
 
@@ -2624,7 +2629,8 @@ set_tests_properties(gui_forms_dispatcher_tests PROPERTIES TIMEOUT 60)
 # ThreadSanitizer's set beyond the C ABI (gap P2): the event stack and
 # the sub-surface and live-surface machinery whose threads the C ABI's
 # sub-surface table reaches. tools/abi_tsan.py runs the tests labelled
-# c_abi or tsan in its instrumented tree; the c_abi conformance kit
+# c_abi or tsan against a tsan test cache (gui_forms' tools/abi_tsan.py
+# builds and packs it); the c_abi conformance kit
 # already covers the ABI's sub-surface part (gf_conformance_subsurfaces.c).
 set_property(TEST
     gui_forms_sub_surface_tests
