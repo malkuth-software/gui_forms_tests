@@ -2591,6 +2591,17 @@ void example() {
 }
 }  // namespace doc_example_PictureBox_1
 
+namespace doc_example_PopupContainerBox_1 {
+void example() {
+    std::shared_ptr<gf::PopupContainerBox> due = gf::make_control<gf::PopupContainerBox>(gf::StableId("task.due"));
+    std::shared_ptr<gf::MonthCalendar> calendar = gf::make_control<gf::MonthCalendar>(gf::StableId("task.due.calendar"));
+    (*due).set_popup_content(calendar);
+    (*due).text = std::string{"Choose a date"};
+    const bool opened = (*due).show_popup();
+    // opened is false outside a window
+}
+}  // namespace doc_example_PopupContainerBox_1
+
 namespace doc_example_ProgressBar_1 {
 void example() {
     gf::Value<double> copied(0.0);
@@ -4295,6 +4306,7 @@ int main() {
     failures += run("Panel example 1", &doc_example_Panel_1::example);
     failures += run("Panel example 2", &doc_example_Panel_2::example);
     failures += run("PictureBox example 1", &doc_example_PictureBox_1::example);
+    failures += run("PopupContainerBox example 1", &doc_example_PopupContainerBox_1::example);
     failures += run("ProgressBar example 1", &doc_example_ProgressBar_1::example);
     failures += run("ProgressBar example 2", &doc_example_ProgressBar_2::example);
     failures += run("PropertyGrid example 1", &doc_example_PropertyGrid_1::example);

@@ -64,6 +64,7 @@
 #include "gui_forms/controls/plot_axis_item.hpp"
 #include "gui_forms/controls/plot_series_item.hpp"
 #include "gui_forms/controls/plot_view.hpp"
+#include "gui_forms/controls/popup_container_box.hpp"
 #include "gui_forms/controls/progress_bar.hpp"
 #include "gui_forms/controls/progress_ring.hpp"
 #include "gui_forms/controls/property_grid.hpp"
@@ -2286,6 +2287,24 @@ void test_plot_view_properties() {
     }
 }
 
+void test_popup_container_box_properties() {
+    std::shared_ptr<PopupContainerBox> control = make_control<PopupContainerBox>(StableId("generated.popupcontainerbox"));
+    {
+        const std::string sample = std::string("codemod.text");
+        int raises = 0;
+        const SubscriptionToken token = (*control).text_changed().subscribe(RaiseCounter{&raises});
+        (*control).text = sample;
+        expect((*control).text.read() == sample, "PopupContainerBox.text: a write stores");
+        expect(raises == 1, "PopupContainerBox.text: a changed write raises once");
+        (*control).text = sample;
+        expect(raises == 1, "PopupContainerBox.text: an equal write raises nothing");
+        static_cast<void>(token);
+        const std::optional<BindingValue> by_name = (*control).property_value("text");
+        expect(by_name && *by_name == PropertyValueTraits<std::string>::to_binding(sample),
+               "PopupContainerBox.text: the table reads the cell");
+    }
+}
+
 void test_progress_bar_properties() {
     std::shared_ptr<ProgressBar> control = make_control<ProgressBar>(StableId("generated.progressbar"));
     {
@@ -3586,6 +3605,7 @@ int main() {
     test_plot_axis_item_properties();
     test_plot_series_item_properties();
     test_plot_view_properties();
+    test_popup_container_box_properties();
     test_progress_bar_properties();
     test_progress_ring_properties();
     test_property_grid_properties();
