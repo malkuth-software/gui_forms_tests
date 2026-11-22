@@ -3011,11 +3011,14 @@ if(TARGET gui_forms_seam_proximity_lab_model)
 endif()
 endif()
 
+# The Gallery and the labs come from the test cache as IMPORTED targets, for
+# which CMake refuses TARGET_BUNDLE_DIR: their fonts are found from the
+# executable's directory, <bundle>/Contents/MacOS.
 if(TARGET gui_forms_gallery)
     add_test(
         NAME gui_forms_gallery_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_gallery>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_gallery>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3024,7 +3027,7 @@ if(TARGET gui_forms_visual_inspector_lab)
     add_test(
         NAME gui_forms_visual_inspector_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_visual_inspector_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_visual_inspector_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3033,7 +3036,7 @@ if(TARGET gui_forms_layered_material_lab)
     add_test(
         NAME gui_forms_layered_material_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_layered_material_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_layered_material_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3042,7 +3045,7 @@ if(TARGET gui_forms_custom_chrome_lab)
     add_test(
         NAME gui_forms_custom_chrome_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_custom_chrome_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_custom_chrome_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3051,7 +3054,7 @@ if(TARGET gui_forms_typography_scale_lab)
     add_test(
         NAME gui_forms_typography_scale_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_typography_scale_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_typography_scale_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3060,7 +3063,7 @@ if(TARGET gui_forms_responsive_tracks_lab)
     add_test(
         NAME gui_forms_responsive_tracks_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_responsive_tracks_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_responsive_tracks_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3069,7 +3072,7 @@ if(TARGET gui_forms_connected_controls_lab)
     add_test(
         NAME gui_forms_connected_controls_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_connected_controls_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_connected_controls_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
@@ -3078,7 +3081,7 @@ if(TARGET gui_forms_seam_proximity_lab)
     add_test(
         NAME gui_forms_seam_proximity_lab_font_policy
         COMMAND ${CMAKE_COMMAND}
-            -DFONT_DIRECTORY=$<TARGET_BUNDLE_DIR:gui_forms_seam_proximity_lab>/Contents/Resources/fonts
+            -DFONT_DIRECTORY=$<TARGET_FILE_DIR:gui_forms_seam_proximity_lab>/../Resources/fonts
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_gallery_fonts.cmake
     )
 endif()
