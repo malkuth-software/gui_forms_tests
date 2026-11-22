@@ -465,8 +465,15 @@ void jewel_filter_tints() {
     const engine_light::LampColour red = engine_light::jewel_filter(engine_light::lamp_red);
     require(red.red == 1.0 && near(red.green, 0.4 + 0.6 * 0.12) && near(red.blue, 0.4 + 0.6 * 0.04),
             "a red jewel passes red and tints the rest");
+    // The study's colours are filters over a white-hot lamp (panel_lamps.html:
+    // "Lamp colours as filters over a white-hot lamp"), its white the warm
+    // [1, 0.92, 0.78]: a white jewel is faintly warm glass, not clear. Only
+    // a neutral colour gives a clear jewel.
     const engine_light::LampColour white = engine_light::jewel_filter(engine_light::lamp_white);
-    require(white.red == 1.0 && white.green == 1.0 && white.blue == 1.0, "a white jewel is clear");
+    require(white.red == 1.0 && near(white.green, 0.4 + 0.6 * 0.92) && near(white.blue, 0.4 + 0.6 * 0.78),
+            "the study's warm white jewel is faintly warm glass");
+    const engine_light::LampColour neutral = engine_light::jewel_filter(engine_light::LampColour{1.0, 1.0, 1.0});
+    require(neutral.red == 1.0 && neutral.green == 1.0 && neutral.blue == 1.0, "a neutral jewel is clear");
     const engine_light::LampColour dark = engine_light::jewel_filter(engine_light::LampColour{0.0, 0.0, 0.0});
     require(dark.red == 1.0 && dark.green == 1.0 && dark.blue == 1.0, "a colourless lamp's jewel is clear");
 }

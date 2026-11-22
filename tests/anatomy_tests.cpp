@@ -689,10 +689,13 @@ void test_radio_button_lamp_look() {
 
     // The lamp colour is settable (owner, 2026-11-22): the light map is
     // achromatic and the tint is set at run time, so a red lamp_color turns
-    // the chosen jewel red while its sibling keeps the green glass.
+    // the chosen jewel red while its sibling keeps the green glass. The
+    // change damages the chosen row alone, and a paint with no request
+    // paints only the damage, so the whole window is asked for here to
+    // draw both jewels again.
     (*low).lamp_color = stxlib::Optional<Color>::of(Color::rgba(255, 40, 10));
     RasterListPainter tinted;
-    window.paint(tinted);
+    window.paint(tinted, Rect{0.0, 0.0, 300.0, 120.0});
     std::size_t red_jewels = 0U;
     std::size_t green_jewels = 0U;
     for (const std::shared_ptr<const PartRaster>& raster : tinted.rasters) {
