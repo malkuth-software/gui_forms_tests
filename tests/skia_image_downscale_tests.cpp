@@ -1,9 +1,11 @@
 // draw_image below 1x (owner, 2026-11-11, audit P11): the image is resampled
-// through stx_conv (the interpolation seam, pixel-area) to the device size it
+// through stxlib::conv (the CONV field of the straight-alpha image and its
+// canon transfer over each device pixel's footprint) to the device size it
 // is drawn at, and the copy is cached by image content and size. Draws at or
 // above 1x are unchanged. This test checks both: a downscaled draw must equal
-// the seam's own output for the same image and size (one quantization step
-// of tolerance), and a draw at or above 1x must equal Skia's linear filter.
+// the engine's own output for the same image and size (one quantization
+// step of tolerance), and a draw at or above 1x must equal Skia's linear
+// filter.
 // It also prints the measurement the owner asked for: the distance of each
 // path from the exact box average of the source, and the time of a
 // downscaled thumbnail workload, before (Skia's linear filter, the path
@@ -12,14 +14,15 @@
 //
 // The box-average distance is printed, not asserted: one-pixel stripes
 // averaged over a footprint of non-integer width are not uniformly grey (a
-// footprint of 256/243 pixels mostly covers one stripe), and stx_conv's
-// pixel-area sampling integrates its own reconstruction of the source, not
-// the box of the source pixels.
+// footprint of 256/243 pixels mostly covers one stripe), and the canon
+// integrates the field's reconstruction of the source, not the box of the
+// source pixels.
 
 #include "gui_forms/window.hpp"
 #include "skia_raster.hpp"
 #include "src/core/image/png_writer.hpp"
-#include "src/core/interpolation/interpolation.hpp"
+
+#include <stxlib/conv.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -32,6 +35,7 @@
 #include <iostream>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -62,38 +66,50 @@ std::vector<std::byte> stripes(int size) {
 
 enum class Path : std::uint8_t { draw_image, linear_filter };
 
-// One premultiplied channel in [0, 1] quantized to a byte, as the renderer
-// quantizes its resampled copy.
-std::uint8_t channel_byte(double value) {
-    const double scaled = std::round(std::clamp(value, 0.0, 1.0) * 255.0);
-    return static_cast<std::uint8_t>(scaled);
-}
-
 // The exact expected copy: `pixels` (premultiplied BGRA, `size` square)
-// resampled by the interpolation seam (pixel-area) to a `target` square and
-// quantized as the renderer does (colour clamped to alpha).
+// made straight RGBA (each colour c of alpha a as round(c 255 / a), 0 where
+// a is 0), resampled by stxlib::conv's canon to a `target` square, and made
+// premultiplied BGRA again (round(c a / 255)), as the renderer does.
 std::vector<std::uint8_t> expected_conv(const std::vector<std::byte>& pixels, int size, int target) {
-    constexpr std::size_t channels = 4U;
+    const std::size_t channels = stxlib::conv::channels;
     const std::size_t source_side = static_cast<std::size_t>(size);
     const std::size_t target_side = static_cast<std::size_t>(target);
-    std::vector<double> source_samples(source_side * source_side * channels);
-    std::vector<double> target_samples(target_side * target_side * channels);
-    for (std::size_t index = 0U; index < source_samples.size(); ++index) {
-        source_samples[index] = static_cast<double>(std::to_integer<std::uint8_t>(pixels[index])) / 255.0;
+    std::vector<stxlib::u8> straight(source_side * source_side * channels);
+    for (std::size_t at = 0U; at < straight.size(); at += channels) {
+        const double alpha = static_cast<double>(std::to_integer<std::uint8_t>(pixels[at + 3U]));
+        const double scale = alpha > 0.0 ? 255.0 / alpha : 0.0;
+        straight[at] = static_cast<stxlib::u8>(
+            std::min(255.0, std::round(static_cast<double>(std::to_integer<std::uint8_t>(pixels[at + 2U])) * scale)));
+        straight[at + 1U] = static_cast<stxlib::u8>(
+            std::min(255.0, std::round(static_cast<double>(std::to_integer<std::uint8_t>(pixels[at + 1U])) * scale)));
+        straight[at + 2U] = static_cast<stxlib::u8>(
+            std::min(255.0, std::round(static_cast<double>(std::to_integer<std::uint8_t>(pixels[at])) * scale)));
+        straight[at + 3U] = std::to_integer<stxlib::u8>(pixels[at + 3U]);
     }
-    const interpolation::SourceImage from{source_samples, source_side, source_side, channels,
-                                          source_side * channels};
-    const interpolation::TargetImage to{target_samples, target_side, target_side, target_side * channels};
-    const interpolation::Status status =
-        interpolation::resample_image(from, to, interpolation::Sampling::pixel_area, interpolation::ValueRange{});
-    require(status == interpolation::Status::ok, "the seam resamples the stripes");
-    std::vector<std::uint8_t> expected(target_samples.size());
-    for (std::size_t at = 0U; at < target_samples.size(); at += channels) {
-        const double alpha = target_samples[at + 3U];
-        expected[at] = channel_byte(std::min(target_samples[at], alpha));
-        expected[at + 1U] = channel_byte(std::min(target_samples[at + 1U], alpha));
-        expected[at + 2U] = channel_byte(std::min(target_samples[at + 2U], alpha));
-        expected[at + 3U] = channel_byte(alpha);
+    stxlib::OperationResult<stxlib::conv::Field> made =
+        stxlib::conv::Field::make(source_side, source_side, stxlib::conv::FieldOptions{});
+    require(made.succeeded(), "the field is made");
+    stxlib::conv::Field field = std::move(made).take_value();
+    const stxlib::conv::Rgba8Image image{stxlib::View<stxlib::u8>(straight.data(), straight.size()), source_side,
+                                         source_side, source_side * channels};
+    require(field.compile(image).succeeded(), "the field compiles the stripes");
+    stxlib::OperationResult<stxlib::conv::Workspace> workspace_made = stxlib::conv::Workspace::make();
+    require(workspace_made.succeeded(), "the workspace is made");
+    stxlib::conv::Workspace workspace = std::move(workspace_made).take_value();
+    std::vector<stxlib::u8> resampled(target_side * target_side * channels);
+    const stxlib::conv::MutableRgba8Image destination{stxlib::MutableView<stxlib::u8>(resampled.data(), resampled.size()),
+                                                      target_side, target_side, target_side * channels};
+    const stxlib::conv::AxisMap map{target_side, target_side};
+    const stxlib::conv::Region whole{0U, 0U, target_side, target_side};
+    require(stxlib::conv::transfer(field, map, stxlib::conv::Mode::canon, destination, whole, workspace).succeeded(),
+            "the engine resamples the stripes");
+    std::vector<std::uint8_t> expected(resampled.size());
+    for (std::size_t at = 0U; at < resampled.size(); at += channels) {
+        const double alpha = static_cast<double>(resampled[at + 3U]) / 255.0;
+        expected[at] = static_cast<std::uint8_t>(std::round(static_cast<double>(resampled[at + 2U]) * alpha));
+        expected[at + 1U] = static_cast<std::uint8_t>(std::round(static_cast<double>(resampled[at + 1U]) * alpha));
+        expected[at + 2U] = static_cast<std::uint8_t>(std::round(static_cast<double>(resampled[at]) * alpha));
+        expected[at + 3U] = resampled[at + 3U];
     }
     return expected;
 }
@@ -177,7 +193,7 @@ void downscale_matches_conv() {
     require(bool(loaded), "the stripe image loads");
     render::SkiaRaster raster;
     require(raster.resize({256.0, 256.0}, 1.0), "the raster sizes");
-    std::printf("scale  box_error_linear  box_error_conv  conv_vs_seam\n");
+    std::printf("scale  box_error_linear  box_error_conv  conv_vs_engine\n");
     const double scales[] = {0.95, 0.9, 0.75, 0.6, 0.5, 0.33, 0.25, 0.1};
     for (const double scale : scales) {
         const int target = static_cast<int>(std::lround(size * scale));
@@ -188,8 +204,8 @@ void downscale_matches_conv() {
         const std::vector<std::uint8_t> expected = expected_conv(pixels, size, target);
         const int difference = conv_difference(raster, expected, target);
         std::printf("%.2f   %6.1f            %6.1f          %d\n", scale, before, after, difference);
-        // The drawn copy is the seam's output at the device size, drawn 1:1.
-        require(difference <= 1, "a downscaled draw is stx_conv's pixel-area resampling");
+        // The drawn copy is the engine's output at the device size, drawn 1:1.
+        require(difference <= 1, "a downscaled draw is stxlib::conv's canon resampling");
     }
 }
 
