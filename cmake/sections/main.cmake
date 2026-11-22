@@ -3009,6 +3009,17 @@ if(TARGET gui_forms_seam_proximity_lab_model)
     add_test(NAME gui_forms_seam_proximity_lab_tests
              COMMAND gui_forms_seam_proximity_lab_tests)
 endif()
+
+if(TARGET gui_forms_touch_start_model)
+    add_executable(gui_forms_touch_start_tests
+        tests/touch_start_tests.cpp)
+    target_include_directories(gui_forms_touch_start_tests PRIVATE
+        ${GUI_FORMS_SOURCE_DIR}/demo)
+    target_link_libraries(gui_forms_touch_start_tests PRIVATE
+        gui_forms_touch_start_model)
+    add_test(NAME gui_forms_touch_start_tests
+             COMMAND gui_forms_touch_start_tests)
+endif()
 endif()
 
 # The Gallery and the labs come from the test cache as IMPORTED targets, for
