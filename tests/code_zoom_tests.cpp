@@ -1,20 +1,14 @@
 // The code-zoom demonstrator (owner, 2026-11-22; demo/code_zoom/
-// code_zoom.hpp): its C++ language on tricky lines (raw strings with and
-// without delimiters, short and long, across lines; block-comment markers
-// that do not nest; line continuations of comments, strings and
-// directives; character literals beside digit separators; numbers,
-// attributes, directives, keywords and types), the zoom's easing and
+// code_zoom.hpp): the zoom's easing and
 // limits (zoom_model.hpp), the bench's sweep, summary and report shape
 // (code_bench.hpp), and the sheet: its runs, its culling at the zoom's true
 // size, its keys and its wheel. Drawing the runs' glyphs is the raster's,
 // covered by the painter and text-engine tests.
 
 #include "code_bench.hpp"
-#include "code_highlight.hpp"
 #include "code_sheet.hpp"
 #include "code_zoom.hpp"
 #include "code_zoom_program.hpp"
-#include "cpp_language.hpp"
 #include "zoom_model.hpp"
 
 #include "gui_forms/events/input_events/input_events.hpp"
@@ -42,9 +36,7 @@
 namespace {
 
 using namespace gui_forms;
-using code_highlight::LexState;
-using code_highlight::LineToken;
-using code_highlight::TokenKind;
+using stxlib::syntax::TokenKind;
 
 void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
@@ -52,228 +44,9 @@ void require(bool condition, const std::string& message) {
 
 bool near(double left, double right, double tolerance) { return std::fabs(left - right) <= tolerance; }
 
-// -- the C++ language ---------------------------------------------------------------------
-
-// Each line's tokens, lexed in order from the initial state, and the state
-// each line leaves.
-struct LexedLines final {
-    std::vector<std::vector<LineToken>> tokens{};
-    std::vector<LexState> exits{};
-};
-
-LexedLines lex(std::span<const std::string_view> lines) {
-    const code_highlight::CppLanguage& language = code_highlight::cpp_language();
-    LexedLines lexed{};
-    LexState state = language.initial_state();
-    for (const std::string_view line : lines) {
-        std::vector<LineToken> tokens{};
-        state = language.lex_line(line, state, tokens);
-        // Increasing columns without overlap, inside the line.
-        std::uint32_t end = 0U;
-        for (const LineToken& token : tokens) {
-            require(token.column >= end && token.length > 0U && token.column + token.length <= line.size(),
-                    "tokens are ordered, non-empty and inside the line: " + std::string(line));
-            end = token.column + token.length;
-        }
-        lexed.tokens.push_back(tokens);
-        lexed.exits.push_back(state);
-    }
-    return lexed;
-}
-
-// The token at `text`'s first occurrence in `line` (from `from`) covers it
-// exactly and is of `kind`.
-void expect_token(std::string_view line, const std::vector<LineToken>& tokens, std::string_view text, TokenKind kind,
-                  std::size_t from = 0U) {
-    const std::size_t column = line.find(text, from);
-    require(column != std::string_view::npos, "the test line holds " + std::string(text));
-    for (const LineToken& token : tokens) {
-        if (token.column != column) continue;
-        require(token.length == text.size() && token.kind == kind,
-                "'" + std::string(text) + "' in '" + std::string(line) + "' is one " +
-                    std::string(code_highlight::token_kind_name(kind)) + " token, not " +
-                    std::string(code_highlight::token_kind_name(token.kind)) + " of " +
-                    std::to_string(token.length));
-        return;
-    }
-    require(false, "no token starts at '" + std::string(text) + "' in '" + std::string(line) + "'");
-}
-
-void test_raw_strings() {
-    {
-        // A ")\"" inside a delimited raw string does not close it.
-        const std::array<std::string_view, 1> lines{R"cpp(auto s = R"x(say ")" here)x" + 1;)cpp"};
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], R"cpp(R"x(say ")" here)x")cpp", TokenKind::string);
-        expect_token(lines[0], lexed.tokens[0], "+", TokenKind::operator_symbol);
-        expect_token(lines[0], lexed.tokens[0], "1", TokenKind::number);
-        require(lexed.exits[0] == LexState{}, "a closed raw string leaves the line in code");
-    }
-    {
-        // Across lines, with a false close (')sql'') on the way.
-        const std::array<std::string_view, 3> lines{
-            R"cpp(const char* q = R"sql(SELECT ")" FROM)cpp",
-            R"cpp(t WHERE x = ')sql' )sql"; int after;)cpp",
-            "int next;",
-        };
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], R"cpp(R"sql(SELECT ")" FROM)cpp", TokenKind::string);
-        require(lexed.exits[0] != LexState{}, "an open raw string carries its delimiter to the next line");
-        expect_token(lines[1], lexed.tokens[1], R"cpp(t WHERE x = ')sql' )sql")cpp", TokenKind::string);
-        expect_token(lines[1], lexed.tokens[1], ";", TokenKind::punctuation);
-        expect_token(lines[1], lexed.tokens[1], "after", TokenKind::identifier);
-        require(lexed.exits[1] == LexState{}, "the close returns to code");
-        expect_token(lines[2], lexed.tokens[2], "int", TokenKind::type);
-    }
-    {
-        // A sixteen-byte delimiter (kept as its hash): a near miss does not
-        // close it, the exact one does.
-        const std::array<std::string_view, 3> lines{
-            R"cpp(R"0123456789abcdef(body)cpp",
-            R"cpp()0123456789abcdee" still inside)cpp",
-            R"cpp(end)0123456789abcdef"_raw x)cpp",
-        };
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], lines[0], TokenKind::string);
-        expect_token(lines[1], lexed.tokens[1], lines[1], TokenKind::string);
-        require(lexed.exits[1] == lexed.exits[0], "the near miss keeps the raw string open");
-        expect_token(lines[2], lexed.tokens[2], R"cpp(end)0123456789abcdef"_raw)cpp", TokenKind::string);
-        expect_token(lines[2], lexed.tokens[2], "x", TokenKind::identifier, 25U);
-        require(lexed.exits[2] == LexState{}, "the exact close returns to code");
-    }
-    {
-        // Prefixes and a suffix; a seventeen-byte delimiter is invalid.
-        const std::array<std::string_view, 2> lines{
-            R"cpp(f(u8R"(x)"_sv, LR"--(y)--");)cpp",
-            R"cpp(R"0123456789abcdefg(z)0123456789abcdefg")cpp",
-        };
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], R"cpp(u8R"(x)"_sv)cpp", TokenKind::string);
-        expect_token(lines[0], lexed.tokens[0], R"cpp(LR"--(y)--")cpp", TokenKind::string);
-        expect_token(lines[1], lexed.tokens[1], lines[1], TokenKind::invalid);
-        require(lexed.exits[1] == LexState{}, "an invalid raw string does not carry over");
-    }
-}
-
-void test_comments() {
-    {
-        // Block-comment markers do not nest: the first */ ends it.
-        const std::array<std::string_view, 1> lines{"/* a /* b */ c */"};
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "/* a /* b */", TokenKind::comment);
-        expect_token(lines[0], lexed.tokens[0], "c", TokenKind::identifier);
-        expect_token(lines[0], lexed.tokens[0], "*/", TokenKind::operator_symbol, 13U);
-    }
-    {
-        const std::array<std::string_view, 4> lines{
-            "int x; /* open",
-            "// not a line comment, nor \"a string",
-            "still */ int y; // done",
-            "int z;",
-        };
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "/* open", TokenKind::comment);
-        expect_token(lines[1], lexed.tokens[1], lines[1], TokenKind::comment);
-        require(lexed.tokens[1].size() == 1U, "a line inside a block comment is one comment");
-        expect_token(lines[2], lexed.tokens[2], "still */", TokenKind::comment);
-        expect_token(lines[2], lexed.tokens[2], "y", TokenKind::identifier);
-        expect_token(lines[2], lexed.tokens[2], "// done", TokenKind::comment);
-        require(lexed.exits[2] == LexState{}, "a closed block comment and an unspliced line comment end");
-        expect_token(lines[3], lexed.tokens[3], "z", TokenKind::identifier);
-    }
-}
-
-void test_line_continuations() {
-    {
-        const std::array<std::string_view, 3> lines{"x = 1; // note \\", "continued note", "y = 2;"};
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "// note \\", TokenKind::comment);
-        expect_token(lines[1], lexed.tokens[1], lines[1], TokenKind::comment);
-        expect_token(lines[2], lexed.tokens[2], "y", TokenKind::identifier);
-    }
-    {
-        const std::array<std::string_view, 3> lines{"s = \"abc\\", "def\" + t;", "u;"};
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "\"abc\\", TokenKind::string);
-        expect_token(lines[1], lexed.tokens[1], "def\"", TokenKind::string);
-        expect_token(lines[1], lexed.tokens[1], "t", TokenKind::identifier);
-        require(lexed.exits[1] == LexState{}, "the continued string closes");
-    }
-    {
-        // A directive continued: its next line's '#' is an operator, not a
-        // directive; the line after it is code again.
-        const std::array<std::string_view, 4> lines{
-            "#define TWICE(x) \\",
-            "  #x ((x) + (x)) \\",
-            "  /* tail */",
-            "#endif",
-        };
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "#define", TokenKind::preprocessor);
-        expect_token(lines[0], lexed.tokens[0], "TWICE", TokenKind::identifier);
-        require(lexed.exits[0] != LexState{}, "a spliced directive carries over");
-        expect_token(lines[1], lexed.tokens[1], "#", TokenKind::operator_symbol);
-        require(lexed.exits[1] == lexed.exits[0], "and carries over again");
-        expect_token(lines[2], lexed.tokens[2], "/* tail */", TokenKind::comment);
-        require(lexed.exits[2] == LexState{}, "an unspliced line ends the directive");
-        expect_token(lines[3], lexed.tokens[3], "#endif", TokenKind::preprocessor);
-    }
-}
-
-void test_literals_and_names() {
-    {
-        const std::array<std::string_view, 1> lines{R"cpp(n = 1'000'000 + 'a' + u8'b' + '\'' + L'\\';)cpp"};
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "1'000'000", TokenKind::number);
-        expect_token(lines[0], lexed.tokens[0], "'a'", TokenKind::character);
-        expect_token(lines[0], lexed.tokens[0], "u8'b'", TokenKind::character);
-        expect_token(lines[0], lexed.tokens[0], R"cpp('\'')cpp", TokenKind::character);
-        expect_token(lines[0], lexed.tokens[0], R"cpp(L'\\')cpp", TokenKind::character);
-    }
-    {
-        const std::array<std::string_view, 1> lines{"v = 0x1.8p+3f + 1e-5 + .5 + 0b1010'1010u + 42_km;"};
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "0x1.8p+3f", TokenKind::number);
-        expect_token(lines[0], lexed.tokens[0], "1e-5", TokenKind::number);
-        expect_token(lines[0], lexed.tokens[0], ".5", TokenKind::number);
-        expect_token(lines[0], lexed.tokens[0], "0b1010'1010u", TokenKind::number);
-        expect_token(lines[0], lexed.tokens[0], "42_km", TokenKind::number);
-    }
-    {
-        const std::array<std::string_view, 4> lines{
-            R"cpp([[nodiscard, deprecated("old")]] constexpr std::size_t f() noexcept;)cpp",
-            "  #  include <vector> // the header",
-            "Painter painter; MAX_SIZE; char32_t c = nullptr;",
-            R"cpp(bad = "unterminated)cpp",
-        };
-        const LexedLines lexed = lex(lines);
-        expect_token(lines[0], lexed.tokens[0], "[[", TokenKind::attribute);
-        expect_token(lines[0], lexed.tokens[0], "nodiscard", TokenKind::attribute);
-        expect_token(lines[0], lexed.tokens[0], "deprecated", TokenKind::attribute);
-        expect_token(lines[0], lexed.tokens[0], "\"old\"", TokenKind::string);
-        expect_token(lines[0], lexed.tokens[0], "]]", TokenKind::attribute);
-        expect_token(lines[0], lexed.tokens[0], "constexpr", TokenKind::keyword);
-        expect_token(lines[0], lexed.tokens[0], "std", TokenKind::identifier);
-        expect_token(lines[0], lexed.tokens[0], "::", TokenKind::operator_symbol);
-        expect_token(lines[0], lexed.tokens[0], "size_t", TokenKind::type);
-        expect_token(lines[0], lexed.tokens[0], "noexcept", TokenKind::keyword);
-        expect_token(lines[1], lexed.tokens[1], "#  include", TokenKind::preprocessor);
-        expect_token(lines[1], lexed.tokens[1], "<vector>", TokenKind::string);
-        expect_token(lines[1], lexed.tokens[1], "// the header", TokenKind::comment);
-        expect_token(lines[2], lexed.tokens[2], "Painter", TokenKind::type);
-        expect_token(lines[2], lexed.tokens[2], "painter", TokenKind::identifier);
-        expect_token(lines[2], lexed.tokens[2], "MAX_SIZE", TokenKind::identifier);
-        expect_token(lines[2], lexed.tokens[2], "char32_t", TokenKind::type);
-        expect_token(lines[2], lexed.tokens[2], "nullptr", TokenKind::keyword);
-        expect_token(lines[3], lexed.tokens[3], "\"unterminated", TokenKind::invalid);
-        require(lexed.exits[3] == LexState{}, "an unterminated string does not carry over");
-    }
-    require(code_highlight::cpp_language().name() == "cpp" && code_highlight::cpp_language().display_name() == "C++",
-            "the language's names");
-    require(code_highlight::token_kind_name(TokenKind::operator_symbol) == "operator_symbol" &&
-                code_highlight::token_kind_name(static_cast<TokenKind>(200)) == "plain",
-            "kind names, plain outside the enumeration");
-}
+// The highlighter is STXlib's (stxlib/syntax.hpp); its tokens, carried states
+// and edits are tested there (STXlib tests/syntax_tests.cpp). What is tested
+// here is the sheet's use of it: runs and their colours (test_sheet_runs).
 
 // -- the zoom -----------------------------------------------------------------------------
 
@@ -495,6 +268,12 @@ void test_sheet_runs() {
     require((*sheet).run_text(name) == "x" && name.column == gutter_columns + tab_columns, "a tab is a tab stop");
     const SheetRun& last = runs[lines[1].first_run + lines[1].run_count - 1U];
     require((*sheet).run_text(last) == "\"s\"" && last.colour == SheetColour::string, "the string ends the line");
+    // A source whose name selects another language is lexed in it.
+    require((*sheet).load_source("page.css", "a { color: #fff; }\n"), "a style sheet loads");
+    const SheetRun& colour = (*sheet).runs()[(*sheet).lines()[0].first_run + 5U];
+    require((*sheet).run_text(colour) == "#fff" && colour.colour == SheetColour::number, "a CSS colour, in the number's colour");
+    require(colour_of(TokenKind::control) == SheetColour::keyword && colour_of(TokenKind::directive) == SheetColour::preprocessor,
+            "control words are keywords, directives the preprocessor's colour");
     require(colour_of(TokenKind::operator_symbol) == SheetColour::punctuation &&
                 colour_of(TokenKind::identifier) == SheetColour::text &&
                 colour_of(TokenKind::plain) == SheetColour::text,
@@ -666,10 +445,6 @@ void test_window() {
 
 int main() {
     try {
-        test_raw_strings();
-        test_comments();
-        test_line_continuations();
-        test_literals_and_names();
         test_zoom_easing_and_limits();
         test_bench();
         test_arguments();
