@@ -151,10 +151,63 @@ void drag_without_button() {
     HostDragSourceRequest request;
     request.items = {DragTextData{"no button"}};
     request.allowed_effects = DragEffect::copy;
-    const WindowsDragOutcome outcome = host::detail::run_windows_drag(request);
+    const bool source_closed = false;
+    const WindowsDragOutcome outcome = host::detail::run_windows_drag(request, source_closed);
     require(outcome.status.error == HostServiceError::backend_failure &&
                 outcome.performed_effect == DragEffect::none,
             "a drag with no button held must be refused before DoDragDrop");
+}
+
+// The hostile source window: its timer's handler destroys it, and its
+// WM_DESTROY sets the flag the host's WM_DESTROY sets
+// (WindowsHostServices::source_window_destroyed).
+LRESULT CALLBACK hostile_source_procedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam) noexcept {
+    if (message == WM_TIMER) {
+        KillTimer(window, wparam);
+        DestroyWindow(window);
+        return 0;
+    }
+    if (message == WM_DESTROY) {
+        bool* const closed = reinterpret_cast<bool*>(GetWindowLongPtrW(window, GWLP_USERDATA));
+        if (closed != nullptr) *closed = true;
+        return 0;
+    }
+    return DefWindowProcW(window, message, wparam, lparam);
+}
+
+// Hostile handlers under a drag (house style section 5): DoDragDrop's loop
+// dispatches messages, so a timer can destroy the source window mid-drag.
+// The drop source must then cancel at its next QueryContinueDrag, with the
+// button still held, as the loop here simulates (a real drag needs a held
+// button OLE follows).
+void drag_cancelled_by_source_destruction() {
+    WNDCLASSEXW type{};
+    type.cbSize = sizeof(type);
+    type.lpfnWndProc = &hostile_source_procedure;
+    type.hInstance = GetModuleHandleW(nullptr);
+    type.lpszClassName = L"GuiFormsHostileDragSource";
+    require(RegisterClassExW(&type) != 0, "the hostile window class must register");
+    bool source_closed = false;
+    const HWND window = CreateWindowExW(0, type.lpszClassName, L"drag source", WS_OVERLAPPEDWINDOW, 0, 0, 200,
+                                        100, nullptr, nullptr, type.hInstance, nullptr);
+    require(window != nullptr, "the hostile source window must be created");
+    SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(&source_closed));
+    IDropSource* const source = host::detail::make_windows_drop_source(MK_LBUTTON, source_closed);
+    const ReleaseScope source_reference(source);
+    require(source != nullptr, "the drop source must be created");
+    require((*source).QueryContinueDrag(FALSE, MK_LBUTTON) == S_OK, "a held button continues the drag");
+    require(SetTimer(window, 1U, 20U, nullptr) != 0U, "the hostile timer must start");
+    const ULONGLONG give_up = GetTickCount64() + 2000U;
+    HRESULT answer = S_OK;
+    while (answer == S_OK && GetTickCount64() < give_up) {
+        MSG message{};
+        while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE) != FALSE) DispatchMessageW(&message);
+        answer = (*source).QueryContinueDrag(FALSE, MK_LBUTTON);
+        if (answer == S_OK) MsgWaitForMultipleObjects(0, nullptr, FALSE, 10U, QS_ALLINPUT);
+    }
+    require(source_closed && IsWindow(window) == FALSE, "the timer's handler must destroy the source window");
+    require(answer == DRAGDROP_S_CANCEL, "a drag whose source window is destroyed must be cancelled");
+    UnregisterClassW(type.lpszClassName, type.hInstance);
 }
 
 } // namespace
@@ -165,6 +218,7 @@ int main() {
     refused_items();
     registration();
     drag_without_button();
+    drag_cancelled_by_source_destruction();
     std::cout << "gui_forms_windows_drag_drop_tests: all tests passed\n";
     return EXIT_SUCCESS;
 }
