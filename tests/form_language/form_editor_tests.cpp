@@ -1,5 +1,6 @@
-// Form documents' editor (stage FD, phase FD4; XML since cp34). Gate: a
-// scripted edit of one property changes only that attribute's bytes;
+// Form documents' editor (stage FD, phase FD4; XML since cp34; binding
+// elements since 2026-11-21). Gate: a scripted edit of one property or one
+// binding changes only that attribute's or that `bind` element's bytes;
 // adding, removing and moving objects change only their own lines; comments
 // and the document's own layout survive every edit; an edit that would make
 // an invalid document is refused and leaves the document as it was.
@@ -10,6 +11,7 @@
 
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/check_box.hpp"
+#include "gui_forms/controls/text_box.hpp"
 #include "gui_forms/controls/user_control.hpp"
 
 #include <cstddef>
@@ -20,6 +22,7 @@
 
 namespace {
 
+using gui_forms::form_language::FormBindingText;
 using gui_forms::form_language::FormDocument;
 using gui_forms::form_language::FormEditOutcome;
 using gui_forms::form_language::FormSchema;
@@ -30,6 +33,7 @@ using gui_forms::form_language::move_form_object;
 using gui_forms::form_language::open_form_document;
 using gui_forms::form_language::remove_form_object;
 using gui_forms::form_language::reset_form_property;
+using gui_forms::form_language::set_form_binding;
 using gui_forms::form_language::set_form_property;
 using gui_forms::theme_language::DiagnosticCode;
 using gui_forms::theme_language::ThemeDiagnosticList;
@@ -49,6 +53,7 @@ FormSchema sample_schema() {
     schema.types.push_back(form_control_type<gui_forms::UserControl>("user_control"));
     schema.types.push_back(form_control_type<gui_forms::Button>("button"));
     schema.types.push_back(form_control_type<gui_forms::CheckBox>("check_box"));
+    schema.types.push_back(form_control_type<gui_forms::TextBox>("text_box"));
     return schema;
 }
 
@@ -165,40 +170,182 @@ void test_properties() {
             "property: a single-quoted attribute set");
     check_text(single, replaced(single_quoted, "'Cancel'", "'it&apos;s \"so\"'"),
                "property: escaped for the single-quoted attribute, its quote kept");
+    // An attribute is always a literal value: a text that begins with
+    // `bind(` is that text, written as it is (no escape).
     FormDocument literal = open(schema, base);
-    require(set_form_property(literal, "app.ok", "text", "\\bind(x) is a call", schema, diagnostics) ==
+    require(set_form_property(literal, "app.ok", "text", "bind(x) is a call", schema, diagnostics) ==
                 FormEditOutcome::edited,
-            "property: a text beginning with bind( written escaped");
+            "property: a text beginning with bind( written");
+    check_text(literal, replaced(base, "\"OK\"", "\"bind(x) is a call\""), "property: written as it is");
     require(model_has_text(literal, "bind(x) is a call"), "property: read back as text, not as a binding");
 
-    // A binding is a value in its property's slot (owner rulings FD-6 R1 and
-    // R6); an `on-` handler is refused, leaving the document as it was.
-    FormDocument bound = open(schema, base);
-    require(set_form_property(bound, "app.ok", "command", "bind(accept_)", schema, diagnostics) ==
-                FormEditOutcome::edited,
-            "binding: written in the Command slot");
-    const std::string bound_text = replaced(base, "text=\"OK\"/>", "text=\"OK\" command=\"bind(accept_)\"/>");
-    check_text(bound, bound_text, "binding: kept on the tag's line");
-    bool binding_read = false;
-    for (const gui_forms::form_language::FormProperty& property : bound.model.properties) {
-        if (property.binding && (*property.binding).source == "accept_") binding_read = true;
-    }
-    require(binding_read, "binding: the model reads the binding");
+    // An `on-` handler is refused (owner ruling FD-6 R6), leaving the
+    // document as it was.
+    FormDocument handler = open(schema, base);
     diagnostics.clear();
-    require(set_form_property(bound, "app.ok", "on-clicked", "accept", schema, diagnostics) ==
+    require(set_form_property(handler, "app.ok", "on-clicked", "accept", schema, diagnostics) ==
                 FormEditOutcome::refused,
-            "binding: an on- handler refused");
+            "property: an on- handler refused");
     require(diagnostics.records().size() == 1U &&
                 diagnostics.records()[0].code == DiagnosticCode::form_handler_removed,
-            "binding: the handler's diagnostic, E816");
+            "property: the handler's diagnostic, E816");
+    check_text(handler, std::string(base), "property: the refused document is unchanged");
+}
+
+// A document with bindings: a comment beside them, a `bind` whose `to`
+// comes before its `property`, and one whose options come first.
+const std::string_view bound_base =
+    "<form xmlns=\"urn:gui-forms:form:1\" id=\"app.window\" text=\"Main\">\n"
+    "  <user-control id=\"app.body\">\n"
+    "    <check-box id=\"app.flag\" tab-index=\"1\">\n"
+    "      <!-- the flag follows the model -->\n"
+    "      <bind to=\"flag_\" property=\"checked\" mode=\"one-way\"/>\n"
+    "      <bind property=\"text\" to=\"names_\" field=\"title\"/>\n"
+    "    </check-box>\n"
+    "    <text-box id=\"app.name\"><bind mode=\"two-way\" update=\"on-change\" property=\"text\" to=\"names_\" "
+    "field=\"name\"/></text-box>\n"
+    "  </user-control>\n"
+    "</form>\n";
+
+// Whether the model binds a property to the source `source`.
+bool model_binds(const FormDocument& document, std::string_view source) {
+    for (const gui_forms::form_language::FormProperty& property : document.model.properties) {
+        if (property.binding && (*property.binding).source == source) return true;
+    }
+    return false;
+}
+
+// Bindings are `bind` elements (owner, 2026-11-21): set_form_binding adds
+// one or changes only the bytes of the attributes that change; setting a
+// property replaces its binding and binding it replaces its attribute;
+// a reset removes either; comments and attribute order survive.
+void test_bindings() {
+    const FormSchema schema = sample_schema();
+    ThemeDiagnosticList diagnostics{};
+
+    FormDocument added = open(schema, base);
+    require(set_form_binding(added, "app.ok", "command", FormBindingText{.to = "accept_"}, schema, diagnostics) ==
+                FormEditOutcome::edited,
+            "binding: added to an empty element");
+    check_text(added,
+               replaced(base, "    <button id=\"app.ok\" text=\"OK\"/>\n",
+                        "    <button id=\"app.ok\" text=\"OK\">\n"
+                        "      <bind property=\"command\" to=\"accept_\"/>\n"
+                        "    </button>\n"),
+               "binding: the element opened, the bind two spaces deeper");
+    require(model_binds(added, "accept_"), "binding: the model reads the binding");
+
+    FormDocument source = open(schema, bound_base);
+    require(set_form_binding(source, "app.flag", "checked", FormBindingText{.to = "other_", .mode = "one-way"}, schema,
+                             diagnostics) == FormEditOutcome::edited,
+            "binding: the source changed");
+    check_text(source, replaced(bound_base, "to=\"flag_\"", "to=\"other_\""),
+               "binding: only the source's bytes change, the comment and attribute order kept");
+    require(model_binds(source, "other_") && !model_binds(source, "flag_"), "binding: the model follows");
+
+    FormDocument unchanged = open(schema, bound_base);
+    require(set_form_binding(unchanged, "app.flag", "checked", FormBindingText{.to = "flag_", .mode = "one-way"},
+                             schema, diagnostics) == FormEditOutcome::unchanged,
+            "binding: the same binding changes nothing");
+
+    FormDocument widened = open(schema, bound_base);
+    require(set_form_binding(widened, "app.flag", "checked", FormBindingText{.to = "flag_"}, schema, diagnostics) ==
+                FormEditOutcome::edited,
+            "binding: an option removed");
+    check_text(widened, replaced(bound_base, " mode=\"one-way\"", ""), "binding: the option takes its space");
+
+    FormDocument field = open(schema, bound_base);
+    require(set_form_binding(field, "app.flag", "checked",
+                             FormBindingText{.to = "flag_", .field = "done", .mode = "one-way"}, schema,
+                             diagnostics) == FormEditOutcome::edited,
+            "binding: an attribute added");
+    check_text(field, replaced(bound_base, "mode=\"one-way\"/>", "mode=\"one-way\" field=\"done\"/>"),
+               "binding: after the element's last attribute");
+
+    FormDocument leading = open(schema, bound_base);
+    require(set_form_binding(leading, "app.name", "text", FormBindingText{.to = "names_", .field = "name"}, schema,
+                             diagnostics) == FormEditOutcome::edited,
+            "binding: the first two attributes removed");
+    check_text(leading, replaced(bound_base, "mode=\"two-way\" update=\"on-change\" ", ""),
+               "binding: the run up to the attribute after it");
+
+    FormDocument another = open(schema, bound_base);
+    require(set_form_binding(another, "app.flag", "visible", FormBindingText{.to = "shown_"}, schema, diagnostics) ==
+                FormEditOutcome::edited,
+            "binding: a second property bound");
+    check_text(another,
+               replaced(bound_base, "field=\"title\"/>\n",
+                        "field=\"title\"/>\n      <bind property=\"visible\" to=\"shown_\"/>\n"),
+               "binding: after the object's last bind, aligned with it");
+
+    // Setting a bound property removes its binding, and binding a set one
+    // removes its attribute.
+    FormDocument set = open(schema, bound_base);
+    require(set_form_property(set, "app.flag", "checked", "true", schema, diagnostics) == FormEditOutcome::edited,
+            "binding: a bound property set");
+    check_text(set,
+               replaced(replaced(bound_base, "tab-index=\"1\">", "tab-index=\"1\" checked=\"true\">"),
+                        "      <bind to=\"flag_\" property=\"checked\" mode=\"one-way\"/>\n", ""),
+               "binding: the bind's line removed, the comment kept");
+    FormDocument rebound = open(schema, base);
+    require(set_form_binding(rebound, "app.cancel", "text", FormBindingText{.to = "names_", .field = "label"},
+                             schema, diagnostics) == FormEditOutcome::edited,
+            "binding: a set property bound");
+    check_text(rebound,
+               replaced(base, "    <button id=\"app.cancel\"\n        text=\"Cancel\"/>\n",
+                        "    <button id=\"app.cancel\">\n"
+                        "      <bind property=\"text\" to=\"names_\" field=\"label\"/>\n"
+                        "    </button>\n"),
+               "binding: the attribute removed, the element opened");
+
+    FormDocument reset = open(schema, bound_base);
+    require(reset_form_property(reset, "app.flag", "checked", schema, diagnostics) == FormEditOutcome::edited,
+            "binding: reset");
+    check_text(reset, replaced(bound_base, "      <bind to=\"flag_\" property=\"checked\" mode=\"one-way\"/>\n", ""),
+               "binding: the reset takes the bind's line");
+    require(reset_form_property(reset, "app.flag", "checked", schema, diagnostics) == FormEditOutcome::unchanged,
+            "binding: resetting it again changes nothing");
+
+    // Refusals leave the document as it was.
+    FormDocument refused = open(schema, bound_base);
     diagnostics.clear();
-    require(set_form_property(bound, "app.cancel", "text", "bind(names_, 'bad \\q')", schema, diagnostics) ==
+    require(set_form_binding(refused, "app.flag", "tab-index", FormBindingText{.to = "n_"}, schema, diagnostics) ==
                 FormEditOutcome::refused,
-            "binding: a refused escape in the field refuses the edit");
+            "binding: a property that is not bindable refused");
     require(diagnostics.records().size() == 1U &&
-                diagnostics.records()[0].code == DiagnosticCode::form_escape_invalid,
-            "binding: the refused escape's diagnostic, E815");
-    check_text(bound, bound_text, "binding: the refused document is unchanged");
+                diagnostics.records()[0].code == DiagnosticCode::form_binding_invalid,
+            "binding: its diagnostic, E817");
+    diagnostics.clear();
+    require(set_form_binding(refused, "app.flag", "text",
+                             FormBindingText{.to = "names_", .field = "title", .update = "on-change"}, schema,
+                             diagnostics) == FormEditOutcome::refused,
+            "binding: update on a one-way binding refused");
+    require(diagnostics.records().size() == 1U &&
+                diagnostics.records()[0].code == DiagnosticCode::form_binding_option_invalid,
+            "binding: its diagnostic, E818");
+    require(set_form_binding(refused, "app.flag", "checked", FormBindingText{}, schema, diagnostics) ==
+                FormEditOutcome::not_admitted,
+            "binding: a binding without a source");
+    require(set_form_binding(refused, "app.flag", "Checked", FormBindingText{.to = "flag_"}, schema, diagnostics) ==
+                FormEditOutcome::not_admitted,
+            "binding: a name that is not kebab-case");
+    require(set_form_binding(refused, "app.none", "checked", FormBindingText{.to = "flag_"}, schema, diagnostics) ==
+                FormEditOutcome::object_missing,
+            "binding: an unknown object");
+    check_text(refused, std::string(bound_base), "binding: the refused document is unchanged");
+
+    // A bind is no object: objects are placed among the objects only.
+    FormDocument placed = open(schema, bound_base);
+    require(add_form_object(placed, "app.flag", 0U, "button", "app.inner", schema, diagnostics) ==
+                FormEditOutcome::edited,
+            "binding: an object added beside the binds");
+    check_text(placed,
+               replaced(bound_base, "field=\"title\"/>\n",
+                        "field=\"title\"/>\n      <button id=\"app.inner\"/>\n"),
+               "binding: the first object after the last bind");
+    require(add_form_object(placed, "app.flag", 0U, "bind", "app.bind", schema, diagnostics) ==
+                FormEditOutcome::not_admitted,
+            "binding: a bind is no object");
 }
 
 void test_objects() {
@@ -321,6 +468,7 @@ void test_comments() {
 
 int main() {
     test_properties();
+    test_bindings();
     test_objects();
     test_line_endings();
     test_comments();
@@ -328,7 +476,7 @@ int main() {
         std::cerr << failures << " form editor checks failed\n";
         return 1;
     }
-    std::cout << "form editor: attributes set, added and reset, objects added, removed and moved, refusals, line "
-                 "endings and comments passed\n";
+    std::cout << "form editor: attributes set, added and reset, bind elements added, changed and replaced, objects "
+                 "added, removed and moved, refusals, line endings and comments passed\n";
     return 0;
 }

@@ -404,7 +404,7 @@ internal static unsafe class Program
         "  <part name=\"face\" role=\"face\" box=\"inset(region, 0)\"/>\n" +
         "  <children>\n" +
         "    <flex-panel id=\"@header\" dock=\"top\">\n" +
-        "      <label id=\"@title\" text=\"bind(self.title, one_way)\"/>\n" +
+        "      <label id=\"@title\"><bind property=\"text\" to=\"self.title\" mode=\"one-way\"/></label>\n" +
         "    </flex-panel>\n" +
         "  </children>\n" +
         "  <focus target=\"none\"/>\n" +

@@ -16,15 +16,22 @@
         tab-index="0">
       <check-box id="sample.general.auto-save"
           text="Save automatically"
-          checked="bind(auto_save_)"
-          tab-index="0"/>
+          tab-index="0">
+        <bind property="checked" to="auto_save_"/>
+      </check-box>
     </group-box>
-    <button id="sample.ok" text="OK" tab-index="1" anchor="top right" command="bind(accept_)"/>
-    <button id="sample.cancel" text="Cancel" tab-index="2" command="bind(dismiss_)"/>
+    <button id="sample.ok" text="OK" tab-index="1" anchor="top right">
+      <bind property="command" to="accept_"/>
+    </button>
+    <button id="sample.cancel" text="Cancel" tab-index="2">
+      <bind property="command" to="dismiss_"/>
+    </button>
     <list-box id="sample.modes" items="AM FM 'Wide FM'" tab-index="3"/>
     <domain-up-down id="sample.band" items="HF VHF UHF" tab-index="4"/>
     <label id="sample.heading" text="Bands"/>
-    <numeric-up-down id="sample.level" value="bind(level_, one_way)" tab-index="5"/>
+    <numeric-up-down id="sample.level" tab-index="5">
+      <bind property="value" to="level_" mode="one-way"/>
+    </numeric-up-down>
   </user-control>
   <command id="sample.save"/>
 </form>

@@ -4,6 +4,8 @@
 <user-control xmlns="urn:gui-forms:form:1" id="notes.root">
   <note-card id="notes.card"
       padding="3">
-    <button id="notes.card.close" text="Close" command="bind(close_)"/>
+    <button id="notes.card.close" text="Close">
+      <bind property="command" to="close_"/>
+    </button>
   </note-card>
 </user-control>

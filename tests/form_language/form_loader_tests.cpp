@@ -296,11 +296,15 @@ void test_bindings() {
             "bindings: a repeated name and a name that is no identifier, refused");
 
     const std::string_view document = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.root\">\n"
-                                      "  <check-box id=\"app.autosave\" checked=\"bind(autosave_)\"/>\n"
-                                      "  <check-box id=\"app.mirror\" checked=\"bind(autosave_, one_way)\"/>\n"
-                                      "  <numeric-up-down id=\"app.level\" value=\"bind(level_)\"/>\n"
-                                      "  <text-box id=\"app.name\" text=\"bind(people_, 'name', update on-change)\"/>\n"
-                                      "  <button id=\"app.save\" text=\"Save\" command=\"bind(save_)\"/>\n"
+                                      "  <check-box id=\"app.autosave\"><bind property=\"checked\" to=\"autosave_\"/></check-box>\n"
+                                      "  <check-box id=\"app.mirror\">\n"
+                                      "    <bind property=\"checked\" to=\"autosave_\" mode=\"one-way\"/>\n"
+                                      "  </check-box>\n"
+                                      "  <numeric-up-down id=\"app.level\"><bind property=\"value\" to=\"level_\"/></numeric-up-down>\n"
+                                      "  <text-box id=\"app.name\">\n"
+                                      "    <bind property=\"text\" to=\"people_\" field=\"name\" update=\"on-change\"/>\n"
+                                      "  </text-box>\n"
+                                      "  <button id=\"app.save\" text=\"Save\"><bind property=\"command\" to=\"save_\"/></button>\n"
                                       "</user-control>\n";
     Workspace workspace{};
     LoadedForm loaded{};
@@ -344,12 +348,12 @@ void test_bindings() {
     }
 
     // A missing source, a source of another kind and a disposed one: every
-    // refusal located, the earlier load kept.
+    // refusal located at its bind element, the earlier load kept.
     const std::string_view refused = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"bad.root\">\n"
-                                     "  <check-box id=\"bad.a\" checked=\"bind(missing_)\"/>\n"
-                                     "  <check-box id=\"bad.b\" checked=\"bind(level_)\"/>\n"
-                                     "  <button id=\"bad.c\" command=\"bind(autosave_)\"/>\n"
-                                     "  <check-box id=\"bad.d\" checked=\"bind(disposed_)\"/>\n"
+                                     "  <check-box id=\"bad.a\"><bind property=\"checked\" to=\"missing_\"/></check-box>\n"
+                                     "  <check-box id=\"bad.b\"><bind property=\"checked\" to=\"level_\"/></check-box>\n"
+                                     "  <button id=\"bad.c\"><bind property=\"command\" to=\"autosave_\"/></button>\n"
+                                     "  <check-box id=\"bad.d\"><bind property=\"checked\" to=\"disposed_\"/></check-box>\n"
                                      "</user-control>\n";
     require(load(workspace, refused, schema, sources, loaded) == FormLoadOutcome::refused, "bindings: refused");
     const std::span<const ThemeDiagnostic> records = workspace.diagnostics.records();
@@ -534,7 +538,7 @@ void test_load_window() {
                                       "    cancel-button=\"settings.cancel\">\n"
                                       "  <command id=\"settings.save\"/>\n"
                                       "  <user-control id=\"settings.body\">\n"
-                                      "    <check-box id=\"settings.auto-save\" checked=\"bind(auto_save_)\"/>\n"
+                                      "    <check-box id=\"settings.auto-save\"><bind property=\"checked\" to=\"auto_save_\"/></check-box>\n"
                                       "    <button id=\"settings.ok\" text=\"OK\"/>\n"
                                       "    <button id=\"settings.cancel\" text=\"Cancel\"/>\n"
                                       "  </user-control>\n"
