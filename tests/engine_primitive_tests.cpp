@@ -207,6 +207,22 @@ void test_builtin_registry() {
     }
 }
 
+// Every built-in primitive fits a parameter block and registers on its own
+// (2026-11-22: the dithered bulge once declared 27 parameters, the registry
+// refused it as too_many_parameters, and every program aborted at startup).
+void test_builtin_primitives_fit_a_parameter_block() {
+    const PrimitiveRegistry& builtins = builtin_primitive_registry();
+    PrimitiveRegistry fresh{};
+    for (const EnginePrimitive* const primitive : builtins.primitives()) {
+        const PrimitiveDescriptor& descriptor = (*primitive).descriptor();
+        require(descriptor.parameters.size() <= maximum_primitive_parameters,
+                "a built-in primitive declares at most maximum_primitive_parameters parameters");
+        require(fresh.register_primitive(*primitive) == RegistrationOutcome::registered,
+                "a built-in primitive registers in a fresh registry");
+    }
+    require(fresh.primitives().size() == builtins.primitives().size(), "every built-in primitive registered");
+}
+
 void test_registration_refusals() {
     PrimitiveRegistry registry{};
     const PrimitiveDescriptor good{"fixture", EngineVersion{0, 1}, face_role, {}, one_number, PrimitiveCost{1U, 1U}, {}};
@@ -1072,6 +1088,7 @@ void test_reference_images() {
 
 int main() {
     test_builtin_registry();
+    test_builtin_primitives_fit_a_parameter_block();
     test_registration_refusals();
     test_parameter_refusals();
     test_destination_refusals();
