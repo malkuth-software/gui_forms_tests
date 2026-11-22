@@ -4,6 +4,7 @@
 #include "gui_forms/controls/indicator_lamp.hpp"
 #include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/panel.hpp"
+#include "gui_forms/controls/radio_button.hpp"
 #include "gui_forms/controls/scaled_group_box.hpp"
 
 namespace gallery_pages_tests {
@@ -15,7 +16,9 @@ namespace gallery_pages_tests {
 // are made), the Lamps check box that switches them, and the industrial
 // theme over the GOST paints, put on the preview group and taken off; the
 // preview's indicator lamps (Start and Stop switch Running, the Coolant
-// check box its flow lamp, and none is hit) and its danger key.
+// check box its flow lamp, a pinpoint, and none is hit), its feed choice
+// drawn with lamps (the row takes the click), and its danger key; the
+// carbon fibre and brushed metal swatches beside the glints.
 // Compositing the lamps is covered by gui_forms_engine_light_planes_tests
 // and the baked lens by gui_forms_indicator_lamp_tests, and the industrial
 // package's compile by gui_forms_theme_gost_palette_tests.
@@ -27,6 +30,9 @@ void test_industrial_surfaces(gui_forms::Window& window) {
                 window.find("gallery.industrial.finish.cloth-weave") != nullptr &&
                 window.find("gallery.industrial.glint.painted-sand") != nullptr,
             "the page shows the finish and glint swatches");
+    require(window.find("gallery.industrial.pattern.carbon-fibre") != nullptr &&
+                window.find("gallery.industrial.pattern.brushed-metal") != nullptr,
+            "the page shows the carbon fibre and brushed metal swatches");
 
     const std::shared_ptr<Label> bakes = std::dynamic_pointer_cast<Label>(window.find("gallery.industrial.bakes"));
     require(bakes != nullptr && !(*bakes).text.read().empty(), "the lamps' status line says what is shown");
@@ -93,6 +99,24 @@ void test_industrial_surfaces(gui_forms::Window& window) {
     const std::shared_ptr<Button> erase =
         std::dynamic_pointer_cast<Button>(window.find("gallery.industrial.preview.erase"));
     require(erase != nullptr && (*erase).danger.read(), "Erase program is a danger key");
+    require((*flow).lamp_style.read() == IndicatorLampStyle::pinpoint && !(*flow).parts().bezel.present,
+            "Coolant flow is a pinpoint, with no bezel");
+
+    // The feed choice is a radio group drawn with lamps: a click on the row
+    // (its centre, on the caption, well away from the lamp) chooses.
+    const std::shared_ptr<RadioButton> manual =
+        std::dynamic_pointer_cast<RadioButton>(window.find("gallery.industrial.preview.manual"));
+    const std::shared_ptr<RadioButton> automatic =
+        std::dynamic_pointer_cast<RadioButton>(window.find("gallery.industrial.preview.automatic"));
+    require(manual != nullptr && automatic != nullptr, "the preview holds the feed choice");
+    if (manual == nullptr || automatic == nullptr) return;
+    require((*manual).indicator_style.read() == ChoiceIndicatorStyle::lamp &&
+                (*automatic).indicator_style.read() == ChoiceIndicatorStyle::lamp && (*manual).checked.read(),
+            "the feed choice is drawn with lamps, Manual feed chosen");
+    click(window, automatic);
+    require((*automatic).checked.read() && !(*manual).checked.read(), "a click on the row chooses Automatic feed");
+    click(window, manual);
+    require((*manual).checked.read() && !(*automatic).checked.read(), "and Manual feed again");
 }
 
 }  // namespace gallery_pages_tests

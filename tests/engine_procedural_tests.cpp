@@ -1,5 +1,6 @@
 // Procedural materials (T2 plan, E10): felt, wood grain, paper fibre,
-// pinstripe, brushed metal and the fresco with blooms.
+// pinstripe, brushed metal, the fresco with blooms, and carbon fibre (its
+// twill and anisotropic sheen, carbon_fibre_weaves).
 //
 // - Each pattern is generated per display scale from its parameters alone,
 //   in integer arithmetic: the reference images below are FNV-1a hashes of
@@ -279,6 +280,66 @@ void tiles_per_scale() {
     require(pixel_of(*stripes, 0U, 1U) == pixel_of(*stripes, 0U, 0U) &&
                 !(pixel_of(*stripes, 0U, 2U) == pixel_of(*stripes, 0U, 0U)),
             "two device rows of line at scale 1.5");
+}
+
+// Whether `raster`, `tows` tows of `side` pixels each way in black and
+// white, shows the 2/2 twill: at crossing (i, j) the tow across floats
+// over where (i + j) mod 4 is 2 or 3 and catches the light, so every such
+// crossing's centre is brighter than every crossing's centre where the tow
+// down floats over (the anisotropic sheen in the twill's diagonals, the
+// seam's crossings included), and a lit tow is darker at its edge than at
+// its middle (its rounded profile).
+bool shows_twill(const PartRaster& raster, std::uint32_t tows, std::uint32_t side) {
+    int dimmest_across = 255;
+    int brightest_down = 0;
+    bool rounded = true;
+    for (std::uint32_t row = 0U; row < tows; ++row) {
+        for (std::uint32_t column = 0U; column < tows; ++column) {
+            const std::uint32_t x = column * side + side / 2U;
+            const int centre = pixel_of(raster, x, row * side + side / 2U)[0];
+            const bool across_over = ((column + row) & 3U) >= 2U;
+            if (!across_over) {
+                brightest_down = std::max(brightest_down, centre);
+                continue;
+            }
+            dimmest_across = std::min(dimmest_across, centre);
+            const int edge = pixel_of(raster, x, row * side)[0];
+            if (edge >= centre) rounded = false;
+        }
+    }
+    const bool twill = rounded && dimmest_across > brightest_down;
+    return twill;
+}
+
+// Carbon fibre (owner, 2026-11-22): seeded, a whole number of 16-unit
+// twill repeats of 4-unit tows per tile, so the twill runs on across the
+// tile's seam, and its weave read from the pixels (shows_twill).
+void carbon_fibre_weaves() {
+    ProceduralFill fill{};
+    fill.pattern = ProceduralPattern::carbon_fibre;
+    fill.seed = 0x0E10F009U;
+    fill.tile = 16.0;
+    fill.ground = Color::rgba(0, 0, 0);
+    fill.figure = Color::rgba(255, 255, 255);
+    // Scale 4: one repeat, four tows of 16 pixels each way.
+    const std::shared_ptr<PartRaster> first = make_pattern(fill, 4.0);
+    require((*first).extent() == DeviceExtent{64U, 64U}, "a carbon fibre tile is round(tile x scale) square");
+    const std::shared_ptr<PartRaster> again = make_pattern(fill, 4.0);
+    require(pattern_hash(*first) == pattern_hash(*again), "carbon fibre is made alike each time");
+    ProceduralFill reseeded = fill;
+    reseeded.seed = fill.seed + 1U;
+    require(pattern_hash(*make_pattern(reseeded, 4.0)) != pattern_hash(*first), "the seed chooses its streaks");
+    require(shows_twill(*first, 4U, 16U), "a 16-unit tile at scale 4 is a 2/2 twill with an anisotropic sheen");
+    // A 24-unit tile rounds to two repeats: eight tows of 6 pixels at
+    // scale 2.
+    ProceduralFill wider = fill;
+    wider.tile = 24.0;
+    const std::shared_ptr<PartRaster> two_repeats = make_pattern(wider, 2.0);
+    require((*two_repeats).extent() == DeviceExtent{48U, 48U} && shows_twill(*two_repeats, 8U, 6U),
+            "a tile between repeats holds whole repeats, so the twill runs on across its seam");
+    const DeviceExtent extent = engine_primitives::procedural_extent(fill, fresco_box(1.0), 1.0);
+    require(engine_primitives::procedural_generation_effort(fill, extent).units > 0U,
+            "carbon fibre's generation has an effort");
 }
 
 // -- the engine --------------------------------------------------------------------
@@ -622,6 +683,7 @@ int main(int argc, char** argv) {
     reference_patterns();
     checker_dithers();
     hatch_marks_its_squares();
+    carbon_fibre_weaves();
     patterns_are_seeded();
     tiles_per_scale();
     generated_in_idle_frames();

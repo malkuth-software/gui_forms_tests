@@ -834,6 +834,19 @@ void test_warnings() {
                 (*hatch_texture).texture.items[0].hatch_style == HatchStyle::diagonal_cross &&
                 (*hatch_texture).texture.items[0].tile == 8.0,
             "a hatch texture lowers to the hatch pattern in its style");
+    // Carbon fibre is a texture kind too (owner, 2026-11-22).
+    const Compilation woven = compile("#a::part(face) { background-texture: procedural(carbon-fibre, 11, 32px, 1)"
+                                      " multiply 2% }");
+    const RecipeDeclaration* woven_texture = nullptr;
+    if (woven.outcome == CompileOutcome::compiled && woven.sheet.rules.size() == 1U) {
+        for (const RecipeDeclaration& field : woven.sheet.rules[0].recipe_fields) {
+            if (field.field == RecipeField::texture_layers) woven_texture = &field;
+        }
+    }
+    require(woven_texture != nullptr && (*woven_texture).texture.count == 1U &&
+                (*woven_texture).texture.items[0].pattern == ProceduralPattern::carbon_fibre &&
+                (*woven_texture).texture.items[0].seed == 11U && (*woven_texture).texture.items[0].tile == 32.0,
+            "a carbon fibre texture lowers to the carbon fibre pattern");
     CanvasTextureLayer hatch_layer{};
     hatch_layer.pattern = ProceduralPattern::hatch;
     hatch_layer.hatch_style = HatchStyle::cross;

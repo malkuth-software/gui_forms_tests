@@ -593,6 +593,72 @@ void test_check_box_and_radio_button_parts() {
     require_parts_within_region(*check);
 }
 
+// RadioButton's lamp look (owner, 2026-11-21): the well is a lamp's bezel
+// and the mark its lens, published dark (unchecked) as well as lit, two
+// units inside the well; the custom state `lamp` names the look for a
+// theme. The whole row takes the click: a press and release on the
+// caption, nowhere near the lamp, chooses the option and clears its
+// sibling. A CheckBox refuses the look.
+void test_radio_button_lamp_look() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("anatomy.lamps.root"));
+    (*root).set_requested_bounds({0.0, 0.0, 300.0, 120.0});
+    std::shared_ptr<RadioButton> low = make_control<RadioButton>(StableId("anatomy.lamps.low"), "Low flow");
+    (*low).set_requested_bounds({10.0, 10.0, 160.0, 24.0});
+    std::shared_ptr<RadioButton> high = make_control<RadioButton>(StableId("anatomy.lamps.high"), "High flow");
+    (*high).set_requested_bounds({10.0, 50.0, 160.0, 24.0});
+    (*root).add_child(low);
+    (*root).add_child(high);
+    const std::unique_ptr<Window> held_window = std::make_unique<Window>(root, Size{300.0, 120.0});
+    Window& window = *held_window;
+    window.set_active(true);
+    window.perform_layout();
+
+    const ControlAnatomy& anatomy = (*low).anatomy();
+    require(anatomy.custom_states.size() == 1U && anatomy.custom_states[0].name == "lamp",
+            "RadioButton declares the custom state lamp");
+    require(validate_control_anatomy(anatomy).defect == AnatomyDefect::none, "the anatomy stays valid");
+    require(!(*low).anatomy_states().contains(CustomStateIndex{0U}), "the classic look takes no lamp state");
+
+    (*low).indicator_style = ChoiceIndicatorStyle::lamp;
+    (*high).indicator_style = ChoiceIndicatorStyle::lamp;
+    (*low).checked = true;
+    window.perform_layout();
+    require((*low).anatomy_states().contains(CustomStateIndex{0U}) &&
+                (*high).anatomy_states().contains(CustomStateIndex{0U}),
+            "the lamp look takes the lamp state, chosen or not");
+    const RadioButton::Parts dark = (*high).parts();
+    require(dark.well.present && near(dark.well.bounds.width, 15.0) && near(dark.well.bounds.height, 15.0),
+            "the lamp's bezel is the 15-unit well");
+    require(dark.indicator.present && near(dark.indicator.bounds.x, dark.well.bounds.x + 2.0) &&
+                near(dark.indicator.bounds.width, 11.0) && near(dark.indicator.bounds.height, 11.0),
+            "an unchosen option still publishes its dark lens, two units inside the bezel");
+    const RadioButton::Parts lit = (*low).parts();
+    require(lit.indicator.present && near(lit.indicator.bounds.width, 11.0) && (*low).states().checked,
+            "the chosen option publishes the same lens, lit (checked)");
+    require_parts_within_region(*low);
+    require_declared_states(*high);
+
+    // The caption of the second row, well right of its lamp.
+    const Rect caption = (*high).parts().label.bounds;
+    require(caption.x > dark.well.bounds.right(), "the caption lies after the lamp");
+    const Point on_caption{10.0 + caption.x + caption.width * 0.5, 50.0 + 12.0};
+    require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_caption}) &&
+                window.dispatch_pointer({PointerAction::up, PointerButton::primary, on_caption}),
+            "the press and release on the caption are delivered");
+    require((*high).checked.read() && !(*low).checked.read(),
+            "the row takes the click: the caption chooses the option and clears its sibling");
+
+    std::shared_ptr<CheckBox> check = make_control<CheckBox>(StableId("anatomy.lamps.check"), "Pump");
+    bool refused = false;
+    try {
+        (*check).indicator_style = ChoiceIndicatorStyle::lamp;
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused && (*check).indicator_style.read() == ChoiceIndicatorStyle::classic,
+            "a check box refuses the lamp look and keeps its style: lamps form a radio choice only");
+}
+
 void test_link_label_custom_visited_state() {
     std::shared_ptr<LinkLabel> link = make_control<LinkLabel>(StableId("anatomy.link"), "Learn more");
     (*link).set_requested_bounds({0.0, 0.0, 160.0, 22.0});
@@ -1352,6 +1418,7 @@ int main() {
         test_base_anatomy_for_undeclared_controls();
         test_button_label_matches_painted_text();
         test_check_box_and_radio_button_parts();
+        test_radio_button_lamp_look();
         test_link_label_custom_visited_state();
         test_drop_down_button_disclosure();
         test_panel_and_scrollable_parts();
