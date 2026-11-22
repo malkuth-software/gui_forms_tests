@@ -58,3 +58,12 @@ library change lands after it.
   precompiled headers and the area labels.
 - `tools/`: `ci_tests.py`, `fetch_test_cache.py`, `update_lock.py`, the engine
   gate, the sanitizer suppressions and the test-only checks and labs.
+- `benchmarks/` and `fuzz/` (from gui_forms on 2026-11-22): the measurement
+  harnesses and probes, none a CTest entry (`cmake/sections/benchmarks.cmake`),
+  and the fuzz targets with their seed corpora: the suite's standalone runs
+  and the libFuzzer programs (`cmake/FuzzTargets.cmake`,
+  `cmake/sections/fuzzers.cmake`, `.github/workflows/fuzz-smoke.yml`). The
+  Gallery workloads that gui_forms' own profiling jobs build stay there.
+- `tools/font_metrics_differential/` (stage F's differential, library and
+  program), the menu, popup-margin and contention drivers, the PNG admission
+  probe, the managed facade laboratories and smoke programs.

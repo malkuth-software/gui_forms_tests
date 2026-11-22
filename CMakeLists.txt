@@ -60,12 +60,13 @@ option(GUI_FORMS_TESTS_WARNINGS_AS_ERRORS "Compile the tests with -Werror" ON)
 option(GUI_FORMS_BUILD_GENERATED_FORM_TESTS "Build the tests that generate a form header at build time" ON)
 
 # The functions the tests call that gui_forms defines (from the cache's
-# source tree): forms and controls, themes, fuzz tests, PE tables and the
-# localizable-literal plugin. The plugin is the one gui_forms built (its path
+# source tree): forms and controls, themes, PE tables and the
+# localizable-literal plugin; the fuzz-test functions are this tree's
+# (cmake/FuzzTargets.cmake). The plugin is the one gui_forms built (its path
 # is the cache's); this configure does not build it again.
 include("${GUI_FORMS_SOURCE_DIR}/cmake/GUIFormsForms.cmake")
 include("${GUI_FORMS_SOURCE_DIR}/cmake/GUIFormsThemes.cmake")
-include("${GUI_FORMS_SOURCE_DIR}/cmake/FuzzTargets.cmake")
+include(cmake/FuzzTargets.cmake)
 include("${GUI_FORMS_SOURCE_DIR}/cmake/PeTables.cmake")
 set(_gf_tests_plugin_path "${GUI_FORMS_LOCALIZABLE_PLUGIN_PATH}")
 set(_gf_tests_plugin "${GUI_FORMS_LOCALIZABLE_PLUGIN}")
@@ -94,6 +95,7 @@ include(cmake/sections/file_manager_demoboard.cmake)
 include(cmake/sections/windows_drawing_probe.cmake)
 include(cmake/sections/macos_live_resize_probe.cmake)
 include(cmake/sections/correspondence.cmake)          # demo/correspondence/correspondence.cmake
+include(cmake/sections/font_metrics_differential.cmake)
 include(cmake/sections/main.cmake)
 include(cmake/sections/audio.cmake)                    # cmake/Audio.cmake
 include(cmake/sections/audio_fuzz.cmake)
@@ -112,6 +114,8 @@ include(cmake/sections/reference_arithmetic_warning.cmake)
 include(cmake/sections/precompiled_header.cmake)
 include(cmake/sections/reference_labels.cmake)
 include(cmake/sections/desktop_tests.cmake)
+include(cmake/sections/benchmarks.cmake)
+include(cmake/sections/fuzzers.cmake)
 
 # The gui_forms tools a test runs from the cache's source tree find this
 # checkout (its consumer projects, probes and generated sources) through

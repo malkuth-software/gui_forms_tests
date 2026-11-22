@@ -1,0 +1,3 @@
+# Binary seed corpora: kept byte for byte.
+fuzz/corpus/** -text
+tools/font_metrics_differential/corpus/** -text
