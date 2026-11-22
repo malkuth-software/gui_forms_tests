@@ -7,14 +7,10 @@
 # with the first checkpoint push whose CI publishes test-cache-<commit>.
 [gui_forms]
 repository = "malkuth-software/gui_forms"
-commit = "c7c9f4f0c7f63afd5f76571196dae3df1278f085"
+commit = "1ed2f277ad4a58f6abc71e3209e34922c488b376"
 
 [digests]
-linux-arm64 = "e1e4a8be7cb81f6638c19b93000590e0dd4567cbbce6d3a8036658245383f981"
-linux-arm64-programs = "cc75c6e3f76f14c9e8511940196efb9cfef6aa387a6a4eaef410fd04c3e694fa"
-linux-x64 = "19b3c399e96ed54a313cdea01baf94be58e96d3e0ce0f2e0ca8ee032addfd550"
-linux-x64-programs = "e632a9c268a0001ccaa463ae4bdbeb457756aad75c90c4180e9070a2d60d1287"
-macos-arm64 = "59e2b4461e1d46ad9be163686bfc0a1d7b38d8ff463bad64bb3922e280408354"
-macos-arm64-programs = "d8c2da049c42cdc7c6d3f612b8ae95a92cd7873c11044b999f9b5a938dcee9c4"
-windows-x64 = "e7dc0bc1c52bf25338f2b4f225cf26d122876f2c2392541fa8bf43e488d5c0e2"
-windows-x64-programs = "e27ba670becafdf1ce7d9b5d7bf5445650d480acc6655c724c1727b41b5329fd"
+linux-arm64 = "9cd2f7cdc28e228fe1b1e63ab2e2a7d3327d57bcf4bc9b26f81e824b589c36cc"
+linux-x64 = "7e4fd5626a3b73ed59f4ac04615bdd46c7b38541784a6f24ad3238bf275b8a67"
+macos-arm64 = "48613d6c823efdebedb264451571f247e1c0e8b3a31ba9a3ba0c877693a4ffb5"
+windows-x64 = "34c288a635b0e87ff4d69e179d68d129efec7b0bbfec052db49bd0c990627c43"
