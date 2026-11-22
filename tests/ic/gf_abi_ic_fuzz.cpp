@@ -270,7 +270,7 @@ private:
             }
         }
         ic::Violation violation{};
-        if (block.mode == ic::Mode::misuse && !block.violations.empty()) {
+        if (block.mode != ic::Mode::legal && !block.violations.empty()) {
             violation = block.violations[static_cast<std::size_t>(input.byte()) % block.violations.size()];
         }
         const std::uint32_t before = subject == 0U ? ic::no_state : observe(block.model, subject);
@@ -290,11 +290,24 @@ private:
             finding(block.name, "an internal failure the declaration does not state", status);
         }
         const std::uint32_t after = subject == 0U ? ic::no_state : observe(block.model, subject);
+        if (block.mode == ic::Mode::ordered) {
+            // Both refusals apply; the one refusal_order puts second must not
+            // be the one reported. Another status still counts as undeclared
+            // (an argument the engine drew may break a clause ordered first).
+            if (status == GF_STATUS_OK) finding(block.name, "a refusal-order block was not refused", status);
+            if (subject != 0U && after != before) finding(block.name, "a refusal moved the subject's state", status);
+            if (status == block.overruled && status != block.expected) {
+                finding(block.name, "the refusal the declared order puts second was reported first", status);
+            } else if (status != block.expected) {
+                undeclared(index, block.name, status);
+            }
+            return;
+        }
         if (block.mode == ic::Mode::misuse) {
             // The refusal must happen and change nothing. Another refusal
             // than the declared one (an argument the engine drew refused
-            // first: the declaration states no order) is listed, and is a
-            // finding only in strict mode.
+            // first, or an order the declaration does not state) is listed,
+            // and is a finding only in strict mode.
             if (status == GF_STATUS_OK) finding(block.name, "a misuse block was not refused", status);
             if (subject != 0U && after != before) finding(block.name, "a refusal moved the subject's state", status);
             if (status != block.expected) undeclared(index, block.name, status);

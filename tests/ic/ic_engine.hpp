@@ -33,9 +33,13 @@
 
 namespace gui_forms_tests::ic {
 
+// legal: the arguments may hold anything; misuse: one refusal is provoked on purpose; ordered: two refusals
+// are provoked at once (a broken clause on a subject in an outside state), and the declaration's
+// refusal_order says which status the call reports.
 enum class Mode : std::uint8_t {
     legal,
     misuse,
+    ordered,
 };
 
 // The state models of the declarations (gui_forms tools/ic_abi_fuzz.py's
