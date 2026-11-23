@@ -4,7 +4,11 @@
 // form of the program's operator new takes its block from STXlib's
 // allocator and every delete releases it there; a block STXlib's allocator
 // serves crosses to delete and back; exhaustion is std::bad_alloc or null;
-// a sanitized build leaves the replacement out and keeps the host's.
+// a sanitized build leaves the replacement out and keeps the host's. After
+// the module's teardown began, delete leaves a teardown reserve block where
+// it is and new still takes STXlib's blocks while they are served.
+
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <stxlib/memory.hpp>
 
@@ -101,6 +105,21 @@ void exhaustion() {
     require(thrown && handler_calls == 1, "the new-handler runs once before std::bad_alloc");
 }
 
+// Last, since a teardown is never undone: a delete of a reserve block does
+// nothing (STXlib's release would end the process on it), and an
+// allocation STXlib's allocator serves is still its own.
+void teardown_reserve_blocks() {
+    gui_forms::detail::begin_library_teardown();
+    void* const reserved = gui_forms::detail::teardown_allocate(24U, 16U);
+    require(gui_forms::detail::teardown_reserve_owns(reserved), "the teardown reserve serves the block");
+    ::operator delete(reserved);
+    ::operator delete[](reserved);
+    ::operator delete(reserved, std::align_val_t{16U});
+    void* const served = ::operator new(48U);
+    require(!gui_forms::detail::teardown_reserve_owns(served), "a served block is STXlib's after teardown began");
+    stxlib::memory::release(served);
+}
+
 } // namespace
 
 int main() {
@@ -112,6 +131,7 @@ int main() {
     }
     every_form_is_stxlibs();
     exhaustion();
+    teardown_reserve_blocks();
     if (failures != 0) {
         std::cerr << failures << " checks failed\n";
         return 1;

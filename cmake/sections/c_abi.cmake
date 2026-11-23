@@ -264,6 +264,27 @@ if(TARGET gui_forms_abi)
     endif()
     add_test(NAME gui_forms_abi_allocation_boundary COMMAND gui_forms_abi_allocation_boundary)
 
+    # The library's teardown: loaded at run time (dlopen, LoadLibrary), its
+    # objects made and released, then unloaded (dlclose, FreeLibrary), or
+    # left loaded into the process's end, where on Windows its static
+    # destructors run at DLL_PROCESS_DETACH after the other threads stop.
+    # Neither may end abnormally: no std::bad_alloc from a destructor, no
+    # teardown-reserve fail-fast (gui_forms allocation/library_memory, "A
+    # module's end"). The exit code decides (a pass pattern would hide a
+    # failure after the last line, at the process's end); the program links
+    # nothing of the library's.
+    add_executable(gui_forms_abi_module_unload tests/abi/allocation/gf_abi_module_unload.cpp)
+    target_include_directories(gui_forms_abi_module_unload PRIVATE ${GUI_FORMS_SOURCE_DIR}/include)
+    target_compile_features(gui_forms_abi_module_unload PRIVATE cxx_std_20)
+    target_link_libraries(gui_forms_abi_module_unload PRIVATE ${CMAKE_DL_LIBS})
+    add_dependencies(gui_forms_abi_module_unload gui_forms_abi)
+    add_test(NAME gui_forms_abi_module_unload
+        COMMAND gui_forms_abi_module_unload $<TARGET_FILE:gui_forms_abi> unload)
+    add_test(NAME gui_forms_abi_module_exit_loaded
+        COMMAND gui_forms_abi_module_unload $<TARGET_FILE:gui_forms_abi> exit)
+    set_tests_properties(gui_forms_abi_module_unload gui_forms_abi_module_exit_loaded PROPERTIES
+        FAIL_REGULAR_EXPRESSION "FAIL:|fail fast")
+
     # The C# interop (bindings/csharp), built offline with the host's .NET SDK
     # and run against this library. Owner ruling (2026-11-02): the test uses a
     # preinstalled SDK of version 10 or later and otherwise skips with a
