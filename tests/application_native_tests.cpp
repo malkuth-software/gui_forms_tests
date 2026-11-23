@@ -147,6 +147,10 @@ struct Probe final {
     // size request made in ready has been delivered.
     Window* window{};
     Size closing_size{};
+    // Each closing request's reason, in order, and the closed window's
+    // reason (Window::host_close_reason, read in Closed).
+    std::vector<HostCloseReason> closing_reasons{};
+    stxlib::Optional<HostCloseReason> closed_reason{};
 };
 struct Ready final {
     Probe* probe{};
@@ -191,6 +195,7 @@ struct Closing final {
     Probe* probe{};
     void operator()(HostCloseRequest& request) const {
         ++(*probe).closing;
+        (*probe).closing_reasons.push_back(request.reason);
         if ((*probe).closing == 1U) (*probe).closing_size = (*(*probe).window).client_size();
         if ((*probe).closing == 1U) {
             request.cancel = true;
@@ -204,6 +209,7 @@ struct Closed final {
     void operator()() const {
         ++(*probe).closed;
         (*probe).closed_active = (*probe).handle.active();
+        if ((*probe).window != nullptr) (*probe).closed_reason = (*(*probe).window).host_close_reason();
     }
 };
 ApplicationResult run_probe(Probe& probe) {
@@ -995,11 +1001,23 @@ void run_checks() {
     // The resize arrives as the host's resize event, after ready returns and
     // before the close it posted (X11 answers later; see linux_host_tests).
     require(system_close.closing_size == Size{420.0, 260.0}, "native client size did not reach the model");
+    // Alt+F4 is the user's close; the second request is the program's.
+    require(system_close.closing_reasons.size() == 2U && system_close.closing_reasons[0] == HostCloseReason::user &&
+                system_close.closing_reasons[1] == HostCloseReason::application &&
+                system_close.closed_reason == stxlib::Optional<HostCloseReason>::of(HostCloseReason::application),
+            "Alt+F4 must report the user's close and request_close the program's");
 #endif
     Probe normal{};
     const ApplicationResult result = run_probe(normal);
     require(result.accepted(), "native application run failed");
     require(normal.ready == 1U && normal.closing == 2U && normal.closed == 1U, "native close/cancel order wrong");
+    // Both closes are the program's (ApplicationWindowHandle::request_close),
+    // which every host reports as application, never as the user's.
+    require(normal.closing_reasons.size() == 2U && normal.closing_reasons[0] == HostCloseReason::application &&
+                normal.closing_reasons[1] == HostCloseReason::application,
+            "request_close's closing requests must report the reason application");
+    require(normal.closed_reason == stxlib::Optional<HostCloseReason>::of(HostCloseReason::application),
+            "a window closed by request_close must report the reason application");
     require(normal.attached_services && normal.primary_hide_rejected && normal.recursive_rejected, "ready contract incomplete");
     require(normal.shutdown_rejected, "shutdown during a run accepted");
     const HostServiceStatus shown = normal.handle.show();
