@@ -12,7 +12,7 @@
 
 #include "src/core/theme_language/compiler/theme_compiler.hpp"
 #include "src/core/resources/fonts/program_typefaces.hpp"
-#include "src/render/text/harfbuzz/harfbuzz_font_engine.hpp"
+#include "src/render/text/shaping/text_shape_engine.hpp"
 #include "gui_forms/composites/composite_control/composite_control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"
@@ -51,7 +51,7 @@ namespace {
 
 using namespace gui_forms;
 using render::text::FontFaceSource;
-using render::text::HarfBuzzFontEngine;
+using render::text::TextShapeEngine;
 using render::text::ShapedFontRun;
 using render::text::ShapedText;
 
@@ -466,7 +466,7 @@ std::shared_ptr<const std::vector<std::byte>> unopenable_face() {
 }
 
 // Whether a run of `shaped` was drawn by a face of `family`.
-bool drawn_with(const HarfBuzzFontEngine& engine, const ShapedText& shaped, const FontFamilyId family) {
+bool drawn_with(const TextShapeEngine& engine, const ShapedText& shaped, const FontFamilyId family) {
     for (const ShapedFontRun& run : shaped.runs) {
         const std::optional<FontFaceSource> source = engine.face_source(run.face);
         if (source && (*source).family == family) return true;
@@ -483,7 +483,7 @@ void malformed_face_is_quarantined() {
     require(family.value != 0U, "the unopenable family loads");
 
     const std::shared_ptr<const std::vector<std::byte>> carlito = read_font(GUI_FORMS_TEST_CARLITO_REGULAR);
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_shared_typeface(FontRole::content, 400U, false, carlito).has_value(),
             "the content role registers");
     const AppFontStatistics before = app_font_statistics();
@@ -516,7 +516,7 @@ void unloaded_family_faces_are_rejected() {
     FontSpec font{};
     font.role = FontRole::content;
     font.family = family;
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_shared_typeface(FontRole::content, 400U, false, carlito).has_value(),
             "the content role registers");
     const ShapedText shaped = engine.shape("Retire", font);
@@ -568,7 +568,7 @@ void unload_while_in_use_is_deferred() {
     font.role = FontRole::content;
     font.family = family;
     {
-        std::unique_ptr<HarfBuzzFontEngine> engine = std::make_unique<HarfBuzzFontEngine>();
+        std::unique_ptr<TextShapeEngine> engine = std::make_unique<TextShapeEngine>();
         require((*engine).register_shared_typeface(FontRole::content, 400U, false, carlito).has_value(),
                 "the content role registers");
         const ShapedText shaped = (*engine).shape("In use", font);

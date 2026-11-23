@@ -9,7 +9,7 @@
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/text/paragraph_layout/paragraph_layout.hpp"
 #include "gui_forms/window.hpp"
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 
 #include <array>
 #include <cmath>
@@ -30,7 +30,7 @@
 namespace {
 
 using namespace gui_forms;
-using render::text::HarfBuzzFontEngine;
+using render::text::TextShapeEngine;
 
 void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
@@ -57,7 +57,7 @@ std::vector<std::byte> read_face(const std::filesystem::path& path) {
 // same resolution, break opportunities and cluster advances.
 class EngineMetrics final : public TextMetricsProvider {
 public:
-    explicit EngineMetrics(HarfBuzzFontEngine& engine) : engine_(engine) {}
+    explicit EngineMetrics(TextShapeEngine& engine) : engine_(engine) {}
 
     ResolvedTextLayout resolve_text_layout_utf8(std::string_view utf8, FontSpec font) override {
         const ResolvedTextLayout layout = engine_.resolve(utf8, font);
@@ -67,7 +67,7 @@ public:
     TextResolutionStatus fill_line_break_opportunities_utf8(
         std::string_view utf8, std::span<LineBreakOpportunity> opportunities) override {
         const TextResolutionStatus status =
-            HarfBuzzFontEngine::fill_line_break_opportunities_utf8(utf8, opportunities);
+            TextShapeEngine::fill_line_break_opportunities_utf8(utf8, opportunities);
         return status;
     }
 
@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    HarfBuzzFontEngine& engine_;
+    TextShapeEngine& engine_;
 };
 
 class TextPainter final : public Painter {
@@ -108,7 +108,7 @@ FontSpec content(double size) {
 // The faces the engine tests register: Carlito for content, with the Noto
 // Emoji, Hebrew and Arabic fallbacks. The byte vectors outlive the engine's
 // copies' registration (span overloads copy).
-void register_faces(HarfBuzzFontEngine& engine, const std::filesystem::path& fonts) {
+void register_faces(TextShapeEngine& engine, const std::filesystem::path& fonts) {
     require(engine.register_typeface(FontRole::content, 400, false, read_face(fonts / "Carlito-Regular.ttf"))
                 .has_value(),
             "Carlito registers");
@@ -127,7 +127,7 @@ const std::string thumbs = "\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD";
 const std::string heart = "\xE2\x9D\xA4\xEF\xB8\x8F";
 
 // The engine's advances sum to the width it shapes the whole text to.
-void test_advances_sum_to_width(HarfBuzzFontEngine& engine) {
+void test_advances_sum_to_width(TextShapeEngine& engine) {
     const std::array<std::string, 4> texts{
         "The quick brown fox jumps over the lazy dog",
         "\xD7\xA9\xD7\x9C\xD7\x95\xD7\x9D ABC 123",
@@ -157,7 +157,7 @@ void test_advances_sum_to_width(HarfBuzzFontEngine& engine) {
 }
 
 // Collapsed, verified layout paints TextBlock's lines over the engine.
-void test_matches_text_block(HarfBuzzFontEngine& engine) {
+void test_matches_text_block(TextShapeEngine& engine) {
     EngineMetrics metrics(engine);
     const std::array<std::string, 5> texts{
         "The quick brown fox jumps over the lazy dog, and then  the   dog sleeps under a tree.",
@@ -234,7 +234,7 @@ void test_matches_text_block(HarfBuzzFontEngine& engine) {
 
 // break_word over the engine's clusters: an emoji word at a width of about
 // one cluster breaks only between the sequences.
-void test_break_word_keeps_emoji_sequences(HarfBuzzFontEngine& engine) {
+void test_break_word_keeps_emoji_sequences(TextShapeEngine& engine) {
     EngineMetrics metrics(engine);
     const std::string emoji = family + thumbs + heart + family;
     const std::array<std::size_t, 5> boundaries{0U, 18U, 26U, 32U, 50U};
@@ -262,7 +262,7 @@ int main(int argument_count, char** arguments) {
     try {
         require(argument_count == 2, "usage: gui_forms_paragraph_layout_engine_tests <assets/fonts>");
         const std::filesystem::path fonts(arguments[1]);
-        HarfBuzzFontEngine engine{};
+        TextShapeEngine engine{};
         register_faces(engine, fonts);
         test_advances_sum_to_width(engine);
         test_matches_text_block(engine);

@@ -1,4 +1,4 @@
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #include "bounded_shape_workspace.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
 
@@ -422,7 +422,7 @@ FontBank load_fonts(const std::filesystem::path& directory) {
     return bank;
 }
 
-void register_fonts(HarfBuzzFontEngine& engine, const FontBank& bank) {
+void register_fonts(TextShapeEngine& engine, const FontBank& bank) {
     const std::size_t charged = engine.configure_bounded_registration(bank.size(), 16U * 1024U * 1024U);
     require(charged != 0U, "font registration uncharged");
     for (std::size_t index = 0U; index < bank.size(); ++index) {
@@ -458,7 +458,7 @@ Scene make_scene(const std::string& name) {
 }
 
 using RetainedRows = std::array<std::unique_ptr<BoundedShapedText>, 512U>;
-void verify_scene(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace,
+void verify_scene(TextShapeEngine& engine, BoundedShapeWorkspace& workspace,
     const Scene& scene, const FontSpec font, const double width) {
     RetainedRows retained{};
     std::size_t bytes = sizeof(retained);
@@ -493,7 +493,7 @@ struct Sample final {
 };
 
 template <bool Reusable>
-Sample sample(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace,
+Sample sample(TextShapeEngine& engine, BoundedShapeWorkspace& workspace,
     const Scene& scene, const FontSpec font, const PlatformClock& clock) {
     Sample result{};
     RetainedRows retained{};
@@ -585,7 +585,7 @@ void write_sample(std::ostream& csv, const char* group, const std::size_t pair,
     }
 }
 
-void measure_pairs(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace,
+void measure_pairs(TextShapeEngine& engine, BoundedShapeWorkspace& workspace,
     const Scene& scene, const FontSpec font, const Options& options,
     const PlatformClock& clock, std::ostream& csv, const bool same_binary) {
     const char* group = same_binary ? "AA" : "AB";
@@ -630,7 +630,7 @@ int main(const int argc, char** argv) {
         const double device_width = options.width * options.scale;
         require(device_size <= 4096.0, "scaled font exceeds profile");
         const FontSpec font{FontRole::content, device_size, 400U, false};
-        HarfBuzzFontEngine engine{};
+        TextShapeEngine engine{};
         BoundedShapeWorkspace workspace{};
         if (!options.measure) {
             verify_csv_output();
