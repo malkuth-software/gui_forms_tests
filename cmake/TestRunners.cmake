@@ -46,9 +46,19 @@ set(_gui_forms_test_runner_keep_separate
     gui_forms_build_profile_tests
     gui_forms_borrowed_view_tests
     gui_forms_abi_runtime_c11_tests
-    # It includes windows_host.cpp textually, so its external names would be
-    # defined twice in a shared runner.
-    gui_forms_windows_drop_target_tests)
+    # They include windows_host.cpp textually, so its external names (run_windows
+    # and the rest) would be defined once per program in a shared runner.
+    gui_forms_windows_backplane_replay_tests
+    gui_forms_windows_canvas_raster_tests
+    gui_forms_windows_content_pixels_tests
+    gui_forms_windows_control_snapshot_tests
+    gui_forms_windows_damage_rectangles_tests
+    gui_forms_windows_drop_target_tests
+    gui_forms_windows_live_idle_tests
+    gui_forms_windows_message_box_tests
+    gui_forms_windows_schedule_wake_tests
+    gui_forms_windows_scroll_copy_tests
+    gui_forms_windows_text_tests)
 
 # Whether `program` may join a runner (see the conditions above); the
 # reason it may not otherwise, for the summary.

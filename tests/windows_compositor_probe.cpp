@@ -49,10 +49,6 @@ struct ProbeColour final {
     int red{};
     int green{};
     int blue{};
-
-    friend bool operator==(const ProbeColour& left, const ProbeColour& right) noexcept {
-        return left.red == right.red && left.green == right.green && left.blue == right.blue;
-    }
 };
 
 constexpr ProbeColour backdrop_colour{0, 160, 0};
