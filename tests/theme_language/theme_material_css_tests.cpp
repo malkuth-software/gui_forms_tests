@@ -14,7 +14,7 @@
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/engine/authored_gradient/authored_gradient.hpp"
-#include "gui_forms/engine/engine_math/engine_math.hpp"
+#include "stxlib/math.hpp"
 #include "gui_forms/engine/part_raster/part_raster.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"
 #include "gui_forms/engine/theme_rules/theme_rules.hpp"
@@ -152,7 +152,7 @@ void test_linear_geometry() {
     AuthoredGradient corner = gradient_of(MaterialFillKind::linear_gradient, {stop(red), stop(blue)});
     corner.corner = GradientCorner::top_right;
     require(!authored_gradient_fixed(corner), "a corner reads the box");
-    const double diagonal = engine_arctangent2(24.0, 40.0) * (180.0 / pi);
+    const double diagonal = stxlib::math::atan2(24.0, 40.0) * (180.0 / pi);
     require(resolved(corner, Size{40.0, 24.0}).angle_degrees == diagonal, "to top right: the diagonal's angle");
     corner.corner = GradientCorner::bottom_left;
     require(resolved(corner, Size{40.0, 24.0}).angle_degrees == 180.0 + diagonal, "to bottom left: opposite");
@@ -1426,7 +1426,7 @@ struct GateImages final {
 
 std::vector<GateRow> gate_rows(const GateImages& images) {
     const std::vector<GradientStop> red_blue = stops_of({{0.0, red}, {1.0, blue}});
-    const double diagonal = engine_arctangent2(24.0, 40.0) * (180.0 / pi);
+    const double diagonal = stxlib::math::atan2(24.0, 40.0) * (180.0 / pi);
     const double corner = 0.5 * 1.41421356237309504880168872420969808;
     std::vector<GateRow> rows{};
     rows.push_back(filled("background: green", {MaterialFillLayer::solid(green)}));
