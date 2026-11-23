@@ -29,12 +29,12 @@ if(TARGET gui_forms_menu_probe_windows AND GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONM
     if(Python3_Interpreter_FOUND AND gui_forms_popup_launcher)
         add_test(NAME gui_forms_popup_margin_probe
             COMMAND ${gui_forms_popup_launcher} ${Python3_EXECUTABLE} -B
-                ${GUI_FORMS_SOURCE_DIR}/tools/popup_margin_probe.py
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/popup_margin_probe.py
                 $<TARGET_FILE:gui_forms_menu_probe_windows> 1.5)
         set_property(TEST gui_forms_popup_margin_probe APPEND PROPERTY LABELS foreground)
         add_test(NAME gui_forms_contention_fuzz_smoke
             COMMAND ${gui_forms_popup_launcher} ${Python3_EXECUTABLE} -B
-                ${GUI_FORMS_SOURCE_DIR}/tools/contention_fuzz.py
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/contention_fuzz.py
                 $<TARGET_FILE:gui_forms_menu_probe_windows> --seed 20261110 --steps 40 --settle-every 10
                 --no-shrink --out ${CMAKE_CURRENT_BINARY_DIR}/contention-fuzz)
         set_property(TEST gui_forms_contention_fuzz_smoke APPEND PROPERTY LABELS timing non_gating foreground)

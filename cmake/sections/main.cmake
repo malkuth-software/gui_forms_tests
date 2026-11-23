@@ -737,9 +737,9 @@ target_link_libraries(gui_forms_host_image_tests PRIVATE gui_forms_host_headless
 add_test(NAME gui_forms_host_image_tests COMMAND gui_forms_host_image_tests)
 
 # The deflate contract harness's standalone inputs, in the normal suite.
-gui_forms_add_fuzz_test(deflate SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/deflate_fuzz.cpp LIBRARIES stx_zlib::stx_zlib)
+gui_forms_add_fuzz_test(deflate SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/deflate_fuzz.cpp LIBRARIES stx_zlib::stx_zlib)
 
-add_executable(gui_forms_inflate_protocol_tests ${GUI_FORMS_SOURCE_DIR}/fuzz/inflate_protocol_fuzz.cpp)
+add_executable(gui_forms_inflate_protocol_tests ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/inflate_protocol_fuzz.cpp)
 target_link_libraries(gui_forms_inflate_protocol_tests PRIVATE gui_forms_core)
 target_compile_definitions(gui_forms_inflate_protocol_tests PRIVATE GUI_FORMS_FUZZ_STANDALONE=1)
 add_test(NAME gui_forms_inflate_protocol_tests COMMAND gui_forms_inflate_protocol_tests)
@@ -1189,8 +1189,8 @@ target_link_libraries(gui_forms_markdown_tests PRIVATE gui_forms_core stx_rtf2md
 # The corpus is stx's (stx_rtf2md/tests/corpus), installed with the stx package.
 add_test(NAME gui_forms_markdown_tests
     COMMAND gui_forms_markdown_tests ${GUI_FORMS_STX_BUILD_PREFIX_DIR}/share/stx_text/rtf2md_corpus)
-gui_forms_add_fuzz_test(markdown SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/markdown_fuzz.cpp LIBRARIES gui_forms_core)
-gui_forms_add_fuzz_test(rtf_import SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/rtf_import_fuzz.cpp
+gui_forms_add_fuzz_test(markdown SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/markdown_fuzz.cpp LIBRARIES gui_forms_core)
+gui_forms_add_fuzz_test(rtf_import SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/rtf_import_fuzz.cpp
     LIBRARIES gui_forms_core stx_rtf2md::stx_rtf2md
     ARGUMENTS ${GUI_FORMS_STX_BUILD_PREFIX_DIR}/share/stx_text/rtf2md_corpus)
 add_executable(gui_forms_rtf_conversion_failure_tests tests/rtf_conversion_failure_tests.cpp)
@@ -1212,7 +1212,7 @@ add_test(NAME gui_forms_help_system_core_tests COMMAND gui_forms_help_system_cor
 add_executable(gui_forms_locale_file_tests tests/locale_file_tests.cpp)
 target_link_libraries(gui_forms_locale_file_tests PRIVATE gui_forms_controls gui_forms_core)
 add_test(NAME gui_forms_locale_file_tests COMMAND gui_forms_locale_file_tests)
-gui_forms_add_fuzz_test(helpbook_section SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/helpbook_section_fuzz.cpp LIBRARIES gui_forms_core)
+gui_forms_add_fuzz_test(helpbook_section SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/helpbook_section_fuzz.cpp LIBRARIES gui_forms_core)
 
 add_executable(gui_forms_xml_tests tests/xml_tests.cpp)
 target_link_libraries(gui_forms_xml_tests PRIVATE gui_forms_core)
@@ -1220,7 +1220,7 @@ add_test(NAME gui_forms_xml_tests COMMAND gui_forms_xml_tests)
 add_executable(gui_forms_json_reader_tests tests/json_reader_tests.cpp)
 target_link_libraries(gui_forms_json_reader_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_json_reader_tests COMMAND gui_forms_json_reader_tests)
-gui_forms_add_fuzz_test(json_reader SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/json_reader_fuzz.cpp LIBRARIES gui_forms_core)
+gui_forms_add_fuzz_test(json_reader SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/json_reader_fuzz.cpp LIBRARIES gui_forms_core)
 
 # The theme language (stage T3): numbers, tokens, diagnostics, the syntax
 # tree, selectors, values, the compiler, and the deterministic mutation
@@ -1499,16 +1499,16 @@ add_test(NAME gui_forms_theme_user_folder_tests COMMAND gui_forms_theme_user_fol
 # The theme sheet's tokenizer and parser, then the compiler, over the
 # theme sheet corpus; the compiler's run must reach the palette bound
 # (N113) with the corpus's palette-enumeration-bound.css.
-gui_forms_add_fuzz_test(theme_sheet SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/theme_sheet_fuzz.cpp LIBRARIES gui_forms_core
-    ARGUMENTS ${GUI_FORMS_SOURCE_DIR}/fuzz/corpus/theme_sheet)
-gui_forms_add_fuzz_test(theme_compile SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/theme_compile_fuzz.cpp LIBRARIES gui_forms_controls
-    ARGUMENTS ${GUI_FORMS_SOURCE_DIR}/fuzz/corpus/theme_sheet)
+gui_forms_add_fuzz_test(theme_sheet SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/theme_sheet_fuzz.cpp LIBRARIES gui_forms_core
+    ARGUMENTS ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/theme_sheet)
+gui_forms_add_fuzz_test(theme_compile SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/theme_compile_fuzz.cpp LIBRARIES gui_forms_controls
+    ARGUMENTS ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/corpus/theme_sheet)
 # The theme manifest, form documents, saved dock layouts and the
 # clipboard image decoders (audit N115, I3).
-gui_forms_add_fuzz_test(theme_manifest SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/theme_manifest_fuzz.cpp LIBRARIES gui_forms_core)
-gui_forms_add_fuzz_test(form_document SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/form_document_fuzz.cpp LIBRARIES gui_forms_controls)
-gui_forms_add_fuzz_test(dock_layout SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/dock_layout_fuzz.cpp LIBRARIES gui_forms_core)
-gui_forms_add_fuzz_test(clipboard_image SOURCE ${GUI_FORMS_SOURCE_DIR}/fuzz/clipboard_image_fuzz.cpp LIBRARIES gui_forms_core)
+gui_forms_add_fuzz_test(theme_manifest SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/theme_manifest_fuzz.cpp LIBRARIES gui_forms_core)
+gui_forms_add_fuzz_test(form_document SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/form_document_fuzz.cpp LIBRARIES gui_forms_controls)
+gui_forms_add_fuzz_test(dock_layout SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/dock_layout_fuzz.cpp LIBRARIES gui_forms_core)
+gui_forms_add_fuzz_test(clipboard_image SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/fuzz/clipboard_image_fuzz.cpp LIBRARIES gui_forms_core)
 # The theme a process is started with (--theme, GUI_FORMS_THEME_SHEET;
 # gui_forms/application/user_themes): in process, then programs with no
 # theme code of their own launched with each request (the C ABI's in
@@ -3480,15 +3480,15 @@ add_executable(gui_forms_macos_host_close_tests tests/macos_host_close_tests.mm)
 endif()
 
 if(TARGET gui_forms_skia)
-    add_executable(gui_forms_live_surface_benchmark EXCLUDE_FROM_ALL ${GUI_FORMS_SOURCE_DIR}/benchmarks/live_surface_benchmark.cpp)
+    add_executable(gui_forms_live_surface_benchmark EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/live_surface_benchmark.cpp)
     target_link_libraries(gui_forms_live_surface_benchmark PRIVATE gui_forms_skia)
     # The canvas pan workload (felt pattern, gradient, sheet shadow and live
     # surface, panned in 8-unit steps at scales 1 and 2); run by hand.
-    add_executable(gui_forms_canvas_pan_benchmark EXCLUDE_FROM_ALL ${GUI_FORMS_SOURCE_DIR}/benchmarks/canvas_pan_benchmark.cpp)
+    add_executable(gui_forms_canvas_pan_benchmark EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/canvas_pan_benchmark.cpp)
     target_link_libraries(gui_forms_canvas_pan_benchmark PRIVATE gui_forms_skia)
     # Threaded sub-surfaces measurements M1, M2, M4-M9 for the grid's cell
     # region (stage S7); run by hand, not by ctest.
-    add_executable(gui_forms_sub_surface_cells_benchmark EXCLUDE_FROM_ALL ${GUI_FORMS_SOURCE_DIR}/benchmarks/sub_surface_cells_benchmark.cpp)
+    add_executable(gui_forms_sub_surface_cells_benchmark EXCLUDE_FROM_ALL ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/sub_surface_cells_benchmark.cpp)
     target_link_libraries(gui_forms_sub_surface_cells_benchmark PRIVATE gui_forms_controls gui_forms_skia)
     add_executable(gui_forms_opaque_live_surface_raster_tests tests/opaque_live_surface_raster_tests.cpp)
     target_link_libraries(gui_forms_opaque_live_surface_raster_tests PRIVATE gui_forms_controls gui_forms_skia)
@@ -3552,7 +3552,7 @@ if(TARGET gui_forms_skia)
     add_test(NAME gui_forms_skia_smoke COMMAND gui_forms_skia_smoke)
     # Process memory of the bundled fonts per configuration (item 4, step 6); a report, not a test.
     # A measuring program, kept with the benchmarks (it reads the host's memory counters).
-    add_executable(gui_forms_bundled_font_memory_report ${GUI_FORMS_SOURCE_DIR}/benchmarks/bundled_font_memory_report.cpp
+    add_executable(gui_forms_bundled_font_memory_report ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/bundled_font_memory_report.cpp
         $<TARGET_OBJECTS:gui_forms_sealed_pages_objects>)
     target_link_libraries(gui_forms_bundled_font_memory_report PRIVATE gui_forms_skia)
 

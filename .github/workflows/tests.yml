@@ -177,6 +177,31 @@ jobs:
           else
             python gui_forms_tests/tools/ci_tests.py --platform ${{ matrix.platform }} --jobs 4 --test-jobs 4 $CHANGED
           fi
+      # SK2: the time each host spends presenting a frame
+      # (benchmarks/present_profile_workload.cpp), in the tree the suite
+      # built against the test cache. Its values are evidence, never a gate;
+      # a workload that cannot run fails the job, because a broken
+      # measurement is a defect. Moved from gui_forms' native job
+      # (roadmap R1); windows-x64 is measured again when this matrix has it.
+      - name: Measure present time per frame
+        run: |
+          build=gui_forms_tests/.build/${{ matrix.platform }}
+          result=.ci/present-${{ matrix.platform }}.json
+          cmake --build "$build" --target gui_forms_present_profile_workload --parallel 4
+          mkdir -p .ci
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a -s "-screen 0 1280x1024x24 -noreset" "$build/gui_forms_present_profile_workload" "$result"
+          else
+            "$build/gui_forms_present_profile_workload" "$result"
+          fi
+          cat "$result" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: present-${{ matrix.platform }}
+          path: .ci/present-${{ matrix.platform }}.json
+          include-hidden-files: true
+          overwrite: true
+          retention-days: 90
       - name: Report cache statistics
         if: always()
         run: ccache --show-stats

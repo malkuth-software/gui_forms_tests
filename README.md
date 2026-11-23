@@ -58,3 +58,16 @@ library change lands after it.
   precompiled headers and the area labels.
 - `tools/`: `ci_tests.py`, `fetch_test_cache.py`, `update_lock.py`, the engine
   gate, the sanitizer suppressions and the test-only checks and labs.
+- `benchmarks/` and `fuzz/` (from gui_forms on 2026-11-22): the measurement
+  harnesses and probes, none a CTest entry (`cmake/sections/benchmarks.cmake`),
+  and the fuzz targets with their seed corpora: the suite's standalone runs
+  and the libFuzzer programs (`cmake/FuzzTargets.cmake`,
+  `cmake/sections/fuzzers.cmake`, `.github/workflows/fuzz-smoke.yml`), and
+  the Gallery workloads with their tools: the hot-path profile
+  (`tools/profile_hot_paths.py`, `.github/workflows/profile-linux.yml`,
+  against the profile test cache gui_forms `tools/profile_cache.py` packs),
+  the blend study (`tools/blend_study.py`) and the present measurement the
+  tests job takes (`.github/workflows/tests.yml`).
+- `tools/font_metrics_differential/` (stage F's differential, library and
+  program), the menu, popup-margin and contention drivers, the PNG admission
+  probe, the managed facade laboratories and smoke programs.

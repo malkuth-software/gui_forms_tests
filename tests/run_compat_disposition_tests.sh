@@ -3,6 +3,10 @@ set -eu
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 project_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
+# Capture-0 stays in gui_forms (its SDRSharp reflection runner shares it):
+# the gui_forms tree is GUI_FORMS_SOURCE_DIR (a test cache's source tree or
+# a checkout), else a gui_forms checkout beside this one.
+gui_forms_dir=${GUI_FORMS_SOURCE_DIR:-$project_dir/../gui_forms}
 capture=
 for candidate in "$project_dir"/compatibility/*/*.capture-v0.json; do
   [ -f "$candidate" ] || continue
@@ -22,9 +26,9 @@ checked_in="$capture_prefix.facade-catalogue-v1.json"
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/gui-forms-disposition.XXXXXX")
 trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
 
-python3 "$project_dir/tools/compat_capture/apply_dispositions.py" \
+python3 "$gui_forms_dir/tools/compat_capture/apply_dispositions.py" \
   --capture "$capture" --policy "$policy" --output "$work_dir/catalogue-a.json"
-python3 "$project_dir/tools/compat_capture/apply_dispositions.py" \
+python3 "$gui_forms_dir/tools/compat_capture/apply_dispositions.py" \
   --capture "$capture" --policy "$policy" --output "$work_dir/catalogue-b.json"
 
 cmp "$work_dir/catalogue-a.json" "$work_dir/catalogue-b.json"
@@ -74,7 +78,7 @@ policy["sourceCaptureSha256"] = "0" * 64
 with open(path, "w", encoding="utf-8") as output:
     json.dump(policy, output)
 PY
-if python3 "$project_dir/tools/compat_capture/apply_dispositions.py" \
+if python3 "$gui_forms_dir/tools/compat_capture/apply_dispositions.py" \
   --capture "$capture" --policy "$work_dir/tampered-policy.json" \
   --output "$work_dir/rejected.json"; then
   echo "disposition tool unexpectedly accepted a mismatched capture pin" >&2
