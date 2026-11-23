@@ -742,9 +742,9 @@ add_executable(gui_forms_png_color_tests tests/image/png_color_tests.cpp)
 target_link_libraries(gui_forms_png_color_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_png_color_tests COMMAND gui_forms_png_color_tests)
 
-# The internal interpolation seam over stx_conv (binary64, clamped).
+# The internal interpolation seam over stxlib::conv (binary64, clamped).
 add_executable(gui_forms_interpolation_tests tests/interpolation/interpolation_tests.cpp)
-target_link_libraries(gui_forms_interpolation_tests PRIVATE gui_forms_core stx_conv::stx_conv)
+target_link_libraries(gui_forms_interpolation_tests PRIVATE gui_forms_core stxlib::algorithms)
 add_test(NAME gui_forms_interpolation_tests COMMAND gui_forms_interpolation_tests)
 
 # By-hand measurement of encoder size and time per level; not a test.
@@ -3514,9 +3514,9 @@ if(TARGET gui_forms_skia)
     add_executable(gui_forms_canvas_raster_tests tests/canvas_raster_tests.cpp)
     target_link_libraries(gui_forms_canvas_raster_tests PRIVATE gui_forms_controls gui_forms_skia)
     add_test(NAME gui_forms_canvas_raster_tests COMMAND gui_forms_canvas_raster_tests)
-    # draw_image below 1x resamples through stx_conv (audit P11).
+    # draw_image below 1x resamples through stxlib::conv (audit P11).
     add_executable(gui_forms_skia_image_downscale_tests tests/skia_image_downscale_tests.cpp)
-    target_link_libraries(gui_forms_skia_image_downscale_tests PRIVATE gui_forms_core gui_forms_skia)
+    target_link_libraries(gui_forms_skia_image_downscale_tests PRIVATE gui_forms_core gui_forms_skia stxlib::algorithms)
     add_test(NAME gui_forms_skia_image_downscale_tests COMMAND gui_forms_skia_image_downscale_tests)
 
     add_executable(gui_forms_content_scroll_raster_tests tests/content_scroll_raster_tests.cpp)
