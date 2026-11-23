@@ -312,10 +312,11 @@ public:
         ++adopted_count_;
     }
 
-    [[nodiscard]] std::span<const gf_object> adopted() const noexcept {
+    [[nodiscard]] std::span<const gf_object> adopted() const& noexcept {
         const std::span<const gf_object> written(adopted_.data(), adopted_count_);
         return written;
     }
+    std::span<const gf_object> adopted() const&& = delete;
 
 private:
     struct alignas(16) Slot final {
