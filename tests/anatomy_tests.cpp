@@ -12,10 +12,12 @@
 #include "gui_forms/schema.hpp"
 #include "gui_forms/timer.hpp"
 #include "gui_forms/window.hpp"
+#include "gui_forms/engine/part_raster/part_raster.hpp"
 #include "gui_forms_lab/correspondence_view.hpp"
 
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -459,6 +461,54 @@ public:
     std::vector<Point> text_origins;
 };
 
+// Keeps the part rasters composited, and draws nothing.
+class RasterListPainter final : public Painter {
+public:
+    void save() override {}
+    void restore() override {}
+    void translate(Point) override {}
+    void clip_rect(Rect) override {}
+    void fill_rect(Rect, Color) override {}
+    void stroke_rect(Rect, Color, double) override {}
+    void draw_line(Point, Point, Color, double) override {}
+    void draw_text_utf8(Point, std::string_view, FontSpec, Color) override {}
+    void draw_image(ImageId, Rect, double) override {}
+    void draw_part_raster(const std::shared_ptr<const PartRaster>& raster, Point, double) override {
+        rasters.push_back(raster);
+    }
+    std::vector<std::shared_ptr<const PartRaster>> rasters;
+};
+
+// The bytes of a PartRaster pixel, premultiplied BGRA8 (part_raster.hpp):
+// blue first, red third.
+constexpr std::size_t blue_byte = 0U;
+constexpr std::size_t green_byte = 1U;
+constexpr std::size_t red_byte = 2U;
+constexpr std::size_t alpha_byte = 3U;
+
+// The centre pixel of `raster`, as stored (premultiplied BGRA).
+std::array<std::uint8_t, 4> centre_pixel(const PartRaster& raster) {
+    const std::uint32_t column = raster.extent().width / 2U;
+    const std::uint32_t row = raster.extent().height / 2U;
+    const std::span<const std::uint8_t> pixels = raster.pixels();
+    const std::size_t at = static_cast<std::size_t>(row) * raster.row_bytes() + static_cast<std::size_t>(column) * 4U;
+    const std::array<std::uint8_t, 4> pixel{pixels[at], pixels[at + 1U], pixels[at + 2U], pixels[at + 3U]};
+    return pixel;
+}
+
+// The 15-pixel jewels `rasters` holds, as "(r,g,b,a)" centres, with the
+// count of all rasters: what a jewel check prints when it fails.
+std::string describe_jewels(const std::vector<std::shared_ptr<const PartRaster>>& rasters) {
+    std::string text = std::to_string(rasters.size()) + " rasters; jewel centres (r,g,b,a):";
+    for (const std::shared_ptr<const PartRaster>& raster : rasters) {
+        if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
+        const std::array<std::uint8_t, 4> centre = centre_pixel(*raster);
+        text += " (" + std::to_string(centre[red_byte]) + "," + std::to_string(centre[green_byte]) + "," +
+                std::to_string(centre[blue_byte]) + "," + std::to_string(centre[alpha_byte]) + ")";
+    }
+    return text;
+}
+
 void test_button_label_matches_painted_text() {
     std::shared_ptr<Panel> root = make_control<Panel>(StableId("anatomy.buttons.root"));
     (*root).set_requested_bounds({0.0, 0.0, 300.0, 120.0});
@@ -637,6 +687,52 @@ void test_radio_button_lamp_look() {
             "the chosen option publishes the same lens, lit (checked)");
     require_parts_within_region(*low);
     require_declared_states(*high);
+
+    // Drawn (owner, 2026-11-22: the lamp radio redrawn from the owner's
+    // jewel lamp): each well is the shipped jewel's light, 15 device pixels
+    // square at scale 1, green glass in both rows, lit in the chosen one
+    // and tinted but dark in the other.
+    RasterListPainter jewels;
+    window.paint(jewels);
+    std::vector<std::array<std::uint8_t, 4>> centres;
+    for (const std::shared_ptr<const PartRaster>& raster : jewels.rasters) {
+        if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
+        centres.push_back(centre_pixel(*raster));
+    }
+    require(centres.size() == 2U, "each lamp row draws its well as one jewel: " + describe_jewels(jewels.rasters));
+    if (centres.size() == 2U) {
+        const bool glass = centres[0][alpha_byte] == 255U && centres[1][alpha_byte] == 255U &&
+                           centres[0][green_byte] > centres[0][red_byte] &&
+                           centres[1][green_byte] > centres[1][red_byte];
+        require(glass, "both jewels are opaque green glass, lit or not: " + describe_jewels(jewels.rasters));
+        require(centres[0][green_byte] != centres[1][green_byte],
+                "the chosen jewel is lit and the other dark: " + describe_jewels(jewels.rasters));
+    }
+
+    // The lamp colour is settable (owner, 2026-11-22): the light map is
+    // achromatic and the tint is set at run time, so a red lamp_color turns
+    // the chosen jewel red while its sibling keeps the green glass. The
+    // change damages the chosen row alone, and a paint with no request
+    // paints only the damage, so the whole window is asked for here to
+    // draw both jewels again.
+    (*low).lamp_color = stxlib::Optional<Color>::of(Color::rgba(255, 40, 10));
+    RasterListPainter tinted;
+    window.paint(tinted, Rect{0.0, 0.0, 300.0, 120.0});
+    std::size_t red_jewels = 0U;
+    std::size_t green_jewels = 0U;
+    for (const std::shared_ptr<const PartRaster>& raster : tinted.rasters) {
+        if (!raster || (*raster).extent().width != 15U || (*raster).extent().height != 15U) continue;
+        const std::array<std::uint8_t, 4> centre = centre_pixel(*raster);
+        const bool red = centre[red_byte] > centre[green_byte] && centre[red_byte] > centre[blue_byte];
+        const bool green = centre[green_byte] > centre[red_byte] && centre[green_byte] > centre[blue_byte];
+        if (red) ++red_jewels;
+        if (green) ++green_jewels;
+    }
+    require(red_jewels == 1U && green_jewels == 1U,
+            "a set lamp_color tints its own jewel alone, the other keeps the default green: " +
+                std::to_string(red_jewels) + " red, " + std::to_string(green_jewels) + " green; " +
+                describe_jewels(tinted.rasters));
+    (*low).lamp_color = stxlib::Optional<Color>{};
 
     // The caption of the second row, well right of its lamp.
     const Rect caption = (*high).parts().label.bounds;

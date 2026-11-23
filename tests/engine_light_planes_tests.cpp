@@ -12,9 +12,21 @@
 //   the rectangle's pixels inside the destination are written.
 // - The strike and press envelopes and the lean formula hold their values,
 //   and reduced motion arrives at once.
-// - LightPlaneCache reads each bake once, on first use; a missing or
-//   defective one is remembered; a name that is not a bake's never reaches
-//   the filesystem.
+// - The failing lamp's factor repeats for a seed, stays in (0, 1], drops out
+//   to near dark, holds at most two dips in any second, and is 1 under
+//   reduced motion.
+// - The shipped store (GFLP, binary16 grey planes) reads back exactly,
+//   subnormals included; each malformed store is refused with its defect;
+//   the six shipped bakes are embedded with their shapes and the jewel's
+//   aperture.
+// - The jewel's filter tints an unlit jewel toward its colour; the jewel
+//   shape is a dot with a dark rim, transparent outside; the pinpoint is a
+//   core with a halo that goes out with the lamp.
+// - LightPlaneCache reads each bake once, on first use, from the
+//   directory's float planes, then its store, then the shipped store; a
+//   missing or defective one is remembered; a name that is not a bake's
+//   never reaches the filesystem; with no directory it lends the shipped
+//   bakes.
 //
 // `--preview <out dir> <bake dir>` writes the dialog keys (the baker's
 // dialog_cancel and dialog_ok, up and down) lit and unlit, 180 units wide
@@ -44,6 +56,7 @@
 #include <memory>
 #include <span>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <vector>
 
@@ -109,6 +122,119 @@ LightPlanes varied_planes() {
     for (std::size_t index = 0U; index < planes.lamps.size(); ++index) planes.lamps[index] = 0.5F + 0.02F * static_cast<float>(index);
     for (std::size_t index = 0U; index < planes.coverage.size(); ++index) planes.coverage[index] = 0.125F * static_cast<float>(index);
     return planes;
+}
+
+// A store (GFLP, version `version`) of `width` x `height` pixels and
+// `lamps` lamp planes: the room `room`, each lamp `glow` and the coverage
+// `cover`, as binary16 bit patterns, the jewel's hole `aperture`.
+std::vector<std::byte> store_bytes(std::uint32_t width, std::uint32_t height, std::uint32_t lamps, float aperture,
+                                   std::uint16_t room, std::uint16_t glow, std::uint16_t cover,
+                                   std::uint32_t version) {
+    std::vector<std::byte> bytes{std::byte{'G'}, std::byte{'F'}, std::byte{'L'}, std::byte{'P'}};
+    put_word(bytes, version);
+    put_word(bytes, width);
+    put_word(bytes, height);
+    put_word(bytes, lamps);
+    put_float(bytes, aperture);
+    const std::size_t pixels = static_cast<std::size_t>(width) * height;
+    const std::size_t planes = 2U + static_cast<std::size_t>(lamps);
+    for (std::size_t plane = 0U; plane < planes; ++plane) {
+        std::uint16_t half = glow;
+        if (plane == 0U) half = room;
+        if (plane + 1U == planes) half = cover;
+        for (std::size_t pixel = 0U; pixel < pixels; ++pixel) {
+            bytes.push_back(static_cast<std::byte>(half & 0xffU));
+            bytes.push_back(static_cast<std::byte>((half >> 8U) & 0xffU));
+        }
+    }
+    return bytes;
+}
+
+// binary16 bit patterns used below.
+constexpr std::uint16_t half_zero = 0x0000U;
+constexpr std::uint16_t half_smallest = 0x0001U; // 2^-24, a subnormal
+constexpr std::uint16_t half_quarter = 0x3400U;
+constexpr std::uint16_t half_half = 0x3800U;
+constexpr std::uint16_t half_one = 0x3c00U;
+constexpr std::uint16_t half_two = 0x4000U;
+constexpr std::uint16_t half_infinity = 0x7c00U;
+
+bool all_equal(const std::vector<float>& values, float expected) {
+    for (const float value : values) {
+        if (value != expected) return false;
+    }
+    return true;
+}
+
+LightPlanesDefect store_defect_of(const std::vector<std::byte>& bytes, LightPlanes& kept) {
+    const LightPlanesDefect defect = engine_light::read_light_plane_store(bytes, kept);
+    return defect;
+}
+
+void reads_the_store() {
+    LightPlanes read{};
+    const std::vector<std::byte> store = store_bytes(3U, 2U, 1U, 0.5F, half_quarter, half_half, half_one, 1U);
+    require(engine_light::read_light_plane_store(store, read) == LightPlanesDefect::none, "a store reads");
+    require(read.width == 3U && read.height == 2U && read.lamp_count == 1U && read.aperture == 0.5,
+            "its shape and aperture read back");
+    require(read.room.size() == 18U && all_equal(read.room, 0.25F), "the grey room is every channel of every pixel");
+    require(read.lamps.size() == 18U && all_equal(read.lamps, 0.5F), "the grey lamp is every channel of every pixel");
+    require(read.coverage.size() == 6U && read.coverage[5] == 1.0F, "the coverage reads back");
+    LightPlanes tiny{};
+    const std::vector<std::byte> subnormal = store_bytes(1U, 1U, 0U, 0.0F, half_smallest, half_zero, half_one, 1U);
+    require(engine_light::read_light_plane_store(subnormal, tiny) == LightPlanesDefect::none &&
+                static_cast<double>(tiny.room[0]) == std::ldexp(1.0, -24),
+            "a subnormal half reads exactly");
+
+    LightPlanes kept = uniform_planes(1U, 1U, 0U, 0.0F, 0.0F, 1.0F);
+    std::vector<std::byte> short_store = store;
+    short_store.resize(10U);
+    require(store_defect_of(short_store, kept) == LightPlanesDefect::short_header, "a short header is refused");
+    std::vector<std::byte> foreign = store;
+    foreign[0] = std::byte{'X'};
+    require(store_defect_of(foreign, kept) == LightPlanesDefect::not_a_store, "another file is not a store");
+    require(store_defect_of(store_bytes(3U, 2U, 1U, 0.5F, half_quarter, half_half, half_one, 2U), kept) ==
+                LightPlanesDefect::unsupported_version,
+            "another version is refused");
+    require(store_defect_of(store_bytes(3U, 2U, 1U, 1.5F, half_quarter, half_half, half_one, 1U), kept) ==
+                LightPlanesDefect::aperture_out_of_range,
+            "an aperture past 1 is refused");
+    std::vector<std::byte> truncated = store;
+    truncated.pop_back();
+    require(store_defect_of(truncated, kept) == LightPlanesDefect::length_mismatch, "a truncated store is refused");
+    require(store_defect_of(store_bytes(3U, 2U, 1U, 0.5F, half_infinity, half_half, half_one, 1U), kept) ==
+                LightPlanesDefect::not_finite,
+            "an infinite light is refused");
+    require(store_defect_of(store_bytes(3U, 2U, 1U, 0.5F, half_quarter, half_half, half_two, 1U), kept) ==
+                LightPlanesDefect::coverage_out_of_range,
+            "a coverage past 1 is refused");
+    require(kept.width == 1U && kept.room.size() == 3U, "a refused store leaves the planes alone");
+}
+
+void ships_the_bakes() {
+    constexpr std::array<std::string_view, 4> dialog{"dialog_ok_up", "dialog_ok_down", "dialog_cancel_up",
+                                                     "dialog_cancel_down"};
+    for (const std::string_view name : dialog) {
+        LightPlanes planes{};
+        const std::span<const std::byte> shipped = engine_light::shipped_light_plane_store(name);
+        require(!shipped.empty(), "each dialog key's bake is shipped");
+        require(engine_light::read_light_plane_store(shipped, planes) == LightPlanesDefect::none, "and reads");
+        require(planes.width == 240U && planes.height == 105U && planes.lamp_count == 1U && planes.aperture == 0.0,
+                "at the baker's dialog size, its lamps summed");
+    }
+    constexpr std::array<std::string_view, 2> indicator{"indicator_backed_up", "indicator_clear_up"};
+    for (const std::string_view name : indicator) {
+        LightPlanes planes{};
+        require(engine_light::read_light_plane_store(engine_light::shipped_light_plane_store(name), planes) ==
+                    LightPlanesDefect::none,
+                "each indicator bake is shipped and reads");
+        require(planes.width == 112U && planes.height == 112U &&
+                    std::fabs(planes.aperture - engine_light::indicator_jewel_aperture) < 1e-6,
+                "at the baker's indicator size, with the jewel's hole");
+    }
+    require(!engine_light::shipped_light_plane_store(engine_light::jewel_lamp_bake).empty(),
+            "the jewel lamp's bake is shipped");
+    require(engine_light::shipped_light_plane_store("dialog_spare_up").empty(), "no other name is shipped");
 }
 
 // -- reading ------------------------------------------------------------------------
@@ -333,6 +459,69 @@ bool near(double a, double b) {
     return close;
 }
 
+// -- jewels and pinpoints -----------------------------------------------------------
+
+void jewel_filter_tints() {
+    const engine_light::LampColour red = engine_light::jewel_filter(engine_light::lamp_red);
+    require(red.red == 1.0 && near(red.green, 0.4 + 0.6 * 0.12) && near(red.blue, 0.4 + 0.6 * 0.04),
+            "a red jewel passes red and tints the rest");
+    // The study's colours are filters over a white-hot lamp (panel_lamps.html:
+    // "Lamp colours as filters over a white-hot lamp"), its white the warm
+    // [1, 0.92, 0.78]: a white jewel is faintly warm glass, not clear. Only
+    // a neutral colour gives a clear jewel.
+    const engine_light::LampColour white = engine_light::jewel_filter(engine_light::lamp_white);
+    require(white.red == 1.0 && near(white.green, 0.4 + 0.6 * 0.92) && near(white.blue, 0.4 + 0.6 * 0.78),
+            "the study's warm white jewel is faintly warm glass");
+    const engine_light::LampColour neutral = engine_light::jewel_filter(engine_light::LampColour{1.0, 1.0, 1.0});
+    require(neutral.red == 1.0 && neutral.green == 1.0 && neutral.blue == 1.0, "a neutral jewel is clear");
+    const engine_light::LampColour dark = engine_light::jewel_filter(engine_light::LampColour{0.0, 0.0, 0.0});
+    require(dark.red == 1.0 && dark.green == 1.0 && dark.blue == 1.0, "a colourless lamp's jewel is clear");
+}
+
+void jewels_and_pinpoints() {
+    LightPlanes planes = uniform_planes(16U, 16U, 1U, 0.2F, 0.3F, 1.0F);
+    planes.aperture = 0.5;
+    const std::array<LampDrive, 1> lit{LampDrive{engine_light::lamp_red, engine_light::jewel_lamp_power}};
+    const std::array<LampDrive, 1> off{LampDrive{engine_light::lamp_red, 0.0}};
+    // A 20 x 20 jewel: half 10, rim 10 × 2/14, dot radius about 8.57.
+    LightComposite jewel{};
+    jewel.shape = engine_light::LightShape::jewel;
+    jewel.filter = engine_light::jewel_filter(engine_light::lamp_red);
+    const LightPlaneRect square{0, 0, 20, 20};
+    std::shared_ptr<PartRaster> raster = make_raster(20U, 20U);
+    require(composite(planes, planes, lit, jewel, square, *raster) == 400U, "the jewel is written");
+    require(pixel_of(*raster, 0U, 0U)[3] == 0U, "outside the jewel is transparent");
+    const std::array<std::uint8_t, 4> lit_centre = pixel_of(*raster, 10U, 10U);
+    require(lit_centre[3] == 255U && lit_centre[2] > lit_centre[0], "the lit jewel's centre is opaque and red");
+    const std::array<std::uint8_t, 4> rim = pixel_of(*raster, 10U, 0U);
+    require(rim[3] > 0U && rim[3] < 255U && rim[2] < 8U && rim[1] < 8U && rim[0] < 8U,
+            "the rim round the dot is dark and part covered");
+    require(composite(planes, planes, off, jewel, square, *raster) == 400U, "the unlit jewel is written");
+    const std::array<std::uint8_t, 4> off_centre = pixel_of(*raster, 10U, 10U);
+    require(off_centre[2] > off_centre[0] && off_centre[2] < lit_centre[2], "unlit, the jewel is tinted and dimmer");
+    LightComposite clear = jewel;
+    clear.filter = engine_light::LampColour{1.0, 1.0, 1.0};
+    require(composite(planes, planes, off, clear, square, *raster) == 400U, "a clear jewel is written");
+    const std::array<std::uint8_t, 4> grey = pixel_of(*raster, 10U, 10U);
+    require(grey[0] == grey[1] && grey[1] == grey[2], "a clear jewel over a grey bake is grey");
+
+    // A 30 x 30 pinpoint: half 15, core radius 5, the halo from 3.
+    LightComposite pinpoint{};
+    pinpoint.shape = engine_light::LightShape::pinpoint;
+    pinpoint.filter = engine_light::jewel_filter(engine_light::lamp_red);
+    const LightPlaneRect wide{0, 0, 30, 30};
+    std::shared_ptr<PartRaster> point = make_raster(30U, 30U);
+    require(composite(planes, planes, lit, pinpoint, wide, *point) == 900U, "the pinpoint is written");
+    require(pixel_of(*point, 15U, 15U)[3] == 255U, "its core is opaque");
+    const std::array<std::uint8_t, 4> glow = pixel_of(*point, 23U, 15U);
+    require(glow[3] > 0U && glow[3] < 255U && glow[2] > glow[0], "its halo glows red past the core");
+    require(pixel_of(*point, 0U, 0U)[3] == 0U, "the halo fades out before the corner");
+    require(composite(planes, planes, off, pinpoint, wide, *point) == 900U, "the unlit pinpoint is written");
+    require(pixel_of(*point, 23U, 15U)[3] == 0U, "unlit, the pinpoint has no halo");
+    require(pixel_of(*point, 15U, 15U)[3] == 255U, "unlit, its core still shows");
+}
+
+
 void envelopes_hold() {
     require(engine_light::lamp_power(false, 0.5, false) == 0.0, "an unlit lamp has no power, at once");
     require(near(engine_light::lamp_power(true, 0.0, false), 0.4), "a lamp strikes at 40%");
@@ -405,11 +594,23 @@ void cache_reads_on_first_use() {
     require(cache.lend("dialog_ok_down") == nullptr && cache.reads() == 2U, "a defective bake is refused");
     require(cache.defect("dialog_ok_down") == LightPlanesDefect::length_mismatch, "with its defect");
     require(cache.lend("dialog_ok_down") == nullptr && cache.reads() == 2U, "and not read again");
-    require(cache.lend("dialog_cancel_up") == nullptr && cache.defect("dialog_cancel_up") == LightPlanesDefect::unreadable,
-            "a missing bake is refused");
-    require(cache.lend("../dialog_ok_up") == nullptr && cache.lend("Dialog") == nullptr && cache.reads() == 3U,
+    require(cache.lend("dialog_spare_up") == nullptr && cache.defect("dialog_spare_up") == LightPlanesDefect::unreadable,
+            "a bake neither in the directory nor shipped is refused");
+    const std::shared_ptr<const LightPlanes> shipped = cache.lend("dialog_cancel_up");
+    require(shipped != nullptr && (*shipped).width == 240U && cache.reads() == 4U,
+            "a bake missing from the directory is lent from the shipped store");
+    write_file(directory / "indicator_clear_up.gflp",
+               store_bytes(3U, 2U, 1U, 0.5F, half_quarter, half_half, half_one, 1U));
+    const std::shared_ptr<const LightPlanes> stored = cache.lend("indicator_clear_up");
+    require(stored != nullptr && (*stored).width == 3U && cache.reads() == 5U,
+            "the directory's store stands before the shipped one");
+    require(cache.lend("../dialog_ok_up") == nullptr && cache.lend("Dialog") == nullptr && cache.reads() == 5U,
             "a name that is not a bake's reads nothing");
     test_support::remove_temporary_directory(directory);
+
+    engine_light::LightPlaneCache shipped_only{std::filesystem::path{}};
+    const std::shared_ptr<const LightPlanes> jewel = shipped_only.lend(engine_light::jewel_lamp_bake);
+    require(jewel != nullptr && (*jewel).width == 112U, "with no directory, the shipped bakes are lent");
 }
 
 // -- previewing ---------------------------------------------------------------------
@@ -494,14 +695,75 @@ int preview(const std::filesystem::path& output, const std::filesystem::path& ba
 
 } // namespace
 
+// The failing lamp (owner, 2026-11-22): deterministic, steady under reduced
+// motion, dark in its dropouts, and never more than two dips in any second.
+void fault_flickers() {
+    require(engine_light::lamp_fault_flicker(0.0, 7U, false) == 1.0, "a fault starts lit");
+    require(engine_light::lamp_fault_flicker(-1.0, 7U, false) == 1.0 &&
+                engine_light::lamp_fault_flicker(std::numeric_limits<double>::quiet_NaN(), 7U, false) == 1.0 &&
+                engine_light::lamp_fault_flicker(1.0e16, 7U, false) == 1.0,
+            "before its start, for no time, and past any lamp's life the factor is 1");
+    std::size_t worst_dips = 0U;
+    std::size_t seeds_reaching_dark = 0U;
+    bool in_range = true;
+    bool repeats = true;
+    bool steady_when_reduced = true;
+    bool seeds_differ = false;
+    constexpr std::size_t frames_per_second = 240U;
+    constexpr std::size_t frames = frames_per_second * 20U;
+    for (std::uint32_t seed = 0U; seed < 200U; ++seed) {
+        std::vector<double> powers;
+        powers.reserve(frames);
+        double lowest = 1.0;
+        for (std::size_t frame = 0U; frame < frames; ++frame) {
+            const double seconds = static_cast<double>(frame) / static_cast<double>(frames_per_second);
+            const double power = engine_light::lamp_fault_flicker(seconds, seed, false);
+            if (!(power > 0.0 && power <= 1.0)) in_range = false;
+            if (engine_light::lamp_fault_flicker(seconds, seed, false) != power) repeats = false;
+            if (engine_light::lamp_fault_flicker(seconds, seed, true) != 1.0) steady_when_reduced = false;
+            if (engine_light::lamp_fault_flicker(seconds, seed + 1000U, false) != power) seeds_differ = true;
+            lowest = std::min(lowest, power);
+            powers.push_back(power);
+        }
+        if (lowest < 0.15) ++seeds_reaching_dark;
+        // A dip is a fall through 70%; count them in every one-second window.
+        std::vector<std::size_t> dips;
+        for (std::size_t frame = 1U; frame < frames; ++frame) {
+            if (powers[frame] < 0.7 && powers[frame - 1U] >= 0.7) dips.push_back(frame);
+        }
+        for (std::size_t first = 0U; first < dips.size(); ++first) {
+            std::size_t count = 0U;
+            for (std::size_t later = first; later < dips.size() && dips[later] < dips[first] + frames_per_second;
+                 ++later) {
+                ++count;
+            }
+            worst_dips = std::max(worst_dips, count);
+        }
+    }
+    require(in_range, "the factor stays in (0, 1]");
+    require(repeats, "the same seed and time give the same factor: captures repeat");
+    require(steady_when_reduced, "under reduced motion a failing lamp is steadily lit");
+    require(seeds_differ, "two seeds fail differently");
+    require(worst_dips >= 1U && worst_dips <= 2U,
+            "no second holds more than two dips, under three flashes a second");
+    require(seeds_reaching_dark == 200U, "within 20 s every seed drops out to near dark");
+    require(engine_light::lamp_fault_slot_seconds - engine_light::lamp_fault_latest_start > 0.5,
+            "two events start more than half a second apart");
+}
+
 int main(int argc, char** argv) {
     if (argc > 3 && std::strcmp(argv[1], "--preview") == 0) return preview(argv[2], argv[3]);
     reads_the_bake_file();
     refuses_malformed_files();
+    reads_the_store();
+    ships_the_bakes();
+    jewel_filter_tints();
+    jewels_and_pinpoints();
     composites_as_panel_lamps();
     press_mixes_the_bakes();
     stretches_over_other_sizes();
     envelopes_hold();
+    fault_flickers();
     cache_reads_on_first_use();
     std::cout << "gui_forms_engine_light_planes_tests passed\n";
     return 0;

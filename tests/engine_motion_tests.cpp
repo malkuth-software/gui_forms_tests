@@ -208,6 +208,8 @@ PropertyTransition transition_on(std::string property, double target) {
 void machines_are_rule_data() {
     const CompiledThemeRules built_in =
         CompiledThemeRules::compile_with_built_in(ThemeRuleSheet{}, builtin_primitive_registry());
+    // Fifteen since 2026-11-22: the ribbon's two open plates went (an open
+    // menu shows the dent) and a split's arrow half took the rise.
     require(built_in.diagnostics().empty() && built_in.built_in_rule_count() == 15U && built_in.rule_count() == 15U,
             "the engine's fifteen built-in rules compile cleanly");
     const CompiledThemeRules::Resolution face =
@@ -217,6 +219,29 @@ void machines_are_rule_data() {
                 (*face.transitions[0]).property == PresentationProperty::parameter && (*face.transitions[0]).parameter == 0U &&
                 face.level == CascadeLevel::built_in,
             "a ribbon command face takes the dithered bulge with its amplitude's rise, at the built-in level");
+    // The rise stands at full amplitude at once while pressed, then rises
+    // while hot and rests flat (owner, 2026-11-22: a press shows the dent
+    // without waiting for a hover to settle).
+    if (face.transition_count == 1U) {
+        const CompiledThemeRules::CompiledTransition& rise = *face.transitions[0];
+        AnatomyStateSet pressed_only{};
+        pressed_only.insert(AnatomyState::pressed);
+        require(rise.states.size() == 3U && rise.states[0].when == pressed_only && rise.states[0].target == 1.0 &&
+                    rise.states[0].enter_from.present() && *rise.states[0].enter_from.value() == 1.0,
+                "pressed, the rise stands at full amplitude at once");
+    }
+    const CompiledThemeRules::Resolution arrow =
+        built_in.resolve(facts_of("ribbon", "command_arrow", PartRole::actuator));
+    require(arrow.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*arrow.primitive).descriptor().name == "dithered_bulge" && arrow.transition_count == 1U,
+            "a split's arrow half hovers as the dithered rise, not the button's plate");
+    AnatomyStateSet open{};
+    open.insert(AnatomyState::open);
+    const CompiledThemeRules::Resolution opened =
+        built_in.resolve(facts_of("ribbon", "command_face", PartRole::face, open));
+    require(opened.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*opened.primitive).descriptor().name == "dithered_bulge",
+            "an open command's face keeps the dithered bulge (the ribbon paints it pressed: the dent)");
     const CompiledThemeRules::Resolution item =
         built_in.resolve(facts_of("ribbon_gallery", "item_face", PartRole::face));
     const CompiledThemeRules::Resolution tab_hover = built_in.resolve(facts_of("ribbon", "tab_hover", PartRole::face));
@@ -230,8 +255,38 @@ void machines_are_rule_data() {
     checked.insert(AnatomyState::checked);
     const CompiledThemeRules::Resolution toggle =
         built_in.resolve(facts_of("ribbon", "command_face", PartRole::face, checked));
-    require(toggle.outcome == CompiledThemeRules::Outcome::built_in_selected && toggle.transition_count == 0U,
-            "a checked toggle keeps today's plate");
+    // The selected look (owner, 2026-11-22; rendering reference §2 "Active
+    // tool"): a checked command is the dithered bulge in gold, standing at
+    // full amplitude at rest.
+    const PrimitiveDescriptor& dithered = (*builtin_primitive_registry().find("dithered_bulge")).descriptor();
+    const stxlib::Optional<std::size_t> gold_found = find_parameter(dithered, "gold");
+    require(gold_found.present(), "the dithered bulge has a gold parameter");
+    if (!gold_found.present()) return;
+    const std::size_t gold_parameter = *gold_found.value();
+    require(toggle.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*toggle.primitive).descriptor().name == "dithered_bulge" &&
+                toggle.parameters.values[gold_parameter].number == 1.0 && toggle.transition_count == 1U &&
+                (*toggle.transitions[0]).parameter == 0U && (*toggle.transitions[0]).states.size() == 1U &&
+                (*toggle.transitions[0]).states[0].when == AnatomyStateSet{} && (*toggle.transitions[0]).states[0].target == 1.0,
+            "a checked toggle is the gold dithered bulge, standing at full amplitude");
+    require(face.parameters.values[gold_parameter].number == 0.0, "an unchecked command face is not gold");
+    AnatomyStateSet chosen{};
+    chosen.insert(AnatomyState::selected);
+    const CompiledThemeRules::Resolution chosen_item =
+        built_in.resolve(facts_of("ribbon_gallery", "item_face", PartRole::face, chosen));
+    require(chosen_item.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*chosen_item.primitive).descriptor().name == "dithered_bulge" &&
+                chosen_item.parameters.values[gold_parameter].number == 1.0 && chosen_item.transition_count == 1U,
+            "a selected gallery item is the gold dithered bulge, standing");
+    AnatomyStateSet pressed{};
+    pressed.insert(AnatomyState::pressed);
+    pressed.insert(AnatomyState::hot);
+    const CompiledThemeRules::Resolution dent =
+        built_in.resolve(facts_of("ribbon", "command_face", PartRole::face, pressed));
+    require(dent.outcome == CompiledThemeRules::Outcome::primitive &&
+                (*dent.primitive).descriptor().name == "dithered_bulge" &&
+                dent.parameters.values[gold_parameter].number == 0.0,
+            "a pressed command is the dithered bulge, which reads pressed as the dent");
     const CompiledThemeRules::Resolution tile = built_in.resolve(facts_of("dock_site", "tile", PartRole::actuator));
     require(tile.outcome == CompiledThemeRules::Outcome::primitive &&
                 (*tile.primitive).descriptor().name == "pill_plate" && tile.transition_count == 1U &&

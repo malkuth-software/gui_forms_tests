@@ -311,9 +311,29 @@ bool shows_twill(const PartRaster& raster, std::uint32_t tows, std::uint32_t sid
     return twill;
 }
 
+// The local peaks a carbon fibre tile shows down its pixel columns: pixels
+// brighter than the pixels above and below them by more than `margin`
+// levels. At scale 4 a tow's every pixel row is one of its 16 fibres, and
+// neighbouring fibres' streaks differ by at most 0.18 of the contrast, so
+// only a glint makes such a peak.
+std::size_t carbon_peaks(const PartRaster& raster, int margin) {
+    const DeviceExtent extent = raster.extent();
+    std::size_t peaks = 0U;
+    for (std::uint32_t y = 1U; y + 1U < extent.height; ++y) {
+        for (std::uint32_t x = 0U; x < extent.width; ++x) {
+            const int here = pixel_of(raster, x, y)[0];
+            const int above = pixel_of(raster, x, y - 1U)[0];
+            const int below = pixel_of(raster, x, y + 1U)[0];
+            if (here - above > margin && here - below > margin) ++peaks;
+        }
+    }
+    return peaks;
+}
+
 // Carbon fibre (owner, 2026-11-22): seeded, a whole number of 16-unit
 // twill repeats of 4-unit tows per tile, so the twill runs on across the
-// tile's seam, and its weave read from the pixels (shows_twill).
+// tile's seam, and its weave read from the pixels (shows_twill); its
+// second pass's sparse glints (carbon_peaks).
 void carbon_fibre_weaves() {
     ProceduralFill fill{};
     fill.pattern = ProceduralPattern::carbon_fibre;
@@ -337,6 +357,19 @@ void carbon_fibre_weaves() {
     const std::shared_ptr<PartRaster> two_repeats = make_pattern(wider, 2.0);
     require((*two_repeats).extent() == DeviceExtent{48U, 48U} && shows_twill(*two_repeats, 8U, 6U),
             "a tile between repeats holds whole repeats, so the twill runs on across its seam");
+    // Second pass (owner, 2026-11-22): sparse glints. A 96-unit tile at
+    // scale 4 holds 24 tows each way, 288 crossings where the tow across
+    // floats over; about one in ten lights an inner fibre, so some rows peak
+    // above both neighbours by more than any streak can, but few do.
+    ProceduralFill broad = fill;
+    broad.tile = 96.0;
+    const std::shared_ptr<PartRaster> glinting = make_pattern(broad, 4.0);
+    const DeviceExtent glint_extent = (*glinting).extent();
+    const std::size_t peaks = carbon_peaks(*glinting, 48);
+    const std::size_t pixels = static_cast<std::size_t>(glint_extent.width) * glint_extent.height;
+    require(peaks > 0U, "carbon fibre shows glints");
+    require(peaks * 50U < pixels, "and they are sparse: under 2% of the tile");
+    require(shows_twill(*glinting, 24U, 16U), "the glints leave the twill and its sheen as they were");
     const DeviceExtent extent = engine_primitives::procedural_extent(fill, fresco_box(1.0), 1.0);
     require(engine_primitives::procedural_generation_effort(fill, extent).units > 0U,
             "carbon fibre's generation has an effort");

@@ -2374,6 +2374,14 @@ void test_radio_button_properties() {
         expect(by_name && *by_name == PropertyValueTraits<ChoiceIndicatorStyle>::to_binding(sample),
                "RadioButton.indicator_style: the table reads the cell");
     }
+    {
+        const stxlib::Optional<Color> sample = stxlib::Optional<Color>::of(Color::rgba(10, 20, 30));
+        (*control).lamp_color = sample;
+        expect((*control).lamp_color.read() == sample, "RadioButton.lamp_color: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("lamp_color");
+        expect(by_name && *by_name == PropertyValueTraits<stxlib::Optional<Color>>::to_binding(sample),
+               "RadioButton.lamp_color: the table reads the cell");
+    }
 }
 
 void test_range_control_properties() {

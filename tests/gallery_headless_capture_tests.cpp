@@ -2,12 +2,14 @@
 // `--page <id> --capture <path.png> --headless`): the parsed options, a page
 // staged and captured offscreen into a PNG of the requested size and scale
 // with no host window, and the refusals (no --capture: exit 2; an unwritable
-// path: exit 1, saved false), and the help-book page's captures (GAPS H5).
+// path: exit 1, saved false), --check's staging of a page's check box, and
+// the help-book page's captures (GAPS H5).
 
 #include "demo/gallery.hpp"
 #include "demo/gallery_headless_capture.hpp"
 #include "demo/gallery_staging.hpp"
 #include "demo/program_options.hpp"
+#include "gui_forms/controls/check_box.hpp"
 #include "gui_forms/window/window.hpp"
 #include "support/unique_temporary_directory.hpp"
 
@@ -86,7 +88,8 @@ void test_capture() {
         test_support::make_unique_temporary_directory("gui_forms_gallery_headless");
     const std::filesystem::path png = directory / "industrial-surfaces.png";
     std::vector<std::string> arguments{"gallery", "--page", "industrial-surfaces", "--capture", png.string(),
-                                       "--headless", "--size", "640x400", "--scale", "2"};
+                                       "--headless", "--size", "640x400", "--scale", "2",
+                                       "--check", "gallery.industrial.theme"};
     const std::optional<demo::ProgramOptions> options = parsed(arguments);
     require(options.has_value(), "the options parse");
     if (!options) {
@@ -95,6 +98,14 @@ void test_capture() {
     }
     std::unique_ptr<Window> window = gallery::make_gallery();
     require(gallery::apply_gallery_staging(*options, *window), "the page is staged");
+    const std::shared_ptr<CheckBox> theme =
+        std::dynamic_pointer_cast<CheckBox>((*window).find("gallery.industrial.theme"));
+    require(theme != nullptr && (*theme).checked.read(), "--check sets the page's industrial theme check box");
+    std::vector<std::string> unknown{"gallery", "--page", "industrial-surfaces", "--check", "gallery.no-such-box"};
+    const std::optional<demo::ProgramOptions> refused = parsed(unknown);
+    std::unique_ptr<Window> other = gallery::make_gallery();
+    require(refused.has_value() && !gallery::apply_gallery_staging(*refused, *other),
+            "--check of a control the page does not have is refused");
     const int code = gallery::run_headless_gallery_capture(*options, *window, GUI_FORMS_TEST_FONT_DIR);
     require(code == 0, "the headless capture saves the page");
     const std::vector<unsigned char> header = leading_bytes(png, 24U);

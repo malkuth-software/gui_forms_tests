@@ -1926,6 +1926,9 @@ void example() {
         gf::make_control<gf::IndicatorLamp>(gf::StableId("panel.fault"), "Fault");
     (*fault).state = gf::IndicatorLampState::error;
     // fault->semantic_descriptor().value is "error"
+    // Failing as a breaking lamp does, steady under reduced motion:
+    (*fault).state = gf::IndicatorLampState::fault;
+    // fault->semantic_descriptor().value is "fault"
 }
 }  // namespace doc_example_IndicatorLamp_1
 

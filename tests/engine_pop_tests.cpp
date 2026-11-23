@@ -319,7 +319,7 @@ bool both_faces_stretched(const RasterLog& painter, const std::shared_ptr<const 
 }
 
 void pop_is_rule_data() {
-    require(builtin_primitive_registry().primitives().size() == 12U, "the pop adds no primitive");
+    require(builtin_primitive_registry().primitives().size() == 13U, "the pop adds no primitive");
     const ThemeRule rule = pop_rule();
     require(rule.declarations.size() == 2U && rule.declarations[0].name == "material",
             "the pop's face is the material primitive's");

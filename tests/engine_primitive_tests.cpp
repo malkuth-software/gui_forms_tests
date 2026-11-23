@@ -4,13 +4,16 @@
 // and the ribbon's bulge and dithered bulge (notes:planning/stages/T4-default-theme/
 // RENDERING_REFERENCE.md §2, §3, with the T2 round 001 decisions G1-3 and
 // G3-3) draw what the reference describes, with the same bytes on every CI
-// platform.
+// platform. The light map (owner, 2026-11-22) draws a shipped key bake
+// exactly as engine_light::composite_light_planes does, its press, lamp
+// power, colour and bake each changing the key, with nothing animated.
 //
 // The reference images are FNV-1a hashes of each raster's rows in RGBA
 // order. The expected values were produced on Windows x64 and are checked
 // by every CI platform. GUI_FORMS_ENGINE_IDENTITY_PRINT=1 prints the
 // observed table instead of checking it.
 
+#include "gui_forms/engine/light_planes/light_planes.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"
 #include "support/rgba_order.hpp"
 
@@ -47,7 +50,7 @@ bool print_mode() {
     return printing;
 }
 
-const EnginePrimitive& builtin(std::string_view name) {
+const EnginePrimitive& builtin_named(std::string_view name) {
     const EnginePrimitive* const primitive = builtin_primitive_registry().find(name);
     require(primitive != nullptr, "the built-in registry has the primitive");
     return *primitive;
@@ -181,14 +184,22 @@ const PrimitiveParameterDeclaration twice[] = {{"strength", PrimitiveParameterKi
 
 void test_builtin_registry() {
     const PrimitiveRegistry& registry = builtin_primitive_registry();
-    require(registry.primitives().size() == 12U,
-            "the built-in registry holds the bulge pair, the relief set, the material, the overlay shadow, the sheen and the glass");
+    require(registry.primitives().size() == 13U,
+            "the built-in registry holds the bulge pair, the relief set, the material, the overlay shadow, the sheen, "
+            "the glass and the light map");
     require(registry.find("not_a_primitive") == nullptr, "an unknown name finds nothing");
     const char* const names[] = {"bulge", "dithered_bulge"};
     for (const char* const name : names) {
-        const PrimitiveDescriptor& descriptor = builtin(name).descriptor();
+        const PrimitiveDescriptor& descriptor = builtin_named(name).descriptor();
         require(descriptor.name == name, "a primitive is found under its own name");
-        require(descriptor.roles.size() == 1U && descriptor.roles[0] == PartRole::face, "the bulge paints faces");
+        // The dithered form also paints a ribbon split's arrow half (an
+        // actuator), which hovers as the soft dither too.
+        const bool dithered = descriptor.name == "dithered_bulge";
+        const std::size_t roles = dithered ? 2U : 1U;
+        require(descriptor.roles.size() == roles && descriptor.roles[0] == PartRole::face, "the bulge paints faces");
+        if (dithered && descriptor.roles.size() == 2U) {
+            require(descriptor.roles[1] == PartRole::actuator, "the dithered bulge paints actuators too");
+        }
         std::set<AnatomyState> read(descriptor.states_read.begin(), descriptor.states_read.end());
         require(read.size() == 2U && read.count(AnatomyState::pressed) == 1U &&
                     read.count(AnatomyState::active_tool) == 1U,
@@ -198,6 +209,22 @@ void test_builtin_registry() {
         const PrimitiveParameterBlock defaults = default_parameters(descriptor);
         require(validate_parameters(descriptor, defaults).defect == ParameterDefect::none, "defaults validate");
     }
+}
+
+// Every built-in primitive fits a parameter block and registers on its own
+// (2026-11-22: the dithered bulge once declared 27 parameters, the registry
+// refused it as too_many_parameters, and every program aborted at startup).
+void test_builtin_primitives_fit_a_parameter_block() {
+    const PrimitiveRegistry& builtins = builtin_primitive_registry();
+    PrimitiveRegistry fresh{};
+    for (const EnginePrimitive* const primitive : builtins.primitives()) {
+        const PrimitiveDescriptor& descriptor = (*primitive).descriptor();
+        require(descriptor.parameters.size() <= maximum_primitive_parameters,
+                "a built-in primitive declares at most maximum_primitive_parameters parameters");
+        require(fresh.register_primitive(*primitive) == RegistrationOutcome::registered,
+                "a built-in primitive registers in a fresh registry");
+    }
+    require(fresh.primitives().size() == builtins.primitives().size(), "every built-in primitive registered");
 }
 
 void test_registration_refusals() {
@@ -258,7 +285,7 @@ void test_registration_refusals() {
 }
 
 void test_parameter_refusals() {
-    const PrimitiveDescriptor& descriptor = builtin("bulge").descriptor();
+    const PrimitiveDescriptor& descriptor = builtin_named("bulge").descriptor();
     PrimitiveParameterBlock block = default_parameters(descriptor);
     const PrimitiveParameterBlock before = block;
     require(set_number_parameter(block, descriptor, "amplitude", 1.5) == ParameterAssignment::out_of_range,
@@ -293,7 +320,7 @@ void test_parameter_refusals() {
 // -- destination ---------------------------------------------------------------
 
 void test_destination_refusals() {
-    const EnginePrimitive& bulge = builtin("bulge");
+    const EnginePrimitive& bulge = builtin_named("bulge");
     const PrimitiveParameterBlock defaults = default_parameters(bulge.descriptor());
     const Size logical{20.0, 10.0};
 
@@ -353,10 +380,10 @@ bool same_preparation(const PrimitivePreparation& left, const PrimitivePreparati
 }
 
 void test_preparation_refusals() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveDescriptor& descriptor = dithered.descriptor();
     require(descriptor.prepared_values == 3U, "the dither derives its three extremes");
-    require(builtin("bulge").descriptor().prepared_values == 0U, "the smooth bulge derives nothing");
+    require(builtin_named("bulge").descriptor().prepared_values == 0U, "the smooth bulge derives nothing");
     const stxlib::Optional<std::size_t> amplitude = find_parameter(descriptor, "amplitude");
     require(amplitude.present() && descriptor.parameters[(*amplitude.value())].animated, "the amplitude is animated");
     const PrimitiveParameterBlock defaults = default_parameters(descriptor);
@@ -389,7 +416,7 @@ void test_preparation_refusals() {
     const PrimitivePreparation unprepared{};
     require(dithered.rasterize(defaults, target, unprepared, raster.view()) == RasterOutcome::stale_preparation,
             "an unprepared part is refused");
-    const EnginePrimitive& bulge = builtin("bulge");
+    const EnginePrimitive& bulge = builtin_named("bulge");
     PrimitivePreparation smooth{};
     require(bulge.prepare(default_parameters(bulge.descriptor()), target, smooth) == PreparationOutcome::prepared,
             "the smooth bulge prepares");
@@ -427,7 +454,7 @@ void test_preparation_refusals() {
 void test_amplitude_zero_is_the_plane() {
     const char* const names[] = {"bulge", "dithered_bulge"};
     for (const char* const name : names) {
-        const EnginePrimitive& primitive = builtin(name);
+        const EnginePrimitive& primitive = builtin_named(name);
         PrimitiveParameterBlock parameters = default_parameters(primitive.descriptor());
         require(set_number_parameter(parameters, primitive.descriptor(), "amplitude", 0.0) ==
                     ParameterAssignment::assigned,
@@ -453,7 +480,7 @@ void test_amplitude_zero_is_the_plane() {
 }
 
 void test_smooth_bulge_is_premultiplied_and_edgeless() {
-    const EnginePrimitive& bulge = builtin("bulge");
+    const EnginePrimitive& bulge = builtin_named("bulge");
     const PrimitiveParameterBlock parameters = default_parameters(bulge.descriptor());
     TestRaster raster = make_raster(large_button, 2.0);
     require(draw(bulge, parameters, raster, large_button, 2.0, {}) == RasterOutcome::painted, "the bulge paints");
@@ -507,7 +534,7 @@ DotCounts count_lit_dots(const TestRaster& raster) {
 }
 
 void test_dithered_lattice_and_tones() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     TestRaster raster = make_raster(large_button, 1.0);
     require(draw(dithered, parameters, raster, large_button, 1.0, {}) == RasterOutcome::painted, "the dither paints");
@@ -533,12 +560,51 @@ void test_dithered_lattice_and_tones() {
     require(dent.lit_lower_right > dent.lit_upper_left, "the dent is lit on the far slope");
 }
 
+// The selected look (owner, 2026-11-22; reference §2 "Active tool"): the
+// `gold` parameter, which the built-in rules set for a checked ribbon
+// command and a selected gallery item, draws exactly what the active_tool
+// state draws, bulge or dent, in both forms; at its default 0 nothing
+// changes.
+void test_gold_parameter_is_the_active_tool() {
+    const char* const names[] = {"bulge", "dithered_bulge"};
+    for (const char* const name : names) {
+        const EnginePrimitive& primitive = builtin_named(name);
+        const PrimitiveDescriptor& descriptor = primitive.descriptor();
+        const stxlib::Optional<std::size_t> found = find_parameter(descriptor, "gold");
+        require(found.present() && !descriptor.parameters[*found.value()].animated &&
+                    descriptor.parameters[*found.value()].default_number == 0.0,
+                "the bulge has a gold parameter, 0 by default and not animated");
+        if (!found.present()) continue;
+        const PrimitiveParameterBlock defaults = default_parameters(descriptor);
+        PrimitiveParameterBlock gold = defaults;
+        gold.values[*found.value()].number = 1.0;
+        require(validate_parameters(descriptor, gold).defect == ParameterDefect::none, "gold 1 validates");
+        const bool dents[] = {false, true};
+        for (const bool dent : dents) {
+            TestRaster by_state = make_raster(large_button, 1.0);
+            TestRaster by_parameter = make_raster(large_button, 1.0);
+            TestRaster plain = make_raster(large_button, 1.0);
+            require(draw(primitive, defaults, by_state, large_button, 1.0, states_of(dent, true)) ==
+                        RasterOutcome::painted,
+                    "the active tool paints");
+            require(draw(primitive, gold, by_parameter, large_button, 1.0, states_of(dent, false)) ==
+                        RasterOutcome::painted,
+                    "the gold parameter paints");
+            require(draw(primitive, defaults, plain, large_button, 1.0, states_of(dent, false)) ==
+                        RasterOutcome::painted,
+                    "the plain bulge paints");
+            require(by_state.bytes == by_parameter.bytes, "gold draws exactly the active tool's pixels");
+            require(plain.bytes != by_parameter.bytes, "and differs from the plain bulge");
+        }
+    }
+}
+
 // GIVEN G1-3: each side of the tone is rescaled to the part's own extreme.
 // Before it, the light default's tone never fell below about −0.63, short
 // of the −0.68 the third shaded step needed; now the darkest dots of each
 // side reach the third step, at every reference scale, bulge or dent.
 void test_rescaled_light_default_uses_every_step() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     const std::uint32_t light_default[] = {0xECF4FEU, 0xF6FAFFU, 0xFFFFFFU, 0xB0C6E8U, 0x84A2D4U, 0x587ABAU};
     const double scales[] = {1.0, 1.25, 1.5, 2.0};
@@ -569,12 +635,91 @@ void test_rescaled_light_default_uses_every_step() {
     }
 }
 
+// The selected look reads as a plate (owner, 2026-11-22; rendering
+// reference §1 "active tool"): the gold form draws the gold plate, #FFEDBA
+// to #FFCF66 inside a one-keyline border #C49332 with radius 2, and its dots
+// shade the plate. Every face pixel is opaque; off the lattice a pixel is
+// the plate's own colour for its row, so the dots fall only on the lattice
+// and the body between them is the plate, not the plane. Pressed, the plate
+// takes the gold plate's pressed face.
+std::array<std::uint8_t, 4> border_pixel() {
+    const std::array<std::uint8_t, 4> border{196U, 147U, 50U, 255U};
+    return border;
+}
+
+void check_gold_plate(const TestRaster& raster, std::uint32_t side, std::uint32_t line, std::string_view where) {
+    const std::uint32_t width = raster.extent.width;
+    const std::uint32_t height = raster.extent.height;
+    require(raster.pixel(width / 2U, 0U) == border_pixel() && raster.pixel(0U, height / 2U) == border_pixel() &&
+                raster.pixel(width / 2U, height - 1U) == border_pixel() &&
+                raster.pixel(width - 1U, height / 2U) == border_pixel(),
+            (std::string(where) + ": the plate's border runs along every side").c_str());
+    require(raster.pixel(0U, 0U)[3] < 255U, (std::string(where) + ": the corners are rounded").c_str());
+    bool opaque = true;
+    bool plate_between = true;
+    std::size_t dots = 0U;
+    // Outside the corner squares (radius 2 logical), with a reference
+    // column off the lattice: lattice column index 1 is device column 2·side.
+    const std::uint32_t corner = 2U * side;
+    const std::uint32_t reference_column = 2U * side;
+    for (std::uint32_t row = corner; row + corner < height; ++row) {
+        const std::array<std::uint8_t, 4> plate = raster.pixel(reference_column, row);
+        const bool lattice_row = (row / side) % 2U == 1U;
+        for (std::uint32_t column = line; column + line < width; ++column) {
+            const std::array<std::uint8_t, 4> pixel = raster.pixel(column, row);
+            if (pixel[3] != 255U) opaque = false;
+            const bool lattice_column = (column / side) % 2U == 1U;
+            if (lattice_row && lattice_column) {
+                if (pixel != plate) ++dots;
+                continue;
+            }
+            if (column >= corner && column + corner < width && pixel != plate) plate_between = false;
+        }
+    }
+    require(opaque, (std::string(where) + ": every face pixel is opaque").c_str());
+    require(plate_between,
+            (std::string(where) + ": off the lattice every pixel is the plate's colour for its row").c_str());
+    require(dots > 0U, (std::string(where) + ": the dots shade the plate").c_str());
+}
+
+void test_gold_form_draws_its_plate() {
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
+    const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
+    const double scales[] = {1.0, 2.0};
+    for (const double scale : scales) {
+        const std::uint32_t side = static_cast<std::uint32_t>(scale);
+        TestRaster gold = make_raster(large_button, scale);
+        require(draw(dithered, parameters, gold, large_button, scale, states_of(false, true)) == RasterOutcome::painted,
+                "the gold dither paints");
+        check_gold_plate(gold, side, side, scale == 1.0 ? "gold at scale 1" : "gold at scale 2");
+        require(padding_untouched(gold), "row padding is never written");
+        TestRaster dent = make_raster(large_button, scale);
+        require(draw(dithered, parameters, dent, large_button, scale, states_of(true, true)) == RasterOutcome::painted,
+                "the gold dent paints");
+        check_gold_plate(dent, side, side, scale == 1.0 ? "the gold dent at scale 1" : "the gold dent at scale 2");
+        // Row 2·side, off the lattice: the face's colour near the top.
+        const std::uint32_t row = 2U * side;
+        require(gold.pixel(2U * side, row) != dent.pixel(2U * side, row),
+                "pressed, the plate takes the gold plate's pressed face");
+    }
+    // The plate's colours are parameters: a theme may recolour it.
+    PrimitiveParameterBlock recoloured = parameters;
+    require(set_colour_parameter(recoloured, dithered.descriptor(), "gold_plate_border", Color{10, 20, 30, 255}) ==
+                ParameterAssignment::assigned,
+            "the plate's border is a parameter");
+    TestRaster themed = make_raster(large_button, 1.0);
+    require(draw(dithered, recoloured, themed, large_button, 1.0, states_of(false, true)) == RasterOutcome::painted,
+            "the recoloured plate paints");
+    const std::array<std::uint8_t, 4> themed_border{10U, 20U, 30U, 255U};
+    require(themed.pixel(20U, 0U) == themed_border, "the border takes the parameter's colour");
+}
+
 // The dark variant's gains reach all three steps of both sides (they did
 // before the rescaling too).
 void apply_dark_palette(PrimitiveParameterBlock& parameters, const PrimitiveDescriptor& descriptor);
 
 void test_dark_variant_reaches_every_step() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     apply_dark_palette(parameters, dithered.descriptor());
     TestRaster raster = make_raster(large_button, 1.0);
@@ -610,7 +755,7 @@ std::size_t count_visible(const std::vector<bool>& visible) {
 // shown stays shown, so the dot count only grows: the rise grows the dither
 // rather than popping it, because the extremes are taken at amplitude 1.
 void test_dot_count_grows_with_amplitude() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     struct Variant final {
         bool pressed;
         bool active;
@@ -675,7 +820,7 @@ bool magnifies(const TestRaster& large, const TestRaster& small, std::uint32_t f
 // odd positions inside 2·floor(w / 2) (checked here and in
 // test_dithered_lattice_and_tones).
 void test_integer_scales_reproduce_the_studies_lattice() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const Size sizes[] = {large_button, Size{41.0, 57.0}, Size{40.5, 56.25}, Size{13.0, 9.0}};
     struct Variant final {
         bool pressed;
@@ -683,8 +828,10 @@ void test_integer_scales_reproduce_the_studies_lattice() {
         bool dark;
         double amplitude;
     };
-    const Variant variants[] = {{false, false, false, 1.0}, {true, false, false, 1.0}, {false, true, false, 1.0},
-                                {false, false, true, 1.0},  {false, false, false, 0.5}, {false, true, false, 0.5}};
+    // The gold form draws its plate under the dots, which is no lattice
+    // (test_gold_form_draws_its_plate); the plain forms are the studies' rule.
+    const Variant variants[] = {{false, false, false, 1.0}, {true, false, false, 1.0}, {false, false, true, 1.0},
+                                {false, false, false, 0.5}};
     const std::uint32_t factors[] = {2U, 3U, 4U};
     for (const Size size : sizes) {
         for (const Variant& variant : variants) {
@@ -719,7 +866,7 @@ void test_integer_scales_reproduce_the_studies_lattice() {
 // k × k block of one colour whose corner is at device (2n + 1)·k on each
 // axis, and there are floor(w·s / 2k) dot columns and rows for the height.
 void test_lattice_follows_the_nearest_integer_scale() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     const PrimitiveParameterBlock parameters = default_parameters(dithered.descriptor());
     const double scales[] = {0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0};
     for (const double scale : scales) {
@@ -776,16 +923,18 @@ struct OldReferenceCase final {
     std::uint64_t scale_2;
 };
 
-constexpr std::array<OldReferenceCase, 5> old_reference_cases{{
+// The old rule drew the gold form's dots on the plane; the gold form now
+// draws its plate under them (owner, 2026-11-22), so its old hashes no
+// longer apply and only the plain forms are compared.
+constexpr std::array<OldReferenceCase, 4> old_reference_cases{{
     {"rest", false, false, 1.0, false, 0x53cca0febc6ccef7ULL, 0xe7555604ef50bcf5ULL},
     {"pressed", true, false, 1.0, false, 0x5ecafcd3609907c7ULL, 0x64067dc3a4ee299dULL},
-    {"active", false, true, 1.0, false, 0xad170a954e2e3b4cULL, 0xd840f9e4182893d5ULL},
     {"half", false, false, 0.5, false, 0x2c3fc566a9e7e9d2ULL, 0x82b6a73be196ccadULL},
     {"dark", false, false, 1.0, true, 0x5208613e5af59721ULL, 0x30da795d91c6d9c5ULL},
 }};
 
 void test_integer_scales_reproduce_the_old_reference_images() {
-    const EnginePrimitive& dithered = builtin("dithered_bulge");
+    const EnginePrimitive& dithered = builtin_named("dithered_bulge");
     for (const OldReferenceCase& reference : old_reference_cases) {
         PrimitiveParameterBlock parameters = with_amplitude(dithered, reference.amplitude);
         if (reference.dark) apply_dark_palette(parameters, dithered.descriptor());
@@ -850,10 +999,10 @@ constexpr std::array<std::array<std::uint64_t, 4>, 13> expected_hashes{{
     {0xe7f1527fa3215f25ULL, 0xcaa4c737b94a58e5ULL, 0x951952b219c4ea25ULL, 0xa55c6ca074ff1325ULL}, // bulge flat
     {0x01ace47b72818b79ULL, 0x7923187f7bacb6c0ULL, 0xd39e2ebbddf9d7adULL, 0xcd12d7dbcb60d2bdULL}, // dithered rest
     {0x389bbb1a25ae59e7ULL, 0x601e47fe5310c5ceULL, 0x67eca5628bc8bfddULL, 0x73a3879ddef6a265ULL}, // dithered pressed
-    {0xfb90047b1f41a576ULL, 0x1f023cd6ab13b4dfULL, 0x98ed4bbdbe78df2dULL, 0xc05abbffd608633dULL}, // dithered active
+    {0xfdba5dce2bb73ad8ULL, 0xcde09440bafc20a4ULL, 0x0d002dc1e19027adULL, 0xa782f0bd4b62497dULL}, // dithered active
     {0x41690111d07d89a8ULL, 0x9b2eea19b6280a95ULL, 0x78295cc94e201585ULL, 0x3153bbec176cb8d5ULL}, // dithered half
     {0xe7f1527fa3215f25ULL, 0xcaa4c737b94a58e5ULL, 0x951952b219c4ea25ULL, 0xa55c6ca074ff1325ULL}, // dithered flat
-    {0x72394a8b750b0a11ULL, 0xa35d9db2d55576c6ULL, 0x366008ddfa3cb6c5ULL, 0x4b1b8e6ca32a0de5ULL}, // dithered active_half
+    {0xcc2b8c3dd7d7cf11ULL, 0xbc06ce357599b530ULL, 0x145739faeec6bb69ULL, 0xed5f81b2136ffd21ULL}, // dithered active_half
     {0x0ba65549256e6ecdULL, 0x70d8937f3e3bd454ULL, 0xb01ddb96616b42ddULL, 0xc7c0b455bfcbcd5dULL}, // dithered pressed_half
     {0xec5afbf735a59962ULL, 0xc619ade9e1b1f527ULL, 0x258bf254bf93a38dULL, 0x074d84c288fbaafdULL}, // dithered dark
 }};
@@ -908,7 +1057,7 @@ void test_reference_images() {
     bool all_match = true;
     for (std::size_t case_index = 0U; case_index < reference_cases.size(); ++case_index) {
         const ReferenceCase& reference = reference_cases[case_index];
-        const EnginePrimitive& primitive = builtin(reference.primitive);
+        const EnginePrimitive& primitive = builtin_named(reference.primitive);
         PrimitiveParameterBlock parameters = default_parameters(primitive.descriptor());
         require(set_number_parameter(parameters, primitive.descriptor(), "amplitude", reference.amplitude) ==
                     ParameterAssignment::assigned,
@@ -941,8 +1090,121 @@ void test_reference_images() {
 
 } // namespace
 
+// -- the light map ------------------------------------------------------------------
+
+// Whether the light map drawn with `parameters` differs from the raster
+// whose hash is `resting`.
+bool light_map_differs(const EnginePrimitive& primitive, const PrimitiveParameterBlock& parameters, Size key,
+                       double scale, std::uint64_t resting) {
+    TestRaster raster = make_raster(key, scale);
+    require(draw(primitive, parameters, raster, key, scale, AnatomyStateSet{}) == RasterOutcome::painted,
+            "the changed key paints");
+    const bool differs = raster_hash(raster) != resting;
+    return differs;
+}
+
+// The light map draws a shipped key bake, its colour set when it is drawn:
+// the same bytes as compositing the decoded stores directly, a press, a lit
+// lamp, another colour and the other bake each change the key, and none of
+// its parameters is animated (a key composited every frame would pass the
+// frame budget).
+void test_light_map() {
+    const EnginePrimitive& primitive = builtin_named("light_map");
+    const PrimitiveDescriptor& descriptor = primitive.descriptor();
+    require(descriptor.introduced == EngineVersion{0, 3} && descriptor.states_read.empty() &&
+                descriptor.inputs_read.empty(),
+            "the light map is engine 0.3 and reads no states and no inputs");
+    require(std::find(descriptor.roles.begin(), descriptor.roles.end(), PartRole::face) != descriptor.roles.end(),
+            "the light map paints faces");
+    require(descriptor.cost.per_device_pixel <= 512U, "the light map stays within the per-pixel budget");
+    for (const PrimitiveParameterDeclaration& parameter : descriptor.parameters) {
+        require(!parameter.animated, "no light-map parameter is animated");
+    }
+
+    const Size key{60.0, 24.0};
+    const double scale = 1.5;
+    const PrimitiveParameterBlock defaults = default_parameters(descriptor);
+    TestRaster unlit = make_raster(key, scale);
+    require(draw(primitive, defaults, unlit, key, scale, AnatomyStateSet{}) == RasterOutcome::painted,
+            "the default light map paints");
+    require(padding_untouched(unlit), "row padding is never written");
+    bool covered = false;
+    for (std::uint32_t row = 0U; row < unlit.extent.height; ++row) {
+        for (std::uint32_t column = 0U; column < unlit.extent.width; ++column) {
+            if (unlit.pixel(column, row)[3] != 0U) covered = true;
+        }
+    }
+    require(covered, "the key's coverage shows as alpha");
+
+    // The same bytes as the stores composited directly.
+    engine_light::LightPlanes up{};
+    engine_light::LightPlanes down{};
+    require(engine_light::read_light_plane_store(engine_light::shipped_light_plane_store("dialog_ok_up"), up) ==
+                    engine_light::LightPlanesDefect::none &&
+                engine_light::read_light_plane_store(engine_light::shipped_light_plane_store("dialog_ok_down"),
+                                                     down) == engine_light::LightPlanesDefect::none,
+            "the shipped OK key reads");
+    PrimitiveParameterBlock lit = defaults;
+    require(set_number_parameter(lit, descriptor, "lamp_power", 1.0) == ParameterAssignment::assigned &&
+                set_colour_parameter(lit, descriptor, "lamp_colour", Color{111, 255, 137, 255}) ==
+                    ParameterAssignment::assigned &&
+                set_number_parameter(lit, descriptor, "press", 0.5) == ParameterAssignment::assigned,
+            "the lamp's power and colour and the press are assigned");
+    TestRaster drawn = make_raster(key, scale);
+    require(draw(primitive, lit, drawn, key, scale, AnatomyStateSet{}) == RasterOutcome::painted, "the lit key paints");
+    TestRaster direct = make_raster(key, scale);
+    const std::array<engine_light::LampDrive, engine_light::maximum_light_plane_lamps> drives{
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+        engine_light::LampDrive{engine_light::lamp_colour_from_srgb(Color{111, 255, 137, 255}), 1.0},
+    };
+    engine_light::LightComposite settings{};
+    settings.press_mix = 0.5;
+    const engine_light::LightPlaneRect whole{0, 0, static_cast<std::int64_t>(direct.extent.width),
+                                             static_cast<std::int64_t>(direct.extent.height)};
+    require(engine_light::composite_light_planes(up, down, std::span(drives).first(up.lamp_count), settings, whole,
+                                                 direct.view()) > 0U,
+            "the stores composite directly");
+    require(raster_hash(drawn) == raster_hash(direct), "the light map is the stores' composite, byte for byte");
+    require(raster_hash(drawn) != raster_hash(unlit), "a lit, half-pressed key differs from the resting one");
+
+    // Each parameter changes the key on its own.
+    const std::uint64_t resting = raster_hash(unlit);
+    PrimitiveParameterBlock pressed = defaults;
+    require(set_number_parameter(pressed, descriptor, "press", 1.0) == ParameterAssignment::assigned, "press set");
+    require(light_map_differs(primitive, pressed, key, scale, resting), "a pressed key differs from the resting one");
+    PrimitiveParameterBlock powered = defaults;
+    require(set_number_parameter(powered, descriptor, "lamp_power", 1.0) == ParameterAssignment::assigned,
+            "power set");
+    require(light_map_differs(primitive, powered, key, scale, resting), "a lit key differs from the dark one");
+    PrimitiveParameterBlock dimmer = defaults;
+    require(set_number_parameter(dimmer, descriptor, "room", 0.5) == ParameterAssignment::assigned, "room set");
+    require(light_map_differs(primitive, dimmer, key, scale, resting), "a dimmer room darkens the key");
+    PrimitiveParameterBlock cancel = defaults;
+    require(set_choice_parameter(cancel, descriptor, "bake", "dialog_cancel") == ParameterAssignment::assigned,
+            "the cancel bake is chosen");
+    require(light_map_differs(primitive, cancel, key, scale, resting), "the cancel key is not the OK key");
+    PrimitiveParameterBlock unknown = defaults;
+    require(set_choice_parameter(unknown, descriptor, "bake", "indicator_backed") == ParameterAssignment::out_of_range,
+            "a bake the light map does not ship is refused");
+    // The colour's alpha scales the power: transparent lamps are dark.
+    PrimitiveParameterBlock clear = powered;
+    require(set_colour_parameter(clear, descriptor, "lamp_colour", Color{255, 255, 255, 0}) ==
+                ParameterAssignment::assigned,
+            "a transparent lamp colour is assigned");
+    TestRaster dark = make_raster(key, scale);
+    require(draw(primitive, clear, dark, key, scale, AnatomyStateSet{}) == RasterOutcome::painted, "it paints");
+    require(raster_hash(dark) == raster_hash(unlit), "a transparent lamp colour leaves the lamps dark");
+}
+
 int main() {
     test_builtin_registry();
+    test_builtin_primitives_fit_a_parameter_block();
     test_registration_refusals();
     test_parameter_refusals();
     test_destination_refusals();
@@ -950,13 +1212,16 @@ int main() {
     test_amplitude_zero_is_the_plane();
     test_smooth_bulge_is_premultiplied_and_edgeless();
     test_dithered_lattice_and_tones();
+    test_gold_parameter_is_the_active_tool();
     test_rescaled_light_default_uses_every_step();
+    test_gold_form_draws_its_plate();
     test_dark_variant_reaches_every_step();
     test_dot_count_grows_with_amplitude();
     test_integer_scales_reproduce_the_studies_lattice();
     test_lattice_follows_the_nearest_integer_scale();
     test_integer_scales_reproduce_the_old_reference_images();
     test_reference_images();
+    test_light_map();
     std::cout << "engine primitive tests passed\n";
     return 0;
 }

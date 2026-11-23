@@ -1270,6 +1270,25 @@ void test_input_settings_report_and_validation() {
         slow_threw = true;
     }
     require(slow_threw, "an application's over-long caret phase throws");
+
+    // The menu show delay is no host's (owner, 2026-11-22: 300 ms on every
+    // host): a report leaves the delay the program set, whatever it carries.
+    require(fixture.window.presentation_settings().pointer.menu_show_milliseconds == default_menu_show_milliseconds &&
+                default_menu_show_milliseconds == 300U,
+            "the menu show delay is 300 ms until the program sets another");
+    PresentationSettings slow_menus = fixture.window.presentation_settings();
+    slow_menus.pointer.menu_show_milliseconds = 650U;
+    fixture.window.set_presentation_settings(slow_menus);
+    HostInputSettingsEvent menu_report = with_pointer;
+    menu_report.pointer.drag_width = 10.0;
+    menu_report.pointer.menu_show_milliseconds = 100U;
+    menu_report.pointer.menu_show_origin = SettingOrigin::host;
+    HostEvent menu_event{18, 18, menu_report};
+    require(fixture.host.session().dispatch(std::move(menu_event)).accepted(), "a report with a menu delay is accepted");
+    const PointerSettings& kept = fixture.window.presentation_settings().pointer;
+    require(kept.drag_width == 10.0 && kept.menu_show_milliseconds == 650U &&
+                kept.menu_show_origin == SettingOrigin::default_value,
+            "the report's pointer settings arrive but the program's menu show delay stays");
 }
 
 void test_lifecycle_transition_guards() {
