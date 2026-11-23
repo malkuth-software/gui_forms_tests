@@ -7,7 +7,7 @@
 # engine's move to STXlib.)
 cmake_minimum_required(VERSION 3.25)
 project(GUIFormsInstalledFeatureConsumer LANGUAGES CXX)
-find_package(GUIForms 0.6 CONFIG REQUIRED COMPONENTS
+find_package(GUIForms 1.0 CONFIG REQUIRED COMPONENTS
     Application TextMasks Audio AudioLoopTransport)
 if(NOT EXISTS "${GUI_FORMS_CONSUMER_MAIN}")
     message(FATAL_ERROR "Set GUI_FORMS_CONSUMER_MAIN to tests/application_text_consumer/main.cpp")
