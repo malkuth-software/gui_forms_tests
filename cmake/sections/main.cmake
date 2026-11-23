@@ -1261,6 +1261,22 @@ add_test(NAME gui_forms_form_loader_tests COMMAND gui_forms_form_loader_tests)
 add_executable(gui_forms_form_editor_tests tests/form_language/form_editor_tests.cpp)
 target_link_libraries(gui_forms_form_editor_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_form_editor_tests COMMAND gui_forms_form_editor_tests)
+# MCP G6: the inspect additions and the forms tools' registry.
+add_executable(gui_forms_model_inspection_tests tests/model_inspection/model_inspection_tests.cpp)
+target_link_libraries(gui_forms_model_inspection_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_model_inspection_tests COMMAND gui_forms_model_inspection_tests)
+# MCP G6: the inspect sections and forms tools registered with the
+# automation's tool registry (built with the automation).
+if(GUI_FORMS_MCP)
+    add_executable(gui_forms_model_tool_registration_tests tests/model_inspection/model_tool_registration_tests.cpp)
+    target_link_libraries(gui_forms_model_tool_registration_tests PRIVATE gui_forms_controls)
+    add_test(NAME gui_forms_model_tool_registration_tests COMMAND gui_forms_model_tool_registration_tests)
+endif()
+# The public form documents: the registry schema, a document's check and a
+# preview window.
+add_executable(gui_forms_form_documents_tests tests/form_language/form_documents_tests.cpp)
+target_link_libraries(gui_forms_form_documents_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_form_documents_tests COMMAND gui_forms_form_documents_tests)
 add_executable(gui_forms_form_generator_tests tests/form_language/form_generator_tests.cpp
     ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_catalog.cpp ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_lab_catalog.cpp)
 target_link_libraries(gui_forms_form_generator_tests PRIVATE gui_forms_lab gui_forms_demo_controls)
