@@ -74,7 +74,9 @@
 namespace {
 // AppKit's dragging session is never made by a test; the source is told of
 // its end with none, as AppKit does for a session it has already dropped.
-NSDraggingSession* const no_session = nil;
+NSDraggingSession* no_session() {
+    return nil;
+}
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
@@ -130,7 +132,7 @@ void drag_survives_window_close() {
     require(ends.size() == 1U && ends[0].performed_effect == gui_forms::DragEffect::none &&
                 !(*services).drag_source_active(),
             "a drag whose window closed ends once, cancelled");
-    [source draggingSession:no_session endedAtPoint:NSMakePoint(240.0, 325.0) operation:NSDragOperationMove];
+    [source draggingSession:no_session() endedAtPoint:NSMakePoint(240.0, 325.0) operation:NSDragOperationMove];
     require(ends.size() == 1U, "AppKit's later end reports nothing");
     require(view.releases == 0, "AppKit's later end sends the closed window's view no release");
     observation.disconnect();
@@ -157,7 +159,7 @@ void drag_survives_services_destroyed() {
     require(services == nullptr, "the timer destroyed the services");
     id<NSDraggingSource> const ending = source;
     require(ending != nil, "the source outlives its services until AppKit's end");
-    [ending draggingSession:no_session endedAtPoint:NSZeroPoint operation:NSDragOperationCopy];
+    [ending draggingSession:no_session() endedAtPoint:NSZeroPoint operation:NSDragOperationCopy];
 }
 } // namespace
 
