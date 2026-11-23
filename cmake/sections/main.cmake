@@ -2770,15 +2770,15 @@ add_test(NAME gui_forms_library_allocation_tests COMMAND gui_forms_library_alloc
 # The teardown reserve: refusals after the module's teardown began, and the
 # fail-fast record when the reserve cannot hold one (a forked child).
 add_executable(gui_forms_library_teardown_tests tests/library_teardown_tests.cpp)
-target_link_libraries(gui_forms_library_teardown_tests PRIVATE gui_forms_core stxlib::boundary)
+target_link_libraries(gui_forms_library_teardown_tests PRIVATE gui_forms_memory stxlib::boundary)
 add_test(NAME gui_forms_library_teardown_tests COMMAND gui_forms_library_teardown_tests)
 # The opt-in whole-program allocator, compiled in as
 # gui_forms_use_library_allocator does.
 add_executable(gui_forms_program_allocator_opt_in_tests tests/program_allocator_opt_in_tests.cpp
     ${GUI_FORMS_SOURCE_DIR}/src/runtime/program_allocator/program_allocator_replacement.cpp)
-# The replacement uses gui_forms_core's teardown reserve, as an opt-in
-# program linking GUI.Forms does.
-target_link_libraries(gui_forms_program_allocator_opt_in_tests PRIVATE gui_forms_core stxlib::boundary stxlib::state)
+# The replacement uses the teardown reserve of gui_forms_memory, which
+# gui_forms_use_library_allocator links; nothing of the engine.
+target_link_libraries(gui_forms_program_allocator_opt_in_tests PRIVATE gui_forms_memory stxlib::boundary stxlib::state)
 target_compile_features(gui_forms_program_allocator_opt_in_tests PRIVATE cxx_std_20)
 add_test(NAME gui_forms_program_allocator_opt_in_tests COMMAND gui_forms_program_allocator_opt_in_tests)
 add_executable(gui_forms_dock_floating_tests tests/dock_floating_tests.cpp)
