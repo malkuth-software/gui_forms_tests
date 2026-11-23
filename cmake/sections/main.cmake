@@ -2808,6 +2808,11 @@ add_test(NAME gui_forms_relative_pointer_example_tests COMMAND gui_forms_relativ
 add_executable(gui_forms_floating_windows_tests tests/floating_windows_tests.cpp)
 target_link_libraries(gui_forms_floating_windows_tests PRIVATE gui_forms_host_headless)
 add_test(NAME gui_forms_floating_windows_tests COMMAND gui_forms_floating_windows_tests)
+# Stage VA, phase VA1: the visible-area guarantee: placement, overflow
+# records and diagnostics, safe insets and the hosts' window-size clamp.
+add_executable(gui_forms_viewport_fit_tests tests/viewport_fit_tests.cpp)
+target_link_libraries(gui_forms_viewport_fit_tests PRIVATE gui_forms_host_headless gui_forms_controls)
+add_test(NAME gui_forms_viewport_fit_tests COMMAND gui_forms_viewport_fit_tests)
 add_executable(gui_forms_native_popup_tests tests/native_popup_tests.cpp)
 target_link_libraries(gui_forms_native_popup_tests PRIVATE gui_forms_host_headless gui_forms_controls)
 add_test(NAME gui_forms_native_popup_tests COMMAND gui_forms_native_popup_tests)

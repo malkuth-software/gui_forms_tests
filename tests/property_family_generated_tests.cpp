@@ -2673,24 +2673,24 @@ void test_rich_text_box_properties() {
 void test_scaled_group_box_properties() {
     std::shared_ptr<ScaledGroupBox> control = make_control<ScaledGroupBox>(StableId("generated.scaledgroupbox"));
     {
-        const Size sample = Size{640.0, 480.0};
-        (*control).design_size = sample;
-        expect((*control).design_size.read() == sample, "ScaledGroupBox.design_size: a write stores");
-        const std::optional<BindingValue> by_name = (*control).property_value("design_size");
-        expect(by_name && *by_name == PropertyValueTraits<Size>::to_binding(sample),
-               "ScaledGroupBox.design_size: the table reads the cell");
+        const ScaledAspect sample = ScaledAspect::uniform;
+        (*control).aspect = sample;
+        expect((*control).aspect.read() == sample, "ScaledGroupBox.aspect: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("aspect");
+        expect(by_name && *by_name == PropertyValueTraits<ScaledAspect>::to_binding(sample),
+               "ScaledGroupBox.aspect: the table reads the cell");
     }
 }
 
 void test_scaled_panel_properties() {
     std::shared_ptr<ScaledPanel> control = make_control<ScaledPanel>(StableId("generated.scaledpanel"));
     {
-        const Size sample = Size{640.0, 480.0};
-        (*control).design_size = sample;
-        expect((*control).design_size.read() == sample, "ScaledPanel.design_size: a write stores");
-        const std::optional<BindingValue> by_name = (*control).property_value("design_size");
-        expect(by_name && *by_name == PropertyValueTraits<Size>::to_binding(sample),
-               "ScaledPanel.design_size: the table reads the cell");
+        const ScaledAspect sample = ScaledAspect::uniform;
+        (*control).aspect = sample;
+        expect((*control).aspect.read() == sample, "ScaledPanel.aspect: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("aspect");
+        expect(by_name && *by_name == PropertyValueTraits<ScaledAspect>::to_binding(sample),
+               "ScaledPanel.aspect: the table reads the cell");
     }
 }
 
