@@ -2026,6 +2026,12 @@ foreach(_gui_hostile_subject IN ITEMS list_view list_box checked_list_box combo_
              COMMAND gui_forms_hostile_handlers_tests --subject ${_gui_hostile_subject} --actions release)
 endforeach()
 
+# IC3: the property families' value rules, now clauses of declarations
+# beside the families' headers, hold at their bounds through the setters.
+add_executable(gui_forms_ic_property_clauses_tests tests/ic/ic_property_clauses_tests.cpp)
+target_link_libraries(gui_forms_ic_property_clauses_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_ic_property_clauses_tests COMMAND gui_forms_ic_property_clauses_tests)
+
 add_executable(gui_forms_kept_layout_tests tests/kept_layout_tests.cpp)
 target_link_libraries(gui_forms_kept_layout_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_kept_layout_tests COMMAND gui_forms_kept_layout_tests)

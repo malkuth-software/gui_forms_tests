@@ -1472,6 +1472,40 @@ void test_lifecycle_transition_guards() {
             "shutdown must be the terminal lifecycle phase");
 }
 
+// IC3: Window::host_lifecycle_phase is the window's public state query and
+// reports its session's phase at every step (HostSession::set_phase writes
+// both); a refused event moves neither.
+void test_window_reports_its_session_phase() {
+    const std::unique_ptr<Fixture> held_fixture = std::make_unique<Fixture>();
+    Fixture& fixture = *held_fixture;
+    require(fixture.window.host_lifecycle_phase() == HostLifecyclePhase::constructed,
+            "a window no host has attached reports constructed");
+    require(fixture.host.dispatch(HostActivationEvent{true}, 1).error == HostDispatchError::invalid_lifecycle &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::constructed,
+            "a refused event moves neither the session nor the window");
+    require(fixture.host.dispatch(HostAttachEvent{{320.0, 180.0}, 1.0}, 2).accepted() &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::attached,
+            "the window reports attached with its session");
+    require(fixture.host.dispatch(HostAttachEvent{{0.0, 180.0}, 1.0}, 3).error ==
+                HostDispatchError::invalid_lifecycle,
+            "a second attach is refused by the lifecycle clause before the geometry clause");
+    require(fixture.host.dispatch(HostResizeEvent{{0.0, 180.0}}, 4).error == HostDispatchError::invalid_geometry &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::attached,
+            "a resize to a zero width is refused by the size clause and moves nothing");
+    require(fixture.host.dispatch(HostScaleEvent{0.0}, 5).error == HostDispatchError::invalid_geometry,
+            "a zero scale is refused by the scale clause");
+    require(fixture.host.dispatch(HostCloseRequest{HostCloseReason::user, false}, 6).close_allowed &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::close_authorized,
+            "the window reports close_authorized with its session");
+    require(fixture.host.dispatch(HostClosedEvent{HostCloseReason::user}, 7).accepted() &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::closed,
+            "the window reports closed with its session");
+    require(fixture.host.dispatch(HostShutdownEvent{}, 8).accepted() &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::shutdown &&
+                fixture.window.host_lifecycle_phase() == fixture.host.session().snapshot().phase,
+            "the window and its session end in shutdown together");
+}
+
 void test_close_cancellation_and_closed_cleanup() {
     const std::unique_ptr<Fixture> held_fixture = std::make_unique<Fixture>();
     Fixture& fixture = *held_fixture;
@@ -1681,6 +1715,7 @@ int main() {
         test_session_outlives_its_window();
         test_input_settings_report_and_validation();
         test_lifecycle_transition_guards();
+        test_window_reports_its_session_phase();
         test_close_cancellation_and_closed_cleanup();
         test_session_end_close_stays_attached_until_closed();
         test_close_query_authorizes_nothing();
