@@ -7,6 +7,7 @@
 #include "gui_forms/controls/track_bar.hpp"
 #include "demo/gallery_instrument.hpp"
 #include "demo/gallery_model.hpp"
+#include "demo/gallery_parts.hpp"
 #include "src/controls/gallery_controls.hpp"
 
 #include <array>
@@ -394,6 +395,38 @@ int main()
         (*window).find("gallery.command.status"));
     expect((*status).text.read() == "Drop received · 1 file · 0 text · 0 data",
            "Gallery exposes the accepted typed drop without platform payloads");
+    expect((*collection).items.read().size() == 5U && (*collection).items.read()[4] == "File: live.iq" &&
+               (*collection).item_stable_id(4U) == "gallery.collection.drop.1" &&
+               (*collection).item_stable_id(2U) == "gallery.collection.gamma",
+           "a dropped file shows as a row of the collection, after the authored rows");
+    expect((*collection).selected_index() == stxlib::Optional<std::size_t>::of(2U),
+           "a drop keeps the selected row");
+
+    // Text and data each add a row; past eight dropped rows the oldest go.
+    gui_forms::DragEvent mixed;
+    mixed.action = gui_forms::DragAction::drop;
+    mixed.session_id = 42;
+    mixed.position = gamma_point;
+    mixed.allowed_effects = gui_forms::DragEffect::copy;
+    mixed.items = {gui_forms::DragTextData{"Hello rows\nsecond line"},
+                   gui_forms::DragBinaryData{"application/octet-stream", {1U, 2U, 3U}},
+                   gui_forms::DragFileListData{{"C:\\captures\\a.iq", "/b.iq", "/c.iq", "/d.iq", "/e.iq", "/f.iq"}}};
+    expect((*window).dispatch_drag(std::move(mixed)).handled, "Gallery collection handles a mixed drop");
+    const gui_forms::gallery::CollectionList& list = dynamic_cast<const gui_forms::gallery::CollectionList&>(*collection);
+    expect(list.dropped_row_count() == gui_forms::gallery::CollectionList::max_dropped_rows &&
+               (*collection).items.read().size() == 12U,
+           "the collection keeps at most eight dropped rows");
+    expect((*collection).items.read()[4] == "Text: Hello rows" &&
+               (*collection).items.read()[5] == "Data: application/octet-stream · 3 bytes" &&
+               (*collection).items.read()[6] == "File: a.iq" && (*collection).items.read()[11] == "File: f.iq" &&
+               (*collection).item_stable_id(11U) == "gallery.collection.drop.9",
+           "text, data and files show as rows, the first drop's row gone");
+    expect((*status).text.read() == "Drop received · 6 files · 1 text · 1 data",
+           "the status line still summarizes the drop");
+    click(*window, "gallery.command.reset");
+    expect(list.dropped_row_count() == 0U && (*collection).items.read().size() == 4U &&
+               (*collection).item_stable_id(3U) == "gallery.collection.delta",
+           "Reset removes the dropped rows and keeps the authored ones");
 
     click(*window, "gallery.command.diagnostics");
     expect((*(*window).find("gallery.diagnostics")).visible.read(),
