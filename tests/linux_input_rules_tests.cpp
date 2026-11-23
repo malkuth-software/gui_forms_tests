@@ -1,9 +1,11 @@
 // The X11 host's computed input (owner's mouse-event rule, 2026-11-08):
 // click counts from the desktop's double-click time and distance, and the
-// keys that ask for a context menu. No Xlib, so tested on every platform.
+// keys that ask for a context menu, and the XI 2.4 pinch as a portable
+// GestureEvent. No Xlib, so tested on every platform.
 
 #include "src/host/linux/application/linux_input_rules.hpp"
 
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -51,12 +53,47 @@ void test_context_keys() {
             "Ctrl+Shift+F10 does not");
 }
 
+bool near(double value, double expected) { return std::fabs(value - expected) < 1e-9; }
+
+void test_pinch_events() {
+    LinuxPinchState state{};
+    const Point at{100.0, 50.0};
+    const GestureEvent began = next_pinch_event(state, LinuxPinchStage::begin, false, at, 1.0, 0.0, {0.0, 0.0},
+                                                Modifier::none, 10U);
+    require(began.kind == GestureKind::magnify && began.gesture_phase == GesturePhase::began, "begin is began");
+    require(near(began.scale, 1.0) && began.position.x == 100.0 && began.timestamp_nanoseconds == 10U,
+            "began carries no change, at the focal point");
+    const GestureEvent grown = next_pinch_event(state, LinuxPinchStage::update, false, at, 1.5, 3.0, {2.0, -1.0},
+                                                Modifier::control, 20U);
+    require(grown.gesture_phase == GesturePhase::changed && near(grown.scale, 1.5), "the first update's ratio");
+    require(near(grown.rotation_degrees, -3.0), "a clockwise turn is a negative rotation");
+    require(grown.translation.x == 2.0 && grown.translation.y == -1.0 && grown.modifiers == Modifier::control,
+            "travel and modifiers pass through");
+    const GestureEvent again = next_pinch_event(state, LinuxPinchStage::update, false, at, 3.0, 0.0, {0.0, 0.0},
+                                                Modifier::none, 30U);
+    require(near(again.scale, 2.0), "each update is the ratio to the previous absolute scale");
+    const GestureEvent bad = next_pinch_event(state, LinuxPinchStage::update, false, at, 0.0, std::nan(""),
+                                              {0.0, 0.0}, Modifier::none, 40U);
+    require(near(bad.scale, 1.0) && bad.rotation_degrees == 0.0 && valid_gesture_event(bad),
+            "an unusable scale or angle changes nothing");
+    const GestureEvent ended = next_pinch_event(state, LinuxPinchStage::end, false, at, 3.0, 0.0, {0.0, 0.0},
+                                                Modifier::none, 50U);
+    require(ended.gesture_phase == GesturePhase::ended && near(ended.scale, 1.0), "end is ended");
+    static_cast<void>(next_pinch_event(state, LinuxPinchStage::begin, false, at, 1.0, 0.0, {0.0, 0.0},
+                                       Modifier::none, 60U));
+    const GestureEvent cancelled = next_pinch_event(state, LinuxPinchStage::end, true, at, 0.5, 0.0, {0.0, 0.0},
+                                                    Modifier::none, 70U);
+    require(cancelled.gesture_phase == GesturePhase::cancelled && near(cancelled.scale, 0.5),
+            "a cancelled end is cancelled, and a new gesture starts at 1");
+}
+
 } // namespace
 
 int main() {
     try {
         test_click_counts();
         test_context_keys();
+        test_pinch_events();
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';
         return EXIT_FAILURE;

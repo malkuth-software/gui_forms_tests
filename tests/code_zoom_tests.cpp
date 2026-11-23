@@ -2,7 +2,7 @@
 // code_zoom.hpp): the zoom's easing and
 // limits (zoom_model.hpp), the bench's sweep, summary and report shape
 // (code_bench.hpp), and the sheet: its runs, its culling at the zoom's true
-// size, its keys and its wheel. Drawing the runs' glyphs is the raster's,
+// size, its keys, its wheel and its touchpad gestures. Drawing the runs' glyphs is the raster's,
 // covered by the painter and text-engine tests.
 
 #include "code_bench.hpp"
@@ -11,6 +11,7 @@
 #include "code_zoom_program.hpp"
 #include "zoom_model.hpp"
 
+#include "gui_forms/events/gesture_events/gesture_events.hpp"
 #include "gui_forms/events/input_events/input_events.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/types/painter/painter.hpp"
@@ -423,6 +424,56 @@ void test_sheet_glides_every_refresh(Window& window, CodeSheet& sheet) {
     require(window.set_display_timing(DisplayTiming::assumed()), "assumed timing is restored");
 }
 
+// A touchpad pinch zooms at once about its focal point and pans with the
+// fingers; a two-finger double tap glides to smart_zoom and back; a rotate
+// is left to bubble.
+void test_sheet_gestures(Window& window, CodeSheet& sheet) {
+    using namespace gui_forms::code_zoom;
+    const Size size = window.client_size();
+    const Point centre{size.width * 0.5, size.height * 0.5};
+    sheet.show_at(1.0, sheet.content_point(capture_line, 0U), centre);
+    require(sheet.gesture_input() && window.gesture_input_requested(),
+            "the sheet asks its window for gestures");
+    const Point pointer{size.width * 0.25, size.height * 0.25};
+    const Point under = sheet.zoom_model().content_at(pointer);
+    GestureEvent pinch{};
+    pinch.kind = GestureKind::magnify;
+    pinch.gesture_phase = GesturePhase::began;
+    pinch.position = pointer;
+    require(window.dispatch_gesture(pinch) && sheet.zoom_model().zoom() == 1.0,
+            "the pinch's began is handled and changes nothing");
+    pinch.gesture_phase = GesturePhase::changed;
+    pinch.scale = 2.0;
+    require(window.dispatch_gesture(pinch), "the sheet handles a pinch");
+    require(near(sheet.zoom_model().zoom(), 2.0, 1e-12), "the pinch zooms by its scale at once");
+    require(near(sheet.zoom_model().content_at(pointer).y, under.y, 1e-6), "about the focal point");
+    const Point origin = sheet.zoom_model().origin();
+    pinch.scale = 1.0;
+    pinch.translation = Point{0.0, 20.0};
+    static_cast<void>(window.dispatch_gesture(pinch));
+    require(near(sheet.zoom_model().origin().y, origin.y - 10.0, 1e-6),
+            "the fingers' travel moves the content with them (20 pixels at zoom 2)");
+    pinch.gesture_phase = GesturePhase::ended;
+    pinch.translation = Point{};
+    static_cast<void>(window.dispatch_gesture(pinch));
+
+    sheet.show_at(1.0, sheet.content_point(capture_line, 0U), centre);
+    GestureEvent tap{};
+    tap.kind = GestureKind::smart_magnify;
+    tap.gesture_phase = GesturePhase::ended;
+    tap.position = pointer;
+    require(window.dispatch_gesture(tap) && near(sheet.zoom_model().zoom(), smart_zoom, 1e-12),
+            "a two-finger double tap glides to smart_zoom (at once under reduced motion)");
+    static_cast<void>(window.dispatch_gesture(tap));
+    require(sheet.zoom_model().zoom() == 1.0, "and back to 1");
+    GestureEvent turn{};
+    turn.kind = GestureKind::rotate;
+    turn.gesture_phase = GesturePhase::began;
+    turn.position = pointer;
+    turn.rotation_degrees = 15.0;
+    require(!window.dispatch_gesture(turn) && sheet.zoom_model().zoom() == 1.0, "a rotate is left unhandled");
+}
+
 void test_window() {
     using namespace gui_forms::code_zoom;
     const std::string_view text = embedded_source_text();
@@ -439,6 +490,7 @@ void test_window() {
     test_sheet_paints_at_the_true_size(*window, *sheet);
     test_sheet_keys_and_wheel(*window, *sheet);
     test_sheet_glides_every_refresh(*window, *sheet);
+    test_sheet_gestures(*window, *sheet);
 }
 
 } // namespace

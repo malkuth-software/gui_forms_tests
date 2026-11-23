@@ -1755,6 +1755,10 @@ add_test(NAME gui_forms_final_controls_tests COMMAND gui_forms_final_controls_te
 add_executable(gui_forms_auto_complete_tests tests/auto_complete_tests.cpp)
 target_link_libraries(gui_forms_auto_complete_tests PRIVATE gui_forms_controls gui_forms_host_headless)
 add_test(NAME gui_forms_auto_complete_tests COMMAND gui_forms_auto_complete_tests)
+# Touchpad gestures: shape, routing, latching and the headless pinch.
+add_executable(gui_forms_gesture_event_tests tests/gesture_event_tests.cpp)
+target_link_libraries(gui_forms_gesture_event_tests PRIVATE gui_forms_controls gui_forms_host_headless)
+add_test(NAME gui_forms_gesture_event_tests COMMAND gui_forms_gesture_event_tests)
 add_executable(gui_forms_combo_box_filter_tests tests/combo_box_filter_tests.cpp)
 target_link_libraries(gui_forms_combo_box_filter_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_combo_box_filter_tests COMMAND gui_forms_combo_box_filter_tests)
@@ -1912,6 +1916,14 @@ target_include_directories(gui_forms_linux_input_rules_tests PRIVATE ${GUI_FORMS
 # marker in a checked build, which only the core library defines.
 target_link_libraries(gui_forms_linux_input_rules_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_linux_input_rules_tests COMMAND gui_forms_linux_input_rules_tests)
+# The Windows host's DirectManipulation rules take plain values and no
+# windows.h, so they are tested on every platform.
+add_executable(gui_forms_windows_manipulation_rules_tests
+    tests/windows_manipulation_rules_tests.cpp
+    ${GUI_FORMS_SOURCE_DIR}/src/host/windows/input/windows_manipulation_rules.cpp)
+target_include_directories(gui_forms_windows_manipulation_rules_tests PRIVATE ${GUI_FORMS_SOURCE_DIR}/include)
+target_link_libraries(gui_forms_windows_manipulation_rules_tests PRIVATE gui_forms_core)
+add_test(NAME gui_forms_windows_manipulation_rules_tests COMMAND gui_forms_windows_manipulation_rules_tests)
 add_executable(gui_forms_page_view_document_tests tests/page_view_document_tests.cpp)
 target_link_libraries(gui_forms_page_view_document_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_page_view_document_tests COMMAND gui_forms_page_view_document_tests)
