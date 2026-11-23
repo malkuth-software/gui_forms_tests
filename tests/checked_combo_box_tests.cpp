@@ -1,5 +1,6 @@
 // CheckedComboBox: items kept by ID, the field's text, checks from code and
-// from the open list, opening and closing, semantics and refusals.
+// from the open list, opening and closing by key and by click, semantics
+// and refusals.
 
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
@@ -113,6 +114,23 @@ void the_open_list() {
     require(!(*box).dropped_down() && (*box).text() == "Monday", "set_items closes the list and takes the new checks");
 }
 
+// A click on the field: the press opens the list, and the field takes the
+// release too, so both halves of the click are handled.
+void a_click_on_the_field() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("root"));
+    std::shared_ptr<CheckedComboBox> box = make_control<CheckedComboBox>(StableId("root.days"));
+    (*box).set_requested_bounds(Rect{20.0, 20.0, 200.0, 26.0});
+    (*root).add_child(box);
+    (*box).set_items(weekdays());
+    Window window(root, {400.0, 300.0});
+    window.perform_layout();
+    const Point field{120.0, 33.0};
+    require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, field}) && (*box).dropped_down(),
+            "a press on the field opens the list");
+    require(window.dispatch_pointer({PointerAction::up, PointerButton::primary, field}) && (*box).dropped_down(),
+            "the field handles the release of its opening press and the list stays open");
+}
+
 void semantics() {
     std::shared_ptr<CheckedComboBox> box = make_control<CheckedComboBox>(StableId("days"));
     (*box).accessible_name = "Repeat on";
@@ -166,8 +184,9 @@ void refusals() {
 int main() {
     items_and_text();
     the_open_list();
+    a_click_on_the_field();
     semantics();
     refusals();
-    std::cout << "CheckedComboBox: items and text, the open list, semantics and refusals passed\n";
+    std::cout << "CheckedComboBox: items and text, the open list, a click on the field, semantics and refusals passed\n";
     return 0;
 }
