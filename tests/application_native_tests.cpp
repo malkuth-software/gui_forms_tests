@@ -32,7 +32,7 @@ using namespace gui_forms;
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
-void require(bool condition, const std::string& message) {
+[[maybe_unused]] void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
 }
 // The test program's application (Application::create; one per process),

@@ -109,3031 +109,3031 @@ struct Block final {
 };
 
 // application.set_program_identity
-inline gf_status invoke_application_set_program_identity(const AbiTables& tables, Arguments& arguments) {
-    const gf_program_identity* const identity = arguments.input<gf_program_identity>(0U, true);
-    const gf_status status = tables.application.set_program_identity(identity);
-    return status;
+inline gf_status invoke_application_set_program_identity(const AbiTables& tables, Arguments& drawn) {
+    const gf_program_identity* const identity = drawn.input<gf_program_identity>(0U, true);
+    const gf_status returned = tables.application.set_program_identity(identity);
+    return returned;
 }
 
 // application.state
-inline gf_status invoke_application_state(const AbiTables& tables, Arguments& arguments) {
-    gf_application_state* const state = arguments.output<gf_application_state>(0U, false);
-    const gf_status status = tables.application.state(state);
-    return status;
+inline gf_status invoke_application_state(const AbiTables& tables, Arguments& drawn) {
+    gf_application_state* const state = drawn.output<gf_application_state>(0U, false);
+    const gf_status returned = tables.application.state(state);
+    return returned;
 }
 
 // bindings.add_record
-inline gf_status invoke_bindings_add_record(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_binding_record* const record = arguments.input<gf_binding_record>(1U, true);
-    uint64_t* const index = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.bindings.add_record(source, record, index);
-    return status;
+inline gf_status invoke_bindings_add_record(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_binding_record* const record = drawn.input<gf_binding_record>(1U, true);
+    uint64_t* const index = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.bindings.add_record(source, record, index);
+    return returned;
 }
 
 // bindings.add_records
-inline gf_status invoke_bindings_add_records(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_binding_record* const records = arguments.input<gf_binding_record>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_binding_record)));
-    uint64_t* const first = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.bindings.add_records(source, records, count, first);
-    return status;
+inline gf_status invoke_bindings_add_records(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_binding_record* const records = drawn.input<gf_binding_record>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_binding_record)));
+    uint64_t* const first = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.bindings.add_records(source, records, count, first);
+    return returned;
 }
 
 // bindings.bind
-inline gf_status invoke_bindings_bind(const AbiTables& tables, Arguments& arguments) {
-    const gf_binding_arguments* const arguments = arguments.input<gf_binding_arguments>(0U, true);
-    gf_object* const binding = arguments.output<gf_object>(1U, false);
-    const gf_status status = tables.bindings.bind(arguments, binding);
-    arguments.adopt(status, binding);
-    return status;
+inline gf_status invoke_bindings_bind(const AbiTables& tables, Arguments& drawn) {
+    const gf_binding_arguments* const arguments = drawn.input<gf_binding_arguments>(0U, true);
+    gf_object* const binding = drawn.output<gf_object>(1U, false);
+    const gf_status returned = tables.bindings.bind(arguments, binding);
+    drawn.adopt(returned, binding);
+    return returned;
 }
 
 // bindings.clear_records
-inline gf_status invoke_bindings_clear_records(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_status status = tables.bindings.clear_records(source);
-    return status;
+inline gf_status invoke_bindings_clear_records(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_status returned = tables.bindings.clear_records(source);
+    return returned;
 }
 
 // bindings.current_field
-inline gf_status invoke_bindings_current_field(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_utf8_view field = arguments.text(1U);
-    gf_value* const value = arguments.output<gf_value>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.bindings.current_field(source, field, value, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_bindings_current_field(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_utf8_view field = drawn.text(1U);
+    gf_value* const value = drawn.output<gf_value>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.bindings.current_field(source, field, value, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // bindings.generation
-inline gf_status invoke_bindings_generation(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    uint64_t* const generation = arguments.output<uint64_t>(1U, false);
-    uint64_t* const count = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.bindings.generation(source, generation, count);
-    return status;
+inline gf_status invoke_bindings_generation(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    uint64_t* const generation = drawn.output<uint64_t>(1U, false);
+    uint64_t* const count = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.bindings.generation(source, generation, count);
+    return returned;
 }
 
 // bindings.insert_record
-inline gf_status invoke_bindings_insert_record(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_binding_record* const record = arguments.input<gf_binding_record>(2U, true);
-    const gf_status status = tables.bindings.insert_record(source, index, record);
-    return status;
+inline gf_status invoke_bindings_insert_record(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_binding_record* const record = drawn.input<gf_binding_record>(2U, true);
+    const gf_status returned = tables.bindings.insert_record(source, index, record);
+    return returned;
 }
 
 // bindings.notify
-inline gf_status invoke_bindings_notify(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t provider = arguments.u64(0U);
-    const gf_binding_notification_kind kind = static_cast<gf_binding_notification_kind>(arguments.u32(1U));
-    const uint64_t row = arguments.u64(2U);
-    const uint64_t count = arguments.u64(3U);
-    const uint64_t target = arguments.u64(4U);
-    const gf_status status = tables.bindings.notify(provider, kind, row, count, target);
-    return status;
+inline gf_status invoke_bindings_notify(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t provider = drawn.u64(0U);
+    const gf_binding_notification_kind kind = static_cast<gf_binding_notification_kind>(drawn.u32(1U));
+    const uint64_t row = drawn.u64(2U);
+    const uint64_t count = drawn.u64(3U);
+    const uint64_t target = drawn.u64(4U);
+    const gf_status returned = tables.bindings.notify(provider, kind, row, count, target);
+    return returned;
 }
 
 // bindings.position
-inline gf_status invoke_bindings_position(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    int64_t* const position = arguments.output<int64_t>(1U, false);
-    uint64_t* const count = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.bindings.position(source, position, count);
-    return status;
+inline gf_status invoke_bindings_position(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    int64_t* const position = drawn.output<int64_t>(1U, false);
+    uint64_t* const count = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.bindings.position(source, position, count);
+    return returned;
 }
 
 // bindings.read_cell
-inline gf_status invoke_bindings_read_cell(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const uint64_t generation = arguments.u64(1U);
-    const uint64_t row = arguments.u64(2U);
-    const uint64_t column = arguments.u64(3U);
-    gf_value* const value = arguments.output<gf_value>(4U, true);
-    char* const text_buffer = arguments.output<char>(5U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(6U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(7U, false);
-    const gf_status status = tables.bindings.read_cell(source, generation, row, column, value, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_bindings_read_cell(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const uint64_t generation = drawn.u64(1U);
+    const uint64_t row = drawn.u64(2U);
+    const uint64_t column = drawn.u64(3U);
+    gf_value* const value = drawn.output<gf_value>(4U, true);
+    char* const text_buffer = drawn.output<char>(5U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(6U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(7U, false);
+    const gf_status returned = tables.bindings.read_cell(source, generation, row, column, value, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // bindings.read_value
-inline gf_status invoke_bindings_read_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_object binding = arguments.subject();
-    uint32_t* const updated = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.bindings.read_value(binding, updated);
-    return status;
+inline gf_status invoke_bindings_read_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_object binding = drawn.subject();
+    uint32_t* const updated = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.bindings.read_value(binding, updated);
+    return returned;
 }
 
 // bindings.remove_record
-inline gf_status invoke_bindings_remove_record(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    uint32_t* const removed = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.bindings.remove_record(source, index, removed);
-    return status;
+inline gf_status invoke_bindings_remove_record(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    uint32_t* const removed = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.bindings.remove_record(source, index, removed);
+    return returned;
 }
 
 // bindings.set_current_field
-inline gf_status invoke_bindings_set_current_field(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_utf8_view field = arguments.text(1U);
-    const gf_value* const value = arguments.input<gf_value>(2U, true);
-    uint32_t* const accepted = arguments.output<uint32_t>(3U, false);
-    const gf_status status = tables.bindings.set_current_field(source, field, value, accepted);
-    return status;
+inline gf_status invoke_bindings_set_current_field(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_utf8_view field = drawn.text(1U);
+    const gf_value* const value = drawn.input<gf_value>(2U, true);
+    uint32_t* const accepted = drawn.output<uint32_t>(3U, false);
+    const gf_status returned = tables.bindings.set_current_field(source, field, value, accepted);
+    return returned;
 }
 
 // bindings.set_filter
-inline gf_status invoke_bindings_set_filter(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_binding_predicate* const predicates = arguments.input<gf_binding_predicate>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_binding_predicate)));
-    const gf_status status = tables.bindings.set_filter(source, predicates, count);
-    return status;
+inline gf_status invoke_bindings_set_filter(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_binding_predicate* const predicates = drawn.input<gf_binding_predicate>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_binding_predicate)));
+    const gf_status returned = tables.bindings.set_filter(source, predicates, count);
+    return returned;
 }
 
 // bindings.set_position
-inline gf_status invoke_bindings_set_position(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const int64_t position = arguments.i64(1U);
-    uint32_t* const moved = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.bindings.set_position(source, position, moved);
-    return status;
+inline gf_status invoke_bindings_set_position(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const int64_t position = drawn.i64(1U);
+    uint32_t* const moved = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.bindings.set_position(source, position, moved);
+    return returned;
 }
 
 // bindings.set_sort
-inline gf_status invoke_bindings_set_sort(const AbiTables& tables, Arguments& arguments) {
-    const gf_object source = arguments.subject();
-    const gf_binding_sort_key* const keys = arguments.input<gf_binding_sort_key>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_binding_sort_key)));
-    const gf_status status = tables.bindings.set_sort(source, keys, count);
-    return status;
+inline gf_status invoke_bindings_set_sort(const AbiTables& tables, Arguments& drawn) {
+    const gf_object source = drawn.subject();
+    const gf_binding_sort_key* const keys = drawn.input<gf_binding_sort_key>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_binding_sort_key)));
+    const gf_status returned = tables.bindings.set_sort(source, keys, count);
+    return returned;
 }
 
 // bindings.unbind
-inline gf_status invoke_bindings_unbind(const AbiTables& tables, Arguments& arguments) {
-    const gf_object binding = arguments.subject();
-    const gf_status status = tables.bindings.unbind(binding);
-    return status;
+inline gf_status invoke_bindings_unbind(const AbiTables& tables, Arguments& drawn) {
+    const gf_object binding = drawn.subject();
+    const gf_status returned = tables.bindings.unbind(binding);
+    return returned;
 }
 
 // bindings.write_value
-inline gf_status invoke_bindings_write_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_object binding = arguments.subject();
-    uint32_t* const updated = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.bindings.write_value(binding, updated);
-    return status;
+inline gf_status invoke_bindings_write_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_object binding = drawn.subject();
+    uint32_t* const updated = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.bindings.write_value(binding, updated);
+    return returned;
 }
 
 // classes.base_raiser
-inline gf_status invoke_classes_base_raiser(const AbiTables& tables, Arguments& arguments) {
-    const gf_class_id class_id = static_cast<gf_class_id>(arguments.u32(0U));
-    const uint32_t entry = arguments.u32(1U);
-    gf_base_raiser* const raiser = arguments.output<gf_base_raiser>(2U, false);
-    const gf_status status = tables.classes.base_raiser(class_id, entry, raiser);
-    return status;
+inline gf_status invoke_classes_base_raiser(const AbiTables& tables, Arguments& drawn) {
+    const gf_class_id class_id = static_cast<gf_class_id>(drawn.u32(0U));
+    const uint32_t entry = drawn.u32(1U);
+    gf_base_raiser* const raiser = drawn.output<gf_base_raiser>(2U, false);
+    const gf_status returned = tables.classes.base_raiser(class_id, entry, raiser);
+    return returned;
 }
 
 // content.close_content
-inline gf_status invoke_content_close_content(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const gf_status status = tables.content.close_content(surface);
-    return status;
+inline gf_status invoke_content_close_content(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const gf_status returned = tables.content.close_content(surface);
+    return returned;
 }
 
 // content.editor_caret_quad
-inline gf_status invoke_content_editor_caret_quad(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    uint32_t* const present = arguments.output<uint32_t>(1U, false);
-    gf_content_quad* const quad = arguments.output<gf_content_quad>(2U, false);
-    const gf_status status = tables.content.editor_caret_quad(editor, present, quad);
-    return status;
+inline gf_status invoke_content_editor_caret_quad(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    uint32_t* const present = drawn.output<uint32_t>(1U, false);
+    gf_content_quad* const quad = drawn.output<gf_content_quad>(2U, false);
+    const gf_status returned = tables.content.editor_caret_quad(editor, present, quad);
+    return returned;
 }
 
 // content.editor_caret_rectangle
-inline gf_status invoke_content_editor_caret_rectangle(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    uint32_t* const present = arguments.output<uint32_t>(1U, false);
-    gf_logical_rect* const rectangle = arguments.output<gf_logical_rect>(2U, false);
-    const gf_status status = tables.content.editor_caret_rectangle(editor, present, rectangle);
-    return status;
+inline gf_status invoke_content_editor_caret_rectangle(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    uint32_t* const present = drawn.output<uint32_t>(1U, false);
+    gf_logical_rect* const rectangle = drawn.output<gf_logical_rect>(2U, false);
+    const gf_status returned = tables.content.editor_caret_rectangle(editor, present, rectangle);
+    return returned;
 }
 
 // content.editor_composition_quads
-inline gf_status invoke_content_editor_composition_quads(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    gf_content_quad* const buffer = arguments.output<gf_content_quad>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_content_quad)));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.content.editor_composition_quads(editor, buffer, capacity, required);
-    return status;
+inline gf_status invoke_content_editor_composition_quads(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    gf_content_quad* const buffer = drawn.output<gf_content_quad>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_content_quad)));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.content.editor_composition_quads(editor, buffer, capacity, required);
+    return returned;
 }
 
 // content.editor_composition_range
-inline gf_status invoke_content_editor_composition_range(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    uint32_t* const present = arguments.output<uint32_t>(1U, false);
-    uint64_t* const start = arguments.output<uint64_t>(2U, false);
-    uint64_t* const end = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.content.editor_composition_range(editor, present, start, end);
-    return status;
+inline gf_status invoke_content_editor_composition_range(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    uint32_t* const present = drawn.output<uint32_t>(1U, false);
+    uint64_t* const start = drawn.output<uint64_t>(2U, false);
+    uint64_t* const end = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.content.editor_composition_range(editor, present, start, end);
+    return returned;
 }
 
 // content.editor_delete_selection
-inline gf_status invoke_content_editor_delete_selection(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    uint32_t* const applied = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.content.editor_delete_selection(editor, applied);
-    return status;
+inline gf_status invoke_content_editor_delete_selection(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    uint32_t* const applied = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.content.editor_delete_selection(editor, applied);
+    return returned;
 }
 
 // content.editor_layout_current
-inline gf_status invoke_content_editor_layout_current(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    uint32_t* const current = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.content.editor_layout_current(editor, current);
-    return status;
+inline gf_status invoke_content_editor_layout_current(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    uint32_t* const current = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.content.editor_layout_current(editor, current);
+    return returned;
 }
 
 // content.editor_open_frames
-inline gf_status invoke_content_editor_open_frames(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const uint32_t opaque = arguments.u32(1U);
-    gf_content_sink* const sink = arguments.output<gf_content_sink>(2U, false);
-    const gf_status status = tables.content.editor_open_frames(editor, opaque, sink);
-    return status;
+inline gf_status invoke_content_editor_open_frames(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const uint32_t opaque = drawn.u32(1U);
+    gf_content_sink* const sink = drawn.output<gf_content_sink>(2U, false);
+    const gf_status returned = tables.content.editor_open_frames(editor, opaque, sink);
+    return returned;
 }
 
 // content.editor_position_at
-inline gf_status invoke_content_editor_position_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const gf_logical_point point = arguments.plain<gf_logical_point>(1U);
-    uint64_t* const offset = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.content.editor_position_at(editor, point, offset);
-    return status;
+inline gf_status invoke_content_editor_position_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const gf_logical_point point = drawn.plain<gf_logical_point>(1U);
+    uint64_t* const offset = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.content.editor_position_at(editor, point, offset);
+    return returned;
 }
 
 // content.editor_replace_selection
-inline gf_status invoke_content_editor_replace_selection(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const gf_utf8_view replacement = arguments.text(1U);
-    uint32_t* const applied = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.content.editor_replace_selection(editor, replacement, applied);
-    return status;
+inline gf_status invoke_content_editor_replace_selection(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const gf_utf8_view replacement = drawn.text(1U);
+    uint32_t* const applied = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.content.editor_replace_selection(editor, replacement, applied);
+    return returned;
 }
 
 // content.editor_selection_quads
-inline gf_status invoke_content_editor_selection_quads(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    gf_content_quad* const buffer = arguments.output<gf_content_quad>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_content_quad)));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.content.editor_selection_quads(editor, buffer, capacity, required);
-    return status;
+inline gf_status invoke_content_editor_selection_quads(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    gf_content_quad* const buffer = drawn.output<gf_content_quad>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_content_quad)));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.content.editor_selection_quads(editor, buffer, capacity, required);
+    return returned;
 }
 
 // content.editor_selection_rectangles
-inline gf_status invoke_content_editor_selection_rectangles(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    gf_logical_rect* const buffer = arguments.output<gf_logical_rect>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_logical_rect)));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.content.editor_selection_rectangles(editor, buffer, capacity, required);
-    return status;
+inline gf_status invoke_content_editor_selection_rectangles(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    gf_logical_rect* const buffer = drawn.output<gf_logical_rect>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_logical_rect)));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.content.editor_selection_rectangles(editor, buffer, capacity, required);
+    return returned;
 }
 
 // content.editor_set_accepts_tab
-inline gf_status invoke_content_editor_set_accepts_tab(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const uint32_t accepts = arguments.u32(1U);
-    const gf_status status = tables.content.editor_set_accepts_tab(editor, accepts);
-    return status;
+inline gf_status invoke_content_editor_set_accepts_tab(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const uint32_t accepts = drawn.u32(1U);
+    const gf_status returned = tables.content.editor_set_accepts_tab(editor, accepts);
+    return returned;
 }
 
 // content.editor_set_draws_selection
-inline gf_status invoke_content_editor_set_draws_selection(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const uint32_t draws = arguments.u32(1U);
-    const gf_status status = tables.content.editor_set_draws_selection(editor, draws);
-    return status;
+inline gf_status invoke_content_editor_set_draws_selection(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const uint32_t draws = drawn.u32(1U);
+    const gf_status returned = tables.content.editor_set_draws_selection(editor, draws);
+    return returned;
 }
 
 // content.editor_set_multiline
-inline gf_status invoke_content_editor_set_multiline(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const uint32_t multiline = arguments.u32(1U);
-    const gf_status status = tables.content.editor_set_multiline(editor, multiline);
-    return status;
+inline gf_status invoke_content_editor_set_multiline(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const uint32_t multiline = drawn.u32(1U);
+    const gf_status returned = tables.content.editor_set_multiline(editor, multiline);
+    return returned;
 }
 
 // content.editor_set_read_only
-inline gf_status invoke_content_editor_set_read_only(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const uint32_t read_only = arguments.u32(1U);
-    const gf_status status = tables.content.editor_set_read_only(editor, read_only);
-    return status;
+inline gf_status invoke_content_editor_set_read_only(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const uint32_t read_only = drawn.u32(1U);
+    const gf_status returned = tables.content.editor_set_read_only(editor, read_only);
+    return returned;
 }
 
 // content.editor_set_text
-inline gf_status invoke_content_editor_set_text(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const gf_utf8_view text = arguments.text(1U);
-    const gf_status status = tables.content.editor_set_text(editor, text);
-    return status;
+inline gf_status invoke_content_editor_set_text(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const gf_utf8_view text = drawn.text(1U);
+    const gf_status returned = tables.content.editor_set_text(editor, text);
+    return returned;
 }
 
 // content.editor_submit_layout
-inline gf_status invoke_content_editor_submit_layout(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    const gf_content_text_layout* const layout = arguments.input<gf_content_text_layout>(1U, true);
-    gf_content_layout_result* const result = arguments.output<gf_content_layout_result>(2U, false);
-    const gf_status status = tables.content.editor_submit_layout(editor, layout, result);
-    return status;
+inline gf_status invoke_content_editor_submit_layout(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    const gf_content_text_layout* const layout = drawn.input<gf_content_text_layout>(1U, true);
+    gf_content_layout_result* const result = drawn.output<gf_content_layout_result>(2U, false);
+    const gf_status returned = tables.content.editor_submit_layout(editor, layout, result);
+    return returned;
 }
 
 // content.editor_text
-inline gf_status invoke_content_editor_text(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.content.editor_text(editor, buffer, capacity, required);
-    return status;
+inline gf_status invoke_content_editor_text(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.content.editor_text(editor, buffer, capacity, required);
+    return returned;
 }
 
 // content.editor_text_revision
-inline gf_status invoke_content_editor_text_revision(const AbiTables& tables, Arguments& arguments) {
-    const gf_object editor = arguments.subject();
-    uint64_t* const revision = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.content.editor_text_revision(editor, revision);
-    return status;
+inline gf_status invoke_content_editor_text_revision(const AbiTables& tables, Arguments& drawn) {
+    const gf_object editor = drawn.subject();
+    uint64_t* const revision = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.content.editor_text_revision(editor, revision);
+    return returned;
 }
 
 // content.failure
-inline gf_status invoke_content_failure(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.content.failure(surface, buffer, capacity, required);
-    return status;
+inline gf_status invoke_content_failure(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.content.failure(surface, buffer, capacity, required);
+    return returned;
 }
 
 // content.hosted_input
-inline gf_status invoke_content_hosted_input(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    gf_hosted_input_report* const report = arguments.output<gf_hosted_input_report>(1U, true);
-    const gf_status status = tables.content.hosted_input(surface, report);
-    return status;
+inline gf_status invoke_content_hosted_input(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    gf_hosted_input_report* const report = drawn.output<gf_hosted_input_report>(1U, true);
+    const gf_status returned = tables.content.hosted_input(surface, report);
+    return returned;
 }
 
 // content.hosted_support
-inline gf_status invoke_content_hosted_support(const AbiTables& tables, Arguments& arguments) {
-    gf_hosted_support* const support = arguments.output<gf_hosted_support>(0U, false);
-    const gf_status status = tables.content.hosted_support(support);
-    return status;
+inline gf_status invoke_content_hosted_support(const AbiTables& tables, Arguments& drawn) {
+    gf_hosted_support* const support = drawn.output<gf_hosted_support>(0U, false);
+    const gf_status returned = tables.content.hosted_support(support);
+    return returned;
 }
 
 // content.open_content
-inline gf_status invoke_content_open_content(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const uint32_t opaque = arguments.u32(1U);
-    gf_content_sink* const sink = arguments.output<gf_content_sink>(2U, false);
-    const gf_status status = tables.content.open_content(surface, opaque, sink);
-    return status;
+inline gf_status invoke_content_open_content(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const uint32_t opaque = drawn.u32(1U);
+    gf_content_sink* const sink = drawn.output<gf_content_sink>(2U, false);
+    const gf_status returned = tables.content.open_content(surface, opaque, sink);
+    return returned;
 }
 
 // content.program_fail
-inline gf_status invoke_content_program_fail(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view message = arguments.text(0U);
-    const gf_status status = tables.content.program_fail(message);
-    return status;
+inline gf_status invoke_content_program_fail(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view message = drawn.text(0U);
+    const gf_status returned = tables.content.program_fail(message);
+    return returned;
 }
 
 // content.program_running
-inline gf_status invoke_content_program_running(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    uint32_t* const running = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.content.program_running(surface, running);
-    return status;
+inline gf_status invoke_content_program_running(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    uint32_t* const running = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.content.program_running(surface, running);
+    return returned;
 }
 
 // content.program_sink
-inline gf_status invoke_content_program_sink(const AbiTables& tables, Arguments& arguments) {
-    gf_content_sink* const sink = arguments.output<gf_content_sink>(0U, false);
-    const gf_status status = tables.content.program_sink(sink);
-    return status;
+inline gf_status invoke_content_program_sink(const AbiTables& tables, Arguments& drawn) {
+    gf_content_sink* const sink = drawn.output<gf_content_sink>(0U, false);
+    const gf_status returned = tables.content.program_sink(sink);
+    return returned;
 }
 
 // content.request
-inline gf_status invoke_content_request(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    gf_content_request* const request = arguments.output<gf_content_request>(1U, true);
-    const gf_status status = tables.content.request(surface, request);
-    return status;
+inline gf_status invoke_content_request(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    gf_content_request* const request = drawn.output<gf_content_request>(1U, true);
+    const gf_status returned = tables.content.request(surface, request);
+    return returned;
 }
 
 // content.set_semantics
-inline gf_status invoke_content_set_semantics(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const gf_content_semantics* const semantics = arguments.input<gf_content_semantics>(1U, true);
-    const gf_status status = tables.content.set_semantics(surface, semantics);
-    return status;
+inline gf_status invoke_content_set_semantics(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const gf_content_semantics* const semantics = drawn.input<gf_content_semantics>(1U, true);
+    const gf_status returned = tables.content.set_semantics(surface, semantics);
+    return returned;
 }
 
 // content.set_stale_interval
-inline gf_status invoke_content_set_stale_interval(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const uint64_t milliseconds = arguments.u64(1U);
-    const gf_status status = tables.content.set_stale_interval(surface, milliseconds);
-    return status;
+inline gf_status invoke_content_set_stale_interval(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const uint64_t milliseconds = drawn.u64(1U);
+    const gf_status returned = tables.content.set_stale_interval(surface, milliseconds);
+    return returned;
 }
 
 // content.set_status_caption
-inline gf_status invoke_content_set_status_caption(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const gf_content_status status = static_cast<gf_content_status>(arguments.u32(1U));
-    const gf_utf8_view caption = arguments.text(2U);
-    const gf_status status = tables.content.set_status_caption(surface, status, caption);
-    return status;
+inline gf_status invoke_content_set_status_caption(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const gf_content_status status = static_cast<gf_content_status>(drawn.u32(1U));
+    const gf_utf8_view caption = drawn.text(2U);
+    const gf_status returned = tables.content.set_status_caption(surface, status, caption);
+    return returned;
 }
 
 // content.set_termination_grace
-inline gf_status invoke_content_set_termination_grace(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const uint64_t milliseconds = arguments.u64(1U);
-    const gf_status status = tables.content.set_termination_grace(surface, milliseconds);
-    return status;
+inline gf_status invoke_content_set_termination_grace(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const uint64_t milliseconds = drawn.u64(1U);
+    const gf_status returned = tables.content.set_termination_grace(surface, milliseconds);
+    return returned;
 }
 
 // content.sink_heartbeat
-inline gf_status invoke_content_sink_heartbeat(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    const gf_status status = tables.content.sink_heartbeat(sink);
-    return status;
+inline gf_status invoke_content_sink_heartbeat(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    const gf_status returned = tables.content.sink_heartbeat(sink);
+    return returned;
 }
 
 // content.sink_publish
-inline gf_status invoke_content_sink_publish(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    const gf_content_frame* const frame = arguments.input<gf_content_frame>(1U, true);
-    gf_content_publish_result* const result = arguments.output<gf_content_publish_result>(2U, false);
-    const gf_status status = tables.content.sink_publish(sink, frame, result);
-    return status;
+inline gf_status invoke_content_sink_publish(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    const gf_content_frame* const frame = drawn.input<gf_content_frame>(1U, true);
+    gf_content_publish_result* const result = drawn.output<gf_content_publish_result>(2U, false);
+    const gf_status returned = tables.content.sink_publish(sink, frame, result);
+    return returned;
 }
 
 // content.sink_publish_semantics
-inline gf_status invoke_content_sink_publish_semantics(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    const gf_content_semantics* const semantics = arguments.input<gf_content_semantics>(1U, true);
-    gf_content_semantics_result* const outcome = arguments.output<gf_content_semantics_result>(2U, false);
-    const gf_status status = tables.content.sink_publish_semantics(sink, semantics, outcome);
-    return status;
+inline gf_status invoke_content_sink_publish_semantics(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    const gf_content_semantics* const semantics = drawn.input<gf_content_semantics>(1U, true);
+    gf_content_semantics_result* const outcome = drawn.output<gf_content_semantics_result>(2U, false);
+    const gf_status returned = tables.content.sink_publish_semantics(sink, semantics, outcome);
+    return returned;
 }
 
 // content.sink_release
-inline gf_status invoke_content_sink_release(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    const gf_status status = tables.content.sink_release(sink);
-    return status;
+inline gf_status invoke_content_sink_release(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    const gf_status returned = tables.content.sink_release(sink);
+    return returned;
 }
 
 // content.sink_request
-inline gf_status invoke_content_sink_request(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    gf_content_request* const request = arguments.output<gf_content_request>(1U, true);
-    const gf_status status = tables.content.sink_request(sink, request);
-    return status;
+inline gf_status invoke_content_sink_request(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    gf_content_request* const request = drawn.output<gf_content_request>(1U, true);
+    const gf_status returned = tables.content.sink_request(sink, request);
+    return returned;
 }
 
 // content.sink_state
-inline gf_status invoke_content_sink_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    uint32_t* const revoked = arguments.output<uint32_t>(1U, false);
-    uint32_t* const stop_requested = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.content.sink_state(sink, revoked, stop_requested);
-    return status;
+inline gf_status invoke_content_sink_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    uint32_t* const revoked = drawn.output<uint32_t>(1U, false);
+    uint32_t* const stop_requested = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.content.sink_state(sink, revoked, stop_requested);
+    return returned;
 }
 
 // content.sink_statistics
-inline gf_status invoke_content_sink_statistics(const AbiTables& tables, Arguments& arguments) {
-    const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
-    gf_content_statistics* const statistics = arguments.output<gf_content_statistics>(1U, true);
-    const gf_status status = tables.content.sink_statistics(sink, statistics);
-    return status;
+inline gf_status invoke_content_sink_statistics(const AbiTables& tables, Arguments& drawn) {
+    const gf_content_sink sink = static_cast<gf_content_sink>(drawn.u64(0U));
+    gf_content_statistics* const statistics = drawn.output<gf_content_statistics>(1U, true);
+    const gf_status returned = tables.content.sink_statistics(sink, statistics);
+    return returned;
 }
 
 // content.statistics
-inline gf_status invoke_content_statistics(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    gf_content_statistics* const statistics = arguments.output<gf_content_statistics>(1U, true);
-    const gf_status status = tables.content.statistics(surface, statistics);
-    return status;
+inline gf_status invoke_content_statistics(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    gf_content_statistics* const statistics = drawn.output<gf_content_statistics>(1U, true);
+    const gf_status returned = tables.content.statistics(surface, statistics);
+    return returned;
 }
 
 // content.status
-inline gf_status invoke_content_status(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    gf_content_status* const status = arguments.output<gf_content_status>(1U, false);
-    const gf_status status = tables.content.status(surface, status);
-    return status;
+inline gf_status invoke_content_status(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    gf_content_status* const status = drawn.output<gf_content_status>(1U, false);
+    const gf_status returned = tables.content.status(surface, status);
+    return returned;
 }
 
 // content.terminate
-inline gf_status invoke_content_terminate(const AbiTables& tables, Arguments& arguments) {
-    const gf_object surface = arguments.subject();
-    const gf_status status = tables.content.terminate(surface);
-    return status;
+inline gf_status invoke_content_terminate(const AbiTables& tables, Arguments& drawn) {
+    const gf_object surface = drawn.subject();
+    const gf_status returned = tables.content.terminate(surface);
+    return returned;
 }
 
 // controls.focus
-inline gf_status invoke_controls_focus(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint32_t* const focused = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.controls.focus(object, focused);
-    return status;
+inline gf_status invoke_controls_focus(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint32_t* const focused = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.controls.focus(object, focused);
+    return returned;
 }
 
 // controls.focus_state
-inline gf_status invoke_controls_focus_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint32_t* const focused = arguments.output<uint32_t>(1U, false);
-    uint32_t* const contains_focus = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.controls.focus_state(object, focused, contains_focus);
-    return status;
+inline gf_status invoke_controls_focus_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint32_t* const focused = drawn.output<uint32_t>(1U, false);
+    uint32_t* const contains_focus = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.controls.focus_state(object, focused, contains_focus);
+    return returned;
 }
 
 // controls.invalidate
-inline gf_status invoke_controls_invalidate(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_logical_rect* const damage = arguments.input<gf_logical_rect>(1U, false);
-    const gf_status status = tables.controls.invalidate(object, damage);
-    return status;
+inline gf_status invoke_controls_invalidate(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_logical_rect* const damage = drawn.input<gf_logical_rect>(1U, false);
+    const gf_status returned = tables.controls.invalidate(object, damage);
+    return returned;
 }
 
 // controls.layout_state
-inline gf_status invoke_controls_layout_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    gf_layout_transaction* const state = arguments.output<gf_layout_transaction>(1U, true);
-    const gf_status status = tables.controls.layout_state(object, state);
-    return status;
+inline gf_status invoke_controls_layout_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    gf_layout_transaction* const state = drawn.output<gf_layout_transaction>(1U, true);
+    const gf_status returned = tables.controls.layout_state(object, state);
+    return returned;
 }
 
 // controls.perform_layout
-inline gf_status invoke_controls_perform_layout(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.controls.perform_layout(object);
-    return status;
+inline gf_status invoke_controls_perform_layout(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.controls.perform_layout(object);
+    return returned;
 }
 
 // controls.pointer_capture
-inline gf_status invoke_controls_pointer_capture(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint32_t* const captured = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.controls.pointer_capture(object, captured);
-    return status;
+inline gf_status invoke_controls_pointer_capture(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint32_t* const captured = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.controls.pointer_capture(object, captured);
+    return returned;
 }
 
 // controls.relative_pointer_state
-inline gf_status invoke_controls_relative_pointer_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    gf_relative_pointer_state* const state = arguments.output<gf_relative_pointer_state>(1U, true);
-    const gf_status status = tables.controls.relative_pointer_state(object, state);
-    return status;
+inline gf_status invoke_controls_relative_pointer_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    gf_relative_pointer_state* const state = drawn.output<gf_relative_pointer_state>(1U, true);
+    const gf_status returned = tables.controls.relative_pointer_state(object, state);
+    return returned;
 }
 
 // controls.release_relative_pointer
-inline gf_status invoke_controls_release_relative_pointer(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint32_t* const released = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.controls.release_relative_pointer(object, released);
-    return status;
+inline gf_status invoke_controls_release_relative_pointer(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint32_t* const released = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.controls.release_relative_pointer(object, released);
+    return returned;
 }
 
 // controls.request_relative_pointer
-inline gf_status invoke_controls_request_relative_pointer(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_relative_pointer_request* const request = arguments.input<gf_relative_pointer_request>(1U, true);
-    gf_relative_pointer_grant* const grant = arguments.output<gf_relative_pointer_grant>(2U, true);
-    const gf_status status = tables.controls.request_relative_pointer(object, request, grant);
-    return status;
+inline gf_status invoke_controls_request_relative_pointer(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_relative_pointer_request* const request = drawn.input<gf_relative_pointer_request>(1U, true);
+    gf_relative_pointer_grant* const grant = drawn.output<gf_relative_pointer_grant>(2U, true);
+    const gf_status returned = tables.controls.request_relative_pointer(object, request, grant);
+    return returned;
 }
 
 // controls.resume_layout
-inline gf_status invoke_controls_resume_layout(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint32_t perform_layout = arguments.u32(1U);
-    const gf_status status = tables.controls.resume_layout(object, perform_layout);
-    return status;
+inline gf_status invoke_controls_resume_layout(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint32_t perform_layout = drawn.u32(1U);
+    const gf_status returned = tables.controls.resume_layout(object, perform_layout);
+    return returned;
 }
 
 // controls.scroll_into_view
-inline gf_status invoke_controls_scroll_into_view(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_object child = arguments.object(1U);
-    const gf_status status = tables.controls.scroll_into_view(object, child);
-    return status;
+inline gf_status invoke_controls_scroll_into_view(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_object child = drawn.object(1U);
+    const gf_status returned = tables.controls.scroll_into_view(object, child);
+    return returned;
 }
 
 // controls.scroll_state
-inline gf_status invoke_controls_scroll_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    gf_scroll_snapshot* const state = arguments.output<gf_scroll_snapshot>(1U, true);
-    const gf_status status = tables.controls.scroll_state(object, state);
-    return status;
+inline gf_status invoke_controls_scroll_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    gf_scroll_snapshot* const state = drawn.output<gf_scroll_snapshot>(1U, true);
+    const gf_status returned = tables.controls.scroll_state(object, state);
+    return returned;
 }
 
 // controls.set_content_effect
-inline gf_status invoke_controls_set_content_effect(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_content_effect* const effect = arguments.input<gf_content_effect>(1U, true);
-    const gf_status status = tables.controls.set_content_effect(object, effect);
-    return status;
+inline gf_status invoke_controls_set_content_effect(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_content_effect* const effect = drawn.input<gf_content_effect>(1U, true);
+    const gf_status returned = tables.controls.set_content_effect(object, effect);
+    return returned;
 }
 
 // controls.set_pointer_capture
-inline gf_status invoke_controls_set_pointer_capture(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint32_t captured = arguments.u32(1U);
-    const gf_status status = tables.controls.set_pointer_capture(object, captured);
-    return status;
+inline gf_status invoke_controls_set_pointer_capture(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint32_t captured = drawn.u32(1U);
+    const gf_status returned = tables.controls.set_pointer_capture(object, captured);
+    return returned;
 }
 
 // controls.set_pointer_release_regions
-inline gf_status invoke_controls_set_pointer_release_regions(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_logical_rect* const regions = arguments.input<gf_logical_rect>(1U, false);
-    const uint32_t count = static_cast<uint32_t>(arguments.extent(2U, sizeof(gf_logical_rect)));
-    const gf_status status = tables.controls.set_pointer_release_regions(object, regions, count);
-    return status;
+inline gf_status invoke_controls_set_pointer_release_regions(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_logical_rect* const regions = drawn.input<gf_logical_rect>(1U, false);
+    const uint32_t count = static_cast<uint32_t>(drawn.extent(2U, sizeof(gf_logical_rect)));
+    const gf_status returned = tables.controls.set_pointer_release_regions(object, regions, count);
+    return returned;
 }
 
 // controls.set_scroll_axis
-inline gf_status invoke_controls_set_scroll_axis(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_scroll_orientation orientation = static_cast<gf_scroll_orientation>(arguments.u32(1U));
-    const gf_scroll_axis* const axis = arguments.input<gf_scroll_axis>(2U, false);
-    const gf_status status = tables.controls.set_scroll_axis(object, orientation, axis);
-    return status;
+inline gf_status invoke_controls_set_scroll_axis(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_scroll_orientation orientation = static_cast<gf_scroll_orientation>(drawn.u32(1U));
+    const gf_scroll_axis* const axis = drawn.input<gf_scroll_axis>(2U, false);
+    const gf_status returned = tables.controls.set_scroll_axis(object, orientation, axis);
+    return returned;
 }
 
 // controls.suspend_layout
-inline gf_status invoke_controls_suspend_layout(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.controls.suspend_layout(object);
-    return status;
+inline gf_status invoke_controls_suspend_layout(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.controls.suspend_layout(object);
+    return returned;
 }
 
 // controls.warp_pointer
-inline gf_status invoke_controls_warp_pointer(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_logical_point position = arguments.plain<gf_logical_point>(1U);
-    uint32_t* const warped = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.controls.warp_pointer(object, position, warped);
-    return status;
+inline gf_status invoke_controls_warp_pointer(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_logical_point position = drawn.plain<gf_logical_point>(1U);
+    uint32_t* const warped = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.controls.warp_pointer(object, position, warped);
+    return returned;
 }
 
 // controls.window_bounds
-inline gf_status invoke_controls_window_bounds(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    gf_logical_rect* const bounds = arguments.output<gf_logical_rect>(1U, false);
-    const gf_status status = tables.controls.window_bounds(object, bounds);
-    return status;
+inline gf_status invoke_controls_window_bounds(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    gf_logical_rect* const bounds = drawn.output<gf_logical_rect>(1U, false);
+    const gf_status returned = tables.controls.window_bounds(object, bounds);
+    return returned;
 }
 
 // custom_controls.composite_child
-inline gf_status invoke_custom_controls_composite_child(const AbiTables& tables, Arguments& arguments) {
-    const gf_object control = arguments.subject();
-    const gf_utf8_view local_id = arguments.text(1U);
-    gf_object* const child = arguments.output<gf_object>(2U, false);
-    const gf_status status = tables.custom_controls.composite_child(control, local_id, child);
-    arguments.adopt(status, child);
-    return status;
+inline gf_status invoke_custom_controls_composite_child(const AbiTables& tables, Arguments& drawn) {
+    const gf_object control = drawn.subject();
+    const gf_utf8_view local_id = drawn.text(1U);
+    gf_object* const child = drawn.output<gf_object>(2U, false);
+    const gf_status returned = tables.custom_controls.composite_child(control, local_id, child);
+    drawn.adopt(returned, child);
+    return returned;
 }
 
 // custom_controls.create_composite
-inline gf_status invoke_custom_controls_create_composite(const AbiTables& tables, Arguments& arguments) {
-    const gf_object definition = arguments.object(0U);
-    const gf_utf8_view stable_id = arguments.text(1U);
-    gf_object* const object = arguments.output<gf_object>(2U, false);
-    const gf_status status = tables.custom_controls.create_composite(definition, stable_id, object);
-    arguments.adopt(status, object);
-    return status;
+inline gf_status invoke_custom_controls_create_composite(const AbiTables& tables, Arguments& drawn) {
+    const gf_object definition = drawn.object(0U);
+    const gf_utf8_view stable_id = drawn.text(1U);
+    gf_object* const object = drawn.output<gf_object>(2U, false);
+    const gf_status returned = tables.custom_controls.create_composite(definition, stable_id, object);
+    drawn.adopt(returned, object);
+    return returned;
 }
 
 // custom_controls.load_composite
-inline gf_status invoke_custom_controls_load_composite(const AbiTables& tables, Arguments& arguments) {
-    const gf_composite_spec* const spec = arguments.input<gf_composite_spec>(0U, true);
-    gf_object* const definition = arguments.output<gf_object>(1U, false);
-    const gf_status status = tables.custom_controls.load_composite(spec, definition);
-    arguments.adopt(status, definition);
-    return status;
+inline gf_status invoke_custom_controls_load_composite(const AbiTables& tables, Arguments& drawn) {
+    const gf_composite_spec* const spec = drawn.input<gf_composite_spec>(0U, true);
+    gf_object* const definition = drawn.output<gf_object>(1U, false);
+    const gf_status returned = tables.custom_controls.load_composite(spec, definition);
+    drawn.adopt(returned, definition);
+    return returned;
 }
 
 // custom_controls.notify_changed
-inline gf_status invoke_custom_controls_notify_changed(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_status status = tables.custom_controls.notify_changed(object, index);
-    return status;
+inline gf_status invoke_custom_controls_notify_changed(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_status returned = tables.custom_controls.notify_changed(object, index);
+    return returned;
 }
 
 // custom_controls.perform_composite
-inline gf_status invoke_custom_controls_perform_composite(const AbiTables& tables, Arguments& arguments) {
-    const gf_object control = arguments.subject();
-    const gf_utf8_view command = arguments.text(1U);
-    uint32_t* const performed = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.custom_controls.perform_composite(control, command, performed);
-    return status;
+inline gf_status invoke_custom_controls_perform_composite(const AbiTables& tables, Arguments& drawn) {
+    const gf_object control = drawn.subject();
+    const gf_utf8_view command = drawn.text(1U);
+    uint32_t* const performed = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.custom_controls.perform_composite(control, command, performed);
+    return returned;
 }
 
 // data_grid.append_rows
-inline gf_status invoke_data_grid_append_rows(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_data_grid_row* const rows = arguments.input<gf_data_grid_row>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_data_grid_row)));
-    uint64_t* const first = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.data_grid.append_rows(grid, rows, count, first);
-    return status;
+inline gf_status invoke_data_grid_append_rows(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_data_grid_row* const rows = drawn.input<gf_data_grid_row>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_data_grid_row)));
+    uint64_t* const first = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.data_grid.append_rows(grid, rows, count, first);
+    return returned;
 }
 
 // data_grid.begin_edit
-inline gf_status invoke_data_grid_begin_edit(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint32_t select_all = arguments.u32(1U);
-    uint32_t* const began = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.data_grid.begin_edit(grid, select_all, began);
-    return status;
+inline gf_status invoke_data_grid_begin_edit(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint32_t select_all = drawn.u32(1U);
+    uint32_t* const began = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.data_grid.begin_edit(grid, select_all, began);
+    return returned;
 }
 
 // data_grid.cancel_edit
-inline gf_status invoke_data_grid_cancel_edit(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_status status = tables.data_grid.cancel_edit(grid);
-    return status;
+inline gf_status invoke_data_grid_cancel_edit(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_status returned = tables.data_grid.cancel_edit(grid);
+    return returned;
 }
 
 // data_grid.cell_text
-inline gf_status invoke_data_grid_cell_text(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    const uint64_t column = arguments.u64(2U);
-    char* const buffer = arguments.output<char>(3U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.data_grid.cell_text(grid, row_id, column, buffer, capacity, required);
-    return status;
+inline gf_status invoke_data_grid_cell_text(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    const uint64_t column = drawn.u64(2U);
+    char* const buffer = drawn.output<char>(3U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.data_grid.cell_text(grid, row_id, column, buffer, capacity, required);
+    return returned;
 }
 
 // data_grid.cell_value
-inline gf_status invoke_data_grid_cell_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    const uint64_t column = arguments.u64(2U);
-    const gf_value_kind as_kind = static_cast<gf_value_kind>(arguments.u32(3U));
-    gf_value* const value = arguments.output<gf_value>(4U, true);
-    char* const text_buffer = arguments.output<char>(5U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(6U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(7U, false);
-    const gf_status status = tables.data_grid.cell_value(grid, row_id, column, as_kind, value, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_data_grid_cell_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    const uint64_t column = drawn.u64(2U);
+    const gf_value_kind as_kind = static_cast<gf_value_kind>(drawn.u32(3U));
+    gf_value* const value = drawn.output<gf_value>(4U, true);
+    char* const text_buffer = drawn.output<char>(5U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(6U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(7U, false);
+    const gf_status returned = tables.data_grid.cell_value(grid, row_id, column, as_kind, value, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // data_grid.clear_rows
-inline gf_status invoke_data_grid_clear_rows(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_status status = tables.data_grid.clear_rows(grid);
-    return status;
+inline gf_status invoke_data_grid_clear_rows(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_status returned = tables.data_grid.clear_rows(grid);
+    return returned;
 }
 
 // data_grid.clear_selection
-inline gf_status invoke_data_grid_clear_selection(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_status status = tables.data_grid.clear_selection(grid);
-    return status;
+inline gf_status invoke_data_grid_clear_selection(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_status returned = tables.data_grid.clear_selection(grid);
+    return returned;
 }
 
 // data_grid.column_at
-inline gf_status invoke_data_grid_column_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    gf_data_grid_column* const column = arguments.output<gf_data_grid_column>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.data_grid.column_at(grid, index, column, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_data_grid_column_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    gf_data_grid_column* const column = drawn.output<gf_data_grid_column>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.data_grid.column_at(grid, index, column, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // data_grid.column_count
-inline gf_status invoke_data_grid_column_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.data_grid.column_count(grid, count);
-    return status;
+inline gf_status invoke_data_grid_column_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.data_grid.column_count(grid, count);
+    return returned;
 }
 
 // data_grid.column_index
-inline gf_status invoke_data_grid_column_index(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    uint64_t* const index = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.data_grid.column_index(grid, name, index);
-    return status;
+inline gf_status invoke_data_grid_column_index(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    uint64_t* const index = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.data_grid.column_index(grid, name, index);
+    return returned;
 }
 
 // data_grid.column_item
-inline gf_status invoke_data_grid_column_item(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const uint64_t item = arguments.u64(2U);
-    char* const buffer = arguments.output<char>(3U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.data_grid.column_item(grid, column, item, buffer, capacity, required);
-    return status;
+inline gf_status invoke_data_grid_column_item(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const uint64_t item = drawn.u64(2U);
+    char* const buffer = drawn.output<char>(3U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.data_grid.column_item(grid, column, item, buffer, capacity, required);
+    return returned;
 }
 
 // data_grid.current_cell
-inline gf_status invoke_data_grid_current_cell(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    uint32_t* const present = arguments.output<uint32_t>(1U, false);
-    uint64_t* const row = arguments.output<uint64_t>(2U, false);
-    uint64_t* const column = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.data_grid.current_cell(grid, present, row, column);
-    return status;
+inline gf_status invoke_data_grid_current_cell(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    uint32_t* const present = drawn.output<uint32_t>(1U, false);
+    uint64_t* const row = drawn.output<uint64_t>(2U, false);
+    uint64_t* const column = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.data_grid.current_cell(grid, present, row, column);
+    return returned;
 }
 
 // data_grid.end_edit
-inline gf_status invoke_data_grid_end_edit(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    uint32_t* const committed = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.data_grid.end_edit(grid, committed);
-    return status;
+inline gf_status invoke_data_grid_end_edit(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    uint32_t* const committed = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.data_grid.end_edit(grid, committed);
+    return returned;
 }
 
 // data_grid.erase_rows
-inline gf_status invoke_data_grid_erase_rows(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const uint64_t count = arguments.u64(2U);
-    const gf_status status = tables.data_grid.erase_rows(grid, index, count);
-    return status;
+inline gf_status invoke_data_grid_erase_rows(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const uint64_t count = drawn.u64(2U);
+    const gf_status returned = tables.data_grid.erase_rows(grid, index, count);
+    return returned;
 }
 
 // data_grid.insert_column
-inline gf_status invoke_data_grid_insert_column(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_data_grid_column* const column = arguments.input<gf_data_grid_column>(2U, true);
-    const gf_status status = tables.data_grid.insert_column(grid, index, column);
-    return status;
+inline gf_status invoke_data_grid_insert_column(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_data_grid_column* const column = drawn.input<gf_data_grid_column>(2U, true);
+    const gf_status returned = tables.data_grid.insert_column(grid, index, column);
+    return returned;
 }
 
 // data_grid.insert_rows
-inline gf_status invoke_data_grid_insert_rows(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_data_grid_row* const rows = arguments.input<gf_data_grid_row>(2U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(3U, sizeof(gf_data_grid_row)));
-    const gf_status status = tables.data_grid.insert_rows(grid, index, rows, count);
-    return status;
+inline gf_status invoke_data_grid_insert_rows(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_data_grid_row* const rows = drawn.input<gf_data_grid_row>(2U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(3U, sizeof(gf_data_grid_row)));
+    const gf_status returned = tables.data_grid.insert_rows(grid, index, rows, count);
+    return returned;
 }
 
 // data_grid.read_cells
-inline gf_status invoke_data_grid_read_cells(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const uint64_t first_row = arguments.u64(2U);
-    const uint64_t row_count = static_cast<uint64_t>(arguments.extent(3U, sizeof(gf_value)));
-    gf_value* const values = arguments.output<gf_value>(4U, true);
-    char* const text_buffer = arguments.output<char>(5U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(6U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(7U, false);
-    const gf_status status = tables.data_grid.read_cells(grid, column, first_row, row_count, values, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_data_grid_read_cells(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const uint64_t first_row = drawn.u64(2U);
+    const uint64_t row_count = static_cast<uint64_t>(drawn.extent(3U, sizeof(gf_value)));
+    gf_value* const values = drawn.output<gf_value>(4U, true);
+    char* const text_buffer = drawn.output<char>(5U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(6U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(7U, false);
+    const gf_status returned = tables.data_grid.read_cells(grid, column, first_row, row_count, values, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // data_grid.remove_column
-inline gf_status invoke_data_grid_remove_column(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_status status = tables.data_grid.remove_column(grid, index);
-    return status;
+inline gf_status invoke_data_grid_remove_column(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_status returned = tables.data_grid.remove_column(grid, index);
+    return returned;
 }
 
 // data_grid.replace_row
-inline gf_status invoke_data_grid_replace_row(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_data_grid_row* const row = arguments.input<gf_data_grid_row>(2U, true);
-    const gf_status status = tables.data_grid.replace_row(grid, index, row);
-    return status;
+inline gf_status invoke_data_grid_replace_row(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_data_grid_row* const row = drawn.input<gf_data_grid_row>(2U, true);
+    const gf_status returned = tables.data_grid.replace_row(grid, index, row);
+    return returned;
 }
 
 // data_grid.row_count
-inline gf_status invoke_data_grid_row_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    int64_t* const new_row = arguments.output<int64_t>(2U, false);
-    const gf_status status = tables.data_grid.row_count(grid, count, new_row);
-    return status;
+inline gf_status invoke_data_grid_row_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    int64_t* const new_row = drawn.output<int64_t>(2U, false);
+    const gf_status returned = tables.data_grid.row_count(grid, count, new_row);
+    return returned;
 }
 
 // data_grid.row_id
-inline gf_status invoke_data_grid_row_id(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t position = arguments.u64(1U);
-    char* const buffer = arguments.output<char>(2U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(3U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(4U, false);
-    const gf_status status = tables.data_grid.row_id(grid, position, buffer, capacity, required);
-    return status;
+inline gf_status invoke_data_grid_row_id(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t position = drawn.u64(1U);
+    char* const buffer = drawn.output<char>(2U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(3U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(4U, false);
+    const gf_status returned = tables.data_grid.row_id(grid, position, buffer, capacity, required);
+    return returned;
 }
 
 // data_grid.row_position
-inline gf_status invoke_data_grid_row_position(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    uint64_t* const position = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.data_grid.row_position(grid, row_id, position);
-    return status;
+inline gf_status invoke_data_grid_row_position(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    uint64_t* const position = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.data_grid.row_position(grid, row_id, position);
+    return returned;
 }
 
 // data_grid.select_all
-inline gf_status invoke_data_grid_select_all(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_status status = tables.data_grid.select_all(grid);
-    return status;
+inline gf_status invoke_data_grid_select_all(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_status returned = tables.data_grid.select_all(grid);
+    return returned;
 }
 
 // data_grid.selected_cells
-inline gf_status invoke_data_grid_selected_cells(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    gf_data_grid_cell* const cells = arguments.output<gf_data_grid_cell>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_data_grid_cell)));
-    uint64_t* const count = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.data_grid.selected_cells(grid, cells, capacity, count);
-    return status;
+inline gf_status invoke_data_grid_selected_cells(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    gf_data_grid_cell* const cells = drawn.output<gf_data_grid_cell>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_data_grid_cell)));
+    uint64_t* const count = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.data_grid.selected_cells(grid, cells, capacity, count);
+    return returned;
 }
 
 // data_grid.selected_rows
-inline gf_status invoke_data_grid_selected_rows(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    uint64_t* const positions = arguments.output<uint64_t>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(uint64_t)));
-    uint64_t* const count = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.data_grid.selected_rows(grid, positions, capacity, count);
-    return status;
+inline gf_status invoke_data_grid_selected_rows(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    uint64_t* const positions = drawn.output<uint64_t>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(uint64_t)));
+    uint64_t* const count = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.data_grid.selected_rows(grid, positions, capacity, count);
+    return returned;
 }
 
 // data_grid.set_cell_selected
-inline gf_status invoke_data_grid_set_cell_selected(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    const uint64_t column = arguments.u64(2U);
-    const uint32_t selected = arguments.u32(3U);
-    const gf_status status = tables.data_grid.set_cell_selected(grid, row_id, column, selected);
-    return status;
+inline gf_status invoke_data_grid_set_cell_selected(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    const uint64_t column = drawn.u64(2U);
+    const uint32_t selected = drawn.u32(3U);
+    const gf_status returned = tables.data_grid.set_cell_selected(grid, row_id, column, selected);
+    return returned;
 }
 
 // data_grid.set_cell_value
-inline gf_status invoke_data_grid_set_cell_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    const uint64_t column = arguments.u64(2U);
-    const gf_value* const value = arguments.input<gf_value>(3U, true);
-    uint32_t* const accepted = arguments.output<uint32_t>(4U, false);
-    const gf_status status = tables.data_grid.set_cell_value(grid, row_id, column, value, accepted);
-    return status;
+inline gf_status invoke_data_grid_set_cell_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    const uint64_t column = drawn.u64(2U);
+    const gf_value* const value = drawn.input<gf_value>(3U, true);
+    uint32_t* const accepted = drawn.output<uint32_t>(4U, false);
+    const gf_status returned = tables.data_grid.set_cell_value(grid, row_id, column, value, accepted);
+    return returned;
 }
 
 // data_grid.set_column_header_text
-inline gf_status invoke_data_grid_set_column_header_text(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const gf_utf8_view text = arguments.text(2U);
-    const gf_status status = tables.data_grid.set_column_header_text(grid, column, text);
-    return status;
+inline gf_status invoke_data_grid_set_column_header_text(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const gf_utf8_view text = drawn.text(2U);
+    const gf_status returned = tables.data_grid.set_column_header_text(grid, column, text);
+    return returned;
 }
 
 // data_grid.set_column_hidden
-inline gf_status invoke_data_grid_set_column_hidden(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const uint32_t hidden = arguments.u32(2U);
-    const gf_status status = tables.data_grid.set_column_hidden(grid, column, hidden);
-    return status;
+inline gf_status invoke_data_grid_set_column_hidden(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const uint32_t hidden = drawn.u32(2U);
+    const gf_status returned = tables.data_grid.set_column_hidden(grid, column, hidden);
+    return returned;
 }
 
 // data_grid.set_column_read_only
-inline gf_status invoke_data_grid_set_column_read_only(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const uint32_t read_only = arguments.u32(2U);
-    const gf_status status = tables.data_grid.set_column_read_only(grid, column, read_only);
-    return status;
+inline gf_status invoke_data_grid_set_column_read_only(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const uint32_t read_only = drawn.u32(2U);
+    const gf_status returned = tables.data_grid.set_column_read_only(grid, column, read_only);
+    return returned;
 }
 
 // data_grid.set_column_width
-inline gf_status invoke_data_grid_set_column_width(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const double width = arguments.real(2U);
-    const gf_status status = tables.data_grid.set_column_width(grid, column, width);
-    return status;
+inline gf_status invoke_data_grid_set_column_width(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const double width = drawn.real(2U);
+    const gf_status returned = tables.data_grid.set_column_width(grid, column, width);
+    return returned;
 }
 
 // data_grid.set_current_cell
-inline gf_status invoke_data_grid_set_current_cell(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    const uint64_t column = arguments.u64(2U);
-    uint32_t* const moved = arguments.output<uint32_t>(3U, false);
-    const gf_status status = tables.data_grid.set_current_cell(grid, row_id, column, moved);
-    return status;
+inline gf_status invoke_data_grid_set_current_cell(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    const uint64_t column = drawn.u64(2U);
+    uint32_t* const moved = drawn.output<uint32_t>(3U, false);
+    const gf_status returned = tables.data_grid.set_current_cell(grid, row_id, column, moved);
+    return returned;
 }
 
 // data_grid.set_row_selected
-inline gf_status invoke_data_grid_set_row_selected(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view row_id = arguments.text(1U);
-    const uint32_t selected = arguments.u32(2U);
-    const gf_status status = tables.data_grid.set_row_selected(grid, row_id, selected);
-    return status;
+inline gf_status invoke_data_grid_set_row_selected(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view row_id = drawn.text(1U);
+    const uint32_t selected = drawn.u32(2U);
+    const gf_status returned = tables.data_grid.set_row_selected(grid, row_id, selected);
+    return returned;
 }
 
 // diagnostics.clear_failure_snapshot
-inline gf_status invoke_diagnostics_clear_failure_snapshot(const AbiTables& tables, Arguments& arguments) {
-    const gf_status status = tables.diagnostics.clear_failure_snapshot();
-    return status;
+inline gf_status invoke_diagnostics_clear_failure_snapshot(const AbiTables& tables, [[maybe_unused]] Arguments& drawn) {
+    const gf_status returned = tables.diagnostics.clear_failure_snapshot();
+    return returned;
 }
 
 // diagnostics.exception_reflection
-inline gf_status invoke_diagnostics_exception_reflection(const AbiTables& tables, Arguments& arguments) {
-    uint32_t* const enabled = arguments.output<uint32_t>(0U, false);
-    const gf_status status = tables.diagnostics.exception_reflection(enabled);
-    return status;
+inline gf_status invoke_diagnostics_exception_reflection(const AbiTables& tables, Arguments& drawn) {
+    uint32_t* const enabled = drawn.output<uint32_t>(0U, false);
+    const gf_status returned = tables.diagnostics.exception_reflection(enabled);
+    return returned;
 }
 
 // diagnostics.failure_detail
-inline gf_status invoke_diagnostics_failure_detail(const AbiTables& tables, Arguments& arguments) {
-    gf_failure_detail* const detail = arguments.output<gf_failure_detail>(0U, true);
-    const gf_status status = tables.diagnostics.failure_detail(detail);
-    return status;
+inline gf_status invoke_diagnostics_failure_detail(const AbiTables& tables, Arguments& drawn) {
+    gf_failure_detail* const detail = drawn.output<gf_failure_detail>(0U, true);
+    const gf_status returned = tables.diagnostics.failure_detail(detail);
+    return returned;
 }
 
 // diagnostics.failure_snapshot
-inline gf_status invoke_diagnostics_failure_snapshot(const AbiTables& tables, Arguments& arguments) {
-    gf_failure_snapshot* const snapshot = arguments.output<gf_failure_snapshot>(0U, true);
-    gf_shadow_frame* const frames = arguments.output<gf_shadow_frame>(1U, false);
-    const uint64_t frame_capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_shadow_frame)));
-    uint64_t* const frames_required = arguments.output<uint64_t>(3U, false);
-    char* const message_buffer = arguments.output<char>(4U, false);
-    const uint64_t message_capacity = static_cast<uint64_t>(arguments.extent(5U, 1U));
-    uint64_t* const message_required = arguments.output<uint64_t>(6U, false);
-    const gf_status status = tables.diagnostics.failure_snapshot(snapshot, frames, frame_capacity, frames_required, message_buffer, message_capacity, message_required);
-    return status;
+inline gf_status invoke_diagnostics_failure_snapshot(const AbiTables& tables, Arguments& drawn) {
+    gf_failure_snapshot* const snapshot = drawn.output<gf_failure_snapshot>(0U, true);
+    gf_shadow_frame* const frames = drawn.output<gf_shadow_frame>(1U, false);
+    const uint64_t frame_capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_shadow_frame)));
+    uint64_t* const frames_required = drawn.output<uint64_t>(3U, false);
+    char* const message_buffer = drawn.output<char>(4U, false);
+    const uint64_t message_capacity = static_cast<uint64_t>(drawn.extent(5U, 1U));
+    uint64_t* const message_required = drawn.output<uint64_t>(6U, false);
+    const gf_status returned = tables.diagnostics.failure_snapshot(snapshot, frames, frame_capacity, frames_required, message_buffer, message_capacity, message_required);
+    return returned;
 }
 
 // diagnostics.invalidation_overlay
-inline gf_status invoke_diagnostics_invalidation_overlay(const AbiTables& tables, Arguments& arguments) {
-    uint32_t* const enabled = arguments.output<uint32_t>(0U, false);
-    const gf_status status = tables.diagnostics.invalidation_overlay(enabled);
-    return status;
+inline gf_status invoke_diagnostics_invalidation_overlay(const AbiTables& tables, Arguments& drawn) {
+    uint32_t* const enabled = drawn.output<uint32_t>(0U, false);
+    const gf_status returned = tables.diagnostics.invalidation_overlay(enabled);
+    return returned;
 }
 
 // diagnostics.set_diagnostic_overlay
-inline gf_status invoke_diagnostics_set_diagnostic_overlay(const AbiTables& tables, Arguments& arguments) {
-    const uint32_t enabled = arguments.u32(0U);
-    const gf_status status = tables.diagnostics.set_diagnostic_overlay(enabled);
-    return status;
+inline gf_status invoke_diagnostics_set_diagnostic_overlay(const AbiTables& tables, Arguments& drawn) {
+    const uint32_t enabled = drawn.u32(0U);
+    const gf_status returned = tables.diagnostics.set_diagnostic_overlay(enabled);
+    return returned;
 }
 
 // diagnostics.set_exception_reflection
-inline gf_status invoke_diagnostics_set_exception_reflection(const AbiTables& tables, Arguments& arguments) {
-    const uint32_t enabled = arguments.u32(0U);
-    const gf_status status = tables.diagnostics.set_exception_reflection(enabled);
-    return status;
+inline gf_status invoke_diagnostics_set_exception_reflection(const AbiTables& tables, Arguments& drawn) {
+    const uint32_t enabled = drawn.u32(0U);
+    const gf_status returned = tables.diagnostics.set_exception_reflection(enabled);
+    return returned;
 }
 
 // diagnostics.set_invalidation_overlay
-inline gf_status invoke_diagnostics_set_invalidation_overlay(const AbiTables& tables, Arguments& arguments) {
-    const uint32_t enabled = arguments.u32(0U);
-    const gf_status status = tables.diagnostics.set_invalidation_overlay(enabled);
-    return status;
+inline gf_status invoke_diagnostics_set_invalidation_overlay(const AbiTables& tables, Arguments& drawn) {
+    const uint32_t enabled = drawn.u32(0U);
+    const gf_status returned = tables.diagnostics.set_invalidation_overlay(enabled);
+    return returned;
 }
 
 // diagnostics.shadow_frames
-inline gf_status invoke_diagnostics_shadow_frames(const AbiTables& tables, Arguments& arguments) {
-    gf_shadow_frame* const frames = arguments.output<gf_shadow_frame>(0U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(1U, sizeof(gf_shadow_frame)));
-    uint64_t* const required = arguments.output<uint64_t>(2U, false);
-    gf_shadow_stack_info* const info = arguments.output<gf_shadow_stack_info>(3U, true);
-    const gf_status status = tables.diagnostics.shadow_frames(frames, capacity, required, info);
-    return status;
+inline gf_status invoke_diagnostics_shadow_frames(const AbiTables& tables, Arguments& drawn) {
+    gf_shadow_frame* const frames = drawn.output<gf_shadow_frame>(0U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(1U, sizeof(gf_shadow_frame)));
+    uint64_t* const required = drawn.output<uint64_t>(2U, false);
+    gf_shadow_stack_info* const info = drawn.output<gf_shadow_stack_info>(3U, true);
+    const gf_status returned = tables.diagnostics.shadow_frames(frames, capacity, required, info);
+    return returned;
 }
 
 // diagnostics.toggle_diagnostic_overlay
-inline gf_status invoke_diagnostics_toggle_diagnostic_overlay(const AbiTables& tables, Arguments& arguments) {
-    uint32_t* const enabled = arguments.output<uint32_t>(0U, false);
-    const gf_status status = tables.diagnostics.toggle_diagnostic_overlay(enabled);
-    return status;
+inline gf_status invoke_diagnostics_toggle_diagnostic_overlay(const AbiTables& tables, Arguments& drawn) {
+    uint32_t* const enabled = drawn.output<uint32_t>(0U, false);
+    const gf_status returned = tables.diagnostics.toggle_diagnostic_overlay(enabled);
+    return returned;
 }
 
 // dispatch.run_pending
-inline gf_status invoke_dispatch_run_pending(const AbiTables& tables, Arguments& arguments) {
-    uint64_t* const invoked = arguments.output<uint64_t>(0U, false);
-    const gf_status status = tables.dispatch.run_pending(invoked);
-    return status;
+inline gf_status invoke_dispatch_run_pending(const AbiTables& tables, Arguments& drawn) {
+    uint64_t* const invoked = drawn.output<uint64_t>(0U, false);
+    const gf_status returned = tables.dispatch.run_pending(invoked);
+    return returned;
 }
 
 // docking.activate_panel
-inline gf_status invoke_docking_activate_panel(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view panel = arguments.text(1U);
-    const gf_status status = tables.docking.activate_panel(workspace, panel);
-    return status;
+inline gf_status invoke_docking_activate_panel(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view panel = drawn.text(1U);
+    const gf_status returned = tables.docking.activate_panel(workspace, panel);
+    return returned;
 }
 
 // docking.apply_edit
-inline gf_status invoke_docking_apply_edit(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_dock_edit* const edit = arguments.input<gf_dock_edit>(1U, true);
-    gf_dock_refusal* const refusal = arguments.output<gf_dock_refusal>(2U, false);
-    const gf_status status = tables.docking.apply_edit(workspace, edit, refusal);
-    return status;
+inline gf_status invoke_docking_apply_edit(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_dock_edit* const edit = drawn.input<gf_dock_edit>(1U, true);
+    gf_dock_refusal* const refusal = drawn.output<gf_dock_refusal>(2U, false);
+    const gf_status returned = tables.docking.apply_edit(workspace, edit, refusal);
+    return returned;
 }
 
 // docking.area_active_document
-inline gf_status invoke_docking_area_active_document(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.docking.area_active_document(workspace, buffer, capacity, required);
-    return status;
+inline gf_status invoke_docking_area_active_document(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.docking.area_active_document(workspace, buffer, capacity, required);
+    return returned;
 }
 
 // docking.area_document_at
-inline gf_status invoke_docking_area_document_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    char* const buffer = arguments.output<char>(2U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(3U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(4U, false);
-    const gf_status status = tables.docking.area_document_at(workspace, index, buffer, capacity, required);
-    return status;
+inline gf_status invoke_docking_area_document_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    char* const buffer = drawn.output<char>(2U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(3U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(4U, false);
+    const gf_status returned = tables.docking.area_document_at(workspace, index, buffer, capacity, required);
+    return returned;
 }
 
 // docking.area_document_count
-inline gf_status invoke_docking_area_document_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.docking.area_document_count(workspace, count);
-    return status;
+inline gf_status invoke_docking_area_document_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.docking.area_document_count(workspace, count);
+    return returned;
 }
 
 // docking.arrange_frames
-inline gf_status invoke_docking_arrange_frames(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_dock_frame_arrangement arrangement = static_cast<gf_dock_frame_arrangement>(arguments.u32(1U));
-    gf_dock_refusal* const refusal = arguments.output<gf_dock_refusal>(2U, false);
-    const gf_status status = tables.docking.arrange_frames(workspace, arrangement, refusal);
-    return status;
+inline gf_status invoke_docking_arrange_frames(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_dock_frame_arrangement arrangement = static_cast<gf_dock_frame_arrangement>(drawn.u32(1U));
+    gf_dock_refusal* const refusal = drawn.output<gf_dock_refusal>(2U, false);
+    const gf_status returned = tables.docking.arrange_frames(workspace, arrangement, refusal);
+    return returned;
 }
 
 // docking.attach_windows
-inline gf_status invoke_docking_attach_windows(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_status status = tables.docking.attach_windows(workspace);
-    return status;
+inline gf_status invoke_docking_attach_windows(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_status returned = tables.docking.attach_windows(workspace);
+    return returned;
 }
 
 // docking.document_area
-inline gf_status invoke_docking_document_area(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    uint32_t* const node = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.docking.document_area(workspace, node);
-    return status;
+inline gf_status invoke_docking_document_area(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    uint32_t* const node = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.docking.document_area(workspace, node);
+    return returned;
 }
 
 // docking.document_presentation
-inline gf_status invoke_docking_document_presentation(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    gf_dock_document_presentation* const presentation = arguments.output<gf_dock_document_presentation>(1U, false);
-    const gf_status status = tables.docking.document_presentation(workspace, presentation);
-    return status;
+inline gf_status invoke_docking_document_presentation(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    gf_dock_document_presentation* const presentation = drawn.output<gf_dock_document_presentation>(1U, false);
+    const gf_status returned = tables.docking.document_presentation(workspace, presentation);
+    return returned;
 }
 
 // docking.floating_site
-inline gf_status invoke_docking_floating_site(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const uint32_t site = arguments.u32(1U);
-    gf_logical_rect* const frame = arguments.output<gf_logical_rect>(2U, false);
-    uint32_t* const first_stack = arguments.output<uint32_t>(3U, false);
-    const gf_status status = tables.docking.floating_site(workspace, site, frame, first_stack);
-    return status;
+inline gf_status invoke_docking_floating_site(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const uint32_t site = drawn.u32(1U);
+    gf_logical_rect* const frame = drawn.output<gf_logical_rect>(2U, false);
+    uint32_t* const first_stack = drawn.output<uint32_t>(3U, false);
+    const gf_status returned = tables.docking.floating_site(workspace, site, frame, first_stack);
+    return returned;
 }
 
 // docking.floating_sites
-inline gf_status invoke_docking_floating_sites(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    uint32_t* const sites = arguments.output<uint32_t>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(uint32_t)));
-    uint64_t* const count = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.docking.floating_sites(workspace, sites, capacity, count);
-    return status;
+inline gf_status invoke_docking_floating_sites(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    uint32_t* const sites = drawn.output<uint32_t>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(uint32_t)));
+    uint64_t* const count = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.docking.floating_sites(workspace, sites, capacity, count);
+    return returned;
 }
 
 // docking.frame_memory
-inline gf_status invoke_docking_frame_memory(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view document = arguments.text(1U);
-    gf_dock_frame_memory* const frame = arguments.output<gf_dock_frame_memory>(2U, true);
-    const gf_status status = tables.docking.frame_memory(workspace, document, frame);
-    return status;
+inline gf_status invoke_docking_frame_memory(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view document = drawn.text(1U);
+    gf_dock_frame_memory* const frame = drawn.output<gf_dock_frame_memory>(2U, true);
+    const gf_status returned = tables.docking.frame_memory(workspace, document, frame);
+    return returned;
 }
 
 // docking.load_layout
-inline gf_status invoke_docking_load_layout(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view xml = arguments.text(1U);
-    uint64_t* const diagnostic_count = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.docking.load_layout(workspace, xml, diagnostic_count);
-    return status;
+inline gf_status invoke_docking_load_layout(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view xml = drawn.text(1U);
+    uint64_t* const diagnostic_count = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.docking.load_layout(workspace, xml, diagnostic_count);
+    return returned;
 }
 
 // docking.locate
-inline gf_status invoke_docking_locate(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view panel = arguments.text(1U);
-    gf_dock_location* const location = arguments.output<gf_dock_location>(2U, true);
-    const gf_status status = tables.docking.locate(workspace, panel, location);
-    return status;
+inline gf_status invoke_docking_locate(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view panel = drawn.text(1U);
+    gf_dock_location* const location = drawn.output<gf_dock_location>(2U, true);
+    const gf_status returned = tables.docking.locate(workspace, panel, location);
+    return returned;
 }
 
 // docking.merged_document
-inline gf_status invoke_docking_merged_document(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.docking.merged_document(workspace, buffer, capacity, required);
-    return status;
+inline gf_status invoke_docking_merged_document(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.docking.merged_document(workspace, buffer, capacity, required);
+    return returned;
 }
 
 // docking.panel_at
-inline gf_status invoke_docking_panel_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const uint32_t stack = arguments.u32(1U);
-    const uint64_t index = arguments.u64(2U);
-    char* const buffer = arguments.output<char>(3U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.docking.panel_at(workspace, stack, index, buffer, capacity, required);
-    return status;
+inline gf_status invoke_docking_panel_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const uint32_t stack = drawn.u32(1U);
+    const uint64_t index = drawn.u64(2U);
+    char* const buffer = drawn.output<char>(3U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.docking.panel_at(workspace, stack, index, buffer, capacity, required);
+    return returned;
 }
 
 // docking.register_panel
-inline gf_status invoke_docking_register_panel(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_dock_panel* const panel = arguments.input<gf_dock_panel>(1U, true);
-    const gf_status status = tables.docking.register_panel(workspace, panel);
-    return status;
+inline gf_status invoke_docking_register_panel(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_dock_panel* const panel = drawn.input<gf_dock_panel>(1U, true);
+    const gf_status returned = tables.docking.register_panel(workspace, panel);
+    return returned;
 }
 
 // docking.save_layout
-inline gf_status invoke_docking_save_layout(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.docking.save_layout(workspace, buffer, capacity, required);
-    return status;
+inline gf_status invoke_docking_save_layout(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.docking.save_layout(workspace, buffer, capacity, required);
+    return returned;
 }
 
 // docking.set_floating_window_visibility
-inline gf_status invoke_docking_set_floating_window_visibility(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const uint32_t site = arguments.u32(1U);
-    const gf_dock_window_visibility visibility = static_cast<gf_dock_window_visibility>(arguments.u32(2U));
-    const gf_status status = tables.docking.set_floating_window_visibility(workspace, site, visibility);
-    return status;
+inline gf_status invoke_docking_set_floating_window_visibility(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const uint32_t site = drawn.u32(1U);
+    const gf_dock_window_visibility visibility = static_cast<gf_dock_window_visibility>(drawn.u32(2U));
+    const gf_status returned = tables.docking.set_floating_window_visibility(workspace, site, visibility);
+    return returned;
 }
 
 // docking.set_frame_icons_at_bottom
-inline gf_status invoke_docking_set_frame_icons_at_bottom(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const uint32_t bottom = arguments.u32(1U);
-    const gf_status status = tables.docking.set_frame_icons_at_bottom(workspace, bottom);
-    return status;
+inline gf_status invoke_docking_set_frame_icons_at_bottom(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const uint32_t bottom = drawn.u32(1U);
+    const gf_status returned = tables.docking.set_frame_icons_at_bottom(workspace, bottom);
+    return returned;
 }
 
 // docking.set_options
-inline gf_status invoke_docking_set_options(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_dock_options* const options = arguments.input<gf_dock_options>(1U, true);
-    const gf_status status = tables.docking.set_options(workspace, options);
-    return status;
+inline gf_status invoke_docking_set_options(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_dock_options* const options = drawn.input<gf_dock_options>(1U, true);
+    const gf_status returned = tables.docking.set_options(workspace, options);
+    return returned;
 }
 
 // docking.set_panel_content
-inline gf_status invoke_docking_set_panel_content(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view panel = arguments.text(1U);
-    const gf_object content = arguments.object(2U);
-    const gf_status status = tables.docking.set_panel_content(workspace, panel, content);
-    return status;
+inline gf_status invoke_docking_set_panel_content(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view panel = drawn.text(1U);
+    const gf_object content = drawn.object(2U);
+    const gf_status returned = tables.docking.set_panel_content(workspace, panel, content);
+    return returned;
 }
 
 // docking.set_panel_menu_strip
-inline gf_status invoke_docking_set_panel_menu_strip(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view panel = arguments.text(1U);
-    const gf_object strip = arguments.object(2U);
-    const gf_status status = tables.docking.set_panel_menu_strip(workspace, panel, strip);
-    return status;
+inline gf_status invoke_docking_set_panel_menu_strip(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view panel = drawn.text(1U);
+    const gf_object strip = drawn.object(2U);
+    const gf_status returned = tables.docking.set_panel_menu_strip(workspace, panel, strip);
+    return returned;
 }
 
 // docking.set_panel_title
-inline gf_status invoke_docking_set_panel_title(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_utf8_view panel = arguments.text(1U);
-    const gf_utf8_view title = arguments.text(2U);
-    const gf_status status = tables.docking.set_panel_title(workspace, panel, title);
-    return status;
+inline gf_status invoke_docking_set_panel_title(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_utf8_view panel = drawn.text(1U);
+    const gf_utf8_view title = drawn.text(2U);
+    const gf_status returned = tables.docking.set_panel_title(workspace, panel, title);
+    return returned;
 }
 
 // docking.update_panel
-inline gf_status invoke_docking_update_panel(const AbiTables& tables, Arguments& arguments) {
-    const gf_object workspace = arguments.subject();
-    const gf_dock_panel* const panel = arguments.input<gf_dock_panel>(1U, true);
-    const gf_status status = tables.docking.update_panel(workspace, panel);
-    return status;
+inline gf_status invoke_docking_update_panel(const AbiTables& tables, Arguments& drawn) {
+    const gf_object workspace = drawn.subject();
+    const gf_dock_panel* const panel = drawn.input<gf_dock_panel>(1U, true);
+    const gf_status returned = tables.docking.update_panel(workspace, panel);
+    return returned;
 }
 
 // events.disconnect
-inline gf_status invoke_events_disconnect(const AbiTables& tables, Arguments& arguments) {
-    const gf_subscription subscription = static_cast<gf_subscription>(arguments.u64(0U));
-    const gf_status status = tables.events.disconnect(subscription);
-    return status;
+inline gf_status invoke_events_disconnect(const AbiTables& tables, Arguments& drawn) {
+    const gf_subscription subscription = static_cast<gf_subscription>(drawn.u64(0U));
+    const gf_status returned = tables.events.disconnect(subscription);
+    return returned;
 }
 
 // events.field_element
-inline gf_status invoke_events_field_element(const AbiTables& tables, Arguments& arguments) {
-    const gf_event* const event = arguments.input<gf_event>(0U, true);
-    const uint64_t field = arguments.u64(1U);
-    const uint64_t index = arguments.u64(2U);
-    gf_value* const element = arguments.output<gf_value>(3U, true);
-    const gf_status status = tables.events.field_element(event, field, index, element);
-    return status;
+inline gf_status invoke_events_field_element(const AbiTables& tables, Arguments& drawn) {
+    const gf_event* const event = drawn.input<gf_event>(0U, true);
+    const uint64_t field = drawn.u64(1U);
+    const uint64_t index = drawn.u64(2U);
+    gf_value* const element = drawn.output<gf_value>(3U, true);
+    const gf_status returned = tables.events.field_element(event, field, index, element);
+    return returned;
 }
 
 // events.write_field
-inline gf_status invoke_events_write_field(const AbiTables& tables, Arguments& arguments) {
-    gf_event* const event = arguments.output<gf_event>(0U, true);
-    const uint64_t field = arguments.u64(1U);
-    const gf_value* const value = arguments.input<gf_value>(2U, true);
-    const gf_status status = tables.events.write_field(event, field, value);
-    return status;
+inline gf_status invoke_events_write_field(const AbiTables& tables, Arguments& drawn) {
+    gf_event* const event = drawn.output<gf_event>(0U, true);
+    const uint64_t field = drawn.u64(1U);
+    const gf_value* const value = drawn.input<gf_value>(2U, true);
+    const gf_status returned = tables.events.write_field(event, field, value);
+    return returned;
 }
 
 // fonts.family_id
-inline gf_status invoke_fonts_family_id(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view name = arguments.text(0U);
-    uint32_t* const family = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.fonts.family_id(name, family);
-    return status;
+inline gf_status invoke_fonts_family_id(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view name = drawn.text(0U);
+    uint32_t* const family = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.fonts.family_id(name, family);
+    return returned;
 }
 
 // fonts.family_name
-inline gf_status invoke_fonts_family_name(const AbiTables& tables, Arguments& arguments) {
-    const uint32_t family = arguments.u32(0U);
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.fonts.family_name(family, buffer, capacity, required);
-    return status;
+inline gf_status invoke_fonts_family_name(const AbiTables& tables, Arguments& drawn) {
+    const uint32_t family = drawn.u32(0U);
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.fonts.family_name(family, buffer, capacity, required);
+    return returned;
 }
 
 // fonts.load_family
-inline gf_status invoke_fonts_load_family(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view name = arguments.text(0U);
-    const gf_app_font_face* const faces = arguments.input<gf_app_font_face>(1U, true);
-    const uint64_t face_count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_app_font_face)));
-    uint32_t* const family = arguments.output<uint32_t>(3U, false);
-    const gf_status status = tables.fonts.load_family(name, faces, face_count, family);
-    return status;
+inline gf_status invoke_fonts_load_family(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view name = drawn.text(0U);
+    const gf_app_font_face* const faces = drawn.input<gf_app_font_face>(1U, true);
+    const uint64_t face_count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_app_font_face)));
+    uint32_t* const family = drawn.output<uint32_t>(3U, false);
+    const gf_status returned = tables.fonts.load_family(name, faces, face_count, family);
+    return returned;
 }
 
 // fonts.unload_family
-inline gf_status invoke_fonts_unload_family(const AbiTables& tables, Arguments& arguments) {
-    const uint32_t family = arguments.u32(0U);
-    uint32_t* const deferred = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.fonts.unload_family(family, deferred);
-    return status;
+inline gf_status invoke_fonts_unload_family(const AbiTables& tables, Arguments& drawn) {
+    const uint32_t family = drawn.u32(0U);
+    uint32_t* const deferred = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.fonts.unload_family(family, deferred);
+    return returned;
 }
 
 // help.attach
-inline gf_status invoke_help_attach(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_object window = arguments.object(1U);
-    const gf_status status = tables.help.attach(system, window);
-    return status;
+inline gf_status invoke_help_attach(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_object window = drawn.object(1U);
+    const gf_status returned = tables.help.attach(system, window);
+    return returned;
 }
 
 // help.cancel_help_mode
-inline gf_status invoke_help_cancel_help_mode(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_status status = tables.help.cancel_help_mode(system);
-    return status;
+inline gf_status invoke_help_cancel_help_mode(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_status returned = tables.help.cancel_help_mode(system);
+    return returned;
 }
 
 // help.clear_user_overrides
-inline gf_status invoke_help_clear_user_overrides(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_status status = tables.help.clear_user_overrides(system);
-    return status;
+inline gf_status invoke_help_clear_user_overrides(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_status returned = tables.help.clear_user_overrides(system);
+    return returned;
 }
 
 // help.detach
-inline gf_status invoke_help_detach(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_object window = arguments.object(1U);
-    const gf_status status = tables.help.detach(system, window);
-    return status;
+inline gf_status invoke_help_detach(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_object window = drawn.object(1U);
+    const gf_status returned = tables.help.detach(system, window);
+    return returned;
 }
 
 // help.enter_help_mode
-inline gf_status invoke_help_enter_help_mode(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_object window = arguments.object(1U);
-    uint32_t* const entered = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.help.enter_help_mode(system, window, entered);
-    return status;
+inline gf_status invoke_help_enter_help_mode(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_object window = drawn.object(1U);
+    uint32_t* const entered = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.help.enter_help_mode(system, window, entered);
+    return returned;
 }
 
 // help.load_built_in
-inline gf_status invoke_help_load_built_in(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_utf8_view locale_xml = arguments.text(1U);
-    const gf_status status = tables.help.load_built_in(system, locale_xml);
-    return status;
+inline gf_status invoke_help_load_built_in(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_utf8_view locale_xml = drawn.text(1U);
+    const gf_status returned = tables.help.load_built_in(system, locale_xml);
+    return returned;
 }
 
 // help.load_translation
-inline gf_status invoke_help_load_translation(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_utf8_view locale_xml = arguments.text(1U);
-    const gf_status status = tables.help.load_translation(system, locale_xml);
-    return status;
+inline gf_status invoke_help_load_translation(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_utf8_view locale_xml = drawn.text(1U);
+    const gf_status returned = tables.help.load_translation(system, locale_xml);
+    return returned;
 }
 
 // help.load_user_overrides
-inline gf_status invoke_help_load_user_overrides(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_utf8_view locale_xml = arguments.text(1U);
-    const gf_status status = tables.help.load_user_overrides(system, locale_xml);
-    return status;
+inline gf_status invoke_help_load_user_overrides(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_utf8_view locale_xml = drawn.text(1U);
+    const gf_status returned = tables.help.load_user_overrides(system, locale_xml);
+    return returned;
 }
 
 // help.read_field
-inline gf_status invoke_help_read_field(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_utf8_view stable_id = arguments.text(1U);
-    const gf_locale_field field = static_cast<gf_locale_field>(arguments.u32(2U));
-    char* const buffer = arguments.output<char>(3U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(5U, false);
-    gf_locale_origin* const origin = arguments.output<gf_locale_origin>(6U, false);
-    const gf_status status = tables.help.read_field(system, stable_id, field, buffer, capacity, required, origin);
-    return status;
+inline gf_status invoke_help_read_field(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_utf8_view stable_id = drawn.text(1U);
+    const gf_locale_field field = static_cast<gf_locale_field>(drawn.u32(2U));
+    char* const buffer = drawn.output<char>(3U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(5U, false);
+    gf_locale_origin* const origin = drawn.output<gf_locale_origin>(6U, false);
+    const gf_status returned = tables.help.read_field(system, stable_id, field, buffer, capacity, required, origin);
+    return returned;
 }
 
 // help.resolve
-inline gf_status invoke_help_resolve(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const gf_object control = arguments.object(1U);
-    char* const buffer = arguments.output<char>(2U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(3U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(4U, false);
-    uint32_t* const home = arguments.output<uint32_t>(5U, false);
-    const gf_status status = tables.help.resolve(system, control, buffer, capacity, required, home);
-    return status;
+inline gf_status invoke_help_resolve(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const gf_object control = drawn.object(1U);
+    char* const buffer = drawn.output<char>(2U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(3U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(4U, false);
+    uint32_t* const home = drawn.output<uint32_t>(5U, false);
+    const gf_status returned = tables.help.resolve(system, control, buffer, capacity, required, home);
+    return returned;
 }
 
 // help.use_built_in_language
-inline gf_status invoke_help_use_built_in_language(const AbiTables& tables, Arguments& arguments) {
-    const gf_object system = arguments.subject();
-    const uint32_t built_in_only = arguments.u32(1U);
-    const gf_status status = tables.help.use_built_in_language(system, built_in_only);
-    return status;
+inline gf_status invoke_help_use_built_in_language(const AbiTables& tables, Arguments& drawn) {
+    const gf_object system = drawn.subject();
+    const uint32_t built_in_only = drawn.u32(1U);
+    const gf_status returned = tables.help.use_built_in_language(system, built_in_only);
+    return returned;
 }
 
 // host.capabilities
-inline gf_status invoke_host_capabilities(const AbiTables& tables, Arguments& arguments) {
-    gf_host_capabilities* const record = arguments.output<gf_host_capabilities>(0U, true);
-    const gf_status status = tables.host.capabilities(record);
-    return status;
+inline gf_status invoke_host_capabilities(const AbiTables& tables, Arguments& drawn) {
+    gf_host_capabilities* const record = drawn.output<gf_host_capabilities>(0U, true);
+    const gf_status returned = tables.host.capabilities(record);
+    return returned;
 }
 
 // host.dialog_path_at
-inline gf_status invoke_host_dialog_path_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t index = arguments.u64(0U);
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.host.dialog_path_at(index, buffer, capacity, required);
-    return status;
+inline gf_status invoke_host_dialog_path_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t index = drawn.u64(0U);
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.host.dialog_path_at(index, buffer, capacity, required);
+    return returned;
 }
 
 // host.platform_name
-inline gf_status invoke_host_platform_name(const AbiTables& tables, Arguments& arguments) {
-    char* const buffer = arguments.output<char>(0U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(1U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.host.platform_name(buffer, capacity, required);
-    return status;
+inline gf_status invoke_host_platform_name(const AbiTables& tables, Arguments& drawn) {
+    char* const buffer = drawn.output<char>(0U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(1U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.host.platform_name(buffer, capacity, required);
+    return returned;
 }
 
 // list_view.clear_selection
-inline gf_status invoke_list_view_clear_selection(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const gf_status status = tables.list_view.clear_selection(view);
-    return status;
+inline gf_status invoke_list_view_clear_selection(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const gf_status returned = tables.list_view.clear_selection(view);
+    return returned;
 }
 
 // list_view.column_at
-inline gf_status invoke_list_view_column_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    gf_list_view_column* const column = arguments.output<gf_list_view_column>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.list_view.column_at(view, index, column, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_list_view_column_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    gf_list_view_column* const column = drawn.output<gf_list_view_column>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.list_view.column_at(view, index, column, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // list_view.column_count
-inline gf_status invoke_list_view_column_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.list_view.column_count(view, count);
-    return status;
+inline gf_status invoke_list_view_column_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.list_view.column_count(view, count);
+    return returned;
 }
 
 // list_view.ensure_visible
-inline gf_status invoke_list_view_ensure_visible(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_status status = tables.list_view.ensure_visible(view, index);
-    return status;
+inline gf_status invoke_list_view_ensure_visible(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_status returned = tables.list_view.ensure_visible(view, index);
+    return returned;
 }
 
 // list_view.focused_item
-inline gf_status invoke_list_view_focused_item(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    int64_t* const index = arguments.output<int64_t>(1U, false);
-    const gf_status status = tables.list_view.focused_item(view, index);
-    return status;
+inline gf_status invoke_list_view_focused_item(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    int64_t* const index = drawn.output<int64_t>(1U, false);
+    const gf_status returned = tables.list_view.focused_item(view, index);
+    return returned;
 }
 
 // list_view.group_at
-inline gf_status invoke_list_view_group_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    gf_list_view_group* const group = arguments.output<gf_list_view_group>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.list_view.group_at(view, index, group, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_list_view_group_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    gf_list_view_group* const group = drawn.output<gf_list_view_group>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.list_view.group_at(view, index, group, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // list_view.group_count
-inline gf_status invoke_list_view_group_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.list_view.group_count(view, count);
-    return status;
+inline gf_status invoke_list_view_group_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.list_view.group_count(view, count);
+    return returned;
 }
 
 // list_view.index_of
-inline gf_status invoke_list_view_index_of(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const gf_utf8_view item_id = arguments.text(1U);
-    uint64_t* const index = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.list_view.index_of(view, item_id, index);
-    return status;
+inline gf_status invoke_list_view_index_of(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const gf_utf8_view item_id = drawn.text(1U);
+    uint64_t* const index = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.list_view.index_of(view, item_id, index);
+    return returned;
 }
 
 // list_view.item_at
-inline gf_status invoke_list_view_item_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    gf_list_view_item* const item = arguments.output<gf_list_view_item>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.list_view.item_at(view, index, item, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_list_view_item_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    gf_list_view_item* const item = drawn.output<gf_list_view_item>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.list_view.item_at(view, index, item, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // list_view.item_count
-inline gf_status invoke_list_view_item_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.list_view.item_count(view, count);
-    return status;
+inline gf_status invoke_list_view_item_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.list_view.item_count(view, count);
+    return returned;
 }
 
 // list_view.item_sub_item
-inline gf_status invoke_list_view_item_sub_item(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const uint64_t sub_item = arguments.u64(2U);
-    char* const buffer = arguments.output<char>(3U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.list_view.item_sub_item(view, index, sub_item, buffer, capacity, required);
-    return status;
+inline gf_status invoke_list_view_item_sub_item(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const uint64_t sub_item = drawn.u64(2U);
+    char* const buffer = drawn.output<char>(3U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.list_view.item_sub_item(view, index, sub_item, buffer, capacity, required);
+    return returned;
 }
 
 // list_view.select_all
-inline gf_status invoke_list_view_select_all(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const gf_status status = tables.list_view.select_all(view);
-    return status;
+inline gf_status invoke_list_view_select_all(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const gf_status returned = tables.list_view.select_all(view);
+    return returned;
 }
 
 // list_view.selected_items
-inline gf_status invoke_list_view_selected_items(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    uint64_t* const indices = arguments.output<uint64_t>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, sizeof(uint64_t)));
-    uint64_t* const count = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.list_view.selected_items(view, indices, capacity, count);
-    return status;
+inline gf_status invoke_list_view_selected_items(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    uint64_t* const indices = drawn.output<uint64_t>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, sizeof(uint64_t)));
+    uint64_t* const count = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.list_view.selected_items(view, indices, capacity, count);
+    return returned;
 }
 
 // list_view.set_column_width
-inline gf_status invoke_list_view_set_column_width(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const double width = arguments.real(2U);
-    const gf_status status = tables.list_view.set_column_width(view, column, width);
-    return status;
+inline gf_status invoke_list_view_set_column_width(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const double width = drawn.real(2U);
+    const gf_status returned = tables.list_view.set_column_width(view, column, width);
+    return returned;
 }
 
 // list_view.set_columns
-inline gf_status invoke_list_view_set_columns(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const gf_list_view_column* const columns = arguments.input<gf_list_view_column>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_list_view_column)));
-    const gf_status status = tables.list_view.set_columns(view, columns, count);
-    return status;
+inline gf_status invoke_list_view_set_columns(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const gf_list_view_column* const columns = drawn.input<gf_list_view_column>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_list_view_column)));
+    const gf_status returned = tables.list_view.set_columns(view, columns, count);
+    return returned;
 }
 
 // list_view.set_focused_item
-inline gf_status invoke_list_view_set_focused_item(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const int64_t index = arguments.i64(1U);
-    const gf_status status = tables.list_view.set_focused_item(view, index);
-    return status;
+inline gf_status invoke_list_view_set_focused_item(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const int64_t index = drawn.i64(1U);
+    const gf_status returned = tables.list_view.set_focused_item(view, index);
+    return returned;
 }
 
 // list_view.set_groups
-inline gf_status invoke_list_view_set_groups(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const gf_list_view_group* const groups = arguments.input<gf_list_view_group>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_list_view_group)));
-    const gf_status status = tables.list_view.set_groups(view, groups, count);
-    return status;
+inline gf_status invoke_list_view_set_groups(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const gf_list_view_group* const groups = drawn.input<gf_list_view_group>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_list_view_group)));
+    const gf_status returned = tables.list_view.set_groups(view, groups, count);
+    return returned;
 }
 
 // list_view.set_item_checked
-inline gf_status invoke_list_view_set_item_checked(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const uint32_t checked = arguments.u32(2U);
-    const gf_status status = tables.list_view.set_item_checked(view, index, checked);
-    return status;
+inline gf_status invoke_list_view_set_item_checked(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const uint32_t checked = drawn.u32(2U);
+    const gf_status returned = tables.list_view.set_item_checked(view, index, checked);
+    return returned;
 }
 
 // list_view.set_items
-inline gf_status invoke_list_view_set_items(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const gf_list_view_item* const items = arguments.input<gf_list_view_item>(1U, true);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_list_view_item)));
-    const gf_status status = tables.list_view.set_items(view, items, count);
-    return status;
+inline gf_status invoke_list_view_set_items(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const gf_list_view_item* const items = drawn.input<gf_list_view_item>(1U, true);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_list_view_item)));
+    const gf_status returned = tables.list_view.set_items(view, items, count);
+    return returned;
 }
 
 // list_view.set_selected
-inline gf_status invoke_list_view_set_selected(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const uint32_t selected = arguments.u32(2U);
-    const gf_status status = tables.list_view.set_selected(view, index, selected);
-    return status;
+inline gf_status invoke_list_view_set_selected(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const uint32_t selected = drawn.u32(2U);
+    const gf_status returned = tables.list_view.set_selected(view, index, selected);
+    return returned;
 }
 
 // list_view.set_sort_indicator
-inline gf_status invoke_list_view_set_sort_indicator(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const int64_t column = arguments.i64(1U);
-    const gf_list_view_sort_order order = static_cast<gf_list_view_sort_order>(arguments.u32(2U));
-    const gf_status status = tables.list_view.set_sort_indicator(view, column, order);
-    return status;
+inline gf_status invoke_list_view_set_sort_indicator(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const int64_t column = drawn.i64(1U);
+    const gf_list_view_sort_order order = static_cast<gf_list_view_sort_order>(drawn.u32(2U));
+    const gf_status returned = tables.list_view.set_sort_indicator(view, column, order);
+    return returned;
 }
 
 // list_view.sort_items
-inline gf_status invoke_list_view_sort_items(const AbiTables& tables, Arguments& arguments) {
-    const gf_object view = arguments.subject();
-    const uint64_t column = arguments.u64(1U);
-    const gf_list_view_sort_order order = static_cast<gf_list_view_sort_order>(arguments.u32(2U));
-    const gf_status status = tables.list_view.sort_items(view, column, order);
-    return status;
+inline gf_status invoke_list_view_sort_items(const AbiTables& tables, Arguments& drawn) {
+    const gf_object view = drawn.subject();
+    const uint64_t column = drawn.u64(1U);
+    const gf_list_view_sort_order order = static_cast<gf_list_view_sort_order>(drawn.u32(2U));
+    const gf_status returned = tables.list_view.sort_items(view, column, order);
+    return returned;
 }
 
 // objects.child_at
-inline gf_status invoke_objects_child_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object parent = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    gf_object* const child = arguments.output<gf_object>(2U, false);
-    const gf_status status = tables.objects.child_at(parent, index, child);
-    arguments.adopt(status, child);
-    return status;
+inline gf_status invoke_objects_child_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object parent = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    gf_object* const child = drawn.output<gf_object>(2U, false);
+    const gf_status returned = tables.objects.child_at(parent, index, child);
+    drawn.adopt(returned, child);
+    return returned;
 }
 
 // objects.child_count
-inline gf_status invoke_objects_child_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object parent = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.objects.child_count(parent, count);
-    return status;
+inline gf_status invoke_objects_child_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object parent = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.objects.child_count(parent, count);
+    return returned;
 }
 
 // objects.create
-inline gf_status invoke_objects_create(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view type_name = arguments.text(0U);
-    const gf_utf8_view stable_id = arguments.text(1U);
-    gf_object* const object = arguments.output<gf_object>(2U, false);
-    const gf_status status = tables.objects.create(type_name, stable_id, object);
-    arguments.adopt(status, object);
-    return status;
+inline gf_status invoke_objects_create(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view type_name = drawn.text(0U);
+    const gf_utf8_view stable_id = drawn.text(1U);
+    gf_object* const object = drawn.output<gf_object>(2U, false);
+    const gf_status returned = tables.objects.create(type_name, stable_id, object);
+    drawn.adopt(returned, object);
+    return returned;
 }
 
 // objects.create_with
-inline gf_status invoke_objects_create_with(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view type_name = arguments.text(0U);
-    const gf_utf8_view stable_id = arguments.text(1U);
-    const gf_create_arguments* const arguments = arguments.input<gf_create_arguments>(2U, true);
-    gf_object* const object = arguments.output<gf_object>(3U, false);
-    const gf_status status = tables.objects.create_with(type_name, stable_id, arguments, object);
-    arguments.adopt(status, object);
-    return status;
+inline gf_status invoke_objects_create_with(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view type_name = drawn.text(0U);
+    const gf_utf8_view stable_id = drawn.text(1U);
+    const gf_create_arguments* const arguments = drawn.input<gf_create_arguments>(2U, true);
+    gf_object* const object = drawn.output<gf_object>(3U, false);
+    const gf_status returned = tables.objects.create_with(type_name, stable_id, arguments, object);
+    drawn.adopt(returned, object);
+    return returned;
 }
 
 // objects.dispose
-inline gf_status invoke_objects_dispose(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.objects.dispose(object);
-    return status;
+inline gf_status invoke_objects_dispose(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.objects.dispose(object);
+    return returned;
 }
 
 // objects.insert_child
-inline gf_status invoke_objects_insert_child(const AbiTables& tables, Arguments& arguments) {
-    const gf_object parent = arguments.subject();
-    const gf_object child = arguments.object(1U);
-    const uint64_t index = arguments.u64(2U);
-    const gf_status status = tables.objects.insert_child(parent, child, index);
-    return status;
+inline gf_status invoke_objects_insert_child(const AbiTables& tables, Arguments& drawn) {
+    const gf_object parent = drawn.subject();
+    const gf_object child = drawn.object(1U);
+    const uint64_t index = drawn.u64(2U);
+    const gf_status returned = tables.objects.insert_child(parent, child, index);
+    return returned;
 }
 
 // objects.parent
-inline gf_status invoke_objects_parent(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    gf_object* const parent = arguments.output<gf_object>(1U, false);
-    const gf_status status = tables.objects.parent(object, parent);
-    arguments.adopt(status, parent);
-    return status;
+inline gf_status invoke_objects_parent(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    gf_object* const parent = drawn.output<gf_object>(1U, false);
+    const gf_status returned = tables.objects.parent(object, parent);
+    drawn.adopt(returned, parent);
+    return returned;
 }
 
 // objects.release
-inline gf_status invoke_objects_release(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.objects.release(object);
-    return status;
+inline gf_status invoke_objects_release(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.objects.release(object);
+    return returned;
 }
 
 // objects.remove_child
-inline gf_status invoke_objects_remove_child(const AbiTables& tables, Arguments& arguments) {
-    const gf_object parent = arguments.subject();
-    const gf_object child = arguments.object(1U);
-    const gf_status status = tables.objects.remove_child(parent, child);
-    return status;
+inline gf_status invoke_objects_remove_child(const AbiTables& tables, Arguments& drawn) {
+    const gf_object parent = drawn.subject();
+    const gf_object child = drawn.object(1U);
+    const gf_status returned = tables.objects.remove_child(parent, child);
+    return returned;
 }
 
 // objects.retain
-inline gf_status invoke_objects_retain(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.objects.retain(object);
-    return status;
+inline gf_status invoke_objects_retain(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.objects.retain(object);
+    return returned;
 }
 
 // objects.stable_id
-inline gf_status invoke_objects_stable_id(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.objects.stable_id(object, buffer, capacity, required);
-    return status;
+inline gf_status invoke_objects_stable_id(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.objects.stable_id(object, buffer, capacity, required);
+    return returned;
 }
 
 // objects.state
-inline gf_status invoke_objects_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    gf_object_state* const state = arguments.output<gf_object_state>(1U, false);
-    const gf_status status = tables.objects.state(object, state);
-    return status;
+inline gf_status invoke_objects_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    gf_object_state* const state = drawn.output<gf_object_state>(1U, false);
+    const gf_status returned = tables.objects.state(object, state);
+    return returned;
 }
 
 // objects.type_id
-inline gf_status invoke_objects_type_id(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.objects.type_id(object, buffer, capacity, required);
-    return status;
+inline gf_status invoke_objects_type_id(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.objects.type_id(object, buffer, capacity, required);
+    return returned;
 }
 
 // overlays.close_anchored
-inline gf_status invoke_overlays_close_anchored(const AbiTables& tables, Arguments& arguments) {
-    const gf_object content = arguments.subject();
-    const gf_status status = tables.overlays.close_anchored(content);
-    return status;
+inline gf_status invoke_overlays_close_anchored(const AbiTables& tables, Arguments& drawn) {
+    const gf_object content = drawn.subject();
+    const gf_status returned = tables.overlays.close_anchored(content);
+    return returned;
 }
 
 // overlays.close_overlay
-inline gf_status invoke_overlays_close_overlay(const AbiTables& tables, Arguments& arguments) {
-    const gf_object overlay = arguments.subject();
-    const gf_status status = tables.overlays.close_overlay(overlay);
-    return status;
+inline gf_status invoke_overlays_close_overlay(const AbiTables& tables, Arguments& drawn) {
+    const gf_object overlay = drawn.subject();
+    const gf_status returned = tables.overlays.close_overlay(overlay);
+    return returned;
 }
 
 // overlays.hide_tool_tip
-inline gf_status invoke_overlays_hide_tool_tip(const AbiTables& tables, Arguments& arguments) {
-    const gf_object tool_tip = arguments.subject();
-    const gf_status status = tables.overlays.hide_tool_tip(tool_tip);
-    return status;
+inline gf_status invoke_overlays_hide_tool_tip(const AbiTables& tables, Arguments& drawn) {
+    const gf_object tool_tip = drawn.subject();
+    const gf_status returned = tables.overlays.hide_tool_tip(tool_tip);
+    return returned;
 }
 
 // overlays.open_overlay
-inline gf_status invoke_overlays_open_overlay(const AbiTables& tables, Arguments& arguments) {
-    const gf_object owner = arguments.subject();
-    const gf_object overlay = arguments.object(1U);
-    const gf_status status = tables.overlays.open_overlay(owner, overlay);
-    return status;
+inline gf_status invoke_overlays_open_overlay(const AbiTables& tables, Arguments& drawn) {
+    const gf_object owner = drawn.subject();
+    const gf_object overlay = drawn.object(1U);
+    const gf_status returned = tables.overlays.open_overlay(owner, overlay);
+    return returned;
 }
 
 // overlays.set_tool_tip
-inline gf_status invoke_overlays_set_tool_tip(const AbiTables& tables, Arguments& arguments) {
-    const gf_object tool_tip = arguments.subject();
-    const gf_object target = arguments.object(1U);
-    const gf_utf8_view text = arguments.text(2U);
-    const gf_status status = tables.overlays.set_tool_tip(tool_tip, target, text);
-    return status;
+inline gf_status invoke_overlays_set_tool_tip(const AbiTables& tables, Arguments& drawn) {
+    const gf_object tool_tip = drawn.subject();
+    const gf_object target = drawn.object(1U);
+    const gf_utf8_view text = drawn.text(2U);
+    const gf_status returned = tables.overlays.set_tool_tip(tool_tip, target, text);
+    return returned;
 }
 
 // overlays.set_tool_tips_shown
-inline gf_status invoke_overlays_set_tool_tips_shown(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.object(0U);
-    const gf_tool_tips_setting setting = static_cast<gf_tool_tips_setting>(arguments.u32(1U));
-    const gf_status status = tables.overlays.set_tool_tips_shown(window, setting);
-    return status;
+inline gf_status invoke_overlays_set_tool_tips_shown(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.object(0U);
+    const gf_tool_tips_setting setting = static_cast<gf_tool_tips_setting>(drawn.u32(1U));
+    const gf_status returned = tables.overlays.set_tool_tips_shown(window, setting);
+    return returned;
 }
 
 // overlays.show_tool_tip
-inline gf_status invoke_overlays_show_tool_tip(const AbiTables& tables, Arguments& arguments) {
-    const gf_object tool_tip = arguments.subject();
-    const gf_object target = arguments.object(1U);
-    const uint64_t duration_ms = arguments.u64(2U);
-    const gf_status status = tables.overlays.show_tool_tip(tool_tip, target, duration_ms);
-    return status;
+inline gf_status invoke_overlays_show_tool_tip(const AbiTables& tables, Arguments& drawn) {
+    const gf_object tool_tip = drawn.subject();
+    const gf_object target = drawn.object(1U);
+    const uint64_t duration_ms = drawn.u64(2U);
+    const gf_status returned = tables.overlays.show_tool_tip(tool_tip, target, duration_ms);
+    return returned;
 }
 
 // overlays.tool_tips_shown
-inline gf_status invoke_overlays_tool_tips_shown(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.object(0U);
-    uint32_t* const shown = arguments.output<uint32_t>(1U, false);
-    gf_tool_tips_setting* const setting = arguments.output<gf_tool_tips_setting>(2U, false);
-    const gf_status status = tables.overlays.tool_tips_shown(window, shown, setting);
-    return status;
+inline gf_status invoke_overlays_tool_tips_shown(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.object(0U);
+    uint32_t* const shown = drawn.output<uint32_t>(1U, false);
+    gf_tool_tips_setting* const setting = drawn.output<gf_tool_tips_setting>(2U, false);
+    const gf_status returned = tables.overlays.tool_tips_shown(window, shown, setting);
+    return returned;
 }
 
 // properties.element_at
-inline gf_status invoke_properties_element_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    const uint64_t index = arguments.u64(2U);
-    gf_value* const value = arguments.output<gf_value>(3U, true);
-    char* const text_buffer = arguments.output<char>(4U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(5U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(6U, false);
-    const gf_status status = tables.properties.element_at(object, name, index, value, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_properties_element_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    const uint64_t index = drawn.u64(2U);
+    gf_value* const value = drawn.output<gf_value>(3U, true);
+    char* const text_buffer = drawn.output<char>(4U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(5U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(6U, false);
+    const gf_status returned = tables.properties.element_at(object, name, index, value, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // properties.get
-inline gf_status invoke_properties_get(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    gf_value* const value = arguments.output<gf_value>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.properties.get(object, name, value, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_properties_get(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    gf_value* const value = drawn.output<gf_value>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.properties.get(object, name, value, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // properties.get_at
-inline gf_status invoke_properties_get_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    gf_value* const value = arguments.output<gf_value>(2U, true);
-    char* const text_buffer = arguments.output<char>(3U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(4U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(5U, false);
-    const gf_status status = tables.properties.get_at(object, index, value, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_properties_get_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    gf_value* const value = drawn.output<gf_value>(2U, true);
+    char* const text_buffer = drawn.output<char>(3U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(4U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(5U, false);
+    const gf_status returned = tables.properties.get_at(object, index, value, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // properties.read_elements
-inline gf_status invoke_properties_read_elements(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    const uint64_t first = arguments.u64(2U);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(3U, sizeof(gf_value)));
-    gf_value* const values = arguments.output<gf_value>(4U, true);
-    char* const text_buffer = arguments.output<char>(5U, false);
-    const uint64_t text_capacity = static_cast<uint64_t>(arguments.extent(6U, 1U));
-    uint64_t* const text_required = arguments.output<uint64_t>(7U, false);
-    const gf_status status = tables.properties.read_elements(object, name, first, count, values, text_buffer, text_capacity, text_required);
-    return status;
+inline gf_status invoke_properties_read_elements(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    const uint64_t first = drawn.u64(2U);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(3U, sizeof(gf_value)));
+    gf_value* const values = drawn.output<gf_value>(4U, true);
+    char* const text_buffer = drawn.output<char>(5U, false);
+    const uint64_t text_capacity = static_cast<uint64_t>(drawn.extent(6U, 1U));
+    uint64_t* const text_required = drawn.output<uint64_t>(7U, false);
+    const gf_status returned = tables.properties.read_elements(object, name, first, count, values, text_buffer, text_capacity, text_required);
+    return returned;
 }
 
 // properties.reset
-inline gf_status invoke_properties_reset(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    const gf_status status = tables.properties.reset(object, name);
-    return status;
+inline gf_status invoke_properties_reset(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    const gf_status returned = tables.properties.reset(object, name);
+    return returned;
 }
 
 // properties.set
-inline gf_status invoke_properties_set(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    const gf_value* const value = arguments.input<gf_value>(2U, true);
-    const gf_status status = tables.properties.set(object, name, value);
-    return status;
+inline gf_status invoke_properties_set(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    const gf_value* const value = drawn.input<gf_value>(2U, true);
+    const gf_status returned = tables.properties.set(object, name, value);
+    return returned;
 }
 
 // properties.set_at
-inline gf_status invoke_properties_set_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    const gf_value* const value = arguments.input<gf_value>(2U, true);
-    const gf_status status = tables.properties.set_at(object, index, value);
-    return status;
+inline gf_status invoke_properties_set_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    const gf_value* const value = drawn.input<gf_value>(2U, true);
+    const gf_status returned = tables.properties.set_at(object, index, value);
+    return returned;
 }
 
 // property_grid.activate_editor
-inline gf_status invoke_property_grid_activate_editor(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    uint32_t* const activated = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.property_grid.activate_editor(grid, name, activated);
-    return status;
+inline gf_status invoke_property_grid_activate_editor(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    uint32_t* const activated = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.property_grid.activate_editor(grid, name, activated);
+    return returned;
 }
 
 // property_grid.refresh
-inline gf_status invoke_property_grid_refresh(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_status status = tables.property_grid.refresh(grid);
-    return status;
+inline gf_status invoke_property_grid_refresh(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_status returned = tables.property_grid.refresh(grid);
+    return returned;
 }
 
 // property_grid.reset_property
-inline gf_status invoke_property_grid_reset_property(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    uint32_t* const reset = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.property_grid.reset_property(grid, name, reset);
-    return status;
+inline gf_status invoke_property_grid_reset_property(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    uint32_t* const reset = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.property_grid.reset_property(grid, name, reset);
+    return returned;
 }
 
 // property_grid.select_objects
-inline gf_status invoke_property_grid_select_objects(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_object* const objects = arguments.objects_input(1U);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(2U, sizeof(gf_object)));
-    const gf_status status = tables.property_grid.select_objects(grid, objects, count);
-    return status;
+inline gf_status invoke_property_grid_select_objects(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_object* const objects = drawn.objects_input(1U);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(2U, sizeof(gf_object)));
+    const gf_status returned = tables.property_grid.select_objects(grid, objects, count);
+    return returned;
 }
 
 // property_grid.try_set_text
-inline gf_status invoke_property_grid_try_set_text(const AbiTables& tables, Arguments& arguments) {
-    const gf_object grid = arguments.subject();
-    const gf_utf8_view name = arguments.text(1U);
-    const gf_utf8_view text = arguments.text(2U);
-    uint32_t* const accepted = arguments.output<uint32_t>(3U, false);
-    const gf_status status = tables.property_grid.try_set_text(grid, name, text, accepted);
-    return status;
+inline gf_status invoke_property_grid_try_set_text(const AbiTables& tables, Arguments& drawn) {
+    const gf_object grid = drawn.subject();
+    const gf_utf8_view name = drawn.text(1U);
+    const gf_utf8_view text = drawn.text(2U);
+    uint32_t* const accepted = drawn.output<uint32_t>(3U, false);
+    const gf_status returned = tables.property_grid.try_set_text(grid, name, text, accepted);
+    return returned;
 }
 
 // rules.remove
-inline gf_status invoke_rules_remove(const AbiTables& tables, Arguments& arguments) {
-    const gf_rule_token token = static_cast<gf_rule_token>(arguments.u64(0U));
-    const gf_status status = tables.rules.remove(token);
-    return status;
+inline gf_status invoke_rules_remove(const AbiTables& tables, Arguments& drawn) {
+    const gf_rule_token token = static_cast<gf_rule_token>(drawn.u64(0U));
+    const gf_status returned = tables.rules.remove(token);
+    return returned;
 }
 
 // rules.state
-inline gf_status invoke_rules_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_rule_token token = static_cast<gf_rule_token>(arguments.u64(0U));
-    gf_rule_state* const state = arguments.output<gf_rule_state>(1U, false);
-    const gf_status status = tables.rules.state(token, state);
-    return status;
+inline gf_status invoke_rules_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_rule_token token = static_cast<gf_rule_token>(drawn.u64(0U));
+    gf_rule_state* const state = drawn.output<gf_rule_state>(1U, false);
+    const gf_status returned = tables.rules.state(token, state);
+    return returned;
 }
 
 // runtime.clear_error
-inline gf_status invoke_runtime_clear_error(const AbiTables& tables, Arguments& arguments) {
-    const gf_status status = tables.runtime.clear_error();
-    return status;
+inline gf_status invoke_runtime_clear_error(const AbiTables& tables, [[maybe_unused]] Arguments& drawn) {
+    const gf_status returned = tables.runtime.clear_error();
+    return returned;
 }
 
 // runtime.error_detail
-inline gf_status invoke_runtime_error_detail(const AbiTables& tables, Arguments& arguments) {
-    gf_error_detail* const detail = arguments.output<gf_error_detail>(0U, true);
-    char* const message_buffer = arguments.output<char>(1U, false);
-    const uint64_t message_capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const message_required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.runtime.error_detail(detail, message_buffer, message_capacity, message_required);
-    return status;
+inline gf_status invoke_runtime_error_detail(const AbiTables& tables, Arguments& drawn) {
+    gf_error_detail* const detail = drawn.output<gf_error_detail>(0U, true);
+    char* const message_buffer = drawn.output<char>(1U, false);
+    const uint64_t message_capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const message_required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.runtime.error_detail(detail, message_buffer, message_capacity, message_required);
+    return returned;
 }
 
 // runtime.splashscreen_close
-inline gf_status invoke_runtime_splashscreen_close(const AbiTables& tables, Arguments& arguments) {
-    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(arguments.u64(0U));
-    const gf_status status = tables.runtime.splashscreen_close(splashscreen);
-    return status;
+inline gf_status invoke_runtime_splashscreen_close(const AbiTables& tables, Arguments& drawn) {
+    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(drawn.u64(0U));
+    const gf_status returned = tables.runtime.splashscreen_close(splashscreen);
+    return returned;
 }
 
 // runtime.splashscreen_set_progress
-inline gf_status invoke_runtime_splashscreen_set_progress(const AbiTables& tables, Arguments& arguments) {
-    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(arguments.u64(0U));
-    const uint32_t show_progress = arguments.u32(1U);
-    const double progress = arguments.real(2U);
-    const gf_status status = tables.runtime.splashscreen_set_progress(splashscreen, show_progress, progress);
-    return status;
+inline gf_status invoke_runtime_splashscreen_set_progress(const AbiTables& tables, Arguments& drawn) {
+    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(drawn.u64(0U));
+    const uint32_t show_progress = drawn.u32(1U);
+    const double progress = drawn.real(2U);
+    const gf_status returned = tables.runtime.splashscreen_set_progress(splashscreen, show_progress, progress);
+    return returned;
 }
 
 // runtime.splashscreen_set_status
-inline gf_status invoke_runtime_splashscreen_set_status(const AbiTables& tables, Arguments& arguments) {
-    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(arguments.u64(0U));
-    const gf_utf8_view status = arguments.text(1U);
-    const gf_status status = tables.runtime.splashscreen_set_status(splashscreen, status);
-    return status;
+inline gf_status invoke_runtime_splashscreen_set_status(const AbiTables& tables, Arguments& drawn) {
+    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(drawn.u64(0U));
+    const gf_utf8_view status = drawn.text(1U);
+    const gf_status returned = tables.runtime.splashscreen_set_status(splashscreen, status);
+    return returned;
 }
 
 // runtime.splashscreen_show
-inline gf_status invoke_runtime_splashscreen_show(const AbiTables& tables, Arguments& arguments) {
-    const gf_splashscreen_options* const options = arguments.input<gf_splashscreen_options>(0U, true);
-    gf_splashscreen* const splashscreen = arguments.output<gf_splashscreen>(1U, false);
-    const gf_status status = tables.runtime.splashscreen_show(options, splashscreen);
-    return status;
+inline gf_status invoke_runtime_splashscreen_show(const AbiTables& tables, Arguments& drawn) {
+    const gf_splashscreen_options* const options = drawn.input<gf_splashscreen_options>(0U, true);
+    gf_splashscreen* const splashscreen = drawn.output<gf_splashscreen>(1U, false);
+    const gf_status returned = tables.runtime.splashscreen_show(options, splashscreen);
+    return returned;
 }
 
 // runtime.splashscreen_state
-inline gf_status invoke_runtime_splashscreen_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(arguments.u64(0U));
-    gf_splashscreen_state* const state = arguments.output<gf_splashscreen_state>(1U, false);
-    const gf_status status = tables.runtime.splashscreen_state(splashscreen, state);
-    return status;
+inline gf_status invoke_runtime_splashscreen_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_splashscreen splashscreen = static_cast<gf_splashscreen>(drawn.u64(0U));
+    gf_splashscreen_state* const state = drawn.output<gf_splashscreen_state>(1U, false);
+    const gf_status returned = tables.runtime.splashscreen_state(splashscreen, state);
+    return returned;
 }
 
 // runtime.version
-inline gf_status invoke_runtime_version(const AbiTables& tables, Arguments& arguments) {
-    gf_abi_version_info* const info = arguments.output<gf_abi_version_info>(0U, true);
-    const gf_status status = tables.runtime.version(info);
-    return status;
+inline gf_status invoke_runtime_version(const AbiTables& tables, Arguments& drawn) {
+    gf_abi_version_info* const info = drawn.output<gf_abi_version_info>(0U, true);
+    const gf_status returned = tables.runtime.version(info);
+    return returned;
 }
 
 // schema.child_choice_at
-inline gf_status invoke_schema_child_choice_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t property = arguments.u64(1U);
-    const uint64_t choice = arguments.u64(2U);
-    gf_schema_choice* const record = arguments.output<gf_schema_choice>(3U, true);
-    const gf_status status = tables.schema.child_choice_at(type, property, choice, record);
-    return status;
+inline gf_status invoke_schema_child_choice_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t property = drawn.u64(1U);
+    const uint64_t choice = drawn.u64(2U);
+    gf_schema_choice* const record = drawn.output<gf_schema_choice>(3U, true);
+    const gf_status returned = tables.schema.child_choice_at(type, property, choice, record);
+    return returned;
 }
 
 // schema.child_property_at
-inline gf_status invoke_schema_child_property_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t property = arguments.u64(1U);
-    gf_schema_property* const record = arguments.output<gf_schema_property>(2U, true);
-    const gf_status status = tables.schema.child_property_at(type, property, record);
-    return status;
+inline gf_status invoke_schema_child_property_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t property = drawn.u64(1U);
+    gf_schema_property* const record = drawn.output<gf_schema_property>(2U, true);
+    const gf_status returned = tables.schema.child_property_at(type, property, record);
+    return returned;
 }
 
 // schema.child_property_count
-inline gf_status invoke_schema_child_property_count(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.schema.child_property_count(type, count);
-    return status;
+inline gf_status invoke_schema_child_property_count(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.schema.child_property_count(type, count);
+    return returned;
 }
 
 // schema.choice_at
-inline gf_status invoke_schema_choice_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t property = arguments.u64(1U);
-    const uint64_t choice = arguments.u64(2U);
-    gf_schema_choice* const record = arguments.output<gf_schema_choice>(3U, true);
-    const gf_status status = tables.schema.choice_at(type, property, choice, record);
-    return status;
+inline gf_status invoke_schema_choice_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t property = drawn.u64(1U);
+    const uint64_t choice = drawn.u64(2U);
+    gf_schema_choice* const record = drawn.output<gf_schema_choice>(3U, true);
+    const gf_status returned = tables.schema.choice_at(type, property, choice, record);
+    return returned;
 }
 
 // schema.composite_at
-inline gf_status invoke_schema_composite_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t index = arguments.u64(0U);
-    gf_schema_composite* const record = arguments.output<gf_schema_composite>(1U, true);
-    const gf_status status = tables.schema.composite_at(index, record);
-    return status;
+inline gf_status invoke_schema_composite_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t index = drawn.u64(0U);
+    gf_schema_composite* const record = drawn.output<gf_schema_composite>(1U, true);
+    const gf_status returned = tables.schema.composite_at(index, record);
+    return returned;
 }
 
 // schema.composite_choice_at
-inline gf_status invoke_schema_composite_choice_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t property = arguments.u64(1U);
-    const uint64_t choice = arguments.u64(2U);
-    gf_schema_choice* const record = arguments.output<gf_schema_choice>(3U, true);
-    const gf_status status = tables.schema.composite_choice_at(composite, property, choice, record);
-    return status;
+inline gf_status invoke_schema_composite_choice_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t property = drawn.u64(1U);
+    const uint64_t choice = drawn.u64(2U);
+    gf_schema_choice* const record = drawn.output<gf_schema_choice>(3U, true);
+    const gf_status returned = tables.schema.composite_choice_at(composite, property, choice, record);
+    return returned;
 }
 
 // schema.composite_command_at
-inline gf_status invoke_schema_composite_command_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t command = arguments.u64(1U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(2U, false);
-    const gf_status status = tables.schema.composite_command_at(composite, command, name);
-    return status;
+inline gf_status invoke_schema_composite_command_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t command = drawn.u64(1U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(2U, false);
+    const gf_status returned = tables.schema.composite_command_at(composite, command, name);
+    return returned;
 }
 
 // schema.composite_count
-inline gf_status invoke_schema_composite_count(const AbiTables& tables, Arguments& arguments) {
-    uint64_t* const count = arguments.output<uint64_t>(0U, false);
-    const gf_status status = tables.schema.composite_count(count);
-    return status;
+inline gf_status invoke_schema_composite_count(const AbiTables& tables, Arguments& drawn) {
+    uint64_t* const count = drawn.output<uint64_t>(0U, false);
+    const gf_status returned = tables.schema.composite_count(count);
+    return returned;
 }
 
 // schema.composite_custom_state_at
-inline gf_status invoke_schema_composite_custom_state_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t state = arguments.u64(1U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(2U, false);
-    const gf_status status = tables.schema.composite_custom_state_at(composite, state, name);
-    return status;
+inline gf_status invoke_schema_composite_custom_state_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t state = drawn.u64(1U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(2U, false);
+    const gf_status returned = tables.schema.composite_custom_state_at(composite, state, name);
+    return returned;
 }
 
 // schema.composite_event_at
-inline gf_status invoke_schema_composite_event_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t event = arguments.u64(1U);
-    gf_schema_interaction* const record = arguments.output<gf_schema_interaction>(2U, true);
-    const gf_status status = tables.schema.composite_event_at(composite, event, record);
-    return status;
+inline gf_status invoke_schema_composite_event_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t event = drawn.u64(1U);
+    gf_schema_interaction* const record = drawn.output<gf_schema_interaction>(2U, true);
+    const gf_status returned = tables.schema.composite_event_at(composite, event, record);
+    return returned;
 }
 
 // schema.composite_part_at
-inline gf_status invoke_schema_composite_part_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t part = arguments.u64(1U);
-    gf_schema_part* const record = arguments.output<gf_schema_part>(2U, true);
-    const gf_status status = tables.schema.composite_part_at(composite, part, record);
-    return status;
+inline gf_status invoke_schema_composite_part_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t part = drawn.u64(1U);
+    gf_schema_part* const record = drawn.output<gf_schema_part>(2U, true);
+    const gf_status returned = tables.schema.composite_part_at(composite, part, record);
+    return returned;
 }
 
 // schema.composite_property_at
-inline gf_status invoke_schema_composite_property_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t property = arguments.u64(1U);
-    gf_schema_property* const record = arguments.output<gf_schema_property>(2U, true);
-    const gf_status status = tables.schema.composite_property_at(composite, property, record);
-    return status;
+inline gf_status invoke_schema_composite_property_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t property = drawn.u64(1U);
+    gf_schema_property* const record = drawn.output<gf_schema_property>(2U, true);
+    const gf_status returned = tables.schema.composite_property_at(composite, property, record);
+    return returned;
 }
 
 // schema.composite_state_at
-inline gf_status invoke_schema_composite_state_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t composite = arguments.u64(0U);
-    const uint64_t part = arguments.u64(1U);
-    const uint64_t state = arguments.u64(2U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(3U, false);
-    const gf_status status = tables.schema.composite_state_at(composite, part, state, name);
-    return status;
+inline gf_status invoke_schema_composite_state_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t composite = drawn.u64(0U);
+    const uint64_t part = drawn.u64(1U);
+    const uint64_t state = drawn.u64(2U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(3U, false);
+    const gf_status returned = tables.schema.composite_state_at(composite, part, state, name);
+    return returned;
 }
 
 // schema.custom_state_at
-inline gf_status invoke_schema_custom_state_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t system = arguments.u64(1U);
-    const uint64_t state = arguments.u64(2U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(3U, false);
-    const gf_status status = tables.schema.custom_state_at(type, system, state, name);
-    return status;
+inline gf_status invoke_schema_custom_state_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t system = drawn.u64(1U);
+    const uint64_t state = drawn.u64(2U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(3U, false);
+    const gf_status returned = tables.schema.custom_state_at(type, system, state, name);
+    return returned;
 }
 
 // schema.effect_at
-inline gf_status invoke_schema_effect_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t effect = arguments.u64(0U);
-    gf_schema_effect* const record = arguments.output<gf_schema_effect>(1U, true);
-    const gf_status status = tables.schema.effect_at(effect, record);
-    return status;
+inline gf_status invoke_schema_effect_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t effect = drawn.u64(0U);
+    gf_schema_effect* const record = drawn.output<gf_schema_effect>(1U, true);
+    const gf_status returned = tables.schema.effect_at(effect, record);
+    return returned;
 }
 
 // schema.effect_count
-inline gf_status invoke_schema_effect_count(const AbiTables& tables, Arguments& arguments) {
-    uint64_t* const count = arguments.output<uint64_t>(0U, false);
-    const gf_status status = tables.schema.effect_count(count);
-    return status;
+inline gf_status invoke_schema_effect_count(const AbiTables& tables, Arguments& drawn) {
+    uint64_t* const count = drawn.output<uint64_t>(0U, false);
+    const gf_status returned = tables.schema.effect_count(count);
+    return returned;
 }
 
 // schema.engine
-inline gf_status invoke_schema_engine(const AbiTables& tables, Arguments& arguments) {
-    gf_schema_engine* const record = arguments.output<gf_schema_engine>(0U, true);
-    const gf_status status = tables.schema.engine(record);
-    return status;
+inline gf_status invoke_schema_engine(const AbiTables& tables, Arguments& drawn) {
+    gf_schema_engine* const record = drawn.output<gf_schema_engine>(0U, true);
+    const gf_status returned = tables.schema.engine(record);
+    return returned;
 }
 
 // schema.find_type
-inline gf_status invoke_schema_find_type(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view name = arguments.text(0U);
-    uint64_t* const type = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.schema.find_type(name, type);
-    return status;
+inline gf_status invoke_schema_find_type(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view name = drawn.text(0U);
+    uint64_t* const type = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.schema.find_type(name, type);
+    return returned;
 }
 
 // schema.interaction_at
-inline gf_status invoke_schema_interaction_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t interaction = arguments.u64(1U);
-    gf_schema_interaction* const record = arguments.output<gf_schema_interaction>(2U, true);
-    const gf_status status = tables.schema.interaction_at(type, interaction, record);
-    return status;
+inline gf_status invoke_schema_interaction_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t interaction = drawn.u64(1U);
+    gf_schema_interaction* const record = drawn.output<gf_schema_interaction>(2U, true);
+    const gf_status returned = tables.schema.interaction_at(type, interaction, record);
+    return returned;
 }
 
 // schema.item_system_at
-inline gf_status invoke_schema_item_system_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t system = arguments.u64(1U);
-    gf_schema_item_system* const record = arguments.output<gf_schema_item_system>(2U, true);
-    const gf_status status = tables.schema.item_system_at(type, system, record);
-    return status;
+inline gf_status invoke_schema_item_system_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t system = drawn.u64(1U);
+    gf_schema_item_system* const record = drawn.output<gf_schema_item_system>(2U, true);
+    const gf_status returned = tables.schema.item_system_at(type, system, record);
+    return returned;
 }
 
 // schema.parameter_at
-inline gf_status invoke_schema_parameter_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t primitive = arguments.u64(0U);
-    const uint64_t parameter = arguments.u64(1U);
-    gf_schema_parameter* const record = arguments.output<gf_schema_parameter>(2U, true);
-    const gf_status status = tables.schema.parameter_at(primitive, parameter, record);
-    return status;
+inline gf_status invoke_schema_parameter_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t primitive = drawn.u64(0U);
+    const uint64_t parameter = drawn.u64(1U);
+    gf_schema_parameter* const record = drawn.output<gf_schema_parameter>(2U, true);
+    const gf_status returned = tables.schema.parameter_at(primitive, parameter, record);
+    return returned;
 }
 
 // schema.parameter_choice_at
-inline gf_status invoke_schema_parameter_choice_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t primitive = arguments.u64(0U);
-    const uint64_t parameter = arguments.u64(1U);
-    const uint64_t choice = arguments.u64(2U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(3U, false);
-    const gf_status status = tables.schema.parameter_choice_at(primitive, parameter, choice, name);
-    return status;
+inline gf_status invoke_schema_parameter_choice_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t primitive = drawn.u64(0U);
+    const uint64_t parameter = drawn.u64(1U);
+    const uint64_t choice = drawn.u64(2U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(3U, false);
+    const gf_status returned = tables.schema.parameter_choice_at(primitive, parameter, choice, name);
+    return returned;
 }
 
 // schema.part_at
-inline gf_status invoke_schema_part_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t system = arguments.u64(1U);
-    const uint64_t part = arguments.u64(2U);
-    gf_schema_part* const record = arguments.output<gf_schema_part>(3U, true);
-    const gf_status status = tables.schema.part_at(type, system, part, record);
-    return status;
+inline gf_status invoke_schema_part_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t system = drawn.u64(1U);
+    const uint64_t part = drawn.u64(2U);
+    gf_schema_part* const record = drawn.output<gf_schema_part>(3U, true);
+    const gf_status returned = tables.schema.part_at(type, system, part, record);
+    return returned;
 }
 
 // schema.primitive_at
-inline gf_status invoke_schema_primitive_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t primitive = arguments.u64(0U);
-    gf_schema_primitive* const record = arguments.output<gf_schema_primitive>(1U, true);
-    const gf_status status = tables.schema.primitive_at(primitive, record);
-    return status;
+inline gf_status invoke_schema_primitive_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t primitive = drawn.u64(0U);
+    gf_schema_primitive* const record = drawn.output<gf_schema_primitive>(1U, true);
+    const gf_status returned = tables.schema.primitive_at(primitive, record);
+    return returned;
 }
 
 // schema.primitive_name_at
-inline gf_status invoke_schema_primitive_name_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t primitive = arguments.u64(0U);
-    const gf_schema_primitive_list list = static_cast<gf_schema_primitive_list>(arguments.u32(1U));
-    const uint64_t index = arguments.u64(2U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(3U, false);
-    const gf_status status = tables.schema.primitive_name_at(primitive, list, index, name);
-    return status;
+inline gf_status invoke_schema_primitive_name_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t primitive = drawn.u64(0U);
+    const gf_schema_primitive_list list = static_cast<gf_schema_primitive_list>(drawn.u32(1U));
+    const uint64_t index = drawn.u64(2U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(3U, false);
+    const gf_status returned = tables.schema.primitive_name_at(primitive, list, index, name);
+    return returned;
 }
 
 // schema.property_at
-inline gf_status invoke_schema_property_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t property = arguments.u64(1U);
-    gf_schema_property* const record = arguments.output<gf_schema_property>(2U, true);
-    const gf_status status = tables.schema.property_at(type, property, record);
-    return status;
+inline gf_status invoke_schema_property_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t property = drawn.u64(1U);
+    gf_schema_property* const record = drawn.output<gf_schema_property>(2U, true);
+    const gf_status returned = tables.schema.property_at(type, property, record);
+    return returned;
 }
 
 // schema.state_at
-inline gf_status invoke_schema_state_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    const uint64_t system = arguments.u64(1U);
-    const uint64_t part = arguments.u64(2U);
-    const uint64_t state = arguments.u64(3U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(4U, false);
-    const gf_status status = tables.schema.state_at(type, system, part, state, name);
-    return status;
+inline gf_status invoke_schema_state_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    const uint64_t system = drawn.u64(1U);
+    const uint64_t part = drawn.u64(2U);
+    const uint64_t state = drawn.u64(3U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(4U, false);
+    const gf_status returned = tables.schema.state_at(type, system, part, state, name);
+    return returned;
 }
 
 // schema.type_at
-inline gf_status invoke_schema_type_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t type = arguments.u64(0U);
-    gf_schema_type* const record = arguments.output<gf_schema_type>(1U, true);
-    const gf_status status = tables.schema.type_at(type, record);
-    return status;
+inline gf_status invoke_schema_type_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t type = drawn.u64(0U);
+    gf_schema_type* const record = drawn.output<gf_schema_type>(1U, true);
+    const gf_status returned = tables.schema.type_at(type, record);
+    return returned;
 }
 
 // schema.type_count
-inline gf_status invoke_schema_type_count(const AbiTables& tables, Arguments& arguments) {
-    uint64_t* const count = arguments.output<uint64_t>(0U, false);
-    const gf_status status = tables.schema.type_count(count);
-    return status;
+inline gf_status invoke_schema_type_count(const AbiTables& tables, Arguments& drawn) {
+    uint64_t* const count = drawn.output<uint64_t>(0U, false);
+    const gf_status returned = tables.schema.type_count(count);
+    return returned;
 }
 
 // schema.vocabulary_at
-inline gf_status invoke_schema_vocabulary_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_schema_vocabulary vocabulary = static_cast<gf_schema_vocabulary>(arguments.u32(0U));
-    const uint64_t index = arguments.u64(1U);
-    gf_utf8_view* const name = arguments.output<gf_utf8_view>(2U, false);
-    const gf_status status = tables.schema.vocabulary_at(vocabulary, index, name);
-    return status;
+inline gf_status invoke_schema_vocabulary_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_schema_vocabulary vocabulary = static_cast<gf_schema_vocabulary>(drawn.u32(0U));
+    const uint64_t index = drawn.u64(1U);
+    gf_utf8_view* const name = drawn.output<gf_utf8_view>(2U, false);
+    const gf_status returned = tables.schema.vocabulary_at(vocabulary, index, name);
+    return returned;
 }
 
 // schema.vocabulary_count
-inline gf_status invoke_schema_vocabulary_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_schema_vocabulary vocabulary = static_cast<gf_schema_vocabulary>(arguments.u32(0U));
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.schema.vocabulary_count(vocabulary, count);
-    return status;
+inline gf_status invoke_schema_vocabulary_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_schema_vocabulary vocabulary = static_cast<gf_schema_vocabulary>(drawn.u32(0U));
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.schema.vocabulary_count(vocabulary, count);
+    return returned;
 }
 
 // subsurfaces.content_epoch
-inline gf_status invoke_subsurfaces_content_epoch(const AbiTables& tables, Arguments& arguments) {
-    const gf_object host = arguments.subject();
-    uint64_t* const epoch = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.subsurfaces.content_epoch(host, epoch);
-    return status;
+inline gf_status invoke_subsurfaces_content_epoch(const AbiTables& tables, Arguments& drawn) {
+    const gf_object host = drawn.subject();
+    uint64_t* const epoch = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.subsurfaces.content_epoch(host, epoch);
+    return returned;
 }
 
 // subsurfaces.failure
-inline gf_status invoke_subsurfaces_failure(const AbiTables& tables, Arguments& arguments) {
-    const gf_object host = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.subsurfaces.failure(host, buffer, capacity, required);
-    return status;
+inline gf_status invoke_subsurfaces_failure(const AbiTables& tables, Arguments& drawn) {
+    const gf_object host = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.subsurfaces.failure(host, buffer, capacity, required);
+    return returned;
 }
 
 // subsurfaces.set_root
-inline gf_status invoke_subsurfaces_set_root(const AbiTables& tables, Arguments& arguments) {
-    const gf_object root = arguments.object(0U);
-    const gf_status status = tables.subsurfaces.set_root(root);
-    return status;
+inline gf_status invoke_subsurfaces_set_root(const AbiTables& tables, Arguments& drawn) {
+    const gf_object root = drawn.object(0U);
+    const gf_status returned = tables.subsurfaces.set_root(root);
+    return returned;
 }
 
 // subsurfaces.state
-inline gf_status invoke_subsurfaces_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object host = arguments.subject();
-    gf_subsurface_state* const state = arguments.output<gf_subsurface_state>(1U, false);
-    const gf_status status = tables.subsurfaces.state(host, state);
-    return status;
+inline gf_status invoke_subsurfaces_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object host = drawn.subject();
+    gf_subsurface_state* const state = drawn.output<gf_subsurface_state>(1U, false);
+    const gf_status returned = tables.subsurfaces.state(host, state);
+    return returned;
 }
 
 // text_editing.clear_decorations
-inline gf_status invoke_text_editing_clear_decorations(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.text_editing.clear_decorations(object);
-    return status;
+inline gf_status invoke_text_editing_clear_decorations(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.text_editing.clear_decorations(object);
+    return returned;
 }
 
 // text_editing.clear_undo_history
-inline gf_status invoke_text_editing_clear_undo_history(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const gf_status status = tables.text_editing.clear_undo_history(object);
-    return status;
+inline gf_status invoke_text_editing_clear_undo_history(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const gf_status returned = tables.text_editing.clear_undo_history(object);
+    return returned;
 }
 
 // text_editing.decoration_at
-inline gf_status invoke_text_editing_decoration_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint32_t layer = arguments.u32(1U);
-    const uint64_t index = arguments.u64(2U);
-    gf_text_decoration* const decoration = arguments.output<gf_text_decoration>(3U, false);
-    const gf_status status = tables.text_editing.decoration_at(object, layer, index, decoration);
-    return status;
+inline gf_status invoke_text_editing_decoration_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint32_t layer = drawn.u32(1U);
+    const uint64_t index = drawn.u64(2U);
+    gf_text_decoration* const decoration = drawn.output<gf_text_decoration>(3U, false);
+    const gf_status returned = tables.text_editing.decoration_at(object, layer, index, decoration);
+    return returned;
 }
 
 // text_editing.decoration_count
-inline gf_status invoke_text_editing_decoration_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint32_t layer = arguments.u32(1U);
-    uint64_t* const count = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.text_editing.decoration_count(object, layer, count);
-    return status;
+inline gf_status invoke_text_editing_decoration_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint32_t layer = drawn.u32(1U);
+    uint64_t* const count = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.text_editing.decoration_count(object, layer, count);
+    return returned;
 }
 
 // text_editing.grapheme_boundary
-inline gf_status invoke_text_editing_grapheme_boundary(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t position = arguments.u64(1U);
-    const int32_t direction = arguments.i32(2U);
-    uint64_t* const boundary = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.text_editing.grapheme_boundary(object, position, direction, boundary);
-    return status;
+inline gf_status invoke_text_editing_grapheme_boundary(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t position = drawn.u64(1U);
+    const int32_t direction = drawn.i32(2U);
+    uint64_t* const boundary = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.text_editing.grapheme_boundary(object, position, direction, boundary);
+    return returned;
 }
 
 // text_editing.redo
-inline gf_status invoke_text_editing_redo(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint32_t* const changed = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.text_editing.redo(object, changed);
-    return status;
+inline gf_status invoke_text_editing_redo(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint32_t* const changed = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.text_editing.redo(object, changed);
+    return returned;
 }
 
 // text_editing.replace_decorations
-inline gf_status invoke_text_editing_replace_decorations(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint32_t layer = arguments.u32(1U);
-    const uint64_t start = arguments.u64(2U);
-    const uint64_t end = arguments.u64(3U);
-    const gf_text_decoration* const decorations = arguments.input<gf_text_decoration>(4U, false);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(5U, sizeof(gf_text_decoration)));
-    const gf_status status = tables.text_editing.replace_decorations(object, layer, start, end, decorations, count);
-    return status;
+inline gf_status invoke_text_editing_replace_decorations(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint32_t layer = drawn.u32(1U);
+    const uint64_t start = drawn.u64(2U);
+    const uint64_t end = drawn.u64(3U);
+    const gf_text_decoration* const decorations = drawn.input<gf_text_decoration>(4U, false);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(5U, sizeof(gf_text_decoration)));
+    const gf_status returned = tables.text_editing.replace_decorations(object, layer, start, end, decorations, count);
+    return returned;
 }
 
 // text_editing.replace_range
-inline gf_status invoke_text_editing_replace_range(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t start = arguments.u64(1U);
-    const uint64_t length = static_cast<uint64_t>(arguments.extent(2U, sizeof(uint32_t)));
-    const gf_utf8_view replacement = arguments.text(3U);
-    uint32_t* const changed = arguments.output<uint32_t>(4U, false);
-    const gf_status status = tables.text_editing.replace_range(object, start, length, replacement, changed);
-    return status;
+inline gf_status invoke_text_editing_replace_range(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t start = drawn.u64(1U);
+    const uint64_t length = static_cast<uint64_t>(drawn.extent(2U, sizeof(uint32_t)));
+    const gf_utf8_view replacement = drawn.text(3U);
+    uint32_t* const changed = drawn.output<uint32_t>(4U, false);
+    const gf_status returned = tables.text_editing.replace_range(object, start, length, replacement, changed);
+    return returned;
 }
 
 // text_editing.select
-inline gf_status invoke_text_editing_select(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t anchor = arguments.u64(1U);
-    const uint64_t caret = arguments.u64(2U);
-    const gf_status status = tables.text_editing.select(object, anchor, caret);
-    return status;
+inline gf_status invoke_text_editing_select(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t anchor = drawn.u64(1U);
+    const uint64_t caret = drawn.u64(2U);
+    const gf_status returned = tables.text_editing.select(object, anchor, caret);
+    return returned;
 }
 
 // text_editing.selection
-inline gf_status invoke_text_editing_selection(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint64_t* const anchor = arguments.output<uint64_t>(1U, false);
-    uint64_t* const caret = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.text_editing.selection(object, anchor, caret);
-    return status;
+inline gf_status invoke_text_editing_selection(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint64_t* const anchor = drawn.output<uint64_t>(1U, false);
+    uint64_t* const caret = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.text_editing.selection(object, anchor, caret);
+    return returned;
 }
 
 // text_editing.set_decorations
-inline gf_status invoke_text_editing_set_decorations(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint32_t layer = arguments.u32(1U);
-    const gf_text_decoration* const decorations = arguments.input<gf_text_decoration>(2U, false);
-    const uint64_t count = static_cast<uint64_t>(arguments.extent(3U, sizeof(gf_text_decoration)));
-    const gf_status status = tables.text_editing.set_decorations(object, layer, decorations, count);
-    return status;
+inline gf_status invoke_text_editing_set_decorations(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint32_t layer = drawn.u32(1U);
+    const gf_text_decoration* const decorations = drawn.input<gf_text_decoration>(2U, false);
+    const uint64_t count = static_cast<uint64_t>(drawn.extent(3U, sizeof(gf_text_decoration)));
+    const gf_status returned = tables.text_editing.set_decorations(object, layer, decorations, count);
+    return returned;
 }
 
 // text_editing.undo
-inline gf_status invoke_text_editing_undo(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    uint32_t* const changed = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.text_editing.undo(object, changed);
-    return status;
+inline gf_status invoke_text_editing_undo(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    uint32_t* const changed = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.text_editing.undo(object, changed);
+    return returned;
 }
 
 // text_editing.utf16_to_utf8_offset
-inline gf_status invoke_text_editing_utf16_to_utf8_offset(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t utf16_offset = arguments.u64(1U);
-    uint64_t* const utf8_offset = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.text_editing.utf16_to_utf8_offset(object, utf16_offset, utf8_offset);
-    return status;
+inline gf_status invoke_text_editing_utf16_to_utf8_offset(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t utf16_offset = drawn.u64(1U);
+    uint64_t* const utf8_offset = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.text_editing.utf16_to_utf8_offset(object, utf16_offset, utf8_offset);
+    return returned;
 }
 
 // text_editing.utf8_to_utf16_offset
-inline gf_status invoke_text_editing_utf8_to_utf16_offset(const AbiTables& tables, Arguments& arguments) {
-    const gf_object object = arguments.subject();
-    const uint64_t utf8_offset = arguments.u64(1U);
-    uint64_t* const utf16_offset = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.text_editing.utf8_to_utf16_offset(object, utf8_offset, utf16_offset);
-    return status;
+inline gf_status invoke_text_editing_utf8_to_utf16_offset(const AbiTables& tables, Arguments& drawn) {
+    const gf_object object = drawn.subject();
+    const uint64_t utf8_offset = drawn.u64(1U);
+    uint64_t* const utf16_offset = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.text_editing.utf8_to_utf16_offset(object, utf8_offset, utf16_offset);
+    return returned;
 }
 
 // themes.diagnostic_at
-inline gf_status invoke_themes_diagnostic_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t index = arguments.u64(0U);
-    gf_theme_diagnostic* const record = arguments.output<gf_theme_diagnostic>(1U, true);
-    const gf_status status = tables.themes.diagnostic_at(index, record);
-    return status;
+inline gf_status invoke_themes_diagnostic_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t index = drawn.u64(0U);
+    gf_theme_diagnostic* const record = drawn.output<gf_theme_diagnostic>(1U, true);
+    const gf_status returned = tables.themes.diagnostic_at(index, record);
+    return returned;
 }
 
 // themes.diagnostic_text
-inline gf_status invoke_themes_diagnostic_text(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t index = arguments.u64(0U);
-    const gf_theme_diagnostic_text text = static_cast<gf_theme_diagnostic_text>(arguments.u32(1U));
-    char* const buffer = arguments.output<char>(2U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(3U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(4U, false);
-    const gf_status status = tables.themes.diagnostic_text(index, text, buffer, capacity, required);
-    return status;
+inline gf_status invoke_themes_diagnostic_text(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t index = drawn.u64(0U);
+    const gf_theme_diagnostic_text text = static_cast<gf_theme_diagnostic_text>(drawn.u32(1U));
+    char* const buffer = drawn.output<char>(2U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(3U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(4U, false);
+    const gf_status returned = tables.themes.diagnostic_text(index, text, buffer, capacity, required);
+    return returned;
 }
 
 // themes.load
-inline gf_status invoke_themes_load(const AbiTables& tables, Arguments& arguments) {
-    const gf_theme_package* const package = arguments.input<gf_theme_package>(0U, true);
-    gf_theme_report* const report = arguments.output<gf_theme_report>(1U, true);
-    const gf_status status = tables.themes.load(package, report);
-    return status;
+inline gf_status invoke_themes_load(const AbiTables& tables, Arguments& drawn) {
+    const gf_theme_package* const package = drawn.input<gf_theme_package>(0U, true);
+    gf_theme_report* const report = drawn.output<gf_theme_report>(1U, true);
+    const gf_status returned = tables.themes.load(package, report);
+    return returned;
 }
 
 // themes.load_image
-inline gf_status invoke_themes_load_image(const AbiTables& tables, Arguments& arguments) {
-    const uint8_t* const bytes = arguments.bytes_input<uint8_t>(0U);
-    const uint64_t size = static_cast<uint64_t>(arguments.extent(1U, 1U));
-    uint64_t* const image = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.themes.load_image(bytes, size, image);
-    return status;
+inline gf_status invoke_themes_load_image(const AbiTables& tables, Arguments& drawn) {
+    const uint8_t* const bytes = drawn.bytes_input<uint8_t>(0U);
+    const uint64_t size = static_cast<uint64_t>(drawn.extent(1U, 1U));
+    uint64_t* const image = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.themes.load_image(bytes, size, image);
+    return returned;
 }
 
 // themes.load_pixels
-inline gf_status invoke_themes_load_pixels(const AbiTables& tables, Arguments& arguments) {
-    const uint8_t* const pixels = arguments.bytes_input<uint8_t>(0U);
-    const uint32_t width = arguments.u32(1U);
-    const uint32_t height = arguments.u32(2U);
-    const uint64_t row_bytes = arguments.u64(3U);
-    uint64_t* const image = arguments.output<uint64_t>(4U, false);
-    const gf_status status = tables.themes.load_pixels(pixels, width, height, row_bytes, image);
-    return status;
+inline gf_status invoke_themes_load_pixels(const AbiTables& tables, Arguments& drawn) {
+    const uint8_t* const pixels = drawn.bytes_input<uint8_t>(0U);
+    const uint32_t width = drawn.u32(1U);
+    const uint32_t height = drawn.u32(2U);
+    const uint64_t row_bytes = drawn.u64(3U);
+    uint64_t* const image = drawn.output<uint64_t>(4U, false);
+    const gf_status returned = tables.themes.load_pixels(pixels, width, height, row_bytes, image);
+    return returned;
 }
 
 // themes.load_sheet
-inline gf_status invoke_themes_load_sheet(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view sheet = arguments.text(0U);
-    const gf_utf8_view name = arguments.text(1U);
-    gf_theme_report* const report = arguments.output<gf_theme_report>(2U, true);
-    const gf_status status = tables.themes.load_sheet(sheet, name, report);
-    return status;
+inline gf_status invoke_themes_load_sheet(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view sheet = drawn.text(0U);
+    const gf_utf8_view name = drawn.text(1U);
+    gf_theme_report* const report = drawn.output<gf_theme_report>(2U, true);
+    const gf_status returned = tables.themes.load_sheet(sheet, name, report);
+    return returned;
 }
 
 // themes.publish_value
-inline gf_status invoke_themes_publish_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view name = arguments.text(0U);
-    const double value = arguments.real(1U);
-    const gf_status status = tables.themes.publish_value(name, value);
-    return status;
+inline gf_status invoke_themes_publish_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view name = drawn.text(0U);
+    const double value = drawn.real(1U);
+    const gf_status returned = tables.themes.publish_value(name, value);
+    return returned;
 }
 
 // themes.published_value
-inline gf_status invoke_themes_published_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view name = arguments.text(0U);
-    double* const value = arguments.output<double>(1U, false);
-    uint32_t* const present = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.themes.published_value(name, value, present);
-    return status;
+inline gf_status invoke_themes_published_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view name = drawn.text(0U);
+    double* const value = drawn.output<double>(1U, false);
+    uint32_t* const present = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.themes.published_value(name, value, present);
+    return returned;
 }
 
 // themes.remove_image
-inline gf_status invoke_themes_remove_image(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t image = arguments.u64(0U);
-    const gf_status status = tables.themes.remove_image(image);
-    return status;
+inline gf_status invoke_themes_remove_image(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t image = drawn.u64(0U);
+    const gf_status returned = tables.themes.remove_image(image);
+    return returned;
 }
 
 // themes.reset
-inline gf_status invoke_themes_reset(const AbiTables& tables, Arguments& arguments) {
-    const gf_status status = tables.themes.reset();
-    return status;
+inline gf_status invoke_themes_reset(const AbiTables& tables, [[maybe_unused]] Arguments& drawn) {
+    const gf_status returned = tables.themes.reset();
+    return returned;
 }
 
 // themes.set_user_theme_policy
-inline gf_status invoke_themes_set_user_theme_policy(const AbiTables& tables, Arguments& arguments) {
-    const gf_user_theme_policy policy = static_cast<gf_user_theme_policy>(arguments.u32(0U));
-    const gf_status status = tables.themes.set_user_theme_policy(policy);
-    return status;
+inline gf_status invoke_themes_set_user_theme_policy(const AbiTables& tables, Arguments& drawn) {
+    const gf_user_theme_policy policy = static_cast<gf_user_theme_policy>(drawn.u32(0U));
+    const gf_status returned = tables.themes.set_user_theme_policy(policy);
+    return returned;
 }
 
 // themes.theme_id
-inline gf_status invoke_themes_theme_id(const AbiTables& tables, Arguments& arguments) {
-    char* const buffer = arguments.output<char>(0U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(1U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(2U, false);
-    const gf_status status = tables.themes.theme_id(buffer, capacity, required);
-    return status;
+inline gf_status invoke_themes_theme_id(const AbiTables& tables, Arguments& drawn) {
+    char* const buffer = drawn.output<char>(0U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(1U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(2U, false);
+    const gf_status returned = tables.themes.theme_id(buffer, capacity, required);
+    return returned;
 }
 
 // themes.theme_request
-inline gf_status invoke_themes_theme_request(const AbiTables& tables, Arguments& arguments) {
-    gf_theme_request_outcome* const outcome = arguments.output<gf_theme_request_outcome>(0U, false);
-    const gf_status status = tables.themes.theme_request(outcome);
-    return status;
+inline gf_status invoke_themes_theme_request(const AbiTables& tables, Arguments& drawn) {
+    gf_theme_request_outcome* const outcome = drawn.output<gf_theme_request_outcome>(0U, false);
+    const gf_status returned = tables.themes.theme_request(outcome);
+    return returned;
 }
 
 // themes.withdraw_value
-inline gf_status invoke_themes_withdraw_value(const AbiTables& tables, Arguments& arguments) {
-    const gf_utf8_view name = arguments.text(0U);
-    const gf_status status = tables.themes.withdraw_value(name);
-    return status;
+inline gf_status invoke_themes_withdraw_value(const AbiTables& tables, Arguments& drawn) {
+    const gf_utf8_view name = drawn.text(0U);
+    const gf_status returned = tables.themes.withdraw_value(name);
+    return returned;
 }
 
 // windows.activate_mdi_child
-inline gf_status invoke_windows_activate_mdi_child(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const gf_utf8_view child = arguments.text(1U);
-    uint32_t* const activated = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.windows.activate_mdi_child(window_or_root, child, activated);
-    return status;
+inline gf_status invoke_windows_activate_mdi_child(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const gf_utf8_view child = drawn.text(1U);
+    uint32_t* const activated = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.windows.activate_mdi_child(window_or_root, child, activated);
+    return returned;
 }
 
 // windows.active_mdi_child
-inline gf_status invoke_windows_active_mdi_child(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.windows.active_mdi_child(window_or_root, buffer, capacity, required);
-    return status;
+inline gf_status invoke_windows_active_mdi_child(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.windows.active_mdi_child(window_or_root, buffer, capacity, required);
+    return returned;
 }
 
 // windows.band_report
-inline gf_status invoke_windows_band_report(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    gf_window_band_report* const report = arguments.output<gf_window_band_report>(1U, true);
-    const gf_status status = tables.windows.band_report(window, report);
-    return status;
+inline gf_status invoke_windows_band_report(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    gf_window_band_report* const report = drawn.output<gf_window_band_report>(1U, true);
+    const gf_status returned = tables.windows.band_report(window, report);
+    return returned;
 }
 
 // windows.content_rect
-inline gf_status invoke_windows_content_rect(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    gf_logical_rect* const rect = arguments.output<gf_logical_rect>(1U, false);
-    const gf_status status = tables.windows.content_rect(window, rect);
-    return status;
+inline gf_status invoke_windows_content_rect(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    gf_logical_rect* const rect = drawn.output<gf_logical_rect>(1U, false);
+    const gf_status returned = tables.windows.content_rect(window, rect);
+    return returned;
 }
 
 // windows.create
-inline gf_status invoke_windows_create(const AbiTables& tables, Arguments& arguments) {
-    const gf_object root = arguments.object(0U);
-    gf_object* const window = arguments.output<gf_object>(1U, false);
-    const gf_status status = tables.windows.create(root, window);
-    arguments.adopt(status, window);
-    return status;
+inline gf_status invoke_windows_create(const AbiTables& tables, Arguments& drawn) {
+    const gf_object root = drawn.object(0U);
+    gf_object* const window = drawn.output<gf_object>(1U, false);
+    const gf_status returned = tables.windows.create(root, window);
+    drawn.adopt(returned, window);
+    return returned;
 }
 
 // windows.declare_band
-inline gf_status invoke_windows_declare_band(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    const gf_window_band_options* const options = arguments.input<gf_window_band_options>(1U, true);
-    const gf_status status = tables.windows.declare_band(window, options);
-    return status;
+inline gf_status invoke_windows_declare_band(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    const gf_window_band_options* const options = drawn.input<gf_window_band_options>(1U, true);
+    const gf_status returned = tables.windows.declare_band(window, options);
+    return returned;
 }
 
 // windows.focused_control
-inline gf_status invoke_windows_focused_control(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    gf_object* const control = arguments.output<gf_object>(1U, false);
-    const gf_status status = tables.windows.focused_control(window_or_root, control);
-    arguments.adopt(status, control);
-    return status;
+inline gf_status invoke_windows_focused_control(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    gf_object* const control = drawn.output<gf_object>(1U, false);
+    const gf_status returned = tables.windows.focused_control(window_or_root, control);
+    drawn.adopt(returned, control);
+    return returned;
 }
 
 // windows.interaction_at
-inline gf_status invoke_windows_interaction_at(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t interaction = arguments.u64(0U);
-    gf_schema_interaction* const record = arguments.output<gf_schema_interaction>(1U, true);
-    const gf_status status = tables.windows.interaction_at(interaction, record);
-    return status;
+inline gf_status invoke_windows_interaction_at(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t interaction = drawn.u64(0U);
+    gf_schema_interaction* const record = drawn.output<gf_schema_interaction>(1U, true);
+    const gf_status returned = tables.windows.interaction_at(interaction, record);
+    return returned;
 }
 
 // windows.interaction_count
-inline gf_status invoke_windows_interaction_count(const AbiTables& tables, Arguments& arguments) {
-    uint64_t* const count = arguments.output<uint64_t>(0U, false);
-    const gf_status status = tables.windows.interaction_count(count);
-    return status;
+inline gf_status invoke_windows_interaction_count(const AbiTables& tables, Arguments& drawn) {
+    uint64_t* const count = drawn.output<uint64_t>(0U, false);
+    const gf_status returned = tables.windows.interaction_count(count);
+    return returned;
 }
 
 // windows.key_state
-inline gf_status invoke_windows_key_state(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    const uint32_t physical_key = arguments.u32(1U);
-    uint32_t* const down = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.windows.key_state(window, physical_key, down);
-    return status;
+inline gf_status invoke_windows_key_state(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    const uint32_t physical_key = drawn.u32(1U);
+    uint32_t* const down = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.windows.key_state(window, physical_key, down);
+    return returned;
 }
 
 // windows.layout_mdi
-inline gf_status invoke_windows_layout_mdi(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const gf_mdi_layout layout = static_cast<gf_mdi_layout>(arguments.u32(1U));
-    uint32_t* const arranged = arguments.output<uint32_t>(2U, false);
-    const gf_status status = tables.windows.layout_mdi(window_or_root, layout, arranged);
-    return status;
+inline gf_status invoke_windows_layout_mdi(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const gf_mdi_layout layout = static_cast<gf_mdi_layout>(drawn.u32(1U));
+    uint32_t* const arranged = drawn.output<uint32_t>(2U, false);
+    const gf_status returned = tables.windows.layout_mdi(window_or_root, layout, arranged);
+    return returned;
 }
 
 // windows.lifecycle
-inline gf_status invoke_windows_lifecycle(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    gf_window_lifecycle* const lifecycle = arguments.output<gf_window_lifecycle>(1U, false);
-    const gf_status status = tables.windows.lifecycle(window, lifecycle);
-    return status;
+inline gf_status invoke_windows_lifecycle(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    gf_window_lifecycle* const lifecycle = drawn.output<gf_window_lifecycle>(1U, false);
+    const gf_status returned = tables.windows.lifecycle(window, lifecycle);
+    return returned;
 }
 
 // windows.main_menu_strip
-inline gf_status invoke_windows_main_menu_strip(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    gf_object* const strip = arguments.output<gf_object>(1U, false);
-    const gf_status status = tables.windows.main_menu_strip(window_or_root, strip);
-    arguments.adopt(status, strip);
-    return status;
+inline gf_status invoke_windows_main_menu_strip(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    gf_object* const strip = drawn.output<gf_object>(1U, false);
+    const gf_status returned = tables.windows.main_menu_strip(window_or_root, strip);
+    drawn.adopt(returned, strip);
+    return returned;
 }
 
 // windows.mdi_child_at
-inline gf_status invoke_windows_mdi_child_at(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const uint64_t index = arguments.u64(1U);
-    char* const buffer = arguments.output<char>(2U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(3U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(4U, false);
-    const gf_status status = tables.windows.mdi_child_at(window_or_root, index, buffer, capacity, required);
-    return status;
+inline gf_status invoke_windows_mdi_child_at(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const uint64_t index = drawn.u64(1U);
+    char* const buffer = drawn.output<char>(2U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(3U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(4U, false);
+    const gf_status returned = tables.windows.mdi_child_at(window_or_root, index, buffer, capacity, required);
+    return returned;
 }
 
 // windows.mdi_child_count
-inline gf_status invoke_windows_mdi_child_count(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    uint64_t* const count = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.windows.mdi_child_count(window_or_root, count);
-    return status;
+inline gf_status invoke_windows_mdi_child_count(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    uint64_t* const count = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.windows.mdi_child_count(window_or_root, count);
+    return returned;
 }
 
 // windows.mdi_children_minimized_anchor_bottom
-inline gf_status invoke_windows_mdi_children_minimized_anchor_bottom(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    uint32_t* const bottom = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.windows.mdi_children_minimized_anchor_bottom(window_or_root, bottom);
-    return status;
+inline gf_status invoke_windows_mdi_children_minimized_anchor_bottom(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    uint32_t* const bottom = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.windows.mdi_children_minimized_anchor_bottom(window_or_root, bottom);
+    return returned;
 }
 
 // windows.mdi_container
-inline gf_status invoke_windows_mdi_container(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    uint32_t* const container = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.windows.mdi_container(window_or_root, container);
-    return status;
+inline gf_status invoke_windows_mdi_container(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    uint32_t* const container = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.windows.mdi_container(window_or_root, container);
+    return returned;
 }
 
 // windows.pointer_location
-inline gf_status invoke_windows_pointer_location(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_control = arguments.subject();
-    gf_logical_point* const location = arguments.output<gf_logical_point>(1U, false);
-    gf_logical_point* const window_position = arguments.output<gf_logical_point>(2U, false);
-    uint32_t* const inside = arguments.output<uint32_t>(3U, false);
-    const gf_status status = tables.windows.pointer_location(window_or_control, location, window_position, inside);
-    return status;
+inline gf_status invoke_windows_pointer_location(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_control = drawn.subject();
+    gf_logical_point* const location = drawn.output<gf_logical_point>(1U, false);
+    gf_logical_point* const window_position = drawn.output<gf_logical_point>(2U, false);
+    uint32_t* const inside = drawn.output<uint32_t>(3U, false);
+    const gf_status returned = tables.windows.pointer_location(window_or_control, location, window_position, inside);
+    return returned;
 }
 
 // windows.request_close
-inline gf_status invoke_windows_request_close(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const gf_status status = tables.windows.request_close(window_or_root);
-    return status;
+inline gf_status invoke_windows_request_close(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const gf_status returned = tables.windows.request_close(window_or_root);
+    return returned;
 }
 
 // windows.request_help
-inline gf_status invoke_windows_request_help(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    uint32_t* const handled = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.windows.request_help(window, handled);
-    return status;
+inline gf_status invoke_windows_request_help(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    uint32_t* const handled = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.windows.request_help(window, handled);
+    return returned;
 }
 
 // windows.set_band_appearance
-inline gf_status invoke_windows_set_band_appearance(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    const gf_window_band_appearance* const appearance = arguments.input<gf_window_band_appearance>(1U, true);
-    const gf_status status = tables.windows.set_band_appearance(window, appearance);
-    return status;
+inline gf_status invoke_windows_set_band_appearance(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    const gf_window_band_appearance* const appearance = drawn.input<gf_window_band_appearance>(1U, true);
+    const gf_status returned = tables.windows.set_band_appearance(window, appearance);
+    return returned;
 }
 
 // windows.set_corner_preference
-inline gf_status invoke_windows_set_corner_preference(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    const gf_window_corner_preference preference = static_cast<gf_window_corner_preference>(arguments.u32(1U));
-    const gf_status status = tables.windows.set_corner_preference(window, preference);
-    return status;
+inline gf_status invoke_windows_set_corner_preference(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    const gf_window_corner_preference preference = static_cast<gf_window_corner_preference>(drawn.u32(1U));
+    const gf_status returned = tables.windows.set_corner_preference(window, preference);
+    return returned;
 }
 
 // windows.set_main_menu_strip
-inline gf_status invoke_windows_set_main_menu_strip(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const gf_object strip = arguments.object(1U);
-    const gf_status status = tables.windows.set_main_menu_strip(window_or_root, strip);
-    return status;
+inline gf_status invoke_windows_set_main_menu_strip(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const gf_object strip = drawn.object(1U);
+    const gf_status returned = tables.windows.set_main_menu_strip(window_or_root, strip);
+    return returned;
 }
 
 // windows.set_mdi_children_minimized_anchor_bottom
-inline gf_status invoke_windows_set_mdi_children_minimized_anchor_bottom(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const uint32_t bottom = arguments.u32(1U);
-    const gf_status status = tables.windows.set_mdi_children_minimized_anchor_bottom(window_or_root, bottom);
-    return status;
+inline gf_status invoke_windows_set_mdi_children_minimized_anchor_bottom(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const uint32_t bottom = drawn.u32(1U);
+    const gf_status returned = tables.windows.set_mdi_children_minimized_anchor_bottom(window_or_root, bottom);
+    return returned;
 }
 
 // windows.set_mdi_container
-inline gf_status invoke_windows_set_mdi_container(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    const uint32_t container = arguments.u32(1U);
-    const gf_status status = tables.windows.set_mdi_container(window_or_root, container);
-    return status;
+inline gf_status invoke_windows_set_mdi_container(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    const uint32_t container = drawn.u32(1U);
+    const gf_status returned = tables.windows.set_mdi_container(window_or_root, container);
+    return returned;
 }
 
 // windows.shaping
-inline gf_status invoke_windows_shaping(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    gf_window_shaping* const report = arguments.output<gf_window_shaping>(1U, true);
-    const gf_status status = tables.windows.shaping(window, report);
-    return status;
+inline gf_status invoke_windows_shaping(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    gf_window_shaping* const report = drawn.output<gf_window_shaping>(1U, true);
+    const gf_status returned = tables.windows.shaping(window, report);
+    return returned;
 }
 
 // windows.show_business_card
-inline gf_status invoke_windows_show_business_card(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window_or_root = arguments.subject();
-    uint32_t* const shown = arguments.output<uint32_t>(1U, false);
-    const gf_status status = tables.windows.show_business_card(window_or_root, shown);
-    return status;
+inline gf_status invoke_windows_show_business_card(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window_or_root = drawn.subject();
+    uint32_t* const shown = drawn.output<uint32_t>(1U, false);
+    const gf_status returned = tables.windows.show_business_card(window_or_root, shown);
+    return returned;
 }
 
 // windows.undeclare_band
-inline gf_status invoke_windows_undeclare_band(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    const gf_status status = tables.windows.undeclare_band(window);
-    return status;
+inline gf_status invoke_windows_undeclare_band(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    const gf_status returned = tables.windows.undeclare_band(window);
+    return returned;
 }
 
 // windows.window_properties
-inline gf_status invoke_windows_window_properties(const AbiTables& tables, Arguments& arguments) {
-    const gf_object window = arguments.subject();
-    gf_window_property_flags* const supported = arguments.output<gf_window_property_flags>(1U, false);
-    gf_window_property_flags* const applied = arguments.output<gf_window_property_flags>(2U, false);
-    const gf_status status = tables.windows.window_properties(window, supported, applied);
-    return status;
+inline gf_status invoke_windows_window_properties(const AbiTables& tables, Arguments& drawn) {
+    const gf_object window = drawn.subject();
+    gf_window_property_flags* const supported = drawn.output<gf_window_property_flags>(1U, false);
+    gf_window_property_flags* const applied = drawn.output<gf_window_property_flags>(2U, false);
+    const gf_status returned = tables.windows.window_properties(window, supported, applied);
+    return returned;
 }
 
 // windows_paint_endpoint.acquire
-inline gf_status invoke_windows_paint_endpoint_acquire(const AbiTables& tables, Arguments& arguments) {
-    const gf_object control = arguments.object(0U);
-    const uint32_t width = arguments.u32(1U);
-    const uint32_t height = arguments.u32(2U);
-    gf_paint_endpoint* const endpoint = arguments.output<gf_paint_endpoint>(3U, false);
-    uint64_t* const compatibility_handle = arguments.output<uint64_t>(4U, false);
-    const gf_status status = tables.windows_paint_endpoint.acquire(control, width, height, endpoint, compatibility_handle);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_acquire(const AbiTables& tables, Arguments& drawn) {
+    const gf_object control = drawn.object(0U);
+    const uint32_t width = drawn.u32(1U);
+    const uint32_t height = drawn.u32(2U);
+    gf_paint_endpoint* const endpoint = drawn.output<gf_paint_endpoint>(3U, false);
+    uint64_t* const compatibility_handle = drawn.output<uint64_t>(4U, false);
+    const gf_status returned = tables.windows_paint_endpoint.acquire(control, width, height, endpoint, compatibility_handle);
+    return returned;
 }
 
 // windows_paint_endpoint.begin_write
-inline gf_status invoke_windows_paint_endpoint_begin_write(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t device_context = arguments.u64(0U);
-    gf_paint_write_lease* const lease = arguments.output<gf_paint_write_lease>(1U, false);
-    const gf_status status = tables.windows_paint_endpoint.begin_write(device_context, lease);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_begin_write(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t device_context = drawn.u64(0U);
+    gf_paint_write_lease* const lease = drawn.output<gf_paint_write_lease>(1U, false);
+    const gf_status returned = tables.windows_paint_endpoint.begin_write(device_context, lease);
+    return returned;
 }
 
 // windows_paint_endpoint.configure
-inline gf_status invoke_windows_paint_endpoint_configure(const AbiTables& tables, Arguments& arguments) {
-    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(arguments.u64(0U));
-    const uint32_t width = arguments.u32(1U);
-    const uint32_t height = arguments.u32(2U);
-    const gf_status status = tables.windows_paint_endpoint.configure(endpoint, width, height);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_configure(const AbiTables& tables, Arguments& drawn) {
+    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(drawn.u64(0U));
+    const uint32_t width = drawn.u32(1U);
+    const uint32_t height = drawn.u32(2U);
+    const gf_status returned = tables.windows_paint_endpoint.configure(endpoint, width, height);
+    return returned;
 }
 
 // windows_paint_endpoint.drain
-inline gf_status invoke_windows_paint_endpoint_drain(const AbiTables& tables, Arguments& arguments) {
-    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(arguments.u64(0U));
-    const gf_status status = tables.windows_paint_endpoint.drain(endpoint);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_drain(const AbiTables& tables, Arguments& drawn) {
+    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(drawn.u64(0U));
+    const gf_status returned = tables.windows_paint_endpoint.drain(endpoint);
+    return returned;
 }
 
 // windows_paint_endpoint.end_write
-inline gf_status invoke_windows_paint_endpoint_end_write(const AbiTables& tables, Arguments& arguments) {
-    const gf_paint_write_lease lease = static_cast<gf_paint_write_lease>(arguments.u64(0U));
-    const uint32_t publish = arguments.u32(1U);
-    const gf_status status = tables.windows_paint_endpoint.end_write(lease, publish);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_end_write(const AbiTables& tables, Arguments& drawn) {
+    const gf_paint_write_lease lease = static_cast<gf_paint_write_lease>(drawn.u64(0U));
+    const uint32_t publish = drawn.u32(1U);
+    const gf_status returned = tables.windows_paint_endpoint.end_write(lease, publish);
+    return returned;
 }
 
 // windows_paint_endpoint.get_dc
-inline gf_status invoke_windows_paint_endpoint_get_dc(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t compatibility_handle = arguments.u64(0U);
-    uint64_t* const device_context = arguments.output<uint64_t>(1U, false);
-    const gf_status status = tables.windows_paint_endpoint.get_dc(compatibility_handle, device_context);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_get_dc(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t compatibility_handle = drawn.u64(0U);
+    uint64_t* const device_context = drawn.output<uint64_t>(1U, false);
+    const gf_status returned = tables.windows_paint_endpoint.get_dc(compatibility_handle, device_context);
+    return returned;
 }
 
 // windows_paint_endpoint.publish_dc
-inline gf_status invoke_windows_paint_endpoint_publish_dc(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t device_context = arguments.u64(0U);
-    const gf_status status = tables.windows_paint_endpoint.publish_dc(device_context);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_publish_dc(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t device_context = drawn.u64(0U);
+    const gf_status returned = tables.windows_paint_endpoint.publish_dc(device_context);
+    return returned;
 }
 
 // windows_paint_endpoint.release
-inline gf_status invoke_windows_paint_endpoint_release(const AbiTables& tables, Arguments& arguments) {
-    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(arguments.u64(0U));
-    const gf_status status = tables.windows_paint_endpoint.release(endpoint);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_release(const AbiTables& tables, Arguments& drawn) {
+    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(drawn.u64(0U));
+    const gf_status returned = tables.windows_paint_endpoint.release(endpoint);
+    return returned;
 }
 
 // windows_paint_endpoint.release_dc
-inline gf_status invoke_windows_paint_endpoint_release_dc(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t compatibility_handle = arguments.u64(0U);
-    const uint64_t device_context = arguments.u64(1U);
-    const gf_status status = tables.windows_paint_endpoint.release_dc(compatibility_handle, device_context);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_release_dc(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t compatibility_handle = drawn.u64(0U);
+    const uint64_t device_context = drawn.u64(1U);
+    const gf_status returned = tables.windows_paint_endpoint.release_dc(compatibility_handle, device_context);
+    return returned;
 }
 
 // windows_paint_endpoint.snapshot
-inline gf_status invoke_windows_paint_endpoint_snapshot(const AbiTables& tables, Arguments& arguments) {
-    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(arguments.u64(0U));
-    char* const buffer = arguments.output<char>(1U, false);
-    const uint64_t capacity = static_cast<uint64_t>(arguments.extent(2U, 1U));
-    uint64_t* const required = arguments.output<uint64_t>(3U, false);
-    const gf_status status = tables.windows_paint_endpoint.snapshot(endpoint, buffer, capacity, required);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_snapshot(const AbiTables& tables, Arguments& drawn) {
+    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(drawn.u64(0U));
+    char* const buffer = drawn.output<char>(1U, false);
+    const uint64_t capacity = static_cast<uint64_t>(drawn.extent(2U, 1U));
+    uint64_t* const required = drawn.output<uint64_t>(3U, false);
+    const gf_status returned = tables.windows_paint_endpoint.snapshot(endpoint, buffer, capacity, required);
+    return returned;
 }
 
 // windows_paint_endpoint.submit_bgra
-inline gf_status invoke_windows_paint_endpoint_submit_bgra(const AbiTables& tables, Arguments& arguments) {
-    const uint64_t compatibility_handle = arguments.u64(0U);
-    const uint32_t width = arguments.u32(1U);
-    const uint32_t height = arguments.u32(2U);
-    const uint64_t row_bytes = arguments.u64(3U);
-    const uint8_t* const pixels = arguments.bytes_input<uint8_t>(4U);
-    const gf_status status = tables.windows_paint_endpoint.submit_bgra(compatibility_handle, width, height, row_bytes, pixels);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_submit_bgra(const AbiTables& tables, Arguments& drawn) {
+    const uint64_t compatibility_handle = drawn.u64(0U);
+    const uint32_t width = drawn.u32(1U);
+    const uint32_t height = drawn.u32(2U);
+    const uint64_t row_bytes = drawn.u64(3U);
+    const uint8_t* const pixels = drawn.bytes_input<uint8_t>(4U);
+    const gf_status returned = tables.windows_paint_endpoint.submit_bgra(compatibility_handle, width, height, row_bytes, pixels);
+    return returned;
 }
 
 // windows_paint_endpoint.touch
-inline gf_status invoke_windows_paint_endpoint_touch(const AbiTables& tables, Arguments& arguments) {
-    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(arguments.u64(0U));
-    const uint32_t explicit_boundary = arguments.u32(1U);
-    const gf_status status = tables.windows_paint_endpoint.touch(endpoint, explicit_boundary);
-    return status;
+inline gf_status invoke_windows_paint_endpoint_touch(const AbiTables& tables, Arguments& drawn) {
+    const gf_paint_endpoint endpoint = static_cast<gf_paint_endpoint>(drawn.u64(0U));
+    const uint32_t explicit_boundary = drawn.u32(1U);
+    const gf_status returned = tables.windows_paint_endpoint.touch(endpoint, explicit_boundary);
+    return returned;
 }
 
 // Slots no block calls, and why:

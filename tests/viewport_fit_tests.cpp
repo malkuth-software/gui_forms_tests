@@ -315,9 +315,9 @@ void test_properties() {
     require(refuses(WriteDesignSize{panel.get(), Size{-1.0, -1.0}}), "a negative design size is refused");
     (*panel).design_size = Size{640.0, 480.0};
     require((*panel).design_size.read() == Size{640.0, 480.0}, "a design size is stored");
-    require(!(*panel).content_scrolls(), "a panel without auto scroll does not scroll its content");
+    require(!static_cast<const Control&>(*panel).content_scrolls(), "a panel without auto scroll does not scroll its content");
     (*panel).auto_scroll = true;
-    require((*panel).content_scrolls(), "auto scroll scrolls the content");
+    require(static_cast<const Control&>(*panel).content_scrolls(), "auto scroll scrolls the content");
 }
 
 // -- the window's records ------------------------------------------------------------------
@@ -493,7 +493,8 @@ void test_scaled_panel_aspect() {
     window.perform_layout();
     require(near_rect((*square).arranged_bounds(), Rect{0.0, 0.0, 200.0, 200.0}),
             "the alignment comes from viewport_fit: " + describe((*square).arranged_bounds()));
-    require((*face).applied_viewport_scale().present() && near(*(*face).applied_viewport_scale().value(), 2.0),
+    const auto applied = (*face).applied_viewport_scale();
+    require(applied.present() && near(*applied.value(), 2.0),
             "the scale is reported");
     require(window.unanswered_overflow_count() == 0U, "a scaled panel's content is never an unanswered overflow");
 }
@@ -668,7 +669,7 @@ void test_overlay_outlines_and_inspection() {
     (*root).add_child(cut);
     (*root).add_child(flow);
     Window window(root, {400.0, 300.0});
-    window.set_invalidation_overlay(std::optional<bool>{true});
+    window.set_invalidation_overlay(stxlib::Optional<bool>::of(true));
     TransformPainter painter;
     paint_whole(window, painter);
     InvalidationOverlay* const overlay = window.invalidation_overlay();

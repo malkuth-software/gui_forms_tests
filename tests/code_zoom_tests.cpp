@@ -37,6 +37,7 @@
 namespace {
 
 using namespace gui_forms;
+using gui_forms::code_zoom::CodeSheet;
 using stxlib::syntax::TokenKind;
 
 void require(bool condition, const std::string& message) {

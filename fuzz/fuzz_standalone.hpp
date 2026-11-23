@@ -16,7 +16,7 @@
 // One header for the fuzz sources, each a single translation unit, so its
 // functions are inline.
 
-#include "../src/platform/library_files.hpp"
+#include "src/platform/library_files.hpp"
 
 #include <algorithm>
 #include <array>
