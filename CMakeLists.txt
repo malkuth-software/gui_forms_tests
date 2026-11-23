@@ -128,8 +128,34 @@ include(cmake/sections/fuzzers.cmake)
 # macos_damage_rectangles failed that way, and pass one at a time). They take
 # the desktop_foreground lock the desktop launchers take; X11 tests each have
 # their own Xvfb display.
+#
+# On Windows a test finds the cache's DLLs (gui_forms_abi1.dll and any other
+# shared library the cache imports) through PATH, since nothing stages them
+# beside the test programs: CTest prepends each one's directory, the cache's
+# bin directory (Shadow, 2026-11-23, question 3).
+set(_gf_tests_dll_directories "")
+if(WIN32)
+    get_property(_gf_tests_imported DIRECTORY PROPERTY IMPORTED_TARGETS)
+    foreach(_gf_tests_target IN LISTS _gf_tests_imported)
+        get_target_property(_gf_tests_type ${_gf_tests_target} TYPE)
+        if(_gf_tests_type STREQUAL "SHARED_LIBRARY")
+            foreach(_gf_tests_property IN ITEMS IMPORTED_LOCATION IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION_NOCONFIG)
+                get_target_property(_gf_tests_location ${_gf_tests_target} ${_gf_tests_property})
+                if(_gf_tests_location)
+                    get_filename_component(_gf_tests_directory "${_gf_tests_location}" DIRECTORY)
+                    list(APPEND _gf_tests_dll_directories "${_gf_tests_directory}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES _gf_tests_dll_directories)
+endif()
 get_property(_gf_tests_all DIRECTORY PROPERTY TESTS)
 foreach(_gf_tests_one IN LISTS _gf_tests_all)
+    foreach(_gf_tests_directory IN LISTS _gf_tests_dll_directories)
+        set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT_MODIFICATION
+            "PATH=path_list_prepend:${_gf_tests_directory}")
+    endforeach()
     set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT
         "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "GUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}")
     if(APPLE)
