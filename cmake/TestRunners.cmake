@@ -45,7 +45,10 @@ set(_gui_forms_test_runner_keep_separate
     gui_forms_bundled_font_set_tests
     gui_forms_build_profile_tests
     gui_forms_borrowed_view_tests
-    gui_forms_abi_runtime_c11_tests)
+    gui_forms_abi_runtime_c11_tests
+    # It includes windows_host.cpp textually, so its external names would be
+    # defined twice in a shared runner.
+    gui_forms_windows_drop_target_tests)
 
 # Whether `program` may join a runner (see the conditions above); the
 # reason it may not otherwise, for the summary.

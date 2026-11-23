@@ -3,6 +3,8 @@
 #include "gui_forms/live_surface.hpp"
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/controls/scrollable_control.hpp"
+#include "gui_forms/event/subscription_token/subscription_token.hpp"
+#include "gui_forms/timer/timer/timer.hpp"
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -1058,10 +1060,140 @@ void present_kernels(Display *display) {
   }
 }
 
+// The XDND source's pure parts (linux_drag_drop.cpp): file URIs that the
+// destination side (local_files) reads back unchanged, and the effect a
+// drag asks for under each modifier. A real drag needs a held button the
+// pointer grab follows, so the drop itself is a hand check (the integration
+// queue entry for host-drag-and-drop).
+void xdnd_source_helpers() {
+  require(xdnd_file_uri("/tmp/a b/\xCE\xA9%.txt") == "file:///tmp/a%20b/%CE%A9%25.txt",
+          "a file URI percent-encodes every byte outside the unreserved set and '/'");
+  DragFileListData files;
+  files.paths_utf8 = {"/captures/a.iq", "/tmp/a b/\xCE\xA9%.txt"};
+  const std::vector<std::byte> list = xdnd_uri_list(files);
+  const std::string text(reinterpret_cast<const char *>(list.data()), list.size());
+  require(text == "file:///captures/a.iq\r\nfile:///tmp/a%20b/%CE%A9%25.txt\r\n",
+          "text/uri-list holds one URI a line, each ended by CR LF");
+  const DragFileListData read = local_files(list);
+  require(read.paths_utf8 == files.paths_utf8, "the destination reads the source's paths back unchanged");
+  const DragEffect all = DragEffect::copy | DragEffect::move | DragEffect::link;
+  require(xdnd_requested_effect(0U, all) == DragEffect::copy, "no modifier asks for a copy");
+  require(xdnd_requested_effect(ShiftMask, all) == DragEffect::move, "Shift asks for a move");
+  require(xdnd_requested_effect(ControlMask, all) == DragEffect::copy, "Control asks for a copy");
+  require(xdnd_requested_effect(ShiftMask | ControlMask, all) == DragEffect::link,
+          "Shift and Control ask for a link");
+  require(xdnd_requested_effect(ShiftMask, DragEffect::copy) == DragEffect::copy,
+          "an effect not allowed falls back to the first allowed");
+  require(xdnd_requested_effect(0U, DragEffect::move | DragEffect::link) == DragEffect::move,
+          "without copy the first allowed is a move");
+}
+
+// Counts a timer's ticks.
+struct CountTicks final {
+  // The test's counter (observing).
+  int &ticks;
+  void operator()() const { ++ticks; }
+};
+
+// Timers run under a drag (audit: a Linux drag froze animations, the FAULT
+// lamp, caret blink and drag-hover auto-scroll): the drag loop's turn,
+// xdnd_drag_turn, fires a window's due timer without the run loop, its wait
+// is the timer's deadline, and the wait for XdndFinished bounds it.
+void timer_fires_during_drag(Runtime &runtime) {
+  const std::shared_ptr<Control> root = make_control<Control>(StableId("drag.timer.root"));
+  host::LinuxApplicationWindow entry;
+  entry.stable_id = "drag.timer";
+  entry.options.title = "GUI.Forms drag timer check";
+  entry.options.initial_size = {80, 60};
+  entry.model = std::make_unique<gui_forms::Window>(root, entry.options.initial_size);
+  const std::shared_ptr<NativeWindow> window = runtime.add(std::move(entry));
+  (*window).ready();
+  for (int tick = 0; tick < 8; ++tick)
+    runtime.step(10);
+  int ticks = 0;
+  Timer timer(*(*window).entry.model, std::chrono::milliseconds(200));
+  const SubscriptionToken subscription = timer.tick().subscribe(CountTicks{ticks});
+  timer.start_at(std::chrono::steady_clock::now() + std::chrono::milliseconds(40));
+  const int first_wait = xdnd_drag_turn(runtime, -1);
+  require(first_wait >= 0 && first_wait <= 41, "a drag turn waits for the timer's deadline");
+  require(xdnd_drag_turn(runtime, 5) <= 5, "the wait for XdndFinished bounds a drag turn's wait");
+  const std::chrono::steady_clock::time_point give_up =
+      std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  while (ticks == 0 && std::chrono::steady_clock::now() < give_up) {
+    const int wait = xdnd_drag_turn(runtime, 100);
+    if (ticks == 0 && wait > 0)
+      runtime.wait_for_work(wait);
+  }
+  require(ticks == 1, "a timer fires during a drag");
+  timer.stop();
+  (*window).close(HostCloseReason::application, true);
+  runtime.step(0);
+}
+
+// Closes its window from the timer's tick: the hostile handler.
+struct CloseOnTick final {
+  // The window under test (observing).
+  NativeWindow &window;
+  // The test's counter (observing).
+  int &ticks;
+  void operator()() const {
+    ++ticks;
+    window.close(HostCloseReason::application, true);
+  }
+};
+
+// Hostile handlers under a drag (house style section 5): a timer that
+// fires during a drag from the program closes the drag's source window.
+// The drag must end cancelled, give up XdndSelection, and keep the window
+// (whose services ran the drag) alive until the run loop's turn ends; the
+// sanitizer tree reports any use of freed state. The drag runs from a
+// simulated held button (run_xdnd_drag_from), since no button is down here.
+void drag_survives_source_close(Runtime &runtime) {
+  const std::shared_ptr<Control> root = make_control<Control>(StableId("drag.close.root"));
+  host::LinuxApplicationWindow entry;
+  entry.stable_id = "drag.close";
+  entry.options.title = "GUI.Forms drag source close check";
+  entry.options.initial_size = {80, 60};
+  entry.model = std::make_unique<gui_forms::Window>(root, entry.options.initial_size);
+  std::shared_ptr<NativeWindow> window = runtime.add(std::move(entry));
+  (*window).ready();
+  for (int tick = 0; tick < 8; ++tick)
+    runtime.step(10);
+  require((*window).visible, "the drag source window is shown");
+  const ::Window xid = (*window).xid;
+  int ticks = 0;
+  {
+    Timer timer(*(*window).entry.model, std::chrono::milliseconds(200));
+    const SubscriptionToken subscription = timer.tick().subscribe(CloseOnTick{*window, ticks});
+    timer.start_at(std::chrono::steady_clock::now() + std::chrono::milliseconds(30));
+    const HostDragSourceRequest request{{DragTextData{"dragged"}}, DragEffect::copy};
+    const XdndDragOutcome outcome =
+        run_xdnd_drag_from(*window, request, XdndDragStart{Button1Mask, 10, 10, Button1Mask});
+    require(outcome.status.accepted(), "a simulated drag starts");
+    require(ticks == 1 && (*window).closed, "the timer fired during the drag and closed its window");
+    require(outcome.performed_effect == DragEffect::none, "a drag whose source closed ends cancelled");
+    require(XGetSelectionOwner(runtime.display, runtime.atom("XdndSelection")) != xid &&
+                runtime.drag_offer_owner == 0,
+            "a cancelled drag gives up XdndSelection and its offer");
+  }
+  const std::weak_ptr<NativeWindow> watched = window;
+  window.reset();
+  require(!watched.expired() && runtime.drag_held_windows.size() == 1U,
+          "the drag holds its source window to the end of the run loop's turn");
+  runtime.reclaim();
+  require(runtime.drag_held_windows.empty(), "the turn's end releases the drag's hold");
+  runtime.step(0);
+}
+
 int main() {
   try {
     require(host::linux_capabilities().supports(HostCapability::accessibility),
             "the Linux host advertises accessibility");
+    // XDND both ways.
+    require(host::linux_capabilities().supports(HostCapability::typed_drag_destination) &&
+                host::linux_capabilities().supports(HostCapability::typed_drag_source),
+            "the Linux host reports drops and drags to other programs");
+    xdnd_source_helpers();
     Runtime runtime;
     present_kernels(runtime.display);
     const std::shared_ptr<Root> root =
@@ -1242,6 +1374,8 @@ int main() {
     scroll_copy_gate(runtime);
     client_size_request(runtime);
     first_frame_show_gate(runtime);
+    timer_fires_during_drag(runtime);
+    drag_survives_source_close(runtime);
     (*window).close(HostCloseReason::application, true);
     std::cout << "X11 services: cross-process text and PNG INCR, preserved "
                  "input, local file drops, open/save dialogs, live frame sequence, client size request, first-frame show passed\n";

@@ -100,6 +100,19 @@ if(WIN32)
         ${GUI_FORMS_WINDOWS_DEFINITIONS})
     target_link_libraries(gui_forms_windows_notify_icon_tests PRIVATE gui_forms_core user32 gdi32 shell32)
     add_test(NAME gui_forms_windows_notify_icon_tests COMMAND gui_forms_windows_notify_icon_tests)
+    # OLE drag and drop with other programs: conversions, the drag data read
+    # back as a destination reads it, and the drop-target registration.
+    # Not built in a high-integrity configuration, which compiles none of it.
+    if(NOT GUI_FORMS_HIGH_INTEGRITY)
+        add_executable(gui_forms_windows_drag_drop_tests
+            tests/windows_drag_drop_tests.cpp
+            ${GUI_FORMS_SOURCE_DIR}/src/surface/windows/services/windows_drag_drop.cpp)
+        target_include_directories(gui_forms_windows_drag_drop_tests PRIVATE ${GUI_FORMS_SOURCE_DIR}/src/surface/windows)
+        target_compile_definitions(gui_forms_windows_drag_drop_tests PRIVATE
+            ${GUI_FORMS_WINDOWS_DEFINITIONS})
+        target_link_libraries(gui_forms_windows_drag_drop_tests PRIVATE gui_forms_core user32 ole32 shell32 uuid)
+        add_test(NAME gui_forms_windows_drag_drop_tests COMMAND gui_forms_windows_drag_drop_tests)
+    endif()
             add_executable(gui_forms_windows_cursor_tests tests/windows_cursor_tests.cpp)
     target_link_libraries(gui_forms_windows_cursor_tests PRIVATE gui_forms_core user32 gdi32)
     add_test(NAME gui_forms_windows_cursors COMMAND gui_forms_windows_cursor_tests)
@@ -596,6 +609,19 @@ if(GUI_FORMS_ENABLE_WINDOWS_HOST)
         gui_forms_controls gui_forms_host_windows)
     add_test(NAME gui_forms_windows_live_idle_tests
              COMMAND gui_forms_windows_live_idle_tests)
+    # Drops from other programs through the window's registered IDropTarget,
+    # onto the Gallery's retained-rows collection (in process; it includes
+    # windows_host.cpp, so it keeps its own program).
+    if(TARGET gui_forms_gallery_model)
+        add_executable(gui_forms_windows_drop_target_tests tests/windows_drop_target_tests.cpp)
+        target_compile_definitions(gui_forms_windows_drop_target_tests PRIVATE
+            ${GUI_FORMS_WINDOWS_DEFINITIONS}
+            GUI_FORMS_WINDOWS_DROP_TEST=1)
+        target_link_libraries(gui_forms_windows_drop_target_tests PRIVATE
+            gui_forms_gallery_model gui_forms_controls gui_forms_host_windows)
+        add_test(NAME gui_forms_windows_drop_target_tests
+                 COMMAND gui_forms_windows_drop_target_tests)
+    endif()
     add_executable(gui_forms_windows_schedule_wake_tests tests/windows_schedule_wake_tests.cpp)
     target_compile_definitions(gui_forms_windows_schedule_wake_tests PRIVATE
         ${GUI_FORMS_WINDOWS_DEFINITIONS}
@@ -3131,6 +3157,15 @@ if(TARGET gui_forms_host_macos)
 target_compile_options(gui_forms_macos_clipboard_image_tests PRIVATE -fobjc-arc)
 target_link_libraries(gui_forms_macos_clipboard_image_tests PRIVATE gui_forms_host_macos)
 add_test(NAME gui_forms_macos_clipboard_image_tests COMMAND gui_forms_macos_clipboard_image_tests)
+
+# The release a drag to other programs gives back to its window when the
+# dragging session ends. Not built in a high-integrity configuration.
+if(NOT GUI_FORMS_HIGH_INTEGRITY)
+    add_executable(gui_forms_macos_drag_release_tests tests/macos_drag_release_tests.mm)
+    target_compile_options(gui_forms_macos_drag_release_tests PRIVATE -fobjc-arc)
+    target_link_libraries(gui_forms_macos_drag_release_tests PRIVATE gui_forms_host_macos)
+    add_test(NAME gui_forms_macos_drag_release_tests COMMAND gui_forms_macos_drag_release_tests)
+endif()
 
 # The application menu names the running program, not the Gallery.
 add_executable(gui_forms_macos_application_menu_tests tests/macos_application_menu_tests.mm)
