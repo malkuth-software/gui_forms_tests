@@ -591,8 +591,8 @@ inline gf_status invoke_content_sink_publish(const AbiTables& tables, Arguments&
 inline gf_status invoke_content_sink_publish_semantics(const AbiTables& tables, Arguments& arguments) {
     const gf_content_sink sink = static_cast<gf_content_sink>(arguments.u64(0U));
     const gf_content_semantics* const semantics = arguments.input<gf_content_semantics>(1U, true);
-    gf_content_semantics_result* const result = arguments.output<gf_content_semantics_result>(2U, false);
-    const gf_status status = tables.content.sink_publish_semantics(sink, semantics, result);
+    gf_content_semantics_result* const outcome = arguments.output<gf_content_semantics_result>(2U, false);
+    const gf_status status = tables.content.sink_publish_semantics(sink, semantics, outcome);
     return status;
 }
 
@@ -4096,7 +4096,7 @@ inline constexpr std::array<Block, 712U> abi_blocks{
     Block{"gf_abi.content.sink_publish", Mode::legal, 3U, Model::none, no_state, no_state, &invoke_content_sink_publish, "", std::span<const gf_status>(block_84_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
     Block{"gf_abi.content.sink_heartbeat", Mode::legal, 3U, Model::none, no_state, no_state, &invoke_content_sink_heartbeat, "", std::span<const gf_status>(block_85_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
     Block{"gf_abi.content.sink_publish_semantics", Mode::legal, 3U, Model::none, no_state, no_state, &invoke_content_sink_publish_semantics, "", std::span<const gf_status>(block_86_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
-    Block{"gf_abi.content.sink_publish_semantics.misuse.sink_publish_semantics_result", Mode::misuse, 3U, Model::none, no_state, no_state, &invoke_content_sink_publish_semantics, "", std::span<const gf_status>(block_87_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_87_violations)},
+    Block{"gf_abi.content.sink_publish_semantics.misuse.sink_publish_semantics_outcome", Mode::misuse, 3U, Model::none, no_state, no_state, &invoke_content_sink_publish_semantics, "", std::span<const gf_status>(block_87_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_87_violations)},
     Block{"gf_abi.content.sink_request", Mode::legal, 3U, Model::none, no_state, no_state, &invoke_content_sink_request, "", std::span<const gf_status>(block_88_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
     Block{"gf_abi.content.sink_request.misuse.sink_request_request", Mode::misuse, 3U, Model::none, no_state, no_state, &invoke_content_sink_request, "", std::span<const gf_status>(block_89_declared), std::span<const gf_status>{}, GF_STATUS_INVALID_ARGUMENT, std::span<const Violation>(block_89_violations)},
     Block{"gf_abi.content.sink_state", Mode::legal, 3U, Model::none, no_state, no_state, &invoke_content_sink_state, "", std::span<const gf_status>(block_90_declared), std::span<const gf_status>{}, GF_STATUS_OK, std::span<const Violation>{}},
