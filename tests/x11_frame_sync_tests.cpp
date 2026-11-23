@@ -49,14 +49,14 @@ void test_counter_frames_and_requests() {
   const stxlib::Optional<std::uint64_t> done = counter.end_frame();
   require(done.present() && *done.value() == 2U && !counter.in_frame(), "and ends even at 2");
   counter.take_sync_request(41U, true);
-  require(*counter.begin_frame().value() == 43U && *counter.end_frame().value() == 44U,
+  require(counter.begin_frame().value_or(0U) == 43U && counter.end_frame().value_or(0U) == 44U,
           "an odd extended request is rounded up to even, then the frame takes the next values");
   counter.take_sync_request(100U, true);
-  require(*counter.begin_frame().value() == 101U && *counter.end_frame().value() == 102U,
+  require(counter.begin_frame().value_or(0U) == 101U && counter.end_frame().value_or(0U) == 102U,
           "an even extended request is where the frames continue");
   require(counter.take_basic_answer().absent(), "no basic answer without a basic request");
   counter.take_sync_request(7U, false);
-  require(*counter.begin_frame().value() == 103U, "a basic request leaves the extended values");
+  require(counter.begin_frame().value_or(0U) == 103U, "a basic request leaves the extended values");
   static_cast<void>(counter.end_frame());
   const stxlib::Optional<std::uint64_t> answer = counter.take_basic_answer();
   require(answer.present() && *answer.value() == 7U && counter.take_basic_answer().absent(),
