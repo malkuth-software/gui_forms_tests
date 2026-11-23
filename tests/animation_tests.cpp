@@ -1,6 +1,7 @@
 #include "gui_forms/animation.hpp"
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/diagnostic_controls.hpp"
+#include "gui_forms/live_surface.hpp"
 #include "gui_forms/range_controls.hpp"
 #include "gui_forms/window.hpp"
 #include "gui_forms_demo/easing_preview.hpp"
@@ -9,10 +10,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <span>
 #include <stdexcept>
+#include <string_view>
 #include <vector>
 
 using gui_forms::test_support::armed_wake;
@@ -230,8 +233,9 @@ public:
 
     struct Tick final {
         TimerProbe* probe;
-        AnimationTickResult operator()(FrameTime) const {
+        AnimationTickResult operator()(FrameTime now) const {
             ++(*probe).ticks;
+            (*probe).last_tick = now;
             if ((*probe).stop_in_tick) (*probe).timer.stop();
             const AnimationTickResult result = (*probe).damaging
                 ? AnimationTickResult::damaged : AnimationTickResult::unchanged;
@@ -243,6 +247,7 @@ public:
 
     AnimationTimer timer;
     int ticks{};
+    FrameTime last_tick{};
     bool damaging{true};
     bool stop_in_tick{};
 };
@@ -784,6 +789,288 @@ void test_public_easing_preview_owns_scheduler_policy_and_semantics() {
 
 } // namespace
 
+// The display timing record and its grid (design note frame-source,
+// section 2): presentations at phase + k * period, the next one strictly
+// after a time, before the phase as well as after it.
+void test_display_timing_grid() {
+    const FrameTime phase{3ms};
+    require(next_on_grid(phase, 8ms, FrameTime{3ms}) == FrameTime{11ms} &&
+                next_on_grid(phase, 8ms, FrameTime{4ms}) == FrameTime{11ms} &&
+                next_on_grid(phase, 8ms, FrameTime{10ms}) == FrameTime{11ms} &&
+                next_on_grid(FrameTime{40ms}, 8ms, FrameTime{17ms}) == FrameTime{24ms} &&
+                next_on_grid(FrameTime{40ms}, 8ms, FrameTime{16ms}) == FrameTime{24ms},
+            "the next grid point is strictly after the time, on either side of the phase");
+    const DisplayTiming assumed = DisplayTiming::assumed();
+    require(!assumed.paced() && assumed.valid() && assumed.refresh_hertz() == 0.0 &&
+                assumed.refresh_period == assumed_refresh_period &&
+                next_presentation(assumed, FrameTime{5ms}) == FrameTime{5ms},
+            "assumed timing is not paced: a frame is shown at the time it is polled");
+    const DisplayTiming fixed = DisplayTiming::fixed_rate(8ms, phase);
+    require(fixed.paced() && fixed.valid() && close_to(fixed.refresh_hertz(), 125.0, 1e-9) &&
+                next_presentation(fixed, FrameTime{12ms}) == FrameTime{19ms},
+            "a fixed rate shows a frame at the next point of its grid");
+    const DisplayTiming reported = DisplayTiming::reported(DisplayTimingSource::display, 16ms, FrameTime{50ms});
+    require(reported.source == DisplayTimingSource::display && reported.presentation_phase == FrameTime{50ms} &&
+                next_presentation(reported, FrameTime{20ms}) == FrameTime{34ms},
+            "a host's report phases the grid at its presentation, which may lie ahead");
+    require(!DisplayTiming::fixed_rate(FrameInterval::zero()).valid() &&
+                !DisplayTiming::fixed_rate(500us).valid() && !DisplayTiming::fixed_rate(2s).valid(),
+            "a period outside 1 ms to 1 s is not valid");
+    require(std::string_view(display_timing_source_name(DisplayTimingSource::assumed)) == "assumed" &&
+                std::string_view(display_timing_source_name(DisplayTimingSource::display)) == "display" &&
+                std::string_view(display_timing_source_name(DisplayTimingSource::measured)) == "measured" &&
+                std::string_view(display_timing_source_name(DisplayTimingSource::nominal)) == "nominal" &&
+                std::string_view(display_timing_source_name(DisplayTimingSource::fixed)) == "fixed",
+            "every source has its diagnostic name");
+}
+
+// Display timing from refresh-counting completion stamps (X11 Present's ust
+// and msc): the period over the refreshes since the anchor, phased at the
+// latest stamp; nothing for the first stamp or one that does not advance;
+// the anchor moving on keeps the period.
+void test_refresh_counter_timing() {
+    RefreshCounterTiming timing;
+    require(timing.take(FrameTime{1000ms}, 100U).absent(), "the first stamp gives no timing");
+    const stxlib::Optional<DisplayTiming> second = timing.take(FrameTime{1008ms}, 101U);
+    require(second.present() && (*second.value()).source == DisplayTimingSource::display &&
+                (*second.value()).refresh_period == 8ms && (*second.value()).presentation_phase == FrameTime{1008ms},
+            "two stamps give the period between them, phased at the latest");
+    const stxlib::Optional<DisplayTiming> skipped = timing.take(FrameTime{1024ms}, 103U);
+    require(skipped.present() && (*skipped.value()).refresh_period == 8ms,
+            "a stamp two refreshes on divides by the refreshes, not the stamps");
+    require(timing.take(FrameTime{1030ms}, 103U).absent(), "a count that does not advance starts again");
+    require(timing.take(FrameTime{1038ms}, 104U).present(), "and the next stamp gives timing again");
+    require(timing.take(FrameTime{1000ms}, 105U).absent(), "a time that runs back starts again");
+    FrameInterval worst{};
+    for (std::uint64_t refresh = 1U; refresh <= 600U; ++refresh) {
+        const FrameTime shown = FrameTime{1000ms} + std::chrono::microseconds(8333) * refresh;
+        const stxlib::Optional<DisplayTiming> taken = timing.take(shown, 105U + refresh);
+        require(taken.present(), "every advancing stamp gives timing");
+        const FrameInterval period = (*taken.value()).refresh_period;
+        const FrameInterval error = period > 8333us ? period - 8333us : 8333us - period;
+        worst = std::max(worst, error);
+    }
+    require(worst == FrameInterval::zero(), "the anchor moving on every 240 refreshes keeps the exact period");
+    timing.reset();
+    require(timing.take(FrameTime{5000ms}, 9U).absent(), "after reset the first stamp gives no timing");
+}
+
+// Display timing measured from presentation completions alone: nothing
+// before eight agreeing intervals, the median period phased at the latest
+// completion, skipped refreshes counted as whole refreshes, a stall off the
+// grid dropped, a doubled stamp ignored, a rest kept, and a clock running
+// back starting again.
+void test_display_timing_estimator() {
+    DisplayTimingEstimator estimator;
+    const FrameInterval period = 16667us;
+    FrameTime completed{2000ms};
+    require(estimator.take(completed).absent(), "the first completion gives no timing");
+    for (int interval = 1; interval < 8; ++interval) {
+        // Jitter of a few hundred microseconds either way.
+        const FrameInterval jitter = interval % 2 == 0 ? 300us : -250us;
+        completed = completed + period + jitter;
+        require(estimator.take(completed).absent(), "fewer than eight intervals give no timing");
+        completed = completed - jitter;
+    }
+    completed = completed + period;
+    const stxlib::Optional<DisplayTiming> first = estimator.take(completed);
+    require(first.present() && (*first.value()).source == DisplayTimingSource::measured &&
+                (*first.value()).presentation_phase == completed,
+            "eight agreeing intervals give measured timing phased at the latest completion");
+    const FrameInterval measured = (*first.value()).refresh_period;
+    require(measured >= period - 300us && measured <= period + 300us, "the median is the refresh period");
+
+    // Three refreshes the window drew nothing in count as three.
+    completed = completed + period * 3;
+    const stxlib::Optional<DisplayTiming> skipped = estimator.take(completed);
+    require(skipped.present() && (*skipped.value()).refresh_period >= period - 300us &&
+                (*skipped.value()).refresh_period <= period + 300us,
+            "a span of whole refreshes is divided into them");
+    const std::size_t held = estimator.interval_count();
+    // Two and a half refreshes is not on the grid: dropped.
+    completed = completed + period * 5 / 2;
+    require(estimator.take(completed).absent() && estimator.interval_count() == held,
+            "a stall off the grid is dropped");
+    // A second stamp for one refresh is ignored.
+    require(estimator.take(completed + 200us).absent() && estimator.interval_count() == held,
+            "a completion within a millisecond of the last is ignored");
+    completed = completed + period;
+    require(estimator.take(completed).present() && estimator.interval_count() == held + 1U,
+            "the next refresh after a dropped stall measures again");
+    // A rest of two seconds keeps the intervals and restarts from the stamp.
+    completed = completed + 2s;
+    require(estimator.take(completed).absent() && estimator.interval_count() == held + 1U,
+            "a completion after a rest starts the next interval");
+    completed = completed + period;
+    require(estimator.take(completed).present(), "and the one after it reports at once");
+    // Sixteen intervals at a new rate move the median over.
+    const FrameInterval faster = 8333us;
+    stxlib::Optional<DisplayTiming> latest;
+    for (int interval = 0; interval < 16; ++interval) {
+        completed = completed + faster;
+        latest = estimator.take(completed);
+    }
+    require(latest.present() && (*latest.value()).refresh_period == faster,
+            "a new rate replaces the old one once it fills the intervals");
+    require(estimator.take(completed - 1s).absent() && estimator.interval_count() == 0U,
+            "a clock running back forgets every interval");
+    estimator.reset();
+    require(estimator.take(FrameTime{9s}).absent() && estimator.interval_count() == 0U,
+            "after reset the first completion gives no timing");
+}
+
+// A window measuring its timing from noted completions: measured timing
+// replaces assumed timing, but never a fixed or display timing, and a reset
+// forgets the completions.
+void test_window_measures_presentation_completions() {
+    std::shared_ptr<TimerProbe> probe = make_control<TimerProbe>(StableId("animation.timer.measured"));
+    (*probe).set_requested_bounds({0.0, 0.0, 40.0, 20.0});
+    Window window(probe, {40.0, 20.0});
+    FrameTime completed{1s};
+    bool set = false;
+    for (int stamp = 0; stamp < 9; ++stamp) {
+        set = window.note_presentation_completed(completed);
+        completed = completed + 10ms;
+    }
+    require(set && window.display_timing().source == DisplayTimingSource::measured &&
+                window.display_timing().refresh_period == 10ms,
+            "nine completions ten milliseconds apart set measured timing on an assumed window");
+    require(window.set_display_timing(DisplayTiming::fixed_rate(8ms)), "a fixed rate is accepted");
+    require(!window.note_presentation_completed(completed) &&
+                window.display_timing().source == DisplayTimingSource::fixed,
+            "a measurement never overrides a fixed timing");
+    require(window.set_display_timing(DisplayTiming::reported(DisplayTimingSource::nominal, 16ms, FrameTime{})),
+            "a nominal rate is accepted");
+    completed = completed + 10ms;
+    require(window.note_presentation_completed(completed) &&
+                window.display_timing().source == DisplayTimingSource::measured,
+            "a measurement replaces a nominal rate, which has no phase");
+    window.reset_presentation_estimate();
+    completed = completed + 10ms;
+    require(!window.note_presentation_completed(completed) &&
+                window.display_timing().source == DisplayTimingSource::measured,
+            "after a reset the completions start again and the held timing stays");
+}
+
+// A host reporting a live surface shown passes the window's display timing
+// to the surface, so its producer paces to the window's frame source.
+void test_live_surface_reports_carry_the_window_timing() {
+    std::shared_ptr<TimerProbe> probe = make_control<TimerProbe>(StableId("animation.timer.live"));
+    (*probe).set_requested_bounds({0.0, 0.0, 40.0, 20.0});
+    Window window(probe, {40.0, 20.0});
+    std::shared_ptr<LiveSurface> surface = LiveSurface::create({8U, 4U});
+    window.report_live_surface_shown(*surface, 0U);
+    require((*surface).presentation_record().timing.source == LiveTimingSource::none &&
+                (*surface).presentation_record().presents == 1U,
+            "an assumed window reports a presentation without timing");
+    require(window.set_display_timing(DisplayTiming::fixed_rate(8ms, FrameTime{2ms})), "a fixed rate is accepted");
+    window.report_live_surface_shown(*surface, 0U);
+    const LivePresentationRecord record = (*surface).presentation_record();
+    require(record.timing.source == LiveTimingSource::phased_timer && record.timing.refresh_period == 8ms &&
+                (record.timing.last_vblank.time_since_epoch() - 2ms) % 8ms == FrameInterval{} &&
+                record.timing.last_vblank <= FrameClock::now() && record.presents == 2U,
+            "a paced window reports its period and a refresh on its grid");
+}
+
+// AnimationTimer on a window that knows its display's timing (design note
+// frame-source, section 5): periods in whole refreshes on the display's
+// grid, a shorter interval at one refresh, every refresh for
+// start_every_frame, ticks at the frame's presentation time, a rate change
+// re-deriving the period, and wants_display_frames only while a timer
+// ticks.
+void test_animation_timer_paces_to_the_display() {
+    std::shared_ptr<TimerProbe> probe = make_control<TimerProbe>(StableId("animation.timer.paced"));
+    (*probe).set_requested_bounds({0.0, 0.0, 40.0, 20.0});
+    Window window(probe, {40.0, 20.0});
+    StripePainter painter;
+    require(!window.display_timing().paced() && !window.wants_display_frames(),
+            "a window starts with assumed timing and wants no display frames");
+    require(!window.set_display_timing(DisplayTiming::fixed_rate(500us)) && !window.display_timing().paced(),
+            "an invalid timing is rejected and changes nothing");
+    const FrameInterval phase = 3ms;
+    require(window.set_display_timing(DisplayTiming::fixed_rate(8ms, FrameTime{phase})) &&
+                window.display_timing().source == DisplayTimingSource::fixed &&
+                window.display_timing().refresh_period == 8ms,
+            "a fixed rate is accepted");
+
+    (*probe).timer.start(*probe, 20ms, TimerProbe::Tick{probe.get()});
+    require((armed_wake(window).time_since_epoch() - phase) % 24ms == FrameInterval{} &&
+                (*probe).timer.interval() == 20ms && window.wants_display_frames(),
+            "a 20 ms timer ticks at three 8 ms refreshes, on the display's grid");
+    (*probe).timer.start(*probe, 2ms, TimerProbe::Tick{probe.get()});
+    const FrameTime short_first = armed_wake(window);
+    require((short_first.time_since_epoch() - phase) % 8ms == FrameInterval{},
+            "an interval shorter than a refresh ticks at one refresh once the timing is known");
+    static_cast<void>(window.poll_frame_schedule(short_first));
+    require(armed_wake(window) == short_first + 8ms, "the shorter interval's cadence is one refresh");
+
+    bool rejected = false;
+    try {
+        (*probe).timer.start_every_frame(*probe, AnimationTimer::Tick{});
+    } catch (const std::invalid_argument&) {
+        rejected = true;
+    }
+    require(rejected, "start_every_frame rejects an empty tick target");
+
+    (*probe).damaging = false;
+    (*probe).timer.start_every_frame(*probe, TimerProbe::Tick{probe.get()});
+    const FrameTime first = armed_wake(window);
+    const int before = (*probe).ticks;
+    const FramePollResult polled = window.poll_frame_schedule(first);
+    require((*probe).timer.interval() == FrameInterval::zero() && (*probe).ticks == before + 1 &&
+                polled.presentation_time == first + 8ms && (*probe).last_tick == first + 8ms &&
+                armed_wake(window) == first + 8ms,
+            "every frame ticks once a refresh, at the time its frame is shown");
+    const FramePollResult late = window.poll_frame_schedule(first + 8ms + 3ms);
+    require(late.presentation_time == first + 16ms && (*probe).last_tick == first + 16ms &&
+                armed_wake(window) == first + 16ms,
+            "a late poll's frame is shown at the refresh after it");
+
+    // The display drops to 62.5 Hz: the period follows, on the new grid.
+    require(window.set_display_timing(DisplayTiming::fixed_rate(16ms, FrameTime{phase})),
+            "a new rate is accepted");
+    const FrameTime slowed = armed_wake(window);
+    require((slowed.time_since_epoch() - phase) % 16ms == FrameInterval{},
+            "a rate change moves the timer onto the new grid");
+    static_cast<void>(window.poll_frame_schedule(slowed));
+    require(armed_wake(window) == slowed + 16ms && (*probe).last_tick == slowed + 16ms,
+            "every frame follows the new rate");
+    // A report restating the phase with a little jitter moves nothing.
+    const FrameTime steady = armed_wake(window);
+    require(window.set_display_timing(DisplayTiming::fixed_rate(16ms, FrameTime{phase + 100us})) &&
+                armed_wake(window) == steady,
+            "a restated phase within the jitter tolerance leaves the deadline");
+    require(window.set_display_timing(DisplayTiming::fixed_rate(16ms + 2us, FrameTime{phase})) &&
+                window.display_timing().refresh_period == 16ms && armed_wake(window) == steady,
+            "a period within a thousandth of the held one keeps the held period");
+
+    // Idle: a damaging tick left unpainted stops the timer, and the window
+    // wants no display frames.
+    (*probe).damaging = true;
+    static_cast<void>(window.poll_frame_schedule(armed_wake(window)));
+    static_cast<void>(window.poll_frame_schedule(armed_wake(window)));
+    require(!(*probe).timer.ticking() && (*probe).timer.started() && !window.wants_display_frames(),
+            "a timer waiting for its paint holds no display frames");
+    (*probe).on_paint(painter, {0.0, 0.0, 40.0, 20.0});
+    require((*probe).timer.ticking() && window.wants_display_frames(), "the paint asks for display frames again");
+    window.set_occluded(true, FrameClock::now());
+    require(!window.wants_display_frames(), "an occluded window wants no display frames");
+    window.set_occluded(false, FrameClock::now());
+    (*probe).timer.stop();
+    require(!window.wants_display_frames(), "a stopped timer wants no display frames");
+
+    // Back to assumed timing: ticks at the poll's time again.
+    require(window.set_display_timing(DisplayTiming::assumed()) && !window.display_timing().paced(),
+            "assumed timing can be restored");
+    (*probe).damaging = false;
+    (*probe).timer.start(*probe, 32ms, TimerProbe::Tick{probe.get()});
+    const FrameTime plain = armed_wake(window);
+    const FramePollResult unpaced = window.poll_frame_schedule(plain);
+    require(plain.time_since_epoch() % 32ms == FrameInterval{} && unpaced.presentation_time == plain &&
+                (*probe).last_tick == plain,
+            "with assumed timing a tick receives the poll's time on the clock's grid");
+}
+
 int main() {
     try {
         test_easing_endpoints_and_curves();
@@ -792,6 +1079,12 @@ int main() {
         test_invalid_timeline_contract();
         test_reduced_motion_remains_active_and_calm();
         test_animation_timer_is_paint_gated();
+        test_display_timing_grid();
+        test_refresh_counter_timing();
+        test_display_timing_estimator();
+        test_window_measures_presentation_completions();
+        test_live_surface_reports_carry_the_window_timing();
+        test_animation_timer_paces_to_the_display();
         test_progress_animation_and_hidden_suspension();
         test_progress_animation_damages_what_moves();
         test_progress_stripes_are_clipped_and_configurable();

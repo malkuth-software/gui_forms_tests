@@ -168,11 +168,46 @@ void presented_wakes_connect_and_disconnect() {
     require(wakes.load() == 1, "a disconnected wake is not called");
 }
 
+// The live timing a host reports for its window's display timing: the
+// display's own as display_phased, any other paced rate as phased_timer,
+// with the latest presentation at or before now as the vertical blank;
+// nothing for assumed timing, so the pacer keeps its fallback.
+void live_timing_follows_the_window() {
+    const FrameTime now{std::chrono::milliseconds(1000)};
+    const FrameInterval period = std::chrono::milliseconds(8);
+    const LiveDisplayTiming display = live_display_timing(
+        DisplayTiming::reported(DisplayTimingSource::display, period, FrameTime{std::chrono::milliseconds(3)}), now);
+    require(display.source == LiveTimingSource::display_phased && display.refresh_period == period &&
+                display.last_vblank == FrameTime{std::chrono::milliseconds(995)},
+            "display timing is display_phased at the latest refresh at or before now");
+    const LiveDisplayTiming on_grid =
+        live_display_timing(DisplayTiming::fixed_rate(period, FrameTime{std::chrono::milliseconds(0)}), now);
+    require(on_grid.source == LiveTimingSource::phased_timer && on_grid.last_vblank == now,
+            "a fixed rate is a phased timer, and a refresh at now is the latest");
+    const LiveDisplayTiming ahead = live_display_timing(
+        DisplayTiming::reported(DisplayTimingSource::measured, period, FrameTime{std::chrono::milliseconds(1100)}), now);
+    require(ahead.source == LiveTimingSource::phased_timer && ahead.last_vblank == FrameTime{std::chrono::milliseconds(996)},
+            "a phase ahead of now is carried back onto the grid before now");
+    const LiveDisplayTiming assumed = live_display_timing(DisplayTiming::assumed(), now);
+    require(assumed.source == LiveTimingSource::none && assumed.refresh_period == FrameInterval::zero(),
+            "assumed timing reports nothing");
+
+    // The pacer reads the reported timing: its frame time is the next
+    // refresh on the window's grid.
+    std::shared_ptr<LiveSurface> surface = LiveSurface::create({8U, 4U});
+    LiveSurfacePacer pacer(surface);
+    const std::uint64_t generation = publish_one(*surface);
+    (*surface).notify_presented(generation, display);
+    require(pacer.display_time(now) == FrameTime{std::chrono::milliseconds(1003)},
+            "the pacer's frame time is the window's next refresh");
+}
+
 } // namespace
 
 int main() {
     plan_follows_reports_and_deadlines();
     waits_wake_on_reports_and_stops();
     presented_wakes_connect_and_disconnect();
+    live_timing_follows_the_window();
     return 0;
 }
