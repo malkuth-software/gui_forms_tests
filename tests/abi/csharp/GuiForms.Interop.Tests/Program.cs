@@ -83,6 +83,31 @@ internal static unsafe class Program
         expect(after == Constants.GF_STATUS_STALE_HANDLE, "a released handle is stale");
     }
 
+    // Memory across the ABI is freed by the side that allocated it (owner,
+    // 2026-11-22): the library makes and frees its objects behind the handles
+    // the wrappers hold, and the text the debugger view reads comes back in
+    // buffers the binding allocates and frees itself. Many rounds, each
+    // handle stale once released, the managed side never freeing native
+    // library memory.
+    private static void allocation_boundary()
+    {
+        int stale = 0;
+        for (int round = 0; round < 256; ++round)
+        {
+            ObjectHandle label = ObjectHandle.create("label"u8, "csharp.allocation"u8);
+            ObjectHandleView view = new ObjectHandleView(label);
+            expect(view.type_id == "label", "the type id comes back in the binding's own buffer");
+            gf_object raw = label.value;
+            label.Dispose();
+            gf_object_state state = 99u;
+            if (Abi.objects.state(raw, &state) == Constants.GF_STATUS_STALE_HANDLE)
+            {
+                ++stale;
+            }
+        }
+        expect(stale == 256, "every handle the library released is stale (" + stale + " of 256)");
+    }
+
     private static void refusal()
     {
         try
@@ -1335,6 +1360,7 @@ internal static unsafe class Program
         negotiation();
         application();
         ownership();
+        allocation_boundary();
         refusal();
         event_thunk();
         window_help();

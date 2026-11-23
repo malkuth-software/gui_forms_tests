@@ -3,6 +3,8 @@ if(TARGET gui_forms_audio)
     # gui_forms compiles gui_forms_audio with GUI_FORMS_AUDIO_TESTING for the test cache (its cmake/Audio.cmake).
     add_executable(gui_forms_audio_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/audio/audio_service_tests.cpp")
     target_compile_definitions(gui_forms_audio_tests PRIVATE GUI_FORMS_AUDIO_TESTING)
+    # Audio alone, without the engine: its buffers come from GUIForms::Memory,
+    # which it links (gui_forms cmake/Audio.cmake), so this link checks that.
     target_link_libraries(gui_forms_audio_tests PRIVATE GUIForms::Audio)
     if(GUI_FORMS_AUDIO_VORBIS_BACKEND STREQUAL "stx")
         target_compile_definitions(gui_forms_audio_tests PRIVATE GUI_FORMS_AUDIO_VORBIS_STX)

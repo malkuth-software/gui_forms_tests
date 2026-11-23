@@ -19,6 +19,7 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <stxlib/stop_token.hpp>
 #include <mutex>
 #include <stdexcept>
 #include <string>
@@ -252,7 +253,7 @@ void terminating_consumer_threads_revokes_at_once() {
     Fixture fixture = make_fixture("termination.raw");
     ContentSurface& surface = *fixture.surface;
     ContentFrameSink sink = surface.open_content(true);
-    const std::stop_token token = sink.stop_token();
+    const stxlib::StopToken token = sink.stop_token();
     require(!token.stop_requested(), "no stop before terminate");
     surface.terminate();
     require(token.stop_requested() && sink.stop_requested(), "terminate fires the sink's stop token");

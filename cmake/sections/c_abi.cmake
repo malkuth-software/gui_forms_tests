@@ -250,6 +250,41 @@ if(TARGET gui_forms_abi)
     target_compile_features(gui_forms_abi_cpp_wrappers PRIVATE cxx_std_20)
     add_test(NAME gui_forms_abi_cpp_wrappers COMMAND gui_forms_abi_cpp_wrappers)
 
+    # Memory across the ABI is freed by the side that allocated it: the
+    # library's handles are its own to make and free, text comes back in the
+    # caller's buffer, and a program-allocated callback context goes back to
+    # the program's release. The program's own operator new counts and
+    # tracks its blocks; the library must never reach it, except where the
+    # library shares the system's C++ runtime (macOS without the static one).
+    add_executable(gui_forms_abi_allocation_boundary tests/abi/allocation/gf_abi_allocation_boundary.cpp)
+    target_link_libraries(gui_forms_abi_allocation_boundary PRIVATE gui_forms_abi)
+    target_compile_features(gui_forms_abi_allocation_boundary PRIVATE cxx_std_20)
+    if(_gf_abi_shared_runtime)
+        target_compile_definitions(gui_forms_abi_allocation_boundary PRIVATE GF_ALLOCATION_SHARED_CXX_RUNTIME=1)
+    endif()
+    add_test(NAME gui_forms_abi_allocation_boundary COMMAND gui_forms_abi_allocation_boundary)
+
+    # The library's teardown: loaded at run time (dlopen, LoadLibrary), its
+    # objects made and released, then unloaded (dlclose, FreeLibrary), or
+    # left loaded into the process's end, where on Windows its static
+    # destructors run at DLL_PROCESS_DETACH after the other threads stop.
+    # Neither may end abnormally: no std::bad_alloc from a destructor, no
+    # teardown-reserve fail-fast (gui_forms allocation/library_memory, "A
+    # module's end"). The exit code decides (a pass pattern would hide a
+    # failure after the last line, at the process's end); the program links
+    # nothing of the library's.
+    add_executable(gui_forms_abi_module_unload tests/abi/allocation/gf_abi_module_unload.cpp)
+    target_include_directories(gui_forms_abi_module_unload PRIVATE ${GUI_FORMS_SOURCE_DIR}/include)
+    target_compile_features(gui_forms_abi_module_unload PRIVATE cxx_std_20)
+    target_link_libraries(gui_forms_abi_module_unload PRIVATE ${CMAKE_DL_LIBS})
+    add_dependencies(gui_forms_abi_module_unload gui_forms_abi)
+    add_test(NAME gui_forms_abi_module_unload
+        COMMAND gui_forms_abi_module_unload $<TARGET_FILE:gui_forms_abi> unload)
+    add_test(NAME gui_forms_abi_module_exit_loaded
+        COMMAND gui_forms_abi_module_unload $<TARGET_FILE:gui_forms_abi> exit)
+    set_tests_properties(gui_forms_abi_module_unload gui_forms_abi_module_exit_loaded PROPERTIES
+        FAIL_REGULAR_EXPRESSION "FAIL:|fail fast")
+
     # The C# interop (bindings/csharp), built offline with the host's .NET SDK
     # and run against this library. Owner ruling (2026-11-02): the test uses a
     # preinstalled SDK of version 10 or later and otherwise skips with a
