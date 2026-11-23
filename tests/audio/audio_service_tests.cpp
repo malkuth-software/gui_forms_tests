@@ -11,11 +11,12 @@
 #include <vector>
 #include <thread>
 #include <barrier>
+#include <stxlib/stop_token.hpp>
 
 #ifdef GUI_FORMS_AUDIO_TESTING
 namespace gui_forms {
 AudioStatus audio_test_revoked_callback_status();
-void audio_test_decode_limits(std::size_t arena_bytes, std::uint64_t budget, std::stop_source* cancel_after_chunk);
+void audio_test_decode_limits(std::size_t arena_bytes, std::uint64_t budget, stxlib::StopSource* cancel_after_chunk);
 std::uint64_t audio_test_clip_bytes();
 void audio_test_cancel_flag_after_chunk(CancellationFlag* flag) noexcept;
 #ifndef GUI_FORMS_AUDIO_VORBIS_STX
@@ -409,9 +410,11 @@ void vorbis_loader() {
     }
     for (std::thread& worker : workers) { worker.join(); }
     for (const ConcurrentDecode& job : jobs) { require(job.passed, "concurrent opens and decode are deterministic"); }
-    std::stop_source cancelled{};
+    stxlib::OperationResult<stxlib::StopSource> made_cancelled = stxlib::StopSource::create();
+    require(made_cancelled.succeeded(), "a stop source is made");
+    stxlib::StopSource cancelled = static_cast<stxlib::OperationResult<stxlib::StopSource>&&>(made_cancelled).take_value();
     cancelled.request_stop();
-    const gui_forms::AudioClipResult stopped = gui_forms::AudioClip::load_ogg(path, cancelled.get_token());
+    const gui_forms::AudioClipResult stopped = gui_forms::AudioClip::load_ogg(path, cancelled.token());
     require(stopped.status == AudioStatus::cancelled && !stopped.clip, "pre-cancel publishes nothing");
 #ifdef GUI_FORMS_AUDIO_TESTING
     const std::uint64_t held_bytes = gui_forms::audio_test_clip_bytes();
@@ -421,9 +424,11 @@ void vorbis_loader() {
     gui_forms::audio_test_decode_limits(16 * 1024 * 1024, held_bytes, nullptr);
     const gui_forms::AudioClipResult quota = gui_forms::AudioClip::load_ogg(path);
     require(quota.status == AudioStatus::quota_exceeded && !quota.clip, "aggregate quota checked before PCM allocation");
-    std::stop_source halfway{};
+    stxlib::OperationResult<stxlib::StopSource> made_halfway = stxlib::StopSource::create();
+    require(made_halfway.succeeded(), "a stop source is made");
+    stxlib::StopSource halfway = static_cast<stxlib::OperationResult<stxlib::StopSource>&&>(made_halfway).take_value();
     gui_forms::audio_test_decode_limits(16 * 1024 * 1024, 512ULL * 1024 * 1024, &halfway);
-    const gui_forms::AudioClipResult interrupted = gui_forms::AudioClip::load_ogg(path, halfway.get_token());
+    const gui_forms::AudioClipResult interrupted = gui_forms::AudioClip::load_ogg(path, halfway.token());
     require(interrupted.status == AudioStatus::cancelled && !interrupted.clip, "between-chunk cancellation publishes nothing");
     gui_forms::audio_test_decode_limits(16 * 1024 * 1024, 512ULL * 1024 * 1024, nullptr);
     const std::uint64_t after_failure = gui_forms::audio_test_clip_bytes();

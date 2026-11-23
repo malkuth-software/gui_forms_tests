@@ -73,7 +73,13 @@ void every_form_is_stxlibs() {
     void* const from_stxlib = stxlib::memory::allocate(24U, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
     ::operator delete(from_stxlib);
     void* const sized = stxlib::memory::allocate(24U, 64U);
-    ::operator delete(sized, 24U, std::align_val_t(64U));
+#if defined(__cpp_sized_deallocation)
+    ::operator delete(sized, std::size_t{24U}, std::align_val_t(64U));
+#else
+    // No sized deallocation in this compiler's mode (clang for windows-gnu
+    // leaves it off): the unsized aligned form.
+    ::operator delete(sized, std::align_val_t(64U));
+#endif
 
     // The program's containers and strings ride on it.
     std::vector<std::uint64_t> numbers(64U, 5U);

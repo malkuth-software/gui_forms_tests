@@ -2,6 +2,7 @@
 #include "prepared_text_test_support.hpp"
 
 #include <iostream>
+#include <stxlib/threads.hpp>
 #include <limits>
 
 namespace {
@@ -355,7 +356,7 @@ void test_all_resource_reservations() {
         const detail::MaskResource resource = static_cast<detail::MaskResource>(index);
         detail::MaskUsage baseline{};
         {
-            std::lock_guard<std::mutex> lock((*ledger).mutex);
+            const stxlib::ScopedLock lock((*ledger).mutex);
             baseline = (*ledger).usage[index];
         }
         detail::MaskCharge capacity{};
@@ -368,13 +369,13 @@ void test_all_resource_reservations() {
         require(refused, "each resource refuses limit plus one without mutation");
         capacity.commit();
         {
-            std::lock_guard<std::mutex> lock((*ledger).mutex);
+            const stxlib::ScopedLock lock((*ledger).mutex);
             const detail::MaskUsage& usage = (*ledger).usage[index];
             require(usage.live == usage.limit && usage.reserved == 0 && usage.peak == usage.limit, "reservation transfers without double charge");
         }
         capacity.reset();
         {
-            std::lock_guard<std::mutex> lock((*ledger).mutex);
+            const stxlib::ScopedLock lock((*ledger).mutex);
             const detail::MaskUsage& usage = (*ledger).usage[index];
             require(usage.live == baseline.live && usage.reserved == 0, "each resource releases to exact baseline");
         }

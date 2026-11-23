@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
-#include <stop_token>
+#include <stxlib/stop_token.hpp>
 #include <thread>
 
 namespace {
@@ -64,16 +64,23 @@ private:
 };
 
 // Requests a stop after `delay`.
+// A new stop source; failing to make one is a test failure.
+stxlib::StopSource made_stop_source() {
+    stxlib::OperationResult<stxlib::StopSource> made = stxlib::StopSource::create();
+    require(made.succeeded(), "a stop source is made");
+    return static_cast<stxlib::OperationResult<stxlib::StopSource>&&>(made).take_value();
+}
+
 class LateStop final {
 public:
-    LateStop(std::stop_source& source, std::chrono::milliseconds delay) : source_(&source), delay_(delay) {}
+    LateStop(stxlib::StopSource& source, std::chrono::milliseconds delay) : source_(&source), delay_(delay) {}
     void operator()() const {
         std::this_thread::sleep_for(delay_);
         static_cast<void>((*source_).request_stop());
     }
 
 private:
-    std::stop_source* source_;
+    stxlib::StopSource* source_;
     std::chrono::milliseconds delay_{};
 };
 
@@ -133,11 +140,11 @@ void plan_follows_reports_and_deadlines() {
 void waits_wake_on_reports_and_stops() {
     std::shared_ptr<LiveSurface> surface = LiveSurface::create({8U, 4U});
     LiveSurfacePacer pacer(surface);
-    std::stop_source source;
-    require(pacer.wait_for_frame(source.get_token()).outcome == LivePacingOutcome::frame, "first frame at once");
+    stxlib::StopSource source = made_stop_source();
+    require(pacer.wait_for_frame(source.token()).outcome == LivePacingOutcome::frame, "first frame at once");
     const std::uint64_t generation = publish_one(*surface);
     std::thread presenter(LatePresenter(surface, generation, std::chrono::milliseconds(5)));
-    const LivePacingResult shown = pacer.wait_for_frame(source.get_token());
+    const LivePacingResult shown = pacer.wait_for_frame(source.token());
     presenter.join();
     require(shown.outcome == LivePacingOutcome::frame || shown.outcome == LivePacingOutcome::deadline,
             "a report or the deadline ends the wait");
@@ -147,10 +154,10 @@ void waits_wake_on_reports_and_stops() {
 
     pacer.idle();
     std::thread stopper(LateStop(source, std::chrono::milliseconds(20)));
-    const LivePacingResult stopped = pacer.wait_for_frame(source.get_token());
+    const LivePacingResult stopped = pacer.wait_for_frame(source.token());
     stopper.join();
     require(stopped.outcome == LivePacingOutcome::stopped, "the stop token ends an idle wait");
-    require(pacer.wait_for_frame(source.get_token()).outcome == LivePacingOutcome::stopped,
+    require(pacer.wait_for_frame(source.token()).outcome == LivePacingOutcome::stopped,
             "a stopped token answers at once");
 }
 
