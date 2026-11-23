@@ -1,4 +1,5 @@
 #include "support.hpp"
+#include "gui_forms/controls/button_text_box.hpp"
 #include "gui_forms/controls/combo_box.hpp"
 #include "gui_forms/controls/content_text_editor.hpp"
 #include "gui_forms/controls/label.hpp"
@@ -143,6 +144,25 @@ void test_text_and_input(gui_forms::Window& window,
     require(window.dispatch_key({KeyAction::down, PhysicalKey::escape}) && (*search).text.read().empty() &&
                 (*search_status).text.read() == "Showing everything",
             "Escape clears the field, then searches for everything");
+
+    // The folder field: browse fills in a folder, clear empties it, and F4
+    // in the field acts as browse.
+    const std::shared_ptr<ButtonTextBox> folder =
+        std::dynamic_pointer_cast<ButtonTextBox>(window.find("gallery.text.buttons.field"));
+    const std::shared_ptr<gui_forms::Label> folder_status =
+        std::dynamic_pointer_cast<Label>(window.find("gallery.text.buttons.status"));
+    require(folder && folder_status && (*folder).buttons().size() == 2U &&
+                (*folder_status).text.read() == "Browse, clear or press F4",
+            "the button field specimen shows its browse and clear buttons");
+    require((*folder).perform_button_click("browse") && (*folder).text.read() == "Documents/Harbour" &&
+                (*folder_status).text.read() == "Browse clicked · the folder is Documents/Harbour",
+            "browse fills in a folder");
+    require((*folder).perform_button_click("clear") && (*folder).text.read().empty() &&
+                (*folder_status).text.read() == "Clear clicked · the folder is empty",
+            "clear empties the field");
+    require(window.request_focus((*folder).editor()) && window.dispatch_key({KeyAction::down, PhysicalKey::f4}) &&
+                (*folder).text.read() == "Documents/Harbour",
+            "F4 in the field acts as browse");
 
     // The content editor: the page's own engine lays out and draws the text,
     // and every edit asks it for a new layout, which GUI.Forms accepts.

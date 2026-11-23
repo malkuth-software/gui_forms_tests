@@ -39,6 +39,7 @@
 #include "gui_forms/components/folder_browser_dialog/folder_browser_dialog.hpp"
 #include "gui_forms/components/help_provider/help_provider.hpp"
 #include "gui_forms/components/notify_icon/notify_icon.hpp"
+#include "gui_forms/components/toast_notification/toast_notification.hpp"
 #include "gui_forms/components/open_file_dialog/open_file_dialog.hpp"
 #include "gui_forms/components/ribbon_tool_tip/ribbon_tool_tip.hpp"
 #include "gui_forms/components/save_file_dialog/save_file_dialog.hpp"
@@ -1116,6 +1117,7 @@ void test_schema_export() {
     const std::shared_ptr<BackgroundWorker> background_worker = std::make_shared<BackgroundWorker>(window);
     const std::shared_ptr<ImageList> image_list = std::make_shared<ImageList>(window);
     const std::shared_ptr<NotifyIcon> notify_icon = std::make_shared<NotifyIcon>(window);
+    const std::shared_ptr<ToastNotification> toast_notification = std::make_shared<ToastNotification>(window);
     const std::shared_ptr<OpenFileDialog> open_file_dialog = std::make_shared<OpenFileDialog>();
     const std::shared_ptr<SaveFileDialog> save_file_dialog = std::make_shared<SaveFileDialog>();
     const std::shared_ptr<ColorDialog> color_dialog = std::make_shared<ColorDialog>();
@@ -1142,6 +1144,7 @@ void test_schema_export() {
     record_component("timer", *timer, records);
     record_component("background_worker", *background_worker, records);
     record_component("notify_icon", *notify_icon, records);
+    record_component("toast_notification", *toast_notification, records);
     record_component("open_file_dialog", *open_file_dialog, records);
     record_component("save_file_dialog", *save_file_dialog, records);
     record_component("color_dialog", *color_dialog, records);

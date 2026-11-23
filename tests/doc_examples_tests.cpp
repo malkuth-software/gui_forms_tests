@@ -430,6 +430,19 @@ void example() {
 }
 }  // namespace doc_example_ButtonBase_2
 
+namespace doc_example_ButtonTextBox_1 {
+void example() {
+    std::shared_ptr<gf::ButtonTextBox> folder = gf::make_control<gf::ButtonTextBox>(gf::StableId("export.folder"));
+    gf::EditButton browse;
+    browse.stable_id = "browse";
+    browse.caption = "Browse";
+    (*folder).set_buttons({browse});
+    (*folder).text = std::string{"Documents"};
+    const bool acted = (*folder).perform_button_click("browse");
+    // acted is true: button_clicked was raised with "browse"
+}
+}  // namespace doc_example_ButtonTextBox_1
+
 namespace doc_example_CancellationFlag_1 {
 void example() {
     gf::CancellationFlag flag;
@@ -525,6 +538,18 @@ void example() {
     (*options.wrap).checked = true;   // options.wrapping is now true
 }
 }  // namespace doc_example_CheckBox_2
+
+namespace doc_example_CheckedComboBox_1 {
+void example() {
+    std::shared_ptr<gf::CheckedComboBox> days = gf::make_control<gf::CheckedComboBox>(gf::StableId("task.days"));
+    (*days).set_items({{.stable_id = "mon", .text = "Monday", .checked = true},
+                       {.stable_id = "tue", .text = "Tuesday", .checked = false},
+                       {.stable_id = "wed", .text = "Wednesday", .checked = false}});
+    (*days).set_item_checked("wed", true);
+    const std::string shown = (*days).text();
+    // shown is "Monday, Wednesday"
+}
+}  // namespace doc_example_CheckedComboBox_1
 
 namespace doc_example_CheckedListBox_1 {
 void example() {
@@ -2581,6 +2606,17 @@ void example() {
 }
 }  // namespace doc_example_PictureBox_1
 
+namespace doc_example_PopupContainerBox_1 {
+void example() {
+    std::shared_ptr<gf::PopupContainerBox> due = gf::make_control<gf::PopupContainerBox>(gf::StableId("task.due"));
+    std::shared_ptr<gf::MonthCalendar> calendar = gf::make_control<gf::MonthCalendar>(gf::StableId("task.due.calendar"));
+    (*due).set_popup_content(calendar);
+    (*due).text = std::string{"Choose a date"};
+    const bool opened = (*due).show_popup();
+    // opened is false outside a window
+}
+}  // namespace doc_example_PopupContainerBox_1
+
 namespace doc_example_ProgressBar_1 {
 void example() {
     gf::Value<double> copied(0.0);
@@ -3629,6 +3665,20 @@ void example() {
 }
 }  // namespace doc_example_Toast_1
 
+namespace doc_example_ToastNotification_1 {
+void example() {
+    std::shared_ptr<gf::Panel> root = gf::make_control<gf::Panel>(gf::StableId("doc.root"));
+    gf::Window window(root, {320.0, 200.0});
+    gf::ToastNotification toast(window);
+    toast.title = "Backup";
+    toast.text = "The backup finished.";
+    const gf::HostServiceStatus status = toast.show();
+    if (!status.accepted()) {
+        // Without a host, status.error is gf::HostServiceError::unsupported.
+    }
+}
+}  // namespace doc_example_ToastNotification_1
+
 namespace doc_example_ToggleSwitch_1 {
 void example() {
     std::shared_ptr<gf::ToggleSwitch> wifi = gf::make_control<gf::ToggleSwitch>(gf::StableId("settings.wifi"), "Wi-Fi");
@@ -4164,12 +4214,14 @@ int main() {
     failures += run("Button example 2", &doc_example_Button_2::example);
     failures += run("ButtonBase example 1", &doc_example_ButtonBase_1::example);
     failures += run("ButtonBase example 2", &doc_example_ButtonBase_2::example);
+    failures += run("ButtonTextBox example 1", &doc_example_ButtonTextBox_1::example);
     failures += run("CancellationFlag example 1", &doc_example_CancellationFlag_1::example);
     failures += run("CancellationFlag example 2", &doc_example_CancellationFlag_2::example);
     failures += run("Card example 1", &doc_example_Card_1::example);
     failures += run("Card example 2", &doc_example_Card_2::example);
     failures += run("CheckBox example 1", &doc_example_CheckBox_1::example);
     failures += run("CheckBox example 2", &doc_example_CheckBox_2::example);
+    failures += run("CheckedComboBox example 1", &doc_example_CheckedComboBox_1::example);
     failures += run("CheckedListBox example 1", &doc_example_CheckedListBox_1::example);
     failures += run("CheckedListBox example 2", &doc_example_CheckedListBox_2::example);
     failures += run("ChoiceGroup example 1", &doc_example_ChoiceGroup_1::example);
@@ -4270,6 +4322,7 @@ int main() {
     failures += run("Panel example 1", &doc_example_Panel_1::example);
     failures += run("Panel example 2", &doc_example_Panel_2::example);
     failures += run("PictureBox example 1", &doc_example_PictureBox_1::example);
+    failures += run("PopupContainerBox example 1", &doc_example_PopupContainerBox_1::example);
     failures += run("ProgressBar example 1", &doc_example_ProgressBar_1::example);
     failures += run("ProgressBar example 2", &doc_example_ProgressBar_2::example);
     failures += run("PropertyGrid example 1", &doc_example_PropertyGrid_1::example);
@@ -4323,6 +4376,7 @@ int main() {
     failures += run("Timer example 1", &doc_example_Timer_1::example);
     failures += run("Timer example 2", &doc_example_Timer_2::example);
     failures += run("Toast example 1", &doc_example_Toast_1::example);
+    failures += run("ToastNotification example 1", &doc_example_ToastNotification_1::example);
     failures += run("ToggleSwitch example 1", &doc_example_ToggleSwitch_1::example);
     failures += run("TokenBox example 1", &doc_example_TokenBox_1::example);
     failures += run("ToolStrip example 1", &doc_example_ToolStrip_1::example);

@@ -1,7 +1,8 @@
 // TaskDialog (stage W): page validation, the in-window modal presentation,
 // published parts, buttons that close and buttons that do not, the default
 // button, Escape, radio buttons, the verification check box, the expander,
-// the progress bar, navigation to another page, semantics and disposal.
+// the progress bar, navigation to another page, semantics and disposal; the
+// input field and the input box built on it.
 
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
@@ -9,8 +10,10 @@
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/button_base.hpp"
+#include "gui_forms/controls/input_box.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/controls/task_dialog.hpp"
+#include "gui_forms/controls/text_box.hpp"
 #include "gui_forms/controls/wizard.hpp"
 #include "gui_forms/dirty.hpp"
 #include "gui_forms/resources/stock_icons/stock_icons.hpp"
@@ -418,6 +421,71 @@ void navigation_and_cancel() {
     require(recorder.results.size() == results && !(*dialog).shown(), "a disposed dialog closes without an event");
 }
 
+// The input field: validation, focus, Enter, the result's text and the
+// input box helpers.
+void input_field() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("input.root"));
+    Window window(root, {640.0, 480.0});
+    window.perform_layout();
+    std::shared_ptr<TaskDialog> probe = make_control<TaskDialog>(StableId("input.probe"));
+    TaskDialogPage too_long = input_box_page({.prompt = "Name", .default_response = "abcdef", .maximum_length = 3U});
+    require(throws_invalid(SetPage{probe.get(), too_long}), "a default response past the maximum length is refused");
+    TaskDialogPage bad_text = input_box_page({.prompt = "Name", .placeholder = std::string("\xff")});
+    require(throws_invalid(SetPage{probe.get(), bad_text}), "an input placeholder that is not UTF-8 is refused");
+
+    InputBoxRequest request{};
+    request.title = "New folder";
+    request.prompt = "Name the new folder";
+    request.default_response = "Untitled";
+    request.placeholder = "Folder name";
+    request.maximum_length = 32U;
+    const TaskDialogPage page = input_box_page(request);
+    require(page.caption == "New folder" && page.text == "Name the new folder" && page.input.has_value() &&
+                page.buttons.size() == 2U && page.default_button == "ok" && page.allow_cancel,
+            "the input box page holds the prompt, the field, OK by default and Cancel");
+
+    Recorder recorder;
+    std::vector<SubscriptionToken> tokens;
+    const std::shared_ptr<TaskDialog> box = show_input_box(root, request, StableId("input.box"));
+    require(box != nullptr && (*box).shown(), "show_input_box shows the box");
+    subscribe(*box, recorder, tokens);
+    window.perform_layout();
+    const std::shared_ptr<TextBox> field = (*box).input_box();
+    require(field != nullptr && std::string((*field).stable_id().value()) == "input.box.input" &&
+                (*field).text.read() == "Untitled" && (*field).placeholder_text.read() == "Folder name" &&
+                (*field).maximum_length.read() == 32U && (*field).accessible_name.read() == "Name the new folder",
+            "the field carries the default response, placeholder, limit and the prompt as its name");
+    require(window.focused_control() == std::static_pointer_cast<Control>(field), "the field takes focus first");
+    require((*box).parts().input.present && (*box).parts().text.present &&
+                (*box).parts().input.bounds.y >= (*box).parts().text.bounds.y + (*box).parts().text.bounds.height,
+            "the input part sits below the prompt");
+    (*field).text = "Evidence";
+    require(window.dispatch_key({KeyAction::down, PhysicalKey::enter}) && !(*box).shown() &&
+                !recorder.results.empty() && recorder.results.back().button_id == "ok" &&
+                recorder.results.back().input_text == "Evidence",
+            "Enter in the field clicks OK and the result carries the text");
+    const InputBoxResult accepted = input_box_result(recorder.results.back());
+    require(accepted.accepted && accepted.text == "Evidence", "input_box_result reads an accepted answer");
+
+    const std::shared_ptr<TaskDialog> again = show_input_box(root, request, StableId("input.again"));
+    require(again != nullptr, "a second input box shows");
+    subscribe(*again, recorder, tokens);
+    window.perform_layout();
+    (*(*again).input_box()).text = "Discarded";
+    require(window.dispatch_key({KeyAction::down, PhysicalKey::escape}) && !(*again).shown(),
+            "Escape cancels the input box");
+    const InputBoxResult cancelled = input_box_result(recorder.results.back());
+    require(!cancelled.accepted && cancelled.text.empty(), "a cancelled input box answers nothing");
+
+    std::shared_ptr<Panel> detached = make_control<Panel>(StableId("input.detached"));
+    require(show_input_box(detached, request) == nullptr, "an owner outside a window shows no box");
+    TaskDialogPage plain;
+    plain.heading = "No field";
+    (*probe).set_page(plain);
+    require((*probe).input_box() == nullptr && (*probe).input_text().empty() && !(*probe).parts().input.present,
+            "a page without input has no field");
+}
+
 } // namespace
 
 int main() {
@@ -425,7 +493,8 @@ int main() {
     modal_presentation();
     closed_while_opening();
     navigation_and_cancel();
+    input_field();
     std::cout << "TaskDialog: validation, modal presentation, parts, buttons, Enter and Escape, radio buttons, "
-                 "verification, expander, progress, navigation, semantics and disposal passed\n";
+                 "verification, expander, progress, navigation, semantics, disposal and the input box passed\n";
     return 0;
 }
