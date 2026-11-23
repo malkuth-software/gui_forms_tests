@@ -609,6 +609,19 @@ if(GUI_FORMS_ENABLE_WINDOWS_HOST)
         gui_forms_controls gui_forms_host_windows)
     add_test(NAME gui_forms_windows_live_idle_tests
              COMMAND gui_forms_windows_live_idle_tests)
+    # Drops from other programs through the window's registered IDropTarget,
+    # onto the Gallery's retained-rows collection (in process; it includes
+    # windows_host.cpp, so it keeps its own program).
+    if(TARGET gui_forms_gallery_model)
+        add_executable(gui_forms_windows_drop_target_tests tests/windows_drop_target_tests.cpp)
+        target_compile_definitions(gui_forms_windows_drop_target_tests PRIVATE
+            ${GUI_FORMS_WINDOWS_DEFINITIONS}
+            GUI_FORMS_WINDOWS_DROP_TEST=1)
+        target_link_libraries(gui_forms_windows_drop_target_tests PRIVATE
+            gui_forms_gallery_model gui_forms_controls gui_forms_host_windows)
+        add_test(NAME gui_forms_windows_drop_target_tests
+                 COMMAND gui_forms_windows_drop_target_tests)
+    endif()
     add_executable(gui_forms_windows_schedule_wake_tests tests/windows_schedule_wake_tests.cpp)
     target_compile_definitions(gui_forms_windows_schedule_wake_tests PRIVATE
         ${GUI_FORMS_WINDOWS_DEFINITIONS}
