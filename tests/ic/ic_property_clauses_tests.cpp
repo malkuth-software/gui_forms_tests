@@ -46,13 +46,14 @@ constexpr double infinite = std::numeric_limits<double>::infinity();
 // ContextMenu.preferred_width: finite(incoming) and incoming >= 120 and incoming <= 1024.
 bool context_menu_width_admits(double width) {
     const std::shared_ptr<ContextMenu> menu = std::make_shared<ContextMenu>("ic.clauses.context");
+    const double before = (*menu).preferred_width.read();
     bool admitted = true;
     try {
         (*menu).preferred_width = width;
     } catch (const std::invalid_argument&) {
         admitted = false;
     }
-    if (!admitted && (*menu).preferred_width.read() != 268.0) {
+    if (!admitted && (*menu).preferred_width.read() != before) {
         require(false, "a refused ContextMenu width changed the property");
     }
     return admitted;

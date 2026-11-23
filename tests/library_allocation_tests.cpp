@@ -35,6 +35,8 @@
 // blocks handed to STXlib would too.
 namespace program_allocations {
 thread_local std::uint64_t calls = 0U;
+// Where a test's block escapes to (program_allocations_stay_the_programs).
+int* volatile escaped = nullptr;
 
 void* allocate(const std::size_t size) {
     calls = calls + 1U;
@@ -126,6 +128,10 @@ void program_allocations_stay_the_programs() {
     const std::uint64_t program_before = program_allocations::calls;
     int* const value = new int(7);
     std::vector<int> numbers(16U, 1);
+    // The blocks escape, so the optimiser may not elide the allocations
+    // (new and delete are replaceable, and Clang removes an unobserved pair).
+    program_allocations::escaped = value;
+    program_allocations::escaped = numbers.data();
     require(program_allocations::calls >= program_before + 2U, "the program's new and vector reach its operator new");
     const LibraryCounts after = library_counts();
     require(after.granted == before.granted, "the program's own allocations do not reach the library seam");
