@@ -16,6 +16,7 @@
 #include "gui_forms/controls/link_flow_effects.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/engine/effect_registry/effect_registry.hpp"
+#include "gui_forms/engine/part_table/engine_part_table.hpp"
 #include "gui_forms/engine/primitive_registry/primitive_registry.hpp"
 #include "gui_forms/resources/image_registry/image_registry.hpp"
 #include "gui_forms/theme/stock_anatomies/stock_anatomies.hpp"
@@ -609,7 +610,7 @@ void background_commands() {
     }
 
     // A finish layer: the world's finish tiles, 128 device pixels square
-    // on the lattice through world (0, 0). In no window it draws nothing;
+    // on the lattice through world (0, 0), each with its apron. In no window it draws nothing;
     // in a window the first paint queues its tiles and draws none, idle
     // frames paint them, and the next paint draws them. The view returns to
     // (5, 7) from the block pan above, so that the pan below stays within
@@ -639,8 +640,12 @@ void background_commands() {
     require(finished.rasters.size() == 4U && finished.saves == 1 && finished.clips.size() == 1U,
             "the next paint draws every tile, clipped to the area");
     if (finished.rasters.size() == 4U) {
-        require(finished.rasters[0] == Point{5.0 - 128.0, 7.0 - 128.0} && finished.rasters[3] == Point{5.0, 7.0},
-                "the tiles lie on the lattice through world (0, 0), 128 device pixels apart");
+        // Each raster starts its apron (finish_tile_apron, two device
+        // pixels at scale 1) before its square.
+        const double apron = static_cast<double>(finish_tile_apron);
+        require(finished.rasters[0] == Point{5.0 - 128.0 - apron, 7.0 - 128.0 - apron} &&
+                    finished.rasters[3] == Point{5.0 - apron, 7.0 - apron},
+                "the tiles lie on the lattice through world (0, 0), 128 device pixels apart, each from its apron");
     }
     view.origin = Point{8.0, 7.0};
     RecordingPainter shifted;
