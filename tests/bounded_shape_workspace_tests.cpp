@@ -1,4 +1,4 @@
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #include "bounded_shape_workspace.hpp"
 #include <array>
 #include <cstdlib>
@@ -46,7 +46,7 @@ void require(const bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
 
-void load_fonts(HarfBuzzFontEngine& engine, const std::filesystem::path& directory) {
+void load_fonts(TextShapeEngine& engine, const std::filesystem::path& directory) {
     const std::array<const char*, 4> names{"Carlito-Regular.ttf", "NotoSansArabic-Minimal.ttf",
         "NotoSansHebrew-Regular.ttf", "NotoEmoji-Regular.ttf"};
     for (std::size_t index = 0; index < names.size(); ++index) {
@@ -96,7 +96,7 @@ void compare(const BoundedShapedText& expected, const BoundedShapedText& actual)
     require(actual.controlled_output_bytes == bytes, "exact retained output accounting");
 }
 
-void test_geometry(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace) {
+void test_geometry(TextShapeEngine& engine, BoundedShapeWorkspace& workspace) {
     const std::array<std::string_view, 9> texts{"", "   ", "office AV 123", "a\xcc\x81",
         "שלום ABC 123", "اللون 123 (RGB)", "Hello 😀!", "a\r\nb\tc", "Latin العربية שלום á 😀"};
     const std::array<FontSpec, 3> fonts{{
@@ -115,7 +115,7 @@ void test_geometry(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace)
     }
 }
 
-void test_failures(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace) {
+void test_failures(TextShapeEngine& engine, BoundedShapeWorkspace& workspace) {
     const FontSpec font{FontRole::content, 16, 400, false};
     std::unique_ptr<BoundedShapedText> output = engine.shape_with_workspace("hello", font, {}, workspace);
     const BoundedShapedText* old = output.get();
@@ -160,7 +160,7 @@ void test_failures(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace)
         "empty row allocates no glyph or run arrays");
 }
 
-void test_preparation(HarfBuzzFontEngine& engine) {
+void test_preparation(TextShapeEngine& engine) {
     ShapeStorageLimits small{};
     small.input_bytes = 8U;
     small.runs = 8U;
@@ -200,7 +200,7 @@ void test_preparation(HarfBuzzFontEngine& engine) {
     allocation_probe::enabled = false;
     require(allocation_probe::calls == 0U, "sufficient prepared arrays reused");
 }
-void test_invalid_requests(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace) {
+void test_invalid_requests(TextShapeEngine& engine, BoundedShapeWorkspace& workspace) {
     const FontSpec font{FontRole::content, 16, 400, false};
     std::unique_ptr<BoundedShapedText> output = engine.shape_with_workspace("abc", font, {}, workspace);
     const BoundedShapedText* old = output.get();
@@ -216,7 +216,7 @@ void test_invalid_requests(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& wo
     try { output = engine.shape_with_workspace("abc", font, {}, unprepared); }
     catch (const std::length_error&) { refused = true; }
     require(refused && output.get() == old, "unprepared workspace refused");
-    HarfBuzzFontEngine unbounded{};
+    TextShapeEngine unbounded{};
     refused = false;
     try { unbounded.prepare_workspace(unprepared, {}); }
     catch (const std::invalid_argument&) { refused = true; }
@@ -232,7 +232,7 @@ void test_invalid_requests(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& wo
     compare(*output, *recovered);
 }
 
-void test_retained_rows(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace) {
+void test_retained_rows(TextShapeEngine& engine, BoundedShapeWorkspace& workspace) {
     const std::array<std::string_view, 4U> texts{"office", "العربية", "שלום", "á 😀"};
     const FontSpec font{FontRole::content, 16, 400, false};
     std::array<std::unique_ptr<BoundedShapedText>, 512U> rows{};
@@ -253,7 +253,7 @@ void test_retained_rows(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& works
 }
 
 #if defined(GUI_FORMS_TEXT_LAYOUT_DIAGNOSTICS)
-void test_native_failures(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& workspace) {
+void test_native_failures(TextShapeEngine& engine, BoundedShapeWorkspace& workspace) {
     const std::array<TextLayoutFailure, 4U> failures{TextLayoutFailure::shaper_open,
         TextLayoutFailure::glyph_storage, TextLayoutFailure::after_shape, TextLayoutFailure::shape_refused};
     const FontSpec font{FontRole::content, 16, 400, false};
@@ -287,7 +287,7 @@ void test_native_failures(HarfBuzzFontEngine& engine, BoundedShapeWorkspace& wor
 int main(int argc, char** argv) {
     try {
         require(argc == 2, "font directory required");
-        HarfBuzzFontEngine engine{};
+        TextShapeEngine engine{};
         const std::size_t registration = engine.configure_bounded_registration(4U, 16U * 1024U * 1024U);
         require(registration != 0U, "bounded registration charged");
         const std::filesystem::path fonts(argv[1]);

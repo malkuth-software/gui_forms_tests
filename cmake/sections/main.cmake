@@ -1597,10 +1597,10 @@ if(TARGET gui_forms_text_engine)
     target_compile_definitions(gui_forms_bundled_font_coverage_tests PRIVATE
         GUI_FORMS_TEST_FONT_DIRECTORY="${GUI_FORMS_SOURCE_DIR}/assets/fonts")
     add_test(NAME gui_forms_bundled_font_coverage_tests COMMAND gui_forms_bundled_font_coverage_tests)
-    add_executable(gui_forms_harfbuzz_font_engine_tests
-        tests/harfbuzz_font_engine_tests.cpp
+    add_executable(gui_forms_text_shape_engine_tests
+        tests/text_shape_engine_tests.cpp
     )
-    target_compile_definitions(gui_forms_harfbuzz_font_engine_tests PRIVATE
+    target_compile_definitions(gui_forms_text_shape_engine_tests PRIVATE
         GUI_FORMS_TEST_RAPIDS_REGULAR="${GUI_FORMS_SOURCE_DIR}/assets/fonts/PortsmouthRapids.ttf"
         GUI_FORMS_TEST_RAPIDS_BOLD="${GUI_FORMS_SOURCE_DIR}/assets/fonts/PortsmouthRapids-Bold.ttf"
         GUI_FORMS_TEST_CARLITO_REGULAR="${GUI_FORMS_SOURCE_DIR}/assets/fonts/Carlito-Regular.ttf"
@@ -1614,10 +1614,10 @@ if(TARGET gui_forms_text_engine)
         GUI_FORMS_TEST_SELAWIK_REGULAR="${GUI_FORMS_SOURCE_DIR}/assets/fonts/Selawik-Regular.ttf"
         GUI_FORMS_TEST_SELAWIK_BOLD="${GUI_FORMS_SOURCE_DIR}/assets/fonts/Selawik-Bold.ttf"
     )
-    target_link_libraries(gui_forms_harfbuzz_font_engine_tests PRIVATE
+    target_link_libraries(gui_forms_text_shape_engine_tests PRIVATE
         gui_forms_text_engine)
-    add_test(NAME gui_forms_harfbuzz_font_engine_tests
-             COMMAND gui_forms_harfbuzz_font_engine_tests)
+    add_test(NAME gui_forms_text_shape_engine_tests
+             COMMAND gui_forms_text_shape_engine_tests)
     # Application font families: validation, loading, composite looks, refusal in stock
     # controls, quarantine and unload while in use.
     add_executable(gui_forms_app_font_tests tests/app_font_tests.cpp)

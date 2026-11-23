@@ -8,7 +8,7 @@
 
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/window.hpp"
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #include "../textlayout/text_analysis.hpp"
 #include "gui_forms/allocation/statistics/allocation_statistics.hpp"
 
@@ -32,7 +32,7 @@
 namespace {
 
 using namespace gui_forms;
-using render::text::HarfBuzzFontEngine;
+using render::text::TextShapeEngine;
 
 void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
@@ -66,7 +66,7 @@ std::vector<std::byte> read_face(const std::filesystem::path& path) {
 // The window's provider over the engine, as the hosts' painters are.
 class EngineMetrics final : public TextMetricsProvider {
 public:
-    explicit EngineMetrics(HarfBuzzFontEngine& engine) : engine_(engine) {}
+    explicit EngineMetrics(TextShapeEngine& engine) : engine_(engine) {}
 
     ResolvedTextLayout resolve_text_layout_utf8(std::string_view utf8, FontSpec font) override {
         const ResolvedTextLayout layout = engine_.resolve(utf8, font);
@@ -76,17 +76,17 @@ public:
     TextResolutionStatus fill_line_break_opportunities_utf8(
         std::string_view utf8, std::span<LineBreakOpportunity> opportunities) override {
         const TextResolutionStatus status =
-            HarfBuzzFontEngine::fill_line_break_opportunities_utf8(utf8, opportunities);
+            TextShapeEngine::fill_line_break_opportunities_utf8(utf8, opportunities);
         return status;
     }
 
 private:
-    HarfBuzzFontEngine& engine_;
+    TextShapeEngine& engine_;
 };
 
 std::vector<LineBreakOpportunity> engine_breaks(std::string_view text) {
     std::vector<LineBreakOpportunity> opportunities(text.size(), LineBreakOpportunity::prohibited);
-    const TextResolutionStatus status = HarfBuzzFontEngine::fill_line_break_opportunities_utf8(text, opportunities);
+    const TextResolutionStatus status = TextShapeEngine::fill_line_break_opportunities_utf8(text, opportunities);
     require(status == TextResolutionStatus::exact, "the engine's breaks are exact");
     return opportunities;
 }
@@ -144,18 +144,18 @@ void test_break_opportunities() {
             "a break between two prefix signs, none around them");
 
     std::array<LineBreakOpportunity, 2> short_storage{LineBreakOpportunity::allowed, LineBreakOpportunity::allowed};
-    require(HarfBuzzFontEngine::fill_line_break_opportunities_utf8("abc", short_storage) ==
+    require(TextShapeEngine::fill_line_break_opportunities_utf8("abc", short_storage) ==
                 TextResolutionStatus::invalid_request,
             "storage of the wrong size is refused");
     require(short_storage[0] == LineBreakOpportunity::allowed, "and left unchanged");
     std::array<LineBreakOpportunity, 2> invalid_storage{LineBreakOpportunity::allowed, LineBreakOpportunity::allowed};
-    require(HarfBuzzFontEngine::fill_line_break_opportunities_utf8("\xc3\x28", invalid_storage) ==
+    require(TextShapeEngine::fill_line_break_opportunities_utf8("\xc3\x28", invalid_storage) ==
                 TextResolutionStatus::invalid_request,
             "invalid UTF-8 is refused");
     require(estimate_line_break_opportunities_utf8("\xc3\x28", invalid_storage) ==
                 TextResolutionStatus::invalid_request,
             "by the estimate too");
-    require(HarfBuzzFontEngine::fill_line_break_opportunities_utf8("", std::span<LineBreakOpportunity>{}) ==
+    require(TextShapeEngine::fill_line_break_opportunities_utf8("", std::span<LineBreakOpportunity>{}) ==
                 TextResolutionStatus::exact,
             "an empty text has nothing to fill");
 }
@@ -199,7 +199,7 @@ FontSpec content(double size) {
     return font;
 }
 
-void require_line_box(HarfBuzzFontEngine& engine, double size, double height, double baseline,
+void require_line_box(TextShapeEngine& engine, double size, double height, double baseline,
                       const std::string& face) {
     const ResolvedTextLayout primary = engine.resolve(" ", content(size));
     require(primary.design_metrics.present(), face + " resolves its design metrics");
@@ -210,7 +210,7 @@ void require_line_box(HarfBuzzFontEngine& engine, double size, double height, do
 
 void test_design_metrics_and_line_boxes(const std::filesystem::path& fonts) {
     const std::vector<std::byte> carlito_bytes = read_face(fonts / "Carlito-Regular.ttf");
-    HarfBuzzFontEngine carlito{};
+    TextShapeEngine carlito{};
     require(carlito.register_typeface(FontRole::content, 400, false, carlito_bytes).has_value(),
             "Carlito registers");
     const ResolvedTextLayout resolved = carlito.resolve("Settings", content(13.0));
@@ -227,7 +227,7 @@ void test_design_metrics_and_line_boxes(const std::filesystem::path& fonts) {
     require_line_box(carlito, 14.0, 17.0, 13.0, "Carlito");
 
     const std::vector<std::byte> rapids_bytes = read_face(fonts / "PortsmouthRapids.ttf");
-    HarfBuzzFontEngine rapids{};
+    TextShapeEngine rapids{};
     require(rapids.register_typeface(FontRole::content, 400, false, rapids_bytes).has_value(),
             "Portsmouth Rapids registers");
     require_line_box(rapids, 13.0, 16.0, 12.0, "Portsmouth Rapids");

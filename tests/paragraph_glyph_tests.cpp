@@ -18,7 +18,7 @@
 #include "gui_forms/text/paragraph_layout/paragraph_layout.hpp"
 #include "gui_forms/types/damage_region/damage_region.hpp"
 #include "gui_forms/types/painter/painter.hpp"
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #include "skia_raster.hpp"
 
 #include <array>

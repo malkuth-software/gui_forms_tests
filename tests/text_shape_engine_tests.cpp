@@ -1,4 +1,4 @@
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #include "src/core/resources/fonts/bundled_font_set.hpp"
 
 #include <algorithm>
@@ -48,7 +48,7 @@ bool shaped_text_uses_face(const ShapedText& shaped, FontFaceId id) {
 }
 
 void test_mixed_direction_text() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false,
         read_file(GUI_FORMS_TEST_CARLITO_REGULAR)).has_value(), "Latin primary registers");
     require(engine.register_fallback_typeface(400, false,
@@ -73,7 +73,7 @@ void test_mixed_direction_text() {
 void test_shared_font_lifetime() {
     std::weak_ptr<const std::vector<std::byte>> weak;
     {
-        HarfBuzzFontEngine engine;
+        TextShapeEngine engine;
         std::shared_ptr<const std::vector<std::byte>> bytes =
             std::make_shared<const std::vector<std::byte>>(read_file(GUI_FORMS_TEST_CARLITO_REGULAR));
         weak = bytes;
@@ -96,7 +96,7 @@ void test_owned_font_view_lifetime() {
     struct FontOwner final { std::vector<std::byte> bytes; };
     std::weak_ptr<const FontOwner> weak;
     {
-        HarfBuzzFontEngine engine;
+        TextShapeEngine engine;
         std::shared_ptr<const FontOwner> owner = std::make_shared<const FontOwner>(
             FontOwner{read_file(GUI_FORMS_TEST_CARLITO_REGULAR)});
         weak = owner;
@@ -115,7 +115,7 @@ void test_owned_font_view_lifetime() {
 }
 
 void test_owned_registration_style_selection_and_ligatures() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     std::vector<std::byte> regular = read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     std::vector<std::byte> bold = read_file(GUI_FORMS_TEST_CARLITO_BOLD);
     const std::optional<FontFaceId> regular_id = engine.register_typeface(
@@ -141,7 +141,7 @@ void test_owned_registration_style_selection_and_ligatures() {
 }
 
 void test_cluster_fallback_is_bounded_and_absolute() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> rapids =
         read_file(GUI_FORMS_TEST_RAPIDS_REGULAR);
     const std::vector<std::byte> carlito =
@@ -180,7 +180,7 @@ void test_control_navigation_symbols_stay_in_rapids() {
         GUI_FORMS_TEST_RAPIDS_BOLD);
     const std::vector<std::byte> carlito = read_file(
         GUI_FORMS_TEST_CARLITO_REGULAR);
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::optional<FontFaceId> regular = engine.register_typeface(
         FontRole::control, 400, false, rapids_regular);
     const std::optional<FontFaceId> bold = engine.register_typeface(
@@ -202,7 +202,7 @@ void test_control_navigation_symbols_stay_in_rapids() {
 }
 
 void test_metrics_scale_and_repeat_deterministically() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> carlito =
         read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     require(engine.register_typeface(FontRole::content, 400, false, carlito)
@@ -225,7 +225,7 @@ void test_metrics_scale_and_repeat_deterministically() {
 }
 
 void test_shared_cjk_and_emoji_fallback_across_roles() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> rapids =
         read_file(GUI_FORMS_TEST_RAPIDS_REGULAR);
     const std::vector<std::byte> carlito =
@@ -285,7 +285,7 @@ void test_shared_cjk_and_emoji_fallback_across_roles() {
 }
 
 void test_letter_spacing_is_a_shaped_layout_input() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> carlito =
         read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     require(engine.register_typeface(FontRole::content, 400, false, carlito)
@@ -309,7 +309,7 @@ void test_letter_spacing_is_a_shaped_layout_input() {
 }
 
 void test_rejection_and_missing_role_are_honest() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> invalid(64U, std::byte{0x7f});
     const std::optional<FontFaceId> empty_face = engine.register_typeface(FontRole::content, 400, false, {});
     const std::optional<FontFaceId> invalid_face = engine.register_typeface(FontRole::content, 400, false, invalid);
@@ -324,7 +324,7 @@ void test_rejection_and_missing_role_are_honest() {
 }
 
 void test_public_resolution_record_names_actual_bundled_runs() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> rapids =
         read_file(GUI_FORMS_TEST_RAPIDS_REGULAR);
     const std::vector<std::byte> carlito =
@@ -384,7 +384,7 @@ void test_public_resolution_record_names_actual_bundled_runs() {
                   << " line=" << scaled.logical_size.height << '\n';
     }
 
-    HarfBuzzFontEngine missing;
+    TextShapeEngine missing;
     require(missing.register_fallback_typeface(400, false, noto_cjk).has_value(),
             "missing-primary fixture fallback must register");
     const ResolvedTextLayout unavailable = missing.resolve(
@@ -453,7 +453,7 @@ std::span<const gui_forms::detail::CodepointRange> table(const char* file_name) 
     return *coverage;
 }
 
-void register_primaries(HarfBuzzFontEngine& engine, const std::vector<std::byte>& rapids,
+void register_primaries(TextShapeEngine& engine, const std::vector<std::byte>& rapids,
                         const std::vector<std::byte>& carlito, const std::vector<std::byte>& cousine) {
     require(engine.register_typeface(FontRole::control, 400, false, rapids) &&
             engine.register_typeface(FontRole::content, 400, false, carlito) &&
@@ -471,8 +471,8 @@ void test_lazy_fallback_matches_eager_and_loads_once() {
                                            GUI_FORMS_TEST_NOTO_HEBREW_REGULAR, GUI_FORMS_TEST_NOTO_EMOJI};
     const std::array<const char*, 4> names{"NotoSansCJKjp-Subset.otf", "NotoSansArabic-Minimal.ttf",
                                            "NotoSansHebrew-Regular.ttf", "NotoEmoji-Regular.ttf"};
-    HarfBuzzFontEngine eager;
-    HarfBuzzFontEngine lazy;
+    TextShapeEngine eager;
+    TextShapeEngine lazy;
     register_primaries(eager, rapids, carlito, cousine);
     register_primaries(lazy, rapids, carlito, cousine);
     std::array<CountingLoader, 4> loaders{};
@@ -512,10 +512,10 @@ void test_lazy_fallback_matches_eager_and_loads_once() {
     require(lazy.opened_face_count() == 7U, "every needed fallback opened");
 
     // Unreadable bytes, and bytes that are not a font, cover nothing and are not read again.
-    HarfBuzzFontEngine primaries;
+    TextShapeEngine primaries;
     register_primaries(primaries, rapids, carlito, cousine);
     for (const char* path : std::array<const char*, 2>{nullptr, GUI_FORMS_TEST_NOTO_EMOJI}) {
-        HarfBuzzFontEngine damaged;
+        TextShapeEngine damaged;
         register_primaries(damaged, rapids, carlito, cousine);
         CountingLoader loader = counting_loader(path);
         if (path != nullptr) {
@@ -532,7 +532,7 @@ void test_lazy_fallback_matches_eager_and_loads_once() {
     }
 
     // A read that throws fails the call and leaves the face to be read by the next one.
-    HarfBuzzFontEngine retried;
+    TextShapeEngine retried;
     register_primaries(retried, rapids, carlito, cousine);
     CountingLoader flaky = counting_loader(GUI_FORMS_TEST_NOTO_CJK_REGULAR);
     *flaky.throws = 1;
@@ -563,7 +563,7 @@ void test_named_family_draws_first_and_loads_on_demand() {
     const std::vector<std::byte> rapids = read_file(GUI_FORMS_TEST_RAPIDS_REGULAR);
     const std::vector<std::byte> carlito = read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     const std::vector<std::byte> cousine = read_file(GUI_FORMS_TEST_COUSINE_REGULAR);
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     register_primaries(engine, rapids, carlito, cousine);
     require(engine.register_fallback_typeface(400, false, read_file(GUI_FORMS_TEST_NOTO_CJK_REGULAR)).has_value(),
             "CJK fallback registers");
@@ -640,7 +640,7 @@ void test_named_family_draws_first_and_loads_on_demand() {
     stacked.family = selawik;
     require(engine.resolve("Stack", stacked).primary_family == "Selawik", "the font's family draws before its stack");
 
-    HarfBuzzFontEngine unreadable;
+    TextShapeEngine unreadable;
     register_primaries(unreadable, rapids, carlito, cousine);
     CountingLoader missing = counting_loader(nullptr);
     require(unreadable.register_lazy_family_typeface(selawik, 400, false, missing).has_value(),
@@ -659,7 +659,7 @@ void test_named_family_draws_first_and_loads_on_demand() {
 
 #if defined(GUI_FORMS_TEXT_LAYOUT_DIAGNOSTICS)
 void test_call_failure_preserves_caller_and_recovers() {
-    HarfBuzzFontEngine engine{};
+    TextShapeEngine engine{};
     const std::vector<std::byte> primary = read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     const std::vector<std::byte> fallback = read_file(GUI_FORMS_TEST_NOTO_HEBREW_REGULAR);
     const std::optional<FontFaceId> primary_id =
@@ -711,7 +711,7 @@ void test_call_failure_preserves_caller_and_recovers() {
 
 namespace {
 void test_canonical_pair_coverage_preserves_source() {
-    HarfBuzzFontEngine engine{};
+    TextShapeEngine engine{};
     const std::vector<std::byte> bytes = read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     const std::optional<FontFaceId> registered =
         engine.register_typeface(FontRole::content, 400, false, bytes);
@@ -756,7 +756,7 @@ void test_advances_are_unhinted_and_scale_linearly() {
     const std::string corpus = "Hamburgefonstiv quick brown fox 0123456789 Help";
     const std::array<const char*, 2> fonts{GUI_FORMS_TEST_RAPIDS_REGULAR, GUI_FORMS_TEST_CARLITO_REGULAR};
     for (const char* font : fonts) {
-        HarfBuzzFontEngine engine;
+        TextShapeEngine engine;
         require(engine.register_typeface(FontRole::control, 400, false, read_file(font)).has_value(),
                 "linearity font registers");
         const std::array<double, 3> sizes{9.0, 11.0, 13.0};
@@ -779,7 +779,7 @@ void test_advances_are_unhinted_and_scale_linearly() {
 // registered after the Japanese one; text in no language, or in Japanese,
 // keeps the registered order. Only fallback faces take a language.
 void test_language_selects_the_korean_face() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     const std::vector<std::byte> carlito = read_file(GUI_FORMS_TEST_CARLITO_REGULAR);
     const std::vector<std::byte> japanese = read_file(GUI_FORMS_TEST_NOTO_CJK_REGULAR);
     const std::vector<std::byte> korean = read_file(GUI_FORMS_TEST_NOTO_CJK_KOREAN);
@@ -843,10 +843,10 @@ int main() {
         test_letter_spacing_is_a_shaped_layout_input();
         test_rejection_and_missing_role_are_honest();
         test_public_resolution_record_names_actual_bundled_runs();
-        std::cout << "harfbuzz font engine tests passed\n";
+        std::cout << "text shape engine tests passed\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {
-        std::cerr << "harfbuzz font engine tests failed: " << error.what() << '\n';
+        std::cerr << "text shape engine tests failed: " << error.what() << '\n';
         return EXIT_FAILURE;
     }
 }
