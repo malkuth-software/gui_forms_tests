@@ -440,7 +440,7 @@ void input_field() {
     request.placeholder = "Folder name";
     request.maximum_length = 32U;
     const TaskDialogPage page = input_box_page(request);
-    require(page.caption == "New folder" && page.text == "Name the new folder" && page.input.present() &&
+    require(page.caption == "New folder" && page.text == "Name the new folder" && page.input.has_value() &&
                 page.buttons.size() == 2U && page.default_button == "ok" && page.allow_cancel,
             "the input box page holds the prompt, the field, OK by default and Cancel");
 
