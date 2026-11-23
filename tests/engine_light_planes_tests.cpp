@@ -22,7 +22,7 @@
 // are made by the integrator (`lamps <bake dir> 240 dialog`, the study's
 // lamp_keys.cpp); nothing here bakes.
 
-#include "gui_forms/engine/engine_math/engine_math.hpp"
+#include "stxlib/math.hpp"
 #include "gui_forms/engine/part_raster/part_raster.hpp"
 #include "gui_forms/surface_root/surface_root.hpp"
 
@@ -197,7 +197,7 @@ std::array<std::uint8_t, 4> expected_pixel(double red, double green, double blue
     const std::array<double, 3> channels{blue, green, red};
     std::array<std::uint8_t, 4> pixel{};
     for (std::size_t at = 0U; at < 3U; ++at) {
-        const double toned = 1.0 - engine_exponential(-channels[at] * 1.3);
+        const double toned = 1.0 - stxlib::math::exp(-channels[at] * 1.3);
         const std::uint32_t straight = engine_primitives::encode_linear(toned);
         pixel[at] = static_cast<std::uint8_t>((straight * alpha + 127U) / 255U);
     }

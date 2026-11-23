@@ -35,8 +35,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     endforeach()
     # Contraction off in every build, whatever GUI_FORMS_REFERENCE_ARITHMETIC
     # says (each source also carries the Clang pragma; GCC reads only the flag):
-    # - engine_math: its stated error bounds (engine_math.hpp) assume each
-    #   operation rounds on its own;
     # - engine_expression and theme_value: theme values and expressions, the
     #   same text giving the same number on every host;
     # - value_text: a ValueBar's typed value, parsed as the expression engine
@@ -46,7 +44,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     # - theme_motion_lowering and motion_value: motion parameters and samples,
     #   whose settling decides when an animation ends.
     set_source_files_properties(
-        ${GUI_FORMS_SOURCE_DIR}/src/core/engine/engine_math/engine_math.cpp
         ${GUI_FORMS_SOURCE_DIR}/src/core/engine/engine_expression/engine_expression.cpp
         ${GUI_FORMS_SOURCE_DIR}/src/core/theme_language/value/theme_value.cpp
         ${GUI_FORMS_SOURCE_DIR}/src/controls/range_control/value_bar/value_text.cpp

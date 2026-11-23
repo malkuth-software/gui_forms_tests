@@ -848,9 +848,12 @@ add_test(NAME gui_forms_motion_clock_tests COMMAND gui_forms_motion_clock_tests)
 add_executable(gui_forms_linear_light_tests tests/linear_light_tests.cpp)
 target_link_libraries(gui_forms_linear_light_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_linear_light_tests COMMAND gui_forms_linear_light_tests)
-add_executable(gui_forms_engine_math_tests tests/engine_math_tests.cpp)
-target_link_libraries(gui_forms_engine_math_tests PRIVATE gui_forms_core)
-add_test(NAME gui_forms_engine_math_tests COMMAND gui_forms_engine_math_tests)
+# What GUI.Forms takes from STXlib's math (stxlib/math.hpp) since engine_math
+# went: exact quarter turns with +0 zeros through the rotations, the effect
+# vocabulary's sine, the scales' exact decades.
+add_executable(gui_forms_math_seat_tests tests/math_seat_tests.cpp)
+target_link_libraries(gui_forms_math_seat_tests PRIVATE gui_forms_plot_primitives gui_forms_core stxlib::algorithms)
+add_test(NAME gui_forms_math_seat_tests COMMAND gui_forms_math_seat_tests)
 add_executable(gui_forms_engine_expression_tests tests/engine_expression_tests.cpp)
 target_link_libraries(gui_forms_engine_expression_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_engine_expression_tests COMMAND gui_forms_engine_expression_tests)
@@ -903,7 +906,7 @@ add_test(NAME gui_forms_engine_dither_tests COMMAND gui_forms_engine_dither_test
 # Lamps and lit keys as baked light planes (phase 3): the bake file,
 # the composite, the envelopes and the cache; --preview <out> <bakes>.
 add_executable(gui_forms_engine_light_planes_tests tests/engine_light_planes_tests.cpp)
-target_link_libraries(gui_forms_engine_light_planes_tests PRIVATE gui_forms_controls)
+target_link_libraries(gui_forms_engine_light_planes_tests PRIVATE gui_forms_controls stxlib::algorithms)
 add_test(NAME gui_forms_engine_light_planes_tests COMMAND gui_forms_engine_light_planes_tests)
 add_executable(gui_forms_engine_slice_tests tests/engine_slice_tests.cpp)
 target_link_libraries(gui_forms_engine_slice_tests PRIVATE gui_forms_controls)
@@ -1361,7 +1364,7 @@ add_executable(gui_forms_theme_hostile_tests tests/theme_language/theme_hostile_
 target_link_libraries(gui_forms_theme_hostile_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_theme_hostile_tests COMMAND gui_forms_theme_hostile_tests)
 add_executable(gui_forms_theme_material_css_tests tests/theme_language/theme_material_css_tests.cpp)
-target_link_libraries(gui_forms_theme_material_css_tests PRIVATE gui_forms_controls)
+target_link_libraries(gui_forms_theme_material_css_tests PRIVATE gui_forms_controls stxlib::algorithms)
 add_test(NAME gui_forms_theme_material_css_tests COMMAND gui_forms_theme_material_css_tests)
 add_executable(gui_forms_theme_motion_css_tests tests/theme_language/theme_motion_css_tests.cpp)
 target_link_libraries(gui_forms_theme_motion_css_tests PRIVATE gui_forms_controls)

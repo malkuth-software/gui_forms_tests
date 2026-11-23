@@ -293,7 +293,7 @@ void test_scale_round_trips() {
         const double back = log.mapping.inverse(log.mapping.forward(value));
         worst_relative = std::max(worst_relative, std::fabs(back - value) / value);
     }
-    require(worst_relative < 1e-12, "a log round trip holds engine_math's bound");
+    require(worst_relative < 1e-12, "a log round trip holds STXlib's bound");
     require(log.mapping.transform(1000.0) == 3.0 && log.mapping.transform(1e-3) == -3.0,
             "exact powers of ten map to exact decades");
     require(std::isnan(log.mapping.forward(0.0)) && std::isnan(log.mapping.forward(-5.0)),
