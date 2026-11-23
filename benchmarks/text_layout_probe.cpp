@@ -1,4 +1,5 @@
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
+#include "../src/platform/library_files.hpp"
 
 #include <algorithm>
 #include <array>
@@ -6,13 +7,14 @@
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <locale>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -25,20 +27,14 @@ void require(bool valid, const char* message) {
 }
 
 std::vector<std::byte> read_font(const std::filesystem::path& path) {
-    std::ifstream stream(path, std::ios::binary | std::ios::ate);
-    require(static_cast<bool>(stream), "font open failed");
-    const std::streamsize length = stream.tellg();
-    require(length > 0 && length <= 16 * 1024 * 1024, "fixed font exceeds probe admission");
-    const std::size_t count = static_cast<std::size_t>(length);
-    std::vector<std::byte> bytes(count);
-    stream.seekg(0);
-    char* destination = reinterpret_cast<char*>(bytes.data());
-    stream.read(destination, length);
-    require(static_cast<bool>(stream), "font read failed");
+    require(gui_forms::platform::names_regular_file(path), "font open failed");
+    std::optional<std::vector<std::byte>> read = gui_forms::platform::read_file_bytes(path, 16 * 1024 * 1024);
+    require(read.has_value() && !(*read).empty(), "fixed font exceeds probe admission");
+    std::vector<std::byte> bytes = std::move(*read);
     return bytes;
 }
 
-std::size_t register_fonts(HarfBuzzFontEngine& engine, const std::filesystem::path& root) {
+std::size_t register_fonts(TextShapeEngine& engine, const std::filesystem::path& root) {
     const std::array<const char*, 4> names{
         "Carlito-Regular.ttf", "NotoSansArabic-Minimal.ttf",
         "NotoSansHebrew-Regular.ttf", "NotoEmoji-Regular.ttf"};
@@ -147,7 +143,7 @@ void write_geometry(const std::filesystem::path& fonts, std::string_view name,
         FontSpec{FontRole::content, 16.0, 400, false, 0.0},
         FontSpec{FontRole::content, 9.5, 400, false, 0.25},
         FontSpec{FontRole::content, 32.0, 700, true, -0.5}};
-    HarfBuzzFontEngine engine{};
+    TextShapeEngine engine{};
     static_cast<void>(register_fonts(engine, fonts));
     const TextStore source(input);
     const std::size_t configuration_count = configurations.size();
@@ -184,7 +180,7 @@ void measure(const std::filesystem::path& fonts, std::string_view name, const st
     constexpr std::size_t samples = 31;
     require(input.size() <= 16 * 1024, "probe source work bound");
     const TextStore oracle(input);
-    HarfBuzzFontEngine engine{};
+    TextShapeEngine engine{};
     const std::size_t font_bytes = register_fonts(engine, fonts);
     const FontSpec font{FontRole::content, 16.0, 400, false};
     std::vector<double> timings(samples, 0);

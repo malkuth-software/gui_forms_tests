@@ -11,9 +11,10 @@
 //
 // Usage: gui_forms_text_engine_benchmark <font-directory> [passes]
 
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #include "src/render/text/glyph_run/glyph_run_raster.hpp"
 #include "src/core/text/composite/text_composite.hpp"
+#include "src/platform/library_files.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -23,11 +24,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <iterator>
+#include <limits>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -109,10 +112,10 @@ struct RetainedLabel final {
 class Benchmark final {
 public:
     explicit Benchmark(const std::filesystem::path& fonts) : rasterizer_(engine_) {
-        std::ifstream stream(fonts / "Carlito-Regular.ttf", std::ios::binary);
-        const std::vector<char> bytes((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-        require(!bytes.empty(), "Carlito-Regular.ttf is readable");
-        const std::span<const std::byte> encoded(reinterpret_cast<const std::byte*>(bytes.data()), bytes.size());
+        const std::optional<std::vector<std::byte>> read = gui_forms::platform::read_file_bytes(
+            fonts / "Carlito-Regular.ttf", std::numeric_limits<std::size_t>::max());
+        require(read.has_value() && !(*read).empty(), "Carlito-Regular.ttf is readable");
+        const std::span<const std::byte> encoded(*read);
         require(engine_.register_typeface(FontRole::content, 400U, false, encoded).has_value(), "font registered");
         surface_.pixels.assign(static_cast<std::size_t>(surface_width) * surface_height, 0xFFFFFFFFU);
         labels_.reserve(label_count);
@@ -196,7 +199,7 @@ private:
         static_cast<void>(detail::composite_text_coverage(placed(coverage, origin), surface_.target(), whole_surface(), ink_));
     }
 
-    text::HarfBuzzFontEngine engine_;
+    text::TextShapeEngine engine_;
     text::GlyphRunRasterizer rasterizer_;
     Surface surface_;
     std::vector<Label> labels_;
