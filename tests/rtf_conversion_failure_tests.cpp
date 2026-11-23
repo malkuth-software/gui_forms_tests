@@ -4,6 +4,7 @@
 // allocation functions with a countdown that fails the nth allocation.
 
 #include "gui_forms/text/markdown/rtf_conversion.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <stxlib/optional.hpp>
 #include <cstddef>
@@ -60,6 +61,27 @@ void operator delete(void* memory, std::size_t) noexcept {
 void operator delete[](void* memory, std::size_t) noexcept {
     std::free(memory);
 }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 namespace {
 

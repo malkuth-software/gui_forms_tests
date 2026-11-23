@@ -250,6 +250,20 @@ if(TARGET gui_forms_abi)
     target_compile_features(gui_forms_abi_cpp_wrappers PRIVATE cxx_std_20)
     add_test(NAME gui_forms_abi_cpp_wrappers COMMAND gui_forms_abi_cpp_wrappers)
 
+    # Memory across the ABI is freed by the side that allocated it: the
+    # library's handles are its own to make and free, text comes back in the
+    # caller's buffer, and a program-allocated callback context goes back to
+    # the program's release. The program's own operator new counts and
+    # tracks its blocks; the library must never reach it, except where the
+    # library shares the system's C++ runtime (macOS without the static one).
+    add_executable(gui_forms_abi_allocation_boundary tests/abi/allocation/gf_abi_allocation_boundary.cpp)
+    target_link_libraries(gui_forms_abi_allocation_boundary PRIVATE gui_forms_abi)
+    target_compile_features(gui_forms_abi_allocation_boundary PRIVATE cxx_std_20)
+    if(_gf_abi_shared_runtime)
+        target_compile_definitions(gui_forms_abi_allocation_boundary PRIVATE GF_ALLOCATION_SHARED_CXX_RUNTIME=1)
+    endif()
+    add_test(NAME gui_forms_abi_allocation_boundary COMMAND gui_forms_abi_allocation_boundary)
+
     # The C# interop (bindings/csharp), built offline with the host's .NET SDK
     # and run against this library. Owner ruling (2026-11-02): the test uses a
     # preinstalled SDK of version 10 or later and otherwise skips with a

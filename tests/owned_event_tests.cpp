@@ -7,6 +7,7 @@
 #include "gui_forms/collection_controls.hpp"
 #include "gui_forms/window.hpp"
 #include "src/core/control/control/control_input_access.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <stxlib/optional.hpp>
 #include <array>
@@ -186,6 +187,27 @@ void operator delete(void* const memory, const std::align_val_t, const std::noth
 void operator delete[](void* const memory, const std::align_val_t, const std::nothrow_t&) noexcept {
     owned_event_allocation_probe::release_aligned(memory);
 }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 namespace {
 namespace gf = gui_forms;
