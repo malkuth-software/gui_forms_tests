@@ -2906,6 +2906,7 @@ add_test(NAME gui_forms_gallery_interaction_tests
         tests/gallery_pages/industrial-surfaces_tests.cpp
         tests/gallery_pages/node-graphs_tests.cpp
         tests/gallery_pages/composite-controls_tests.cpp
+        tests/gallery_pages/devexpress-demos_tests.cpp
         tests/gallery_pages/anatomy_coverage_tests.cpp
         tests/gallery_pages/schema_export_tests.cpp
     )
@@ -2963,6 +2964,19 @@ add_test(NAME gui_forms_gallery_interaction_tests
             COMMAND ${Python3_EXECUTABLE} ${GUI_FORMS_SOURCE_DIR}/tools/control_registry.py emit-cpp --check
         )
     endif()
+
+# The data-workbench demonstrator (demo/data_workbench): the find panel,
+# the sort, the column chooser, layouts, summaries and the dashboard.
+if(TARGET gui_forms_data_workbench_model)
+    add_executable(gui_forms_data_workbench_tests
+        tests/data_workbench_tests.cpp)
+    target_include_directories(gui_forms_data_workbench_tests PRIVATE
+        ${GUI_FORMS_SOURCE_DIR}/demo)
+    target_link_libraries(gui_forms_data_workbench_tests PRIVATE
+        gui_forms_data_workbench_model)
+    add_test(NAME gui_forms_data_workbench_tests
+             COMMAND gui_forms_data_workbench_tests)
+endif()
 
 if(TARGET gui_forms_visual_inspector_lab_model)
     add_executable(gui_forms_visual_inspector_lab_tests
