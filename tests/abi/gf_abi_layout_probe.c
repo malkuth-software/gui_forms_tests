@@ -1008,7 +1008,7 @@ GF_LAYOUT_ASSERT(offsetof(gf_dock_frame_memory, state) == 40, "gf_dock_frame_mem
 GF_LAYOUT_ASSERT(offsetof(gf_dock_frame_memory, icon_slot) == 44, "gf_dock_frame_memory.icon_slot offset");
 GF_LAYOUT_ASSERT(offsetof(gf_dock_frame_memory, order) == 48, "gf_dock_frame_memory.order offset");
 GF_LAYOUT_ASSERT(offsetof(gf_dock_frame_memory, reserved) == 52, "gf_dock_frame_memory.reserved offset");
-GF_LAYOUT_ASSERT(sizeof(gf_docking_table) == 208, "gf_docking_table size");
+GF_LAYOUT_ASSERT(sizeof(gf_docking_table) == 272, "gf_docking_table size");
 GF_LAYOUT_ASSERT(offsetof(gf_docking_table, struct_size) == 0, "gf_docking_table.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_docking_table, abi_minor) == 4, "gf_docking_table.abi_minor offset");
 GF_LAYOUT_ASSERT(offsetof(gf_docking_table, register_panel) == 8, "gf_docking_table.register_panel offset");
@@ -1036,6 +1036,14 @@ GF_LAYOUT_ASSERT(offsetof(gf_docking_table, area_document_at) == 176, "gf_dockin
 GF_LAYOUT_ASSERT(offsetof(gf_docking_table, area_active_document) == 184, "gf_docking_table.area_active_document offset");
 GF_LAYOUT_ASSERT(offsetof(gf_docking_table, set_panel_menu_strip) == 192, "gf_docking_table.set_panel_menu_strip offset");
 GF_LAYOUT_ASSERT(offsetof(gf_docking_table, merged_document) == 200, "gf_docking_table.merged_document offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, set_merge_tool_strip) == 208, "gf_docking_table.set_merge_tool_strip offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, merge_tool_strip) == 216, "gf_docking_table.merge_tool_strip offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, set_panel_tool_strip) == 224, "gf_docking_table.set_panel_tool_strip offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, merged_tool_strip_document) == 232, "gf_docking_table.merged_tool_strip_document offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, set_merge_ribbon) == 240, "gf_docking_table.set_merge_ribbon offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, merge_ribbon) == 248, "gf_docking_table.merge_ribbon offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, set_panel_ribbon) == 256, "gf_docking_table.set_panel_ribbon offset");
+GF_LAYOUT_ASSERT(offsetof(gf_docking_table, merged_ribbon_document) == 264, "gf_docking_table.merged_ribbon_document offset");
 GF_LAYOUT_ASSERT(sizeof(gf_app_font_face) == 32, "gf_app_font_face size");
 GF_LAYOUT_ASSERT(offsetof(gf_app_font_face, struct_size) == 0, "gf_app_font_face.struct_size offset");
 GF_LAYOUT_ASSERT(offsetof(gf_app_font_face, reserved) == 4, "gf_app_font_face.reserved offset");
