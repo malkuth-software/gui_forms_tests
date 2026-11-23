@@ -80,7 +80,7 @@ public:
         (*made.sample_root).add_child(made.sample_heading);
         made.sample_level = gui_forms::make_control<gui_forms::NumericUpDown>(gui_forms::StableId("sample.level"));
         (*made.sample_root).add_child(made.sample_level);
-        made.sample_save = std::make_shared<gui_forms::Command>();
+        made.sample_save = gui_forms::detail::make_library_shared<gui_forms::Command>();
         (*made.sample_root).padding = gui_forms::assigned_property_value<decltype((*made.sample_root).padding)>(gui_forms::BindingValue{gui_forms::Insets{.left = 8.0, .top = 4.0, .right = 8.0, .bottom = 4.0}});
         (*made.sample_general).tab_index = gui_forms::assigned_property_value<decltype((*made.sample_general).tab_index)>(gui_forms::BindingValue{std::uint64_t{0U}});
         (*made.sample_general_auto_save).text = gui_forms::assigned_property_value<decltype((*made.sample_general_auto_save).text)>(gui_forms::BindingValue{std::string("Save automatically")});
