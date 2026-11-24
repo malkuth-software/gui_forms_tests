@@ -23,6 +23,8 @@
 #include "src/controls/automation/tools/automation_tools.hpp"
 #if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
 #include "src/runtime/automation/automation_run.hpp"
+#include "src/host/headless/services/headless_host_services.hpp"
+#include "src/host/headless/session/headless_host.hpp"
 #endif
 #include "support/named_callbacks.hpp"
 
@@ -266,6 +268,70 @@ void dialogs_refuse_the_model_until_instrumented() {
     require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.modal.inside\"}", pump)),
             "an instrumented dialog admits the model");
     set_model_drivable(window, false);
+}
+
+// Inside a native alert over the main window: the model's act there is
+// refused, and the refusal names the dialog it saw.
+class NativeAlertAct final {
+public:
+    NativeAlertAct(AutomationCore& core, AutomationPump& pump, std::string& seen)
+        : core_(&core), pump_(&pump), seen_(&seen) {}
+
+    HostDialogResult operator()(const HostDialogRequest& request, host::HeadlessHostServices&) const {
+        const ToolReply reply = (*core_).run(
+            "act", "{\"window\":\"auto.alert.window\",\"action\":\"press\",\"target\":\"auto.alert.button\"}",
+            *pump_);
+        const ToolFailure* const failure = reply.failure_value();
+        if (failure != nullptr && (*failure).error == ToolError::dialog_open) *seen_ = (*failure).message;
+        const HostDialogResult result{
+            {}, request.request_id, HostMessageDialogResult{HostDialogOutcome::cancelled, HostDialogChoice::cancel}};
+        return result;
+    }
+
+private:
+    AutomationCore* core_;
+    AutomationPump* pump_;
+    std::string* seen_;
+};
+
+// A native alert blocks the main window while a tooltip's window stays
+// free: the dialog is the native one, never the tooltip (Plan Paint's
+// recovery alert was reported as [main/tool-tip.1], 2026-11-24).
+void a_native_alert_is_named_native_not_the_tooltip() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.alert.root"));
+    const std::shared_ptr<Button> button = make_control<Button>(StableId("auto.alert.button"), "Behind");
+    (*button).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*root).add_child(button);
+    Window window(root, Size{400.0, 300.0});
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    const std::shared_ptr<Panel> tip_root = make_control<Panel>(StableId("tool-tip"));
+    Window tip(tip_root, Size{120.0, 24.0});
+    host::HeadlessHost tip_host(tip);
+
+    TestPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.alert.window"), "the main window joins");
+    require(core.attach_window(tip, "auto.alert.window/tool-tip.1", true), "the tooltip's window joins as passive");
+    require(core.passive_popup_window(tip) && !core.passive_popup_window(window), "only the tooltip is passive");
+    WindowPump pump(window, control, presenter);
+    std::string seen{};
+    window_host.headless_services().set_dialog_handler(NativeAlertAct(core, pump, seen));
+    HostMessageDialogRequest message{};
+    message.title = "Recover unfinished artwork";
+    message.message = "Recover Untitled?";
+    message.buttons = HostMessageButtons::ok_cancel;
+    message.icon = HostMessageIcon::information;
+    message.default_choice = HostDialogChoice::ok;
+    const HostDialogResult shown = window_host.services().show_dialog(
+        HostDialogRequest{1, "auto.alert.window", std::move(message)});
+    require(shown.status.accepted(), "the native alert ran");
+    if (seen.find("native") == std::string::npos || seen.find("tool-tip") != std::string::npos) {
+        std::cerr << "refusal: " << seen << '\n';
+    }
+    require(seen.find("native") != std::string::npos && seen.find("tool-tip") == std::string::npos,
+            "the refusal names the native dialog, not the tooltip's window");
 }
 
 void batch_runs_its_steps_in_one_call() {
@@ -635,6 +701,7 @@ int main() {
     a_user_step_needs_the_user();
     destructive_acts_ask_once_per_launch();
     dialogs_refuse_the_model_until_instrumented();
+    a_native_alert_is_named_native_not_the_tooltip();
     batch_runs_its_steps_in_one_call();
     the_public_registry_adds_tools();
     a_program_tool_meets_the_dialog_rule();
