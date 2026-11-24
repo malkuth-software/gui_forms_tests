@@ -18,7 +18,9 @@ namespace gui_forms {
 AudioStatus audio_test_revoked_callback_status();
 void audio_test_decode_limits(std::size_t arena_bytes, std::uint64_t budget, stxlib::StopSource* cancel_after_chunk);
 std::uint64_t audio_test_clip_bytes();
-void audio_test_cancel_flag_after_chunk(CancellationFlag* flag) noexcept;
+// As src/audio/audio.cpp defines it: the Microsoft ABI mangles a pointer
+// parameter's top-level const, so the declaration must keep it.
+void audio_test_cancel_flag_after_chunk(CancellationFlag* const flag) noexcept;
 #ifndef GUI_FORMS_AUDIO_VORBIS_STX
 bool audio_test_vorbis_seek_bounds() noexcept;
 #endif
