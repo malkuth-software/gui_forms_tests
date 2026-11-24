@@ -148,7 +148,7 @@ void glow_without_scrub_fades_on_layout() {
     window.perform_layout();
     require(!(*numeric).scrubbing() && (*numeric).scrub_glow_target() == 0.0, "F5: unlit at rest");
     Flip::set_glow_target(*numeric, 1.0);
-    window.resize({210.0, 80.0});
+    (*numeric).set_requested_bounds({10.0, 10.0, 124.0, 26.0});
     window.perform_layout();
     require((*numeric).scrub_glow_target() == 0.0, "F5: a lit glow with no scrub fades on layout");
 }
