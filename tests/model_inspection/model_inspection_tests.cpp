@@ -256,6 +256,42 @@ void test_register_form_document() {
     fl::process_form_exports().forget(*root);
 }
 
+// State hunt S2: a record borrows the program members its sources name,
+// which need outlive the form's controls only until those are disposed. A
+// root disposed but still held (an inspection, a C ABI handle) is no longer
+// registered, so a candidate is never loaded against members the program
+// may already have destroyed: here the members end right after the dispose.
+void test_disposed_root_ends_registration() {
+    const fl::FormSchema schema = sample_schema();
+    const std::string document = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"gone\">\n"
+                                 "  <check-box id=\"gone.autosave\"><bind property=\"checked\" to=\"autosave_\"/></check-box>\n"
+                                 "</user-control>\n";
+    fl::FormExportRegistry registry{};
+    gui_forms::Control::Ptr root{};
+    {
+        std::unique_ptr<gui_forms::Value<bool>> autosave = std::make_unique<gui_forms::Value<bool>>(true);
+        std::unique_ptr<fl::FormSources> sources = std::make_unique<fl::FormSources>();
+        (*sources).add("autosave_", *autosave);
+        fl::LoadedForm loaded{};
+        root = load(document, schema, *sources, loaded);
+        require(root != nullptr, "disposed root: the form loads");
+        if (root == nullptr) return;
+        require(registry.add(root, "gone.form", document, *sources), "disposed root: registered");
+        require(registry.registered(*root), "disposed root: registered while alive");
+        (*root).dispose();
+        require(!registry.registered(*root), "disposed root: a disposed root is no longer registered");
+        // The record ended with the dispose: the sources and the member they
+        // borrow go now, while the root is still held.
+    }
+    ThemeDiagnosticList diagnostics{};
+    require(registry.apply(*root, schema, "gone.form", document, std::string_view(), diagnostics) ==
+                fl::FormExportOutcome::not_registered,
+            "disposed root: apply loads nothing against the ended members");
+    std::string exported{};
+    require(registry.export_document(*root, exported) == fl::FormExportOutcome::not_registered,
+            "disposed root: export reports it unregistered");
+}
+
 } // namespace
 
 int main() {
@@ -263,6 +299,7 @@ int main() {
     test_layout_and_resources();
     test_form_export();
     test_register_form_document();
+    test_disposed_root_ends_registration();
     if (failures != 0) {
         std::cerr << failures << " model inspection checks failed\n";
         return 1;

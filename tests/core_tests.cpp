@@ -1515,6 +1515,29 @@ void test_semantic_feedback_is_clocked_bounded_and_sound_optional() {
             "feedback history and trace must be deterministic and bounded");
 }
 
+// State hunt S8: a SemanticFeedback kept past its window (the C ABI makes it
+// on a window without keeping the window) refuses emit instead of reading
+// the freed window; its own history may still be trimmed and cleared.
+void test_semantic_feedback_outliving_its_window() {
+    std::shared_ptr<ProbeControl> root =
+        make_control<ProbeControl>(StableId("feedback.outlived"));
+    std::unique_ptr<Window> window = std::make_unique<Window>(root, Size{100.0, 60.0});
+    std::shared_ptr<SemanticFeedback> feedback = std::make_shared<SemanticFeedback>(*window);
+    static_cast<void>((*feedback).emit(SemanticFeedbackKind::pane_changed));
+    window.reset();
+    bool refused{};
+    try {
+        static_cast<void>((*feedback).emit(SemanticFeedbackKind::conflict));
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused, "feedback must refuse to emit after its window ended");
+    (*feedback).set_maximum_records(4U);
+    (*feedback).clear();
+    require((*feedback).records().empty(), "feedback history stays its own after the window ended");
+    (*feedback).dispose();
+}
+
 void test_paint_wake_is_coalesced_and_rearmed_after_damage_consumption() {
     std::shared_ptr<ProbeControl> root =
         make_control<ProbeControl>(StableId("paint-wake.root"));
@@ -1581,6 +1604,7 @@ int main() {
         test_tokenized_accelerator_runs_after_focused_route();
         test_presentation_settings_separate_text_and_device_scale();
         test_semantic_feedback_is_clocked_bounded_and_sound_optional();
+        test_semantic_feedback_outliving_its_window();
         test_paint_wake_is_coalesced_and_rearmed_after_damage_consumption();
         std::cout << "gui_forms_core_tests: all tests passed\n";
         return EXIT_SUCCESS;

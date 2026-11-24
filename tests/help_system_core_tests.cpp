@@ -460,8 +460,43 @@ void locale_depth_limit() {
 
 } // namespace
 
+// State hunt S7: a section filled by hand (a public record) is searched
+// within its own bounds. A term whose postings run past the section's and a
+// posting that names no record are skipped, not read; the valid posting
+// beside them is still found.
+void search_hand_built_section() {
+    HelpBookSection section{};
+    HelpBookRecord record{};
+    record.stable_id = "only";
+    record.title = "Only";
+    record.folded_text = "alpha beta";
+    section.records.push_back(record);
+    section.postings.push_back(HelpSearchPosting{0U, 1U, false});
+    section.postings.push_back(HelpSearchPosting{7U, 1U, true});
+    section.terms.push_back(HelpSearchTerm{"alpha", 0U, 1U});
+    section.terms.push_back(HelpSearchTerm{"beta", 0U, 40U});
+    section.terms.push_back(HelpSearchTerm{"gamma", 1U, 1U});
+    section.terms.push_back(HelpSearchTerm{"zeta", 0xFFFFFFF0U, 0x20U});
+    HelpSearchQuery query;
+    std::vector<HelpSearchHit> hits;
+    parse_help_query("alpha", query);
+    require(search_help(section, query, {}, hits) == HelpSearchStatus::complete && hits.size() == 1U &&
+                hits[0].record == 0U,
+            "S7: a term inside the section is found");
+    parse_help_query("beta", query);
+    require(search_help(section, query, {}, hits) == HelpSearchStatus::complete && hits.empty(),
+            "S7: a term whose postings run past the section's is skipped");
+    parse_help_query("gamma", query);
+    require(search_help(section, query, {}, hits) == HelpSearchStatus::complete && hits.empty(),
+            "S7: a posting that names no record is skipped");
+    parse_help_query("zeta", query);
+    require(search_help(section, query, {}, hits) == HelpSearchStatus::complete && hits.empty(),
+            "S7: a term range that wraps 32 bits is skipped");
+}
+
 int main() {
     records_and_layers();
+    search_hand_built_section();
     contents_and_compile();
     broken_links();
     search();
