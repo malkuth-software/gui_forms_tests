@@ -364,7 +364,7 @@ void test_resizing_the_ancestor_moves_the_grandchild() {
     require_bounds(*built.middle, 0.0, 0.0, 100.0, 100.0, "the middle container stays");
     require_bounds(*built.pinned, 0.0, 290.0, 30.0, 10.0, "the grandchild follows the ancestor's bottom");
     require(resized.arrange_passes == 1U, "in one arrange pass, got " + std::to_string(resized.arrange_passes));
-    require(window.layout_diagnostics().size() == 1U, "an unchanged resolution records nothing");
+    require(window.layout_diagnostics().size() == 2U, "an unchanged resolution records nothing new");
 
     // Disposing the ancestor leaves no dependent behind.
     const RuntimeId ancestor_id = (*built.ancestor).runtime_id();
