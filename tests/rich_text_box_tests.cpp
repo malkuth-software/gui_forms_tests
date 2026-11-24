@@ -528,7 +528,25 @@ void occluded_caret_rests() {
 
 } // namespace
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_heading_menu_open() {
+    Fixture fixture = make_fixture("word");
+    Window& window = *fixture.window;
+    RichTextBox& box = *fixture.box;
+    const std::size_t before = window.focus_scope_depth();
+    require(box.on_semantic_child_action("rich.bar.heading", SemanticAction::press, {}) &&
+                window.focus_scope_depth() > before,
+            "the heading button opens its menu");
+    box.dispose();
+    require(!box.is_alive() && window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the box with its heading menu open closes the menu and its focus scope");
+}
+
 int main() {
+    disposed_with_its_heading_menu_open();
     source_and_plain_text();
     plain_text_as_markdown();
     limits();

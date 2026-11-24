@@ -1115,8 +1115,29 @@ void test_context_menu_survives_its_handlers() {
     require(window.request_focus(other), "no focus scope of the closed menu holds the focus");
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void test_menu_strip_disposed_with_its_menu_open() {
+    std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("disposed.root"));
+    std::shared_ptr<gui_forms::MenuStrip> strip = make_control<MenuStrip>(StableId("disposed.strip"));
+    (*strip).set_requested_bounds({0.0, 0.0, 320.0, 24.0});
+    (*root).add_child(strip);
+    std::shared_ptr<gui_forms::Command> open = std::make_shared<Command>("file.open", "Open");
+    (*strip).set_items({{"disposed.file", "File", {{"file.open", MenuItemKind::command, open}}}});
+    Window window(root, {320.0, 190.0});
+    require((*strip).open(0U, MenuOpenMode::pointer) && (*strip).is_open(), "the strip's menu opens");
+    (*strip).dispose();
+    static_cast<void>((*root).remove_child((*strip).runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the strip with its menu open closes the menu and its focus scope");
+}
+
 int main() {
     try {
+        test_menu_strip_disposed_with_its_menu_open();
         test_context_menu_command_snapshot_keyboard_nesting_and_restore();
         test_context_menu_scroll_and_validation_bounds();
         test_context_menu_items_without_commands();
