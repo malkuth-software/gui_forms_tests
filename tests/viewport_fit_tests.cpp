@@ -493,7 +493,7 @@ void test_scaled_panel_aspect() {
     window.perform_layout();
     require(near_rect((*square).arranged_bounds(), Rect{0.0, 0.0, 200.0, 200.0}),
             "the alignment comes from viewport_fit: " + describe((*square).arranged_bounds()));
-    const auto applied = (*face).applied_viewport_scale();
+    const stxlib::Optional<double> applied = (*face).applied_viewport_scale();
     require(applied.present() && near(*applied.value(), 2.0),
             "the scale is reported");
     require(window.unanswered_overflow_count() == 0U, "a scaled panel's content is never an unanswered overflow");
