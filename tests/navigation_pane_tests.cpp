@@ -712,7 +712,50 @@ void close_and_reopen_from_handlers() {
     static_cast<void>(reports);
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_menu_open() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    NavigationPane& pane = *(*fixture).pane;
+    Window& window = *(*fixture).window;
+    window.perform_layout();
+    require(pane.show_configure_menu() && pane.configure_menu_open(), "the configure menu opens");
+    pane.dispose();
+    static_cast<void>((*(*fixture).root).remove_child(pane.runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the pane with its menu open closes the menu and its focus scope");
+}
+
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void overlay_refused_by_a_containing_scope() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    NavigationPane& pane = *(*fixture).pane;
+    Window& window = *(*fixture).window;
+    pane.collapsed = true;
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope((*fixture).outside);
+    bool refused = false;
+    try {
+        static_cast<void>(pane.open_overlay());
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !pane.overlay_open() && pane.agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "an overlay the window refuses a scope is not left open, and the content is back in the pane");
+    require(window.end_focus_scope(fenced) && pane.open_overlay() && pane.overlay_open() && pane.agrees_with_itself(),
+            "once the containing scope ends, the overlay opens");
+    pane.close_overlay();
+    require(!pane.overlay_open() && pane.agrees_with_itself() && window.focus_scope_depth() == 0U, "and closes cleanly");
+}
+
 int main() {
+    overlay_refused_by_a_containing_scope();
+    disposed_with_its_menu_open();
     layout_and_content();
     grip_steps();
     hidden_pages_and_menu();

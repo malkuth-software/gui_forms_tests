@@ -1093,7 +1093,74 @@ void test_expandable_sections_replaced_during_a_reveal() {
             "the handler's items replaced the sections during the reveal");
 }
 
+// N3 and C6/C20 (state hunt, 2026-11-23): a callout or modal layer the window
+// refuses a scope (outside an active containing scope) is not left shown,
+// its target and content are let go, and each agrees with itself.
+void test_overlays_refused_by_a_containing_scope() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.fenced.root"));
+    std::shared_ptr<Button> target = make_control<Button>(StableId("final.fenced.target"), "New");
+    (*target).set_requested_bounds(Rect{20.0, 20.0, 80.0, 28.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("final.fenced.fence"), "Fence");
+    (*fence).set_requested_bounds(Rect{300.0, 300.0, 80.0, 28.0});
+    (*root).add_child(target);
+    (*root).add_child(fence);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    std::shared_ptr<Callout> callout = make_control<Callout>(StableId("final.fenced.callout"));
+    (*callout).title = std::string{"Try the new view"};
+    (*callout).action_text = std::string{"Got it"};
+    std::shared_ptr<ModalLayer> layer = make_control<ModalLayer>(StableId("final.fenced.modal"));
+    std::shared_ptr<Button> content = make_control<Button>(StableId("final.fenced.content"), "OK");
+    (*content).set_requested_bounds(Rect{0.0, 0.0, 120.0, 28.0});
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool callout_refused = false;
+    try {
+        static_cast<void>((*callout).show(target));
+    } catch (const std::logic_error&) {
+        callout_refused = true;
+    }
+    require(callout_refused && !(*callout).is_shown() && !(*callout).target() && !(*callout).parent() &&
+                (*callout).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "a refused callout is not shown and keeps no target");
+    bool layer_refused = false;
+    try {
+        static_cast<void>((*layer).show(target, content));
+    } catch (const std::logic_error&) {
+        layer_refused = true;
+    }
+    require(layer_refused && !(*layer).is_shown() && !(*content).parent() && (*layer).agrees_with_itself() &&
+                window.focus_scope_depth() == 1U,
+            "a refused modal layer is not shown and gives its content back");
+    require(window.end_focus_scope(fenced), "the containing scope ends");
+    require((*callout).show(target) && (*callout).is_shown() && (*callout).agrees_with_itself(),
+            "the callout shows afterwards");
+    require((*callout).close() && (*callout).agrees_with_itself(), "and closes");
+    require((*layer).show(target, content) && (*layer).is_shown() && (*layer).agrees_with_itself(),
+            "the modal layer shows afterwards");
+    require((*layer).close(DialogResult::cancel) && !(*layer).is_shown() && (*layer).agrees_with_itself() &&
+                window.focus_scope_depth() == 0U,
+            "and closes cleanly");
+}
+
+// C43 (state hunt, 2026-11-23): fewer steps bring the current step down
+// with them, and the indicator agrees with itself throughout.
+void test_step_indicator_agrees_with_itself() {
+    std::shared_ptr<StepIndicator> steps = make_control<StepIndicator>(StableId("final.steps.agree"));
+    (*steps).set_steps({"One", "Two", "Three", "Four"});
+    (*steps).current_step = 3U;
+    require((*steps).agrees_with_itself(), "four steps with the last current agree");
+    (*steps).set_steps({"One", "Two"});
+    require((*steps).current_step.read() == 1U && (*steps).agrees_with_itself() &&
+                (*steps).semantic_descriptor().value == "Step 2 of 2: Two",
+            "two steps bring the current step to the last");
+    (*steps).set_steps({});
+    require((*steps).current_step.read() == 0U && (*steps).agrees_with_itself(), "no steps leave step 0");
+}
+
+
 int main() {
+    test_step_indicator_agrees_with_itself();
+    test_overlays_refused_by_a_containing_scope();
     test_seven_segment_patterns();
     test_seven_segment_in_window();
     test_gauge_values_and_alarms();

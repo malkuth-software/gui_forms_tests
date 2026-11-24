@@ -480,7 +480,30 @@ void hosted_item_width_follows_the_application() {
             "a negative width or an unknown item is refused and changes nothing");
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_menu_open() {
+    const std::shared_ptr<Command> save = std::make_shared<Command>("save", "Save");
+    const std::shared_ptr<Command> choice = std::make_shared<Command>("choice", "Choice");
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("disposed.root"));
+    std::shared_ptr<ToolStrip> strip = make_control<ToolStrip>(StableId("disposed.strip"));
+    (*strip).set_items(sample_items(save, choice));
+    (*strip).set_requested_bounds({0.0, 0.0, 640.0, 25.0});
+    (*root).add_child(strip);
+    Window window(root, {640.0, 300.0});
+    window.perform_layout();
+    require((*strip).show_drop_down("export") && (*strip).drop_down_open(), "the drop-down opens");
+    (*strip).dispose();
+    static_cast<void>((*root).remove_child((*strip).runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the strip with its menu open closes the menu and its focus scope");
+}
+
 int main() {
+    disposed_with_its_menu_open();
     layout_and_parts();
     clicks_and_commands();
     overflow_and_keyboard();

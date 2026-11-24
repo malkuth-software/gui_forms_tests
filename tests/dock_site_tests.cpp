@@ -1522,7 +1522,49 @@ void navigator_measures_its_titles() {
     require(offered.width <= 600.0, "the offered width bounds the navigator (titles then shorten)");
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_position_menu_open() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    DockSite& site = *(*fixture).site;
+    Window& window = *(*fixture).window;
+    require(site.show_position_menu(DockPanelId("properties")) && site.position_menu_open(),
+            "the position menu opens");
+    require(site.agrees_with_itself(), "the site agrees with itself with its menu open");
+    site.dispose();
+    require(!site.is_alive() && window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the site with its position menu open closes the menu and its focus scope");
+}
+
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void navigator_refused_by_a_containing_scope() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    DockWorkspace& workspace = *(*fixture).workspace;
+    DockSite& site = *(*fixture).site;
+    Window& window = *(*fixture).window;
+    require(workspace.activate_panel(DockPanelId("doc.first")) && workspace.activate_panel(DockPanelId("properties")),
+            "two panels activate");
+    const FocusScopeId fenced = window.begin_focus_scope(content_edit(window, "properties"));
+    bool refused = false;
+    try {
+        static_cast<void>(site.open_navigator(DockNavigatorList::documents, 1, Modifier::control));
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !site.navigator_open() && site.agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "a navigator the window refuses a scope is not left open");
+    require(window.end_focus_scope(fenced) && site.open_navigator(DockNavigatorList::documents, 1, Modifier::control) &&
+                site.navigator_open() && site.agrees_with_itself(),
+            "once the containing scope ends, the navigator opens");
+}
+
 int main() {
+    navigator_refused_by_a_containing_scope();
+    disposed_with_its_position_menu_open();
     anatomy_and_parts();
     add_panels_docked_only();
     lazy_creation();

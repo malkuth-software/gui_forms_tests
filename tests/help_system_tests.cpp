@@ -558,7 +558,44 @@ void help_mode_cancelled_while_entering() {
     help.detach(*program.window);
 }
 
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void help_mode_refused_and_revoked() {
+    Program program = make_program();
+    HelpBookSystem help{};
+    static_cast<void>(help.load_built_in(program_locale));
+    help.attach(*program.window);
+    Window& window = *program.window;
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(program.tools);
+    bool refused = false;
+    try {
+        static_cast<void>(help.enter_help_mode(window));
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !help.help_mode_active() && help.agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "What's This refused a scope is not left active");
+    require(window.end_focus_scope(fenced) && help.enter_help_mode(window) && help.help_mode_active(),
+            "once the containing scope ends, What's This enters");
+    // S6: the window takes the pick layer back itself (its root hidden);
+    // help mode ends without touching the window again.
+    (*program.root).visible = false;
+    window.perform_layout();
+    require(!help.help_mode_active() && help.agrees_with_itself(), "a revoked pick layer ends What's This");
+    (*program.root).visible = true;
+    window.perform_layout();
+    help.cancel_help_mode();
+    require(help.enter_help_mode(window) && help.help_mode_active() && help.agrees_with_itself(),
+            "What's This enters again afterwards");
+    help.cancel_help_mode();
+    require(!help.help_mode_active() && window.focus_scope_depth() == 0U, "and leaves cleanly");
+    help.detach(window);
+}
+
 int main() {
+    help_mode_refused_and_revoked();
     paper_pane();
     viewer();
     system_routes();

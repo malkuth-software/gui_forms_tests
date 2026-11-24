@@ -1,4 +1,7 @@
 #include "gui_forms/inspection_controls.hpp"
+#include "gui_forms/controls/button.hpp"
+#include "gui_forms/controls/label.hpp"
+#include "gui_forms/controls/panel.hpp"
 #include "gui_forms/window.hpp"
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/detail/bound_member_function.hpp"
@@ -1497,8 +1500,106 @@ void test_edit_failed_handler_rebuilds_the_grid() {
     }
 }
 
+// N1 (state hunt, 2026-11-23): rebuilding the rows while a row's drop-down
+// is open closes that drop-down with the old rows already let go, so no
+// handler reads past the new rows; the list agrees with itself after.
+void test_rebuild_with_a_row_drop_down_open() {
+    std::shared_ptr<PropertyList> properties = make_properties();
+    Window window(properties, {288.0, 260.0});
+    window.perform_layout();
+    std::shared_ptr<ComboBox> handler = std::dynamic_pointer_cast<ComboBox>((*properties).editor("inspection.handler"));
+    require(handler != nullptr, "the handler row has a drop-down editor");
+    (*handler).dropped_down = true;
+    require((*handler).dropped_down.read() && window.focus_scope_depth() == 1U, "the drop-down opens");
+    (*properties).set_groups({{"inspection.single", "SINGLE", {{"inspection.only", "Only", "One", "One row"}}}});
+    window.perform_layout();
+    require((*properties).agrees_with_itself() && window.focus_scope_depth() == 0U && !window.captured_control() &&
+                !(*properties).editor("inspection.handler"),
+            "the rebuild closes the drop-down and keeps only the new rows");
+}
+
+// N6 and C36 (state hunt, 2026-11-23): a header or an editor the window
+// refuses (its identity is taken) leaves the list as it was: later layouts
+// work, and a good header or group list is accepted afterwards.
+void test_refused_header_and_groups_leave_the_list_whole() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("inspection.whole.root"));
+    std::shared_ptr<Label> taken = make_control<Label>(StableId("inspection.taken"), "Taken");
+    std::shared_ptr<Label> clash = make_control<Label>(StableId("inspection.clash.editor"), "Clash");
+    std::shared_ptr<PropertyList> properties = make_properties();
+    (*root).add_child(taken);
+    (*root).add_child(clash);
+    (*root).add_child(properties);
+    Window window(root, {288.0, 320.0});
+    window.perform_layout();
+
+    bool refused = false;
+    try {
+        (*properties).set_header_content(make_control<Label>(StableId("inspection.taken"), "Header"), 24.0);
+    } catch (const std::exception&) {
+        refused = true;
+    }
+    require(refused && !(*properties).header_content() && (*properties).agrees_with_itself(),
+            "a refused header leaves no header");
+    window.perform_layout();
+    std::shared_ptr<Label> header = make_control<Label>(StableId("inspection.header"), "Header");
+    (*properties).set_header_content(header, 24.0);
+    window.perform_layout();
+    require((*properties).header_content() == header && (*header).parent() == properties &&
+                (*properties).agrees_with_itself(),
+            "layout works after the refusal and a good header is accepted");
+
+    refused = false;
+    try {
+        (*properties).set_groups({{"inspection.clashing", "CLASH", {
+            {"inspection.clash", "Clash", "x", "Clashing row", PropertyEditorKind::text, {}, {}, true, true},
+        }}});
+    } catch (const std::exception&) {
+        refused = true;
+    }
+    window.perform_layout();
+    require(refused && (*properties).editor("inspection.handler") && (*properties).editor("inspection.name") &&
+                !(*properties).editor("inspection.clash") && (*properties).agrees_with_itself(),
+            "a refused group list keeps the groups and editors before");
+}
+
+// N3 (state hunt, 2026-11-23): a colour picker the window refuses a scope
+// (outside an active containing scope) is closed again, not left open.
+void test_color_picker_refused_by_a_containing_scope() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("inspection.fenced.root"));
+    std::shared_ptr<Label> target = make_control<Label>(StableId("inspection.fenced.target"), "Target");
+    (*target).set_requested_bounds({12.0, 12.0, 190.0, 30.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("inspection.fenced.fence"), "Fence");
+    (*fence).set_requested_bounds({12.0, 400.0, 120.0, 28.0});
+    std::shared_ptr<PropertyGrid> grid = make_control<PropertyGrid>(StableId("inspection.fenced.grid"));
+    (*grid).set_requested_bounds({210.0, 0.0, 410.0, 440.0});
+    (*root).add_child(target);
+    (*root).add_child(fence);
+    (*root).add_child(grid);
+    (*grid).set_selected_object(target);
+    Window window(root, {620.0, 440.0});
+    window.perform_layout();
+    std::shared_ptr<ColorValueEditor> color = std::dynamic_pointer_cast<ColorValueEditor>((*grid).editor("ForeColor"));
+    require(color != nullptr, "the grid has a colour editor");
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        static_cast<void>((*color).open_picker());
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !(*color).picker_open() && window.focus_scope_depth() == 1U,
+            "a picker refused a scope is not left open");
+    require(window.end_focus_scope(fenced) && (*color).open_picker() && (*color).picker_open(),
+            "the picker opens afterwards");
+    (*color).close_picker();
+    require(!(*color).picker_open() && window.focus_scope_depth() == 0U, "and closes cleanly");
+}
+
 int main() {
     try {
+        test_rebuild_with_a_row_drop_down_open();
+        test_refused_header_and_groups_leave_the_list_whole();
+        test_color_picker_refused_by_a_containing_scope();
         test_grouped_editors_commit_cancel_validation_and_semantics();
         test_scrolling_responsive_layout_and_validation_bounds();
         test_property_row_hierarchy_pointer_and_reset_contract();

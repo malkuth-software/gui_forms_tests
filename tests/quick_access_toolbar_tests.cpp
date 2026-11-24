@@ -291,7 +291,24 @@ void unknown_ids_and_semantics() {
 
 } // namespace
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_menu_open() {
+    const Commands commands;
+    std::shared_ptr<QuickAccessToolbar> toolbar = make_control<QuickAccessToolbar>(StableId("qat.disposed"));
+    (*toolbar).set_commands(declared(commands));
+    Window window(toolbar, {320.0, 240.0});
+    window.perform_layout();
+    require((*toolbar).show_customize_menu() && (*toolbar).customize_menu_open(), "the customize menu opens");
+    (*toolbar).dispose();
+    require(!(*toolbar).is_alive() && window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the toolbar with its menu open closes the menu and its focus scope");
+}
+
 int main() {
+    disposed_with_its_menu_open();
     parts_and_commands_only();
     customize_menu();
     hide_by_shown_identity();

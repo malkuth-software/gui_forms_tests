@@ -889,7 +889,29 @@ void tab_records_follow_their_pages() {
             "moving a page makes no record and no index fallback");
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_list_open() {
+    PageSet pages{};
+    add_pages(pages, 12U);
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("disposed.root"));
+    std::shared_ptr<PageStrip> strip = make_control<PageStrip>(StableId("disposed.strip"), pages);
+    (*strip).set_requested_bounds({0.0, 0.0, 500.0, 26.0});
+    (*root).add_child(strip);
+    Window window(root, {500.0, 400.0});
+    window.perform_layout();
+    require((*strip).show_page_list() && (*strip).page_list_open(), "the page list opens");
+    (*strip).dispose();
+    static_cast<void>((*root).remove_child((*strip).runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the strip with its page list open closes the list and its focus scope");
+}
+
 int main() {
+    disposed_with_its_list_open();
     anatomy_and_parts();
     tab_records_follow_their_pages();
     fixed_geometry_table();

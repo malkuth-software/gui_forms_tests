@@ -402,6 +402,61 @@ struct RecordMenuInvocation final {
     void operator()(const MenuItemInvocation& invocation) const { (*invocations).push_back(invocation); }
 };
 
+// S3 (state hunt, 2026-11-23): a menu's rows are shared controls that a tree
+// walk, a C ABI handle or an inspection may hold past the close. Such a row
+// still describes its item, but neither acts nor reaches the menu: not after
+// the close, not once the menu opens again (a new row is in its place), and
+// not after the menu is destroyed.
+void test_context_menu_rows_held_past_the_close() {
+    std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("held.root"));
+    std::shared_ptr<gui_forms::Button> owner = make_control<Button>(StableId("held.owner"), "Menu");
+    (*owner).set_requested_bounds({4.0, 4.0, 80.0, 30.0});
+    (*root).add_child(owner);
+    Window window(root, {320.0, 190.0});
+    require(window.request_focus(owner), "the menu owner takes focus");
+    MenuItemSpec plain{};
+    plain.stable_id = "plain";
+    plain.kind = MenuItemKind::command;
+    plain.text = "Plain";
+    std::vector<MenuItemInvocation> invocations{};
+    Control::Ptr held_row;
+    Control::Ptr held_panel;
+    {
+        ContextMenu menu("held.menu");
+        menu.set_items({plain});
+        SubscriptionToken recorded = menu.item_invoked().subscribe(RecordMenuInvocation{&invocations});
+        menu.show(owner, {20.0, 20.0});
+        held_row = window.find("held.menu.overlay.row.plain");
+        held_panel = window.find("held.menu.overlay.panel.0");
+        require(held_row && held_panel && menu.is_open(), "the menu opens with its row");
+        menu.close();
+        require(!menu.is_open() && (*held_row).semantic_descriptor().name == "Plain",
+                "a row held past the close still describes its item");
+        require(!(*held_row).on_semantic_action(SemanticAction::press, {}) &&
+                    !(*held_row).on_semantic_action(SemanticAction::focus, {}) && invocations.empty() &&
+                    !menu.is_open(),
+                "a row held past the close neither acts nor reopens the menu");
+        menu.show(owner, {20.0, 20.0});
+        const Control::Ptr fresh = window.find("held.menu.overlay.row.plain");
+        require(menu.is_open() && fresh && fresh != held_row, "the menu opens again with a new row");
+        require(!(*held_row).on_semantic_action(SemanticAction::press, {}) && invocations.empty() && menu.is_open(),
+                "the old row does not act for the new open");
+        require((*fresh).on_semantic_action(SemanticAction::press, {}) && invocations.size() == 1U &&
+                    invocations[0].item_id == "plain" && !menu.is_open(),
+                "the new row acts");
+        menu.show(owner, {20.0, 20.0});
+        require(menu.is_open(), "the menu is open when it is destroyed");
+        static_cast<void>(recorded);
+    }
+    window.perform_layout();
+    require((*held_row).semantic_descriptor().name == "Plain" &&
+                !(*held_row).on_semantic_action(SemanticAction::press, {}) && invocations.size() == 1U &&
+                (*held_panel).semantic_descriptor().role == SemanticRole::menu,
+            "rows and panels held past the menu's destruction read nothing of it");
+    require(window.focus_scope_depth() == 0U && !window.find("held.menu.overlay.row.plain"),
+            "the destroyed menu left no overlay or focus scope");
+}
+
 // GAPS E9: an item without a Command shows its own text and state, and
 // choosing it raises item_invoked with an empty command_id.
 void test_context_menu_items_without_commands() {
@@ -1115,8 +1170,30 @@ void test_context_menu_survives_its_handlers() {
     require(window.request_focus(other), "no focus scope of the closed menu holds the focus");
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void test_menu_strip_disposed_with_its_menu_open() {
+    std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("disposed.root"));
+    std::shared_ptr<gui_forms::MenuStrip> strip = make_control<MenuStrip>(StableId("disposed.strip"));
+    (*strip).set_requested_bounds({0.0, 0.0, 320.0, 24.0});
+    (*root).add_child(strip);
+    std::shared_ptr<gui_forms::Command> open = std::make_shared<Command>("file.open", "Open");
+    (*strip).set_items({{"disposed.file", "File", {{"file.open", MenuItemKind::command, open}}}});
+    Window window(root, {320.0, 190.0});
+    require((*strip).open(0U, MenuOpenMode::pointer) && (*strip).is_open(), "the strip's menu opens");
+    (*strip).dispose();
+    static_cast<void>((*root).remove_child((*strip).runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the strip with its menu open closes the menu and its focus scope");
+}
+
 int main() {
     try {
+        test_menu_strip_disposed_with_its_menu_open();
+        test_context_menu_rows_held_past_the_close();
         test_context_menu_command_snapshot_keyboard_nesting_and_restore();
         test_context_menu_scroll_and_validation_bounds();
         test_context_menu_items_without_commands();
