@@ -62,7 +62,7 @@ OPAQUE_PROPERTIES: frozenset[str] = frozenset({'DEPENDS', 'FIXTURES_REQUIRED', '
 def tsan_options(suppressions: Path) -> str:
     """TSAN_OPTIONS for the run: every report fatal, with the suppressions."""
     return ('halt_on_error=1:abort_on_error=0:print_summary=1:second_deadlock_stack=1:'
-            'suppressions=' + str(suppressions))
+            'suppressions=' + suppressions.as_posix())
 
 
 def test_labels(test: dict) -> list[str]:

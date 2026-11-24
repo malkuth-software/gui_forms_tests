@@ -25,17 +25,20 @@
 # each module; that the C ABI library exports none of STXlib is the exact
 # check of cmake/CheckCAbiExports.cmake.
 #
-#   cmake -DTOOL_OBJDUMP=<objdump> -DBINARIES=<a|b|...>
+#   cmake -DGUI_FORMS_SOURCE_DIR=<checkout> -DTOOL_OBJDUMP=<objdump> -DBINARIES=<a|b|...>
 #         [-DPROVIDER=<dll file name> -DPROVIDER_NAMES=<names file> [-DPROVIDER_DEF=<.def>]]
 #         -P cmake/CheckAllocatorBoundary.cmake
 #
 # PE images only (a .dll or .exe), read from `objdump -p` (GNU or LLVM,
-# cmake/PeTables.cmake). The binaries are separated by '|', since a CMake
+# GUI.Forms' cmake/PeTables.cmake). The binaries are separated by '|', since a CMake
 # list's ';' does not survive a -D argument on every generator. Fails naming
 # every offending export and import, or when a binary cannot be read.
 
 cmake_minimum_required(VERSION 3.25)
-include("${CMAKE_CURRENT_LIST_DIR}/PeTables.cmake")
+if(NOT EXISTS "${GUI_FORMS_SOURCE_DIR}/cmake/PeTables.cmake")
+    message(FATAL_ERROR "CheckAllocatorBoundary: set GUI_FORMS_SOURCE_DIR to the GUI.Forms checkout")
+endif()
+include("${GUI_FORMS_SOURCE_DIR}/cmake/PeTables.cmake")
 
 if(NOT DEFINED BINARIES OR BINARIES STREQUAL "")
     message(FATAL_ERROR "CheckAllocatorBoundary: set BINARIES")

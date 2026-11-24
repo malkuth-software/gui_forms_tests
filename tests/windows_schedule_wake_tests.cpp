@@ -226,7 +226,10 @@ struct ScheduleWakeHostFixture final {
             DispatchMessageW(&render);
         }
         paint_pending(hosted.window);
-        require((*root).paints == first_paints + 1U, "the armed paint ran");
+        require((*root).paints == first_paints + 1U,
+                "the armed paint ran once (paints " + std::to_string((*root).paints - first_paints) +
+                    " after the arm, update region " +
+                    (GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE ? "pending" : "empty") + ")");
         require(schedule_wake_queued(hosted.window), "a deadline set while painting posts a schedule wake");
         run_until(hosted, (*root).paints, first_paints + 2U);
         require((*root).paints >= first_paints + 2U, "the paint deadline repaints with no other input");

@@ -105,7 +105,10 @@ def compare_steps(reference: list[Step], host: list[Step], strict_hover: bool) -
                 got = actual_lines[index] if index < len(actual_lines) else "(nothing)"
                 if want != got:
                     problems.append(f"{expected.title}: line {index + 1}: expected '{want}', host '{got}'")
-                    break
+                    # A display summary's digest only says that a command
+                    # differs: the first command that does is named too.
+                    if not want.startswith("display lines="):
+                        break
         missing = sorted(expected.receipts - actual.receipts)
         if missing:
             problems.append(f"{expected.title}: receipts missing on the host: {', '.join(missing)}")

@@ -34,6 +34,15 @@ if(TARGET gui_forms_application AND NOT GUI_FORMS_BUILD_PREPARED_TEXT)
             "-DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}"
             "-DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}"
             "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+        # The Windows toolchain's own-runtime cache entries: without them the
+        # consumer links the Microsoft runtime's default libraries
+        # (winspool.lib, oldnames.lib), which the own runtime has not.
+        foreach(_gf_setting IN ITEMS GUI_FORMS_MSVC_RUNTIME GUI_FORMS_OWN_RUNTIME_SOURCE
+                                     GUI_FORMS_OWN_RUNTIME_PREFIX GUI_FORMS_LIBCXX_PREFIX)
+            if(DEFINED CACHE{${_gf_setting}})
+                list(APPEND gui_forms_sdk_consumer_cmake_arguments "-D${_gf_setting}=$CACHE{${_gf_setting}}")
+            endif()
+        endforeach()
         add_test(NAME gui_forms_sdk_consumer_link
             COMMAND ${Python3_EXECUTABLE} -B ${GUI_FORMS_SOURCE_DIR}/tools/sdk_consumer_link.py
                 --prefix ${GUI_FORMS_TEST_CACHE_PREFIX}

@@ -655,7 +655,14 @@ private:
         same = text(owner, id, "subrole", expected.subrole, published.subrole) && same;
         same = text(owner, id, "label", expected.label, published.label) && same;
         same = text(owner, id, "identifier", expected.identifier, published.identifier) && same;
-        same = text(owner, id, "value", expected.value, published.value) && same;
+        // A metrics view's value is the paint count it last painted, so any
+        // paint between the settled dump and the AX read (the window taking
+        // focus for the client, say) moves it: one CI run published
+        // "2 paints" against a dump's "1 paints". Its other fields are
+        // compared; the value is not.
+        if (owner != "metrics_view") {
+            same = text(owner, id, "value", expected.value, published.value) && same;
+        }
         same = flag(owner, id, "enabled", expected.enabled, published.enabled) && same;
         same = flag(owner, id, "focused", expected.focused, published.focused) && same;
         same = flag(owner, id, "selected", expected.selected, published.selected) && same;

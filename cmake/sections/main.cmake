@@ -1358,8 +1358,21 @@ if(TARGET gui_forms_form_compiler)
         # compiler and another target configures and builds without a
         # dependency cycle, and a changed document rebuilds it (cp33;
         # tests/cmake/form_shared_source_test.cmake).
+        # The Windows toolchain's own-runtime settings are cache entries the
+        # nested project needs too (cmake/llvm22-windows-msvc.cmake in
+        # GUI.Forms); without them it links the Microsoft runtime's default
+        # libraries (winspool.lib, oldnames.lib), which the own runtime has not.
+        set(_gf_runtime_settings "")
+        foreach(_gf_setting IN ITEMS GUI_FORMS_MSVC_RUNTIME GUI_FORMS_OWN_RUNTIME_SOURCE
+                                     GUI_FORMS_OWN_RUNTIME_PREFIX GUI_FORMS_LIBCXX_PREFIX)
+            if(DEFINED CACHE{${_gf_setting}})
+                list(APPEND _gf_runtime_settings "${_gf_setting}=$CACHE{${_gf_setting}}")
+            endif()
+        endforeach()
+        string(REPLACE ";" "|" _gf_runtime_settings "${_gf_runtime_settings}")
         add_test(NAME gui_forms_form_shared_source
                  COMMAND ${CMAKE_COMMAND}
+                         "-DRUNTIME_SETTINGS=${_gf_runtime_settings}"
                          -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/form_shared_source_test
                          -DSOURCE_DIRECTORY=${CMAKE_CURRENT_SOURCE_DIR}
                          -DGUI_FORMS_SOURCE_DIRECTORY=${GUI_FORMS_SOURCE_DIR}

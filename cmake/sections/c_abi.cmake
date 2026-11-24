@@ -78,7 +78,7 @@ if(TARGET gui_forms_abi)
     # the Win32 shim's names.
     if(WIN32)
         add_test(NAME gui_forms_abi_allocator_boundary
-            COMMAND "${CMAKE_COMMAND}" "-DTOOL_OBJDUMP=${CMAKE_OBJDUMP}"
+            COMMAND "${CMAKE_COMMAND}" "-DGUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}" "-DTOOL_OBJDUMP=${CMAKE_OBJDUMP}"
                 "-DBINARIES=$<TARGET_FILE:gui_forms_abi>|$<TARGET_FILE:gui_forms_abi_runtime_c11_tests>|$<TARGET_FILE:gui_forms_abi_conformance>|$<TARGET_FILE:gui_forms_abi_schema_export>|$<TARGET_FILE:gui_forms_abi_cpp_wrappers>"
                 "-DPROVIDER=$<TARGET_FILE_NAME:gui_forms_abi>"
                 "-DPROVIDER_NAMES=${_gf_abi_generated}/gf_abi_exports.txt"
