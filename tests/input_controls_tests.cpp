@@ -408,6 +408,26 @@ void test_list_box_selection_navigation_and_mutation() {
             "ListBox top index must bound virtualized row painting");
 }
 
+// Hunt r18: narrowing to one item keeps a selected row. A command-toggle
+// leaves the active row on the item it just unselected; narrowing used to
+// keep that row, selecting an item that was not selected.
+void test_list_box_narrowing_keeps_a_selected_row() {
+    std::shared_ptr<gui_forms::ListBox> list = make_control<ListBox>(StableId("input.list.narrow"));
+    (*list).items = {"Alpha", "Bravo", "Charlie", "Delta", "Echo"};
+    (*list).set_requested_bounds({0.0, 0.0, 180.0, 86.0});
+    Window window(list, {180.0, 86.0});
+    (*list).selection_mode = ListSelectionMode::multiple_extended;
+    (*list).select_index(1U);
+    (*list).select_index(3U, true, false);
+    (*list).select_index(2U, false, true);
+    require((*list).selected_indices().size() == 2U && (*list).selected_indices().front() == 1U &&
+                (*list).selected_indices().back() == 3U,
+            "the toggle leaves rows 1 and 3 selected");
+    (*list).selection_mode = ListSelectionMode::one;
+    require((*list).selected_indices().size() == 1U && (*list).selected_indices().front() == 1U,
+            "narrowing keeps the first selected row, not the unselected active one");
+}
+
 void test_combo_box_scrollbar_reaches_last_item() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("scroll.root"));
     const std::shared_ptr<ComboBox> combo = make_control<ComboBox>(StableId("scroll.combo"));
@@ -1218,6 +1238,7 @@ int main() {
         test_word_navigation_and_deletion();
         test_clipboard_commands_and_protected_text();
         test_list_box_selection_navigation_and_mutation();
+        test_list_box_narrowing_keeps_a_selected_row();
         test_combo_box_overlay_commit_dismiss_and_owner_revocation();
         test_combo_box_scrollbar_reaches_last_item();
         test_numeric_up_down_composite_edit_spinner_and_keys();

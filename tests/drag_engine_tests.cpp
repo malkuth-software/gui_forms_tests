@@ -355,7 +355,17 @@ public:
         return accepted;
     }
 
-    void preview_drag(const DragFrame& frame) override { previews.push_back(frame.selection.token.value); }
+    void preview_drag(const DragFrame& frame) override {
+        previews.push_back(frame.selection.token.value);
+        if (replan_from_preview != nullptr) {
+            nested_replan_refused = !(*replan_from_preview).replan(*this, Point{0.0, 1.0});
+            replan_from_preview = nullptr;
+        }
+    }
+
+    // Set to ask for a replan from inside the next preview (hunt r31 C31).
+    DragEngine* replan_from_preview{};
+    bool nested_replan_refused{};
 
     void announce_drag(const DragFrame& frame, DragAnnouncement& announcement) override {
         std::array<char, 64> text{};
@@ -461,6 +471,29 @@ DragLanding tile(double x, double y, std::uint32_t token, std::uint16_t group) {
 }
 
 // -- reorder ----------------------------------------------------------------------------
+
+// Hunt r31 C31: a replan asked from inside one of the client's own calls
+// (here its preview) is refused and changes nothing; the same replan after
+// the call returns is taken.
+void replan_inside_a_client_call_is_refused() {
+    TestClient client;
+    client.reset_list(5U, 1U);
+    Fixture fixture = make_fixture(client.slots[1]);
+    client.container = fixture.container.get();
+    DragEngine& engine = (*fixture.window).drag_engine();
+    const Point grab = centre(client.slots[1]);
+    require(press(fixture, client, grab, 4.0), "a press arms a drag");
+    move_to(fixture, {grab.x, 81.0});
+    require(engine.phase() == DragPhase::dragging, "the drag is under way");
+    const std::uint64_t replans = engine.statistics().replans;
+    client.replan_from_preview = &engine;
+    move_to(fixture, {grab.x, 20.0});
+    require(client.nested_replan_refused && engine.statistics().replans == replans,
+            "a replan from inside preview_drag is refused and plans nothing");
+    require(engine.replan(client, Point{0.0, 1.0}) && engine.statistics().replans == replans + 1U,
+            "the same replan outside the client's calls is taken");
+    release_at(fixture, {grab.x, 20.0});
+}
 
 void list_reorder_forward_and_back() {
     TestClient client;
@@ -1241,6 +1274,7 @@ void no_allocation_while_dragging() {
 
 int main() {
     list_reorder_forward_and_back();
+    replan_inside_a_client_call_is_refused();
     non_finite_moves_are_refused();
     cancels_leave_the_model_untouched();
     release_outside_and_suppression();
