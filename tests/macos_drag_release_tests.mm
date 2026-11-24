@@ -171,6 +171,8 @@ int main() {
                                                                  styleMask:NSWindowStyleMaskBorderless
                                                                    backing:NSBackingStoreBuffered
                                                                      defer:NO];
+            // ARC owns the window: closing it must not release it as well.
+            window.releasedWhenClosed = NO;
             GuiFormsReleaseRecorder* const view =
                 [[GuiFormsReleaseRecorder alloc] initWithFrame:NSMakeRect(0.0, 0.0, 320.0, 180.0)];
             window.contentView = view;

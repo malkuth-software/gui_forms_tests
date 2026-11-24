@@ -72,6 +72,7 @@ static const capability_name capability_names[] = {
     {"host_scroll", GF_HOST_CAPABILITY_HOST_SCROLL},
     {"reference_presentation", GF_HOST_CAPABILITY_REFERENCE_PRESENTATION},
     {"desktop_notifications", GF_HOST_CAPABILITY_DESKTOP_NOTIFICATIONS},
+    {"safe_insets", GF_HOST_CAPABILITY_SAFE_INSETS},
 };
 
 enum { capability_name_count = (int)(sizeof(capability_names) / sizeof(capability_names[0])) };
