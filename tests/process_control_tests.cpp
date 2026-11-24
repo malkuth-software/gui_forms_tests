@@ -50,11 +50,16 @@ void require(bool condition, const std::string& message) {
 }
 
 // The test's time for the window's motion: moves start at it and frames are
-// polled at it, never at the wall clock.
+// polled at it, never at the wall clock. It starts a second after the
+// window's clock, so a move begun at the wall clock (a click before the
+// test's time takes over) ends on its first frame instead of waiting for a
+// time behind it: a fixed start fell behind the clock on a host up longer
+// than the start.
 class ManualTime final : public MotionTimeSource {
 public:
+    explicit ManualTime(const Window& window) : time(window.motion_clock().now() + std::chrono::seconds(1)) {}
     [[nodiscard]] FrameTime now() const noexcept override { return time; }
-    FrameTime time{std::chrono::seconds(1000)};
+    FrameTime time;
 };
 
 // Advances the test's time by `step` and polls the window's frames there.
@@ -137,7 +142,7 @@ void test_the_dialog(Window& window) {
 
     // Held, OK's lamp strikes (40% at once, full after 60 ms) and the key
     // goes down; released, it comes up and the lamp cools out.
-    ManualTime time{};
+    ManualTime time{window};
     window.motion_clock().set_time_source(&time);
     const Point on_ok = centre_of(*ok);
     require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_ok}),
@@ -233,7 +238,7 @@ void test_the_strip(Window& window) {
     require((*find<process_control::LampKey>(window, "process.key.cancel")).lamp_power() ==
                 process_control::key_lit_power,
             "and leaves CANCEL lit");
-    ManualTime time{};
+    ManualTime time{window};
     window.motion_clock().set_time_source(&time);
     const Point on_ok = centre_of(*ok);
     require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, on_ok}), "OK is pressed");
