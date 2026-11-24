@@ -224,6 +224,20 @@ if(TARGET gui_forms_application)
     target_link_libraries(gui_forms_application_native_tests PRIVATE gui_forms_application)
     add_test(NAME gui_forms_application_native_tests COMMAND gui_forms_application_native_tests)
     set_tests_properties(gui_forms_application_native_tests PROPERTIES TIMEOUT 30)
+    # cp37: a program started with --mcp answers initialize and tools/list
+    # and ends when its input closes (tools/mcp_launch_check.py), so a build
+    # whose MCP has no transport fails here.
+    if(GUI_FORMS_MCP AND NOT GUI_FORMS_HIGH_INTEGRITY)
+        find_package(Python3 COMPONENTS Interpreter QUIET)
+        add_executable(gui_forms_mcp_launch_probe tests/mcp_launch_probe.cpp)
+        target_link_libraries(gui_forms_mcp_launch_probe PRIVATE gui_forms_application)
+        if(Python3_Interpreter_FOUND)
+            add_test(NAME gui_forms_mcp_launch_tests
+                COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/mcp_launch_check.py
+                    $<TARGET_FILE:gui_forms_mcp_launch_probe> 30)
+            set_tests_properties(gui_forms_mcp_launch_tests PROPERTIES TIMEOUT 90)
+        endif()
+    endif()
     # One stxlib_state in a program that reaches STXlib through the
     # Application archive and through its own stxlib::boundary link: the
     # static state archive is linked once, so a second state (two
