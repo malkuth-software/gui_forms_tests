@@ -133,6 +133,39 @@ private:
     DispatchOperation& nested_;
 };
 
+class RunNestedTurn final {
+public:
+    RunNestedTurn(Window& window, std::string& trace,
+                  DispatchDrainResult& nested) noexcept
+        : window_(window), trace_(trace), nested_(nested) {}
+
+    // A nested loop's turn inside a callback, as a modal dialog runs one.
+    void operator()() const {
+        trace_ += 'A';
+        static_cast<void>(window_.begin_invoke(
+            callbacks::AppendLiteral<>(trace_, "D")));
+        nested_ = window_.drain_posted_work();
+        trace_ += '|';
+    }
+
+private:
+    Window& window_;
+    std::string& trace_;
+    DispatchDrainResult& nested_;
+};
+
+class RecordWakeCount final {
+public:
+    RecordWakeCount(const std::uint64_t& wakes, std::uint64_t& seen) noexcept
+        : wakes_(wakes), seen_(seen) {}
+
+    void operator()() const { seen_ = wakes_; }
+
+private:
+    const std::uint64_t& wakes_;
+    std::uint64_t& seen_;
+};
+
 class RecordUiThread final {
 public:
     RecordUiThread(std::atomic<bool>& result,
@@ -1090,9 +1123,46 @@ void test_window_dispatcher_outlives_its_window() {
 
 } // namespace
 
+void test_a_nested_turn_reaches_the_rest_of_the_turn() {
+    std::shared_ptr<gui_forms::Control> root = make_control<Control>(StableId("dispatcher.nested-turn"));
+    Window window(root, {320.0, 180.0});
+    std::string trace;
+    DispatchDrainResult nested;
+    DispatchOperation first = window.begin_invoke(RunNestedTurn(window, trace, nested));
+    DispatchOperation second = window.begin_invoke(callbacks::AppendLiteral<>(trace, "B"));
+    DispatchOperation third = window.begin_invoke(callbacks::AppendLiteral<>(trace, "C"));
+    const DispatchDrainResult outer = window.drain_posted_work();
+    // The turn's later work used to wait in the outer turn's batch until the
+    // nested loop ended (round 3: an MCP act behind a modal dialog).
+    require(trace == "ABCD|" && nested.invoked == 3U && outer.invoked == 1U && outer.remaining == 0U &&
+                second.state() == DispatchOperationState::completed &&
+                third.state() == DispatchOperationState::completed,
+            "a nested turn must run the rest of the turn and the work queued before it");
+    static_cast<void>(first);
+}
+
+void test_queued_work_keeps_a_wake_while_a_callback_runs() {
+    std::shared_ptr<gui_forms::Control> root = make_control<Control>(StableId("dispatcher.kept-wake"));
+    Window window(root, {320.0, 180.0});
+    std::uint64_t wakes = 0U;
+    window.set_dispatch_wake_handler(callbacks::IncrementCounter<std::uint64_t>(wakes));
+    std::uint64_t seen = 0U;
+    static_cast<void>(window.begin_invoke(RecordWakeCount(wakes, seen)));
+    std::string trace;
+    static_cast<void>(window.begin_invoke(callbacks::AppendLiteral<>(trace, "B")));
+    require(wakes == 1U, "two posts share one wake");
+    static_cast<void>(window.drain_posted_work());
+    // The turn answered the first wake; the work behind the first callback
+    // asked another before it ran, for a nested loop the callback might
+    // enter (round 3: an MCP act's step behind a modal dialog's loop).
+    require(seen == 2U && trace == "B", "work queued behind a callback keeps a wake pending while it runs");
+}
+
 int main() {
     try {
         test_fifo_snapshot_and_nested_deferral();
+        test_a_nested_turn_reaches_the_rest_of_the_turn();
+        test_queued_work_keeps_a_wake_while_a_callback_runs();
         test_cancellation_owner_lifetime_and_fault_isolation();
         test_completed_work_releases_its_callable();
         test_cross_thread_post_and_headless_pump();

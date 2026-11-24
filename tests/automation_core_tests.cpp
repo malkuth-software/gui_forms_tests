@@ -31,6 +31,7 @@
 #include "src/core/host/session/session_directory.hpp"
 #if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
 #include "src/runtime/automation/automation_run.hpp"
+#include "src/host/headless/application/headless_application.hpp"
 #include "src/host/headless/services/headless_host_services.hpp"
 #include "src/host/headless/session/headless_host.hpp"
 #endif
@@ -882,6 +883,101 @@ void an_ai_led_launch_holds_control_without_asking() {
 
 // A tooltip's window gets no band and no tag line: the tag line on a
 // tooltip window opened another tooltip window, 65 deep (round 2).
+// The modal turns of take_back_answers_over_model_modals: the owner's
+// round-3 finding, the take-back question dead while the model's Resize
+// dialog ran modally.
+struct TakeBackTurnState final {
+    host::HeadlessApplication* application{};
+    AutomationControl* control{};
+    // How deep the model's modal windows go before the user takes back.
+    std::size_t depth{1U};
+    bool blocked{true};
+    bool taken{};
+    bool dialog_left{};
+    std::size_t depth_seen{};
+};
+
+struct TakeBackTurn final {
+    TakeBackTurnState* state{};
+    bool operator()(HostWindowId window) const;
+};
+
+ApplicationWindow modal_entry(const char* id, const char* owner) {
+    ApplicationWindow entry{};
+    entry.stable_id = id;
+    entry.owner_id = owner;
+    entry.model = std::make_unique<Window>(make_control<Panel>(StableId(std::string(id) + ".root")),
+                                           Size{240.0, 160.0});
+    entry.options.title = id;
+    entry.options.initial_size = Size{240.0, 160.0};
+    entry.options.minimum_size = Size{100.0, 80.0};
+    return entry;
+}
+
+bool TakeBackTurn::operator()(HostWindowId window) const {
+    TakeBackTurnState& run = *state;
+    host::HeadlessApplication& application = *run.application;
+    const std::size_t depth = application.windowing().modal_depth();
+    if (depth < run.depth) {
+        // The model's dialog opens one of its own (a nested modal).
+        static_cast<void>(application.handle("resize").windows().show_modal(modal_entry("resize.inner", "resize")));
+        application.windowing().set_modal_turn(*this);
+        application.simulate_user_close(window);
+        return true;
+    }
+    if (run.depth_seen == 0U) {
+        run.depth_seen = depth;
+        const HostWindowId question = application.id("automation.take-back");
+        run.blocked = !question.valid() || application.windowing().input_blocked(question);
+        Window* const model = question.valid() ? application.model(question) : nullptr;
+        const std::shared_ptr<ButtonBase> accept =
+            model == nullptr ? nullptr
+                             : std::dynamic_pointer_cast<ButtonBase>((*model).find("automation.take-back.accept"));
+        if (accept && !run.blocked) static_cast<void>((*accept).perform_click());
+        run.taken = (*run.control).state() == ControlState::user_control;
+        // Taking back leaves the model's dialog for the user.
+        run.dialog_left = application.windowing().modal_depth() == depth && application.model(window) != nullptr;
+    }
+    // The user closes the dialog.
+    application.simulate_user_close(window);
+    return true;
+}
+
+void take_back_answers_over_model_modals() {
+    for (std::size_t depth = 1U; depth <= 2U; ++depth) {
+        std::vector<ApplicationWindow> windows{};
+        windows.push_back(modal_entry("main", ""));
+        host::HeadlessApplication application(std::move(windows));
+        StockPresenter presenter{};
+        ControlSettings settings{};
+        settings.ai_led = true;
+        AutomationControl control(settings, &presenter);
+        presenter.bind_control(&control);
+        presenter.set_windowing(application.handle("main"), "main");
+        control.begin_ai_led(FrameClock::now());
+        ClientIdentity client{};
+        client.model_name = "Claude Opus 5.5";
+        presenter.client_changed(client);
+        // The user clicked: the question is up before the model's dialog.
+        presenter.offer_take_back(client);
+        require(application.id("automation.take-back").valid(), "the take-back question opens");
+        TakeBackTurnState state{};
+        state.application = &application;
+        state.control = &control;
+        state.depth = depth;
+        application.windowing().set_modal_turn(TakeBackTurn{&state});
+        const ApplicationModalResult shown =
+            application.handle("main").windows().show_modal(modal_entry("resize", "main"));
+        require(shown.status.accepted(), "the model's dialog runs modally");
+        require(state.depth_seen == depth, "the user answers at the model's deepest modal");
+        require(!state.blocked, "no modal of the model's blocks the take-back question");
+        require(state.taken, "Take Back Control works while the model's modal dialog is up");
+        require(state.dialog_left, "taking back leaves the model's dialog open for the user");
+        presenter.disconnected();
+        presenter.bind_control(nullptr);
+    }
+}
+
 void popup_windows_carry_no_sign() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.popup.root"));
     Window window(root, Size{300.0, 200.0});
@@ -978,6 +1074,27 @@ void round_two_replies_are_structured_and_strict() {
 // A window run modally is a dialog whatever its root's role: Plan Paint's
 // Resize dialog (a plain group in a modal window) was driven and submitted
 // (round 2).
+// Shows a window modally, as a program's command opens its dialog.
+class ShowModally final {
+public:
+    explicit ShowModally(const Window& dialog) noexcept : dialog_(dialog) {}
+    void operator()(ButtonBase&) const { gui_forms::detail::note_shown_modally(dialog_, true); }
+
+private:
+    const Window& dialog_;
+};
+
+// Ends a window's modal showing, as a dialog closes once its nested loop
+// has ended: after the key that cancelled it.
+class EndModally final {
+public:
+    explicit EndModally(const Window& dialog) noexcept : dialog_(dialog) {}
+    void operator()() const { gui_forms::detail::note_shown_modally(dialog_, false); }
+
+private:
+    const Window& dialog_;
+};
+
 void a_modal_window_is_a_dialog() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.owner.root"));
     Window window(root, Size{300.0, 200.0});
@@ -1009,6 +1126,51 @@ void a_modal_window_is_a_dialog() {
                 submits == 0U,
             "a model never submits a modal window's dialog");
     gui_forms::detail::note_shown_modally(dialog, false);
+}
+
+// Round 3: a modal window the model opened is closed by its own ID, with no
+// window named, and reset waits for it to close after its nested loop.
+void a_model_opened_modal_window_closes_by_its_id() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.opener.root"));
+    const std::shared_ptr<Button> open = make_control<Button>(StableId("auto.opener.resize"), "Resize");
+    (*open).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*root).add_child(open);
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    const std::shared_ptr<Panel> dialog_root = make_control<Panel>(StableId("auto.sized"));
+    Window dialog(dialog_root, Size{200.0, 120.0});
+    dialog.perform_layout();
+    host::HeadlessHost dialog_host(dialog);
+    require(window_host.dispatch(HostAttachEvent{{300.0, 200.0}, 1.0}, 500U).accepted() &&
+                dialog_host.dispatch(HostAttachEvent{{200.0, 120.0}, 1.0}, 500U).accepted(),
+            "the hosts attach");
+    SubscriptionToken opened = (*open).clicked().subscribe(ShowModally(dialog));
+    TestPresenter presenter{};
+    ControlSettings settings{};
+    settings.ai_led = true;
+    AutomationControl control(settings, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.opener.window"), "the owner joins");
+    require(core.attach_window(dialog, "auto.sized.window"), "the dialog's window joins");
+    WindowPump pump(window, control, presenter);
+    control.begin_ai_led(pump.now());
+    const std::string pressed =
+        success_text(core.run("act", "{\"action\":\"press\",\"target\":\"auto.opener.resize\"}", pump));
+    require(contains(pressed, "a dialog opened: [auto.sized.window]"), "the press opens the modal window");
+    // The act runs on the dialog's own window, whose work its pump drains.
+    WindowPump dialog_pump(dialog, control, presenter);
+    const ToolReply closed =
+        core.run("act", "{\"action\":\"close\",\"target\":\"auto.sized.window\"}", dialog_pump);
+    const ToolFailure* const refused = closed.failure_value();
+    require(refused == nullptr && contains(success_text(closed), "as Cancel: the dialog you opened"),
+            refused == nullptr ? "act close names the dialog by its ID alone"
+                               : ("act close names the dialog by its ID alone: " + (*refused).message).c_str());
+    // The dialog closes on a later turn, as a modal window does.
+    static_cast<void>(window.begin_invoke(EndModally(dialog)));
+    const std::string reset = success_text(core.run("reset", "{}", pump));
+    require(contains(reset, "closed the dialog [auto.sized.window] as Cancel") && !contains(reset, "did not close"),
+            "reset waits for the dialog to close");
 }
 
 
@@ -1139,6 +1301,8 @@ int main() {
     popup_windows_carry_no_sign();
     round_two_replies_are_structured_and_strict();
     a_modal_window_is_a_dialog();
+    a_model_opened_modal_window_closes_by_its_id();
+    take_back_answers_over_model_modals();
     the_users_pointer_never_feeds_a_model_gesture();
     idle_ignores_the_signs_motion();
     the_tool_list_is_stable_for_the_launch();
