@@ -430,6 +430,11 @@ void test_sheet_glides_every_refresh(Window& window, CodeSheet& sheet) {
 // is left to bubble.
 void test_sheet_gestures(Window& window, CodeSheet& sheet) {
     using namespace gui_forms::code_zoom;
+    // Under reduced motion, as test_sheet_keys_and_wheel set it: the glide
+    // test before this one restores the defaults.
+    PresentationOverrides still{};
+    still.reduced_motion.set(true);
+    window.set_presentation_overrides(still);
     const Size size = window.client_size();
     const Point centre{size.width * 0.5, size.height * 0.5};
     sheet.show_at(1.0, sheet.content_point(capture_line, 0U), centre);
