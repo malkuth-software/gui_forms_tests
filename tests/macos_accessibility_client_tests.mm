@@ -795,9 +795,23 @@ Dump perform_default_actions(const std::string& path, AXUIElementRef application
         }
         const std::string signature_before = semantic_subtree_signature(dump.snapshot.roots, entry);
         const AXError performed = perform_through_ax(element.get(), action, target_before);
-        Dump after = wait_for_new_dump(path, dump, 1500);
-        const bool effect = after.effects > dump.effects;
-        const bool changed = semantic_subtree_signature(after.snapshot.roots, entry) != signature_before;
+        // The first new dump is not the answer: a press can bump the
+        // generation (focus, a pressed look) a dump before its effect is
+        // counted, which failed a different control each run (cp37 runs 12
+        // and 13). The wait lasts until the effect or the entry's change
+        // shows, or the timeout.
+        Dump after = dump;
+        bool effect = false;
+        bool changed = false;
+        for (int waited = 0; waited < 1500 && !effect && !changed; waited += 20) {
+            const Dump current = read_dump(path);
+            if (current.valid) {
+                after = current;
+                effect = after.effects > dump.effects;
+                changed = semantic_subtree_signature(after.snapshot.roots, entry) != signature_before;
+            }
+            if (!effect && !changed) sleep_milliseconds(20);
+        }
         const bool observed = performed == kAXErrorSuccess && (effect || changed);
         tally.action_observed = tally.action_observed || observed;
         if (!observed) {
