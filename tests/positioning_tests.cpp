@@ -341,8 +341,14 @@ void test_resizing_the_ancestor_moves_the_grandchild() {
     Window& window = *built.window;
     require_bounds(*built.middle, 0.0, 0.0, 100.0, 100.0, "the middle container");
     require_bounds(*built.pinned, 0.0, 190.0, 30.0, 10.0, "bottom 0 in the ancestor's box, in the parent's coordinates");
-    require(window.layout_diagnostics().size() == 1U, "one warning");
+    // The warning, then the middle container's own overflow: the pinned
+    // child lies past its 100 x 100 box and a GridPanel without auto
+    // scroll records it unanswered (stage VA, content_overflow).
+    require(window.layout_diagnostics().size() == 2U, "one warning and the middle container's overflow");
     require_warning(window, 0U, "pos.ancestor");
+    require(window.layout_diagnostics()[1].code == LayoutDiagnosticCode::content_overflow &&
+                window.layout_diagnostics()[1].child == "pos.middle",
+            "the middle container records its overflow");
     require(layout_diagnostic_code_name(LayoutDiagnosticCode::containing_block_not_parent) ==
                 "containing_block_not_parent",
             "the code's name");
