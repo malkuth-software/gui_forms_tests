@@ -4,6 +4,7 @@
 // BackstageView with its navigation, Escape and the File tab returning to
 // the document.
 
+#include "gui_forms/controls/panel.hpp"
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/commands/color_command/color_command.hpp"
@@ -790,7 +791,41 @@ void application_menu_measures_its_labels() {
     (*ribbon).close_menus();
 }
 
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void palette_refused_by_a_containing_scope() {
+    std::shared_ptr<ColorCommand> command = std::make_shared<ColorCommand>(std::make_shared<Command>("color", "Colour"));
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("fenced.root"));
+    std::shared_ptr<RibbonColorPicker> picker = make_control<RibbonColorPicker>(StableId("fenced.picker"));
+    (*picker).command = command;
+    (*picker).text = "Font &colour";
+    (*picker).set_requested_bounds({10.0, 10.0, 120.0, 30.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("fenced.fence"), "Fence");
+    (*fence).set_requested_bounds({10.0, 250.0, 80.0, 28.0});
+    (*root).add_child(picker);
+    (*root).add_child(fence);
+    Window window(root, {300.0, 300.0});
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        static_cast<void>((*picker).open_palette());
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !(*picker).palette_open() && (*picker).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "a palette the window refuses a scope is not left open");
+    require(window.end_focus_scope(fenced) && (*picker).open_palette() && (*picker).palette_open() &&
+                (*picker).agrees_with_itself(),
+            "once the containing scope ends, the palette opens");
+    (*picker).close_palette();
+    require(!(*picker).palette_open() && (*picker).agrees_with_itself() && window.focus_scope_depth() == 0U,
+            "and closes cleanly");
+}
+
 int main() {
+    palette_refused_by_a_containing_scope();
     value_commands();
     font_control();
     color_picker();

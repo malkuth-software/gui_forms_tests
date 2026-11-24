@@ -5,6 +5,7 @@
 // auto-complete stands aside while a filter is set. Also the typed prefix a
 // TextBox's suggestion list highlights.
 
+#include <stdexcept>
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
@@ -338,7 +339,39 @@ void close_and_reopen_from_handlers() {
     static_cast<void>(field_reports);
 }
 
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void list_refused_by_a_containing_scope() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("fenced.root"));
+    std::shared_ptr<ComboBox> listed = make_control<ComboBox>(StableId("fenced.listed"));
+    (*listed).set_requested_bounds({10.0, 10.0, 220.0, 30.0});
+    (*listed).items = {"Calgary", "California", "Cambridge"};
+    (*listed).drop_down_style = ComboBoxStyle::drop_down_list;
+    std::shared_ptr<ComboBox> fence = make_control<ComboBox>(StableId("fenced.fence"));
+    (*fence).set_requested_bounds({10.0, 280.0, 220.0, 30.0});
+    (*root).add_child(listed);
+    (*root).add_child(fence);
+    Window window(root, Size{320.0, 320.0});
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        (*listed).dropped_down = true;
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !(*listed).dropped_down.read() && window.focus_scope_depth() == 1U,
+            "a list the window refuses a scope is not left down");
+    require(window.end_focus_scope(fenced), "the containing scope ends");
+    (*listed).dropped_down = true;
+    require((*listed).dropped_down.read() && window.focus_scope_depth() == 1U, "then the list drops down");
+    (*listed).dropped_down = false;
+    require(!(*listed).dropped_down.read() && window.focus_scope_depth() == 0U, "and folds cleanly");
+}
+
 int main() {
+    list_refused_by_a_containing_scope();
     prefix_filter_narrows_and_widens();
     substring_filter();
     keyboard_and_identity();
