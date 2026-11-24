@@ -6,12 +6,19 @@
 // destructive question (one per launch), the dialog rule, batch, the
 // public model-tool registry and the event-propagation trace; and MCP round
 // 1: strict arguments, find, per-node actions, rows a list does not show,
-// dialogs a model opened (closed as Cancel, never submitted), reset, the
-// wash that goes with the in-use sign, and the appearance-review refusal.
+// dialogs a model opened (closed as Cancel, never submitted), reset, and
+// the appearance-review refusal; and MCP round 2 with the owner's control
+// model (2026-11-24): the take question, its countdown, a refusal, the
+// grace period, release_control, the take-back dialog a press offers, the
+// AI-led launch, AI mode's veil and X cursor, popups without a sign,
+// structured batch failures, expectations and waits that name nothing,
+// typed pointer arguments, pending state, the program's note, tool names
+// without '.', and modal windows read as dialogs.
 
 #include "gui_forms/automation/marks/automation_marks.hpp"
 #include "gui_forms/automation/tools/model_tools.hpp"
 #include "gui_forms/basic_controls.hpp"
+#include "gui_forms/commands/command/command.hpp"
 #include "gui_forms/controls/list_box.hpp"
 #include "gui_forms/controls/modal_layer.hpp"
 #include "gui_forms/controls/panel.hpp"
@@ -21,6 +28,7 @@
 #include "src/controls/automation/core/automation_core.hpp"
 #include "src/controls/automation/presenter/stock_presenter.hpp"
 #include "src/controls/automation/tools/automation_tools.hpp"
+#include "src/core/host/session/session_directory.hpp"
 #if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
 #include "src/runtime/automation/automation_run.hpp"
 #include "src/host/headless/services/headless_host_services.hpp"
@@ -28,6 +36,8 @@
 #endif
 #include "support/named_callbacks.hpp"
 
+#include <array>
+#include <chrono>
 #include <cstdint>
 #include <cmath>
 #include <cstdlib>
@@ -80,6 +90,13 @@ bool failed_with(const ToolReply& reply, ToolError error) {
 class TestPresenter final : public AutomationPresenter {
 public:
     bool allow{};
+    // The take question: answered with take_allow when the pump next runs,
+    // or left to its countdown when take_answers is false.
+    bool take_allow{true};
+    bool take_answers{true};
+    std::size_t takes{};
+    std::size_t take_back_offers{};
+    ControlState state{ControlState::user_control};
     std::size_t questions{};
     std::size_t reads{};
     std::size_t acts{};
@@ -99,7 +116,9 @@ public:
     }
     void calls_finished() noexcept override { ++finished; }
     void pointer_moved(Window&, Point, bool) noexcept override { ++pointer_moves; }
-    void control_changed(ControlState, const ClientIdentity&) override {}
+    void control_changed(ControlState changed, const ClientIdentity&) override { state = changed; }
+    void ask_take(const ClientIdentity&, std::chrono::milliseconds) override { ++takes; }
+    void offer_take_back(const ClientIdentity&) override { ++take_back_offers; }
     void ask_consent(const ClientIdentity&) override { ++questions; }
     void user_step_needed(Window&, const SemanticNode&, std::string_view) override { ++user_steps; }
     void disconnected() noexcept override {}
@@ -124,6 +143,10 @@ public:
             answered_ = presenter_.questions;
             control_.answer_consent(presenter_.allow);
         }
+        if (presenter_.take_answers && presenter_.takes > takes_answered_) {
+            takes_answered_ = presenter_.takes;
+            control_.answer_take(presenter_.take_allow);
+        }
     }
 
 private:
@@ -132,6 +155,7 @@ private:
     TestPresenter& presenter_;
     FrameTime now_{FrameClock::now()};
     std::size_t answered_{};
+    std::size_t takes_answered_{};
 };
 
 // The fixture: a button, a check box, a destructive button and a password
@@ -366,7 +390,7 @@ void the_public_registry_adds_tools() {
     Fixture fixture(false);
     const std::uint64_t before = fixture.core.tool_generation();
     ModelToolSpec spec{};
-    spec.name = "test.echo";
+    spec.name = "test_echo";
     spec.title = "Echo";
     spec.description = "Replies echoed and its arguments.";
     spec.input_schema = "{\"type\":\"object\",\"properties\":{}}";
@@ -378,10 +402,10 @@ void the_public_registry_adds_tools() {
     fixture.core.fill_tool_specs(specs);
     bool listed = false;
     for (const ToolSpec& listed_spec : specs) {
-        if (listed_spec.name == "test.echo") listed = true;
+        if (listed_spec.name == "test_echo") listed = true;
     }
     require(listed, "the added tool is listed");
-    require(success_text(fixture.call("test.echo", "{}")) == "echoed {}", "the added tool answers");
+    require(success_text(fixture.call("test_echo", "{}")) == "echoed {}", "the added tool answers");
 
     ModelToolSpec reserved{};
     reserved.name = "snapshot";
@@ -389,7 +413,7 @@ void the_public_registry_adds_tools() {
     require(register_model_tool(reserved, &echo_tool, nullptr) == ModelToolRegistration::duplicate,
             "a built-in tool's name is refused");
     ModelToolSpec off_thread{};
-    off_thread.name = "test.off_thread";
+    off_thread.name = "test_off_thread";
     off_thread.description = "Acts away from the UI thread.";
     off_thread.access = ModelToolAccess::acting;
     off_thread.thread = ModelToolThread::any;
@@ -398,12 +422,12 @@ void the_public_registry_adds_tools() {
 
     std::uint64_t wipes = 0U;
     ModelToolSpec wipe{};
-    wipe.name = "test.wipe";
+    wipe.name = "test_wipe";
     wipe.description = "Wipes the document.";
     wipe.access = ModelToolAccess::acting;
     wipe.destructive = true;
     require(register_model_tool(wipe, &wipe_tool, &wipes) == ModelToolRegistration::added, "a destructive tool");
-    require(failed_with(fixture.call("test.wipe", "{}"), ToolError::declined) && wipes == 0U &&
+    require(failed_with(fixture.call("test_wipe", "{}"), ToolError::declined) && wipes == 0U &&
                 fixture.presenter.questions == 1U,
             "a program's destructive tool asks the launch's question, and Don't Allow refuses it");
 
@@ -413,10 +437,10 @@ void the_public_registry_adds_tools() {
     const std::string noted = success_text(fixture.call("inspect", "{\"what\":[\"test.note\"]}"));
     require(contains(noted, "note: window"), "the section answers inspect");
 
-    require(unregister_model_tool("test.echo") && unregister_model_tool("test.wipe") &&
+    require(unregister_model_tool("test_echo") && unregister_model_tool("test_wipe") &&
                 unregister_model_inspect_section("test.note"),
             "the tools and the section are withdrawn");
-    require(failed_with(fixture.call("test.echo", "{}"), ToolError::unknown_tool), "a withdrawn tool is unknown");
+    require(failed_with(fixture.call("test_echo", "{}"), ToolError::unknown_tool), "a withdrawn tool is unknown");
 }
 
 void a_program_tool_meets_the_dialog_rule() {
@@ -439,13 +463,13 @@ void a_program_tool_meets_the_dialog_rule() {
     WindowPump pump(window, control, presenter);
     std::uint64_t wipes = 0U;
     ModelToolSpec wipe{};
-    wipe.name = "test.dialog_wipe";
+    wipe.name = "test_dialog_wipe";
     wipe.description = "Acts on the window.";
     wipe.access = ModelToolAccess::acting;
     require(register_model_tool(wipe, &wipe_tool, &wipes) == ModelToolRegistration::added, "an acting tool");
-    require(failed_with(core.run("test.dialog_wipe", "{}", pump), ToolError::dialog_open) && wipes == 0U,
+    require(failed_with(core.run("test_dialog_wipe", "{}", pump), ToolError::dialog_open) && wipes == 0U,
             "a program's acting tool is refused while an uninstrumented dialog is open");
-    require(unregister_model_tool("test.dialog_wipe"), "the tool is withdrawn");
+    require(unregister_model_tool("test_dialog_wipe"), "the tool is withdrawn");
 }
 
 void inspect_traces_the_routed_events() {
@@ -643,8 +667,11 @@ void a_model_closes_the_dialog_it_opened_but_never_submits_it() {
     require(set_opens_dialog("auto.opener", false, nullptr), "the mark is cleared");
 }
 
-void the_sign_washes_the_content_and_review_mode_shows_none() {
+void the_sign_shows_ai_mode_and_review_mode_shows_none() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.wash.root"));
+    const std::shared_ptr<Button> button = make_control<Button>(StableId("auto.wash.button"), "Apply");
+    (*button).set_requested_bounds(Rect{10.0, 10.0, 100.0, 28.0});
+    (*root).add_child(button);
     Window window(root, Size{300.0, 200.0});
     window.perform_layout();
     require(window.content_wash() == 1.0, "no wash without a model");
@@ -665,11 +692,25 @@ void the_sign_washes_the_content_and_review_mode_shows_none() {
         StockPresenter presenter{};
         presenter.window_attached(window);
         presenter.client_changed(client);
-        require(window.content_wash() < 0.5, "a connected model washes the content");
-        require(window.title_note() != nullptr && contains(window.title_note(), "is using this"),
+        require(window.content_wash() == 1.0 && !window.model_veil(),
+                "a connected model that does not hold control neither washes nor stripes the window");
+        require(window.title_note() != nullptr && contains(window.title_note(), "is connected"),
                 "a connected model is named in the title");
+        presenter.control_changed(ControlState::model_control, client);
+        require(window.model_veil() && window.content_wash() == 1.0,
+                "AI mode stripes the control surfaces and draws no greyscale wash");
+        require(contains(window.title_note(), "is in control"), "AI mode says the model is in control");
+        CursorImagesPtr images{};
+        CursorKind fallback = CursorKind::arrow;
+        require(window.model_cursor(images, fallback) && images && fallback == CursorKind::forbidden,
+                "AI mode shows the X cursor, with a host fallback");
+        presenter.control_changed(ControlState::user_control, client);
+        require(!window.model_veil() && !window.model_cursor(images, fallback),
+                "control back with the user ends AI mode");
+        presenter.control_changed(ControlState::model_control, client);
         presenter.disconnected();
-        require(window.content_wash() == 1.0, "the wash ends on disconnect");
+        require(!window.model_veil() && (window.title_note() == nullptr || window.title_note()[0] == '\0'),
+                "every sign ends on disconnect");
         presenter.window_detached(window);
         window.undeclare_band();
     }
@@ -678,8 +719,9 @@ void the_sign_washes_the_content_and_review_mode_shows_none() {
         presenter.set_unsigned(true);
         presenter.window_attached(window);
         presenter.client_changed(client);
-        require(!window.band_snapshot().declared && window.content_wash() == 1.0,
-                "appearance review shows no band and no wash");
+        presenter.control_changed(ControlState::model_control, client);
+        require(!window.band_snapshot().declared && !window.model_veil(),
+                "appearance review shows no band and no veil");
         presenter.disconnected();
         presenter.window_detached(window);
     }
@@ -690,6 +732,381 @@ void the_sign_washes_the_content_and_review_mode_shows_none() {
     launch.appearance_review = true;
     require(automation_launch_refusal(launch, false) != nullptr, "a release build refuses appearance review");
     require(automation_launch_refusal(launch, true) == nullptr, "a test build takes appearance review");
+#endif
+}
+
+
+// The owner's control model (2026-11-24): a default launch's first act asks
+// the user, waits on the answer, and once allowed the model holds control.
+void a_first_act_asks_to_take_control() {
+    Fixture fixture(false);
+    require(success_text(fixture.call("snapshot", "{}")).size() != 0U && fixture.presenter.takes == 0U,
+            "a read needs no control and asks nothing");
+    const std::string first = success_text(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}"));
+    require(fixture.presenter.takes == 1U && fixture.presses == 1U, "the first act asks once and then runs");
+    require(fixture.control.state() == ControlState::model_control &&
+                fixture.presenter.state == ControlState::model_control,
+            "the model holds control and the presenter shows AI mode");
+    require(contains(first, "You now hold control") && contains(first, "auto.check"),
+            "the first allowed act's reply carries the window's snapshot");
+    const std::string second = success_text(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}"));
+    require(fixture.presenter.takes == 1U && fixture.presses == 2U && !contains(second, "You now hold control"),
+            "later acts run at once without asking");
+    require(contains(success_text(fixture.call("windows", "{}")), "control: you hold it"),
+            "windows says the model holds control");
+}
+
+void the_take_countdown_allows_when_it_ends() {
+    Fixture fixture(false);
+    fixture.presenter.take_answers = false;
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
+                fixture.presses == 1U && fixture.presenter.takes == 1U,
+            "an unanswered take question allows when its countdown ends");
+    require(fixture.control.state() == ControlState::model_control, "the countdown's end gives the model control");
+}
+
+void a_refused_take_blocks_the_act() {
+    Fixture fixture(false);
+    fixture.presenter.take_allow = false;
+    const ToolReply refused = fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}");
+    require(failed_with(refused, ToolError::declined) && contains(failure_text(refused), "declined to let you take"),
+            "a refused take refuses the act and says the user declined");
+    require(fixture.presses == 0U && fixture.control.state() == ControlState::user_control,
+            "nothing ran and the user keeps control");
+    require(failed_with(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}"), ToolError::declined) &&
+                fixture.presenter.takes == 2U,
+            "the next act asks the user again");
+}
+
+void control_returns_after_the_grace_period() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    fixture.control.tick((*fixture.pump).now() + std::chrono::seconds(29));
+    require(fixture.control.state() == ControlState::model_control, "29 s without a call keeps control");
+    fixture.control.tick((*fixture.pump).now() + std::chrono::seconds(31));
+    require(fixture.control.state() == ControlState::user_control &&
+                fixture.presenter.state == ControlState::user_control,
+            "30 s without a call returns control and ends AI mode");
+    require(contains(success_text(fixture.call("windows", "{}")), "note: control returned to the user after 30 s"),
+            "the model's next reply says control returned");
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
+                fixture.presenter.takes == 2U,
+            "the next act asks again");
+}
+
+void release_control_gives_control_back() {
+    Fixture fixture(false);
+    require(contains(success_text(fixture.call("release_control", "{}")), "did not hold control"),
+            "releasing without control says so");
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    require(contains(success_text(fixture.call("release_control", "{}")), "control returned to the user"),
+            "release_control gives control back");
+    require(fixture.control.state() == ControlState::user_control &&
+                fixture.presenter.state == ControlState::user_control,
+            "AI mode ends on release");
+}
+
+// A user's press while the model holds control goes to the take-back
+// dialog, never to the program; taking back interrupts the model.
+void a_press_offers_take_back_and_taking_back_interrupts() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.back.root"));
+    const std::shared_ptr<Button> button = make_control<Button>(StableId("auto.back.button"), "Apply");
+    (*button).set_requested_bounds(Rect{10.0, 10.0, 100.0, 28.0});
+    (*root).add_child(button);
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    require(window_host.dispatch(HostAttachEvent{{300.0, 200.0}, 1.0}, 500U).accepted(), "the host attaches");
+    std::uint64_t presses = 0U;
+    SubscriptionToken pressed =
+        (*button).clicked().subscribe(callbacks::IncrementCounter<std::uint64_t, ButtonBase&>(presses));
+    TestPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.back.window"), "the window joins the automation");
+    WindowPump pump(window, control, presenter);
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.back.button\"}", pump)) &&
+                presses == 1U,
+            "the model takes control and presses");
+    PointerEvent down{};
+    down.action = PointerAction::down;
+    down.button = PointerButton::primary;
+    down.position = Point{40.0, 20.0};
+    down.click_count = 1U;
+    PointerEvent up = down;
+    up.action = PointerAction::up;
+    const std::uint64_t held_before = window_host.session().snapshot().user_input_held;
+    static_cast<void>(window_host.dispatch(down, 1000U));
+    static_cast<void>(window_host.dispatch(up, 2000U));
+    static_cast<void>(window.drain_posted_work());
+    require(presses == 1U && window_host.session().snapshot().user_input_held >= held_before + 2U,
+            "the user's click never reaches the program while the model holds control");
+    require(presenter.take_back_offers == 1U, "the press offers the take-back dialog once");
+    control.user_took_back();
+    require(control.state() == ControlState::user_control && presenter.state == ControlState::user_control,
+            "taking back ends the model's control and AI mode");
+    require(contains(success_text(core.run("windows", "{}", pump)), "the user took back control"),
+            "the model's next reply says the user took control back");
+    static_cast<void>(window_host.dispatch(down, 3000U));
+    static_cast<void>(window_host.dispatch(up, 4000U));
+    require(presses == 2U, "the user's clicks reach the program again");
+}
+
+void an_ai_led_launch_holds_control_without_asking() {
+    Fixture fixture(false);
+    ControlSettings settings{};
+    settings.ai_led = true;
+    TestPresenter presenter{};
+    AutomationControl control(settings, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(*fixture.window, "auto.led.window"), "the window joins the AI-led automation");
+    WindowPump pump(*fixture.window, control, presenter);
+    control.begin_ai_led(pump.now());
+    require(control.state() == ControlState::model_control, "an AI-led launch starts with the model in control");
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.press\"}", pump)) &&
+                presenter.takes == 0U && fixture.presses == 1U,
+            "an AI-led act runs with no countdown");
+    control.tick(pump.now() + std::chrono::minutes(10));
+    require(control.state() == ControlState::model_control, "an AI-led launch never returns control after idle");
+    control.user_took_back();
+    require(control.state() == ControlState::user_control, "the user can always take back an AI-led launch");
+#if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
+    AutomationLaunch shared{};
+    shared.shared = true;
+    require(shared.requested() && automation_launch_refusal(shared, false) == nullptr,
+            "--mcp-shared is a launch of its own");
+#endif
+}
+
+// A tooltip's window gets no band and no tag line: the tag line on a
+// tooltip window opened another tooltip window, 65 deep (round 2).
+void popup_windows_carry_no_sign() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.popup.root"));
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    const std::shared_ptr<Panel> tip_root = make_control<Panel>(StableId("tool-tip"));
+    Window tip(tip_root, Size{120.0, 24.0});
+    StockPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    presenter.bind_control(&control);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.popup.window"), "the main window joins");
+    require(core.attach_window(tip, "auto.popup.window/tool-tip.1", true), "the tooltip's window joins as passive");
+    ClientIdentity client{};
+    client.model_name = "Claude Opus 5.5";
+    presenter.client_changed(client);
+    require(window.band_snapshot().declared && !tip.band_snapshot().declared,
+            "the program's window carries the band, the tooltip's window none");
+    require(tip.title_note() == nullptr || tip.title_note()[0] == '\0', "the tooltip's window carries no title note");
+    TestPresenter reads{};
+    WindowPump pump(window, control, reads);
+    const std::string windows = success_text(core.run("windows", "{}", pump));
+    require(contains(windows, "auto.popup.window") && !contains(windows, "tool-tip.1") &&
+                contains(windows, "1 tooltip or popup window"),
+            "windows lists the real windows and counts the popups");
+    presenter.disconnected();
+    presenter.bind_control(nullptr);
+}
+
+void round_two_replies_are_structured_and_strict() {
+    Fixture fixture(false);
+    const ToolReply stopped = fixture.call(
+        "batch", "{\"steps\":[{\"tool\":\"snapshot\"},{\"tool\":\"act\",\"action\":\"press\",\"target\":"
+                 "\"auto.nothing\"},{\"tool\":\"act\",\"action\":\"press\",\"target\":\"auto.press\"}]}");
+    const ToolFailure* const failure = stopped.failure_value();
+    require(failure != nullptr && contains((*failure).message, "step 2 act failed") &&
+                contains((*failure).detail_json, "{\"steps\":[{\"step\":1,\"tool\":\"snapshot\",\"ok\":true") &&
+                contains((*failure).detail_json, "\"step\":2,\"tool\":\"act\",\"ok\":false"),
+            "a failed batch names the failing step and gives every step as structured JSON");
+    require(failed_with(fixture.call("batch", "{\"steps\":[{\"expect\":\"visual\",\"target\":\"auto.press\"}]}"),
+                        ToolError::invalid_arguments),
+            "expect visual with nothing to check is refused, not passed");
+    require(failed_with(fixture.call("batch", "{\"steps\":[{\"expect\":\"node\",\"target\":\"auto.press\"}]}"),
+                        ToolError::invalid_arguments),
+            "expect node with nothing to check is refused");
+    require(failed_with(fixture.call("wait", "{\"until\":\"user_step\",\"step\":\"auto.never\"}"),
+                        ToolError::not_found),
+            "waiting on a user step the program never asked for is refused");
+    require(failed_with(fixture.call("pointer", "{\"action\":\"click\",\"target\":\"auto.press\",\"position\":"
+                                                "{\"x\":1,\"y\":1}}"),
+                        ToolError::invalid_arguments),
+            "pointer takes a target or a position, not both");
+    require(succeeded(fixture.call("pointer", "{\"action\":\"drag\",\"target\":\"auto.press\",\"offset\":{\"x\":5,"
+                                              "\"y\":5},\"path\":[{\"x\":20,\"y\":5},{\"x\":40,\"y\":5}]}")),
+            "a drag's path is read in the target's space");
+    const std::string typed = success_text(fixture.call("keyboard", "{\"target\":\"auto.check\",\"keys\":\"Space\"}"));
+    require(contains(typed, "ok: keyboard into") && contains(typed, "frames:"),
+            "keyboard replies with what it did and changed, as act does");
+
+    require(set_model_pending_state("shape", "a rectangle floats at 10,10 to 90,60",
+                                    "double-click commits, Escape cancels") &&
+                model_pending_state_set(),
+            "a pending state is declared");
+    require(contains(success_text(fixture.call("snapshot", "{}")),
+                     "pending: a rectangle floats at 10,10 to 90,60 (double-click commits, Escape cancels)"),
+            "every reply names the pending state and how to settle it");
+    clear_model_pending_state("shape");
+    require(!model_pending_state_set() && !contains(success_text(fixture.call("snapshot", "{}")), "pending:"),
+            "a cleared pending state is no longer named");
+    require(set_model_app_note("Shapes float until committed.") &&
+                std::string_view(model_app_note()) == "Shapes float until committed.",
+            "the program's note is kept");
+    const std::string long_note(5000U, 'x');
+    require(!set_model_app_note(long_note.c_str()) &&
+                std::string_view(model_app_note()) == "Shapes float until committed.",
+            "a note over 4096 bytes is refused and the old one kept");
+    require(set_model_app_note(nullptr) && model_app_note()[0] == '\0', "the note clears");
+
+    ModelToolSpec dotted{};
+    dotted.name = "test.dotted";
+    dotted.description = "A dotted name.";
+    require(register_model_tool(dotted, &echo_tool, nullptr) == ModelToolRegistration::invalid_name,
+            "a tool name with a dot is refused (clients rename it)");
+    std::vector<ToolSpec> specs{};
+    fixture.core.fill_tool_specs(specs);
+    bool release = false;
+    for (const ToolSpec& spec : specs) {
+        require(spec.name.find('.') == std::string::npos, "no served tool name has a dot");
+        release = release || spec.name == "release_control";
+        require(spec.name != "control", "the control tool is retired");
+    }
+    require(release, "release_control is served");
+}
+
+// A window run modally is a dialog whatever its root's role: Plan Paint's
+// Resize dialog (a plain group in a modal window) was driven and submitted
+// (round 2).
+void a_modal_window_is_a_dialog() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.owner.root"));
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    const std::shared_ptr<Panel> dialog_root = make_control<Panel>(StableId("auto.resize"));
+    const std::shared_ptr<Button> ok = make_control<Button>(StableId("auto.resize.ok"), "OK");
+    (*ok).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*dialog_root).add_child(ok);
+    Window dialog(dialog_root, Size{200.0, 120.0});
+    dialog.perform_layout();
+    host::HeadlessHost dialog_host(dialog);
+    std::uint64_t submits = 0U;
+    SubscriptionToken submitted =
+        (*ok).clicked().subscribe(callbacks::IncrementCounter<std::uint64_t, ButtonBase&>(submits));
+    TestPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.owner.window"), "the owner joins");
+    require(core.attach_window(dialog, "auto.resize.window"), "the dialog's window joins");
+    gui_forms::detail::note_shown_modally(dialog, true);
+    WindowPump pump(window, control, presenter);
+    const std::string windows = success_text(core.run("windows", "{}", pump));
+    require(contains(windows, "dialog (modal window)"), "windows reads the modal window as a dialog");
+    require(failed_with(core.run("act", "{\"window\":\"auto.resize.window\",\"action\":\"press\",\"target\":"
+                                        "\"auto.resize.ok\"}",
+                                 pump),
+                        ToolError::dialog_open) &&
+                submits == 0U,
+            "a model never submits a modal window's dialog");
+    gui_forms::detail::note_shown_modally(dialog, false);
+}
+
+
+// Round 2, item 1: the model's drag and the user's pointer share one input
+// stream. The user's idle pointer never feeds the model's gesture; the
+// user's press ends it, and the rest of it is dropped until its release.
+void the_users_pointer_never_feeds_a_model_gesture() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.stream.root"));
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    require(window_host.dispatch(HostAttachEvent{{300.0, 200.0}, 1.0}, 500U).accepted(), "the host attaches");
+    using gui_forms::detail::GestureVerdict;
+    require(gui_forms::detail::admit_user_input(window, true, false) == GestureVerdict::deliver,
+            "with no model gesture the user's pointer is delivered");
+    require(gui_forms::detail::admit_model_pointer(window, true, false, false) == GestureVerdict::deliver,
+            "the model's press starts its gesture");
+    require(gui_forms::detail::admit_user_input(window, true, false) == GestureVerdict::drop,
+            "the user's idle pointer never feeds the model's gesture");
+    require(gui_forms::detail::admit_model_pointer(window, false, false, true) == GestureVerdict::deliver,
+            "the model's drag goes on");
+    require(gui_forms::detail::admit_user_input(window, false, true) == GestureVerdict::cancel_model_gesture,
+            "the user's press ends the model's gesture");
+    const std::uint64_t dropped = gui_forms::detail::model_events_dropped(window);
+    require(gui_forms::detail::admit_model_pointer(window, false, false, true) == GestureVerdict::drop &&
+                gui_forms::detail::admit_model_pointer(window, false, true, false) == GestureVerdict::drop &&
+                gui_forms::detail::model_events_dropped(window) == dropped + 2U,
+            "the rest of the cancelled gesture is dropped and counted");
+    require(gui_forms::detail::admit_model_pointer(window, true, false, false) == GestureVerdict::deliver &&
+                gui_forms::detail::admit_model_pointer(window, false, true, false) == GestureVerdict::deliver,
+            "the model's next gesture is its own again");
+    require(gui_forms::detail::model_pointer_id != 0U, "injected pointer events carry their own identity");
+}
+
+// Round 2, item 2: the in-use sign's motion (the stripes, the band's march)
+// never keeps a window from being idle.
+void idle_ignores_the_signs_motion() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    (*fixture.window).set_model_veil(true);
+    (*fixture.pump).advance((*fixture.pump).now() + std::chrono::milliseconds(20));
+    const stxlib::Optional<FrameTime> settling = (*fixture.window).next_settling_wake();
+    require(settling.value() == nullptr && !(*fixture.window).needs_settling_frame(),
+            "the stripes' motion is no settling work");
+    const std::string pressed = success_text(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}"));
+    require(contains(pressed, "idle after") && fixture.presses == 2U,
+            "an act under moving stripes settles at once");
+    (*fixture.window).set_model_veil(false);
+}
+
+// Round 2, item 3: the served tool list is the same all launch long, so a
+// client is sent no list_changed for state the program goes through.
+void the_tool_list_is_stable_for_the_launch() {
+    Fixture fixture(false);
+    std::vector<ToolSpec> before{};
+    fixture.core.fill_tool_specs(before);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    (*fixture.check).enabled = false;
+    (*fixture.pump).advance((*fixture.pump).now() + std::chrono::milliseconds(20));
+    std::vector<ToolSpec> after{};
+    fixture.core.fill_tool_specs(after);
+    require(before.size() == after.size(), "taking control and disabling a control change no tool");
+    for (std::size_t index = 0U; index < before.size(); ++index) {
+        require(before[index].name == after[index].name && before[index].description == after[index].description &&
+                    before[index].input_schema == after[index].input_schema,
+                "every served spec stays the same");
+        require(!contains(after[index].description, "Disabled now"), "no spec carries the moment's state");
+    }
+    (*fixture.check).enabled = true;
+
+    // Two live commands with one stable ID (a menu's Save and the Quick
+    // Access Toolbar's) are one tool, so the list binds (round 2).
+    const std::shared_ptr<Command> menu_save = std::make_shared<Command>("test-save", "Save");
+    const std::shared_ptr<Command> toolbar_save = std::make_shared<Command>("test-save", "Save");
+    std::vector<ToolSpec> commands{};
+    fixture.core.fill_tool_specs(commands);
+    std::size_t named = 0U;
+    for (const ToolSpec& spec : commands) named += spec.name == "command_test-save" ? 1U : 0U;
+    require(named == 1U, "commands sharing a stable ID are served as one tool");
+}
+
+
+// take_mcp_arguments edits argv, and on macOS argv is where the launch is
+// read: the taken arguments still make the launch (round 3: Plan Paint
+// called it and served nothing). Last, since what it takes stays taken.
+void taken_arguments_still_launch() {
+    std::string program = "program";
+    std::string led = "--mcp";
+    std::string file = "picture.png";
+    std::array<char*, 4> argv{program.data(), led.data(), file.data(), nullptr};
+    int argc = 3;
+    take_mcp_arguments(argc, argv.data());
+    require(argc == 2 && std::string_view(argv[1]) == "picture.png" && argv[2] == nullptr,
+            "take_mcp_arguments leaves the program its own arguments");
+#if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
+    require(read_automation_launch().mcp, "the taken --mcp still launches the automation");
 #endif
 }
 
@@ -711,7 +1128,21 @@ int main() {
     arguments_are_strict_and_find_finds();
     rows_a_list_does_not_show_are_reached_by_id();
     a_model_closes_the_dialog_it_opened_but_never_submits_it();
-    the_sign_washes_the_content_and_review_mode_shows_none();
+    the_sign_shows_ai_mode_and_review_mode_shows_none();
+    a_first_act_asks_to_take_control();
+    the_take_countdown_allows_when_it_ends();
+    a_refused_take_blocks_the_act();
+    control_returns_after_the_grace_period();
+    release_control_gives_control_back();
+    a_press_offers_take_back_and_taking_back_interrupts();
+    an_ai_led_launch_holds_control_without_asking();
+    popup_windows_carry_no_sign();
+    round_two_replies_are_structured_and_strict();
+    a_modal_window_is_a_dialog();
+    the_users_pointer_never_feeds_a_model_gesture();
+    idle_ignores_the_signs_motion();
+    the_tool_list_is_stable_for_the_launch();
+    taken_arguments_still_launch();
     std::cout << "automation core tests passed\n";
     return 0;
 }
