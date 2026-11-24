@@ -2599,6 +2599,30 @@ add_executable(gui_forms_housekeeping_expectation_tests tests/housekeeping_expec
 target_link_libraries(gui_forms_housekeeping_expectation_tests PRIVATE gui_forms_core)
 add_test(NAME gui_forms_housekeeping_expectation_tests COMMAND gui_forms_housekeeping_expectation_tests)
 
+# The bit-flip run's persisting states (state hunt run 7): `repairs` puts the
+# corrupted states right; each other mode corrupts state no write makes and
+# must end through the fail-fast path with its defect report.
+add_executable(gui_forms_flip_persists_tests tests/flip_persists_tests.cpp)
+target_link_libraries(gui_forms_flip_persists_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_flip_persists_repairs COMMAND gui_forms_flip_persists_tests repairs)
+foreach(_gui_flip_case IN ITEMS
+        "lifecycle_bit|component.lifecycle|component lifecycle code is no state"
+        "lifecycle_zero|component.lifecycle|component lifecycle code is no state"
+        "lifecycle_dispose|component.lifecycle|component lifecycle code is no state"
+        "enumerator|property.retained_enumerator|retained enumerator is outside its property enumeration .corrupted storage.: dock_style"
+        "container_size|control.retained_size|retained container size is impossible .corrupted storage.: hollow"
+        "range_bounds|range_control.bounds|range bounds are not finite and ordered")
+    string(REPLACE "|" ";" _gui_flip_fields "${_gui_flip_case}")
+    list(GET _gui_flip_fields 0 _gui_flip_mode)
+    list(GET _gui_flip_fields 1 _gui_flip_site)
+    list(GET _gui_flip_fields 2 _gui_flip_text)
+    add_test(NAME gui_forms_flip_persists_${_gui_flip_mode}
+             COMMAND ${CMAKE_COMMAND} -DPROGRAM=$<TARGET_FILE:gui_forms_flip_persists_tests>
+                     -DMODE=${_gui_flip_mode}
+                     "-DEXPECTED=GUI.Forms: fatal exception at ${_gui_flip_site}: ${_gui_flip_text}"
+                     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/expect_fail_fast.cmake)
+endforeach()
+
 # The fail-fast boundary: each mode must end the process with its report
 # (site and exception text) and never print "survived".
 add_executable(gui_forms_fail_fast_tests tests/fail_fast_tests.cpp)
