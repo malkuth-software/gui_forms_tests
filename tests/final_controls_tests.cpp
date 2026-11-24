@@ -459,6 +459,37 @@ void test_wizard() {
             "a target removed by page_changing is refused");
 }
 
+// The wizard's buttons at text scale 2: the row grows to the labels'
+// measured height (it was a fixed 28 units and clipped them), and at scale
+// 1 it keeps its 28-unit row.
+void test_wizard_buttons_at_text_scale_two() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.wizard2.root"));
+    std::shared_ptr<Wizard> wizard = make_control<Wizard>(StableId("final.wizard2"));
+    (*wizard).set_requested_bounds(Rect{0.0, 0.0, 1040.0, 760.0});
+    (*wizard).add_child(make_page("final.wizard2.first", "Account"));
+    (*wizard).add_child(make_page("final.wizard2.second", "Details"));
+    (*root).add_child(wizard);
+    Window window(root, Size{1200.0, 800.0});
+    window.perform_layout();
+    require((*(*wizard).cancel_button()).committed_arranged_bounds().height == 28.0,
+            "at text scale 1 the button row keeps its 28 units");
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    (*wizard).invalidate(Dirty::measure | Dirty::arrange);
+    window.perform_layout();
+    const std::shared_ptr<Button> buttons[] = {(*wizard).back_button(), (*wizard).next_button(),
+                                               (*wizard).cancel_button()};
+    for (const std::shared_ptr<Button>& button : buttons) {
+        const Size wanted = (*button).measure(Size{1.0e6, 1.0e6});
+        const Rect placed = (*button).committed_arranged_bounds();
+        require(wanted.height > 28.0, "a label at text scale 2 needs more than the old row");
+        require(wanted.width <= placed.width && wanted.height <= placed.height,
+                "every wizard button fits its label at text scale 2");
+        require(placed.y + placed.height <= 760.0, "the row stays inside the wizard");
+    }
+}
+
 // -- overlays ----------------------------------------------------------------------
 
 void test_callout() {
@@ -959,6 +990,7 @@ int main() {
     test_dial();
     test_step_indicator();
     test_wizard();
+    test_wizard_buttons_at_text_scale_two();
     test_callout();
     test_released_callout_closes_whole();
     test_modal_layer();
