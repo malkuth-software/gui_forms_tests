@@ -978,6 +978,120 @@ void take_back_answers_over_model_modals() {
     }
 }
 
+// A program's Close: with unsaved work it asks "Save changes?" through its
+// window's host services, as Plan Paint's quit does (owner, round 3).
+struct UnsavedWork final {
+    bool dirty{true};
+    bool closed{};
+    HostDialogChoice answered{HostDialogChoice::none};
+    std::uint64_t next_request{1U};
+};
+
+class AskToSave final {
+public:
+    AskToSave(Window& window, UnsavedWork& work) noexcept : window_(window), work_(work) {}
+    void operator()(ButtonBase&) const {
+        if (!work_.dirty) {
+            work_.closed = true;
+            return;
+        }
+        HostMessageDialogRequest question{};
+        question.title = "Save changes?";
+        question.message = "Save changes to Untitled?";
+        question.buttons = HostMessageButtons::yes_no_cancel;
+        question.default_choice = HostDialogChoice::cancel;
+        HostDialogRequest request{};
+        request.request_id = work_.next_request++;
+        request.payload = question;
+        const HostDialogResult result = (*window_.host_services()).show_dialog(request);
+        const HostMessageDialogResult* const answer = std::get_if<HostMessageDialogResult>(&result.payload);
+        work_.answered = answer == nullptr ? HostDialogChoice::none : (*answer).choice;
+        if (work_.answered == HostDialogChoice::yes) work_.dirty = false;
+        work_.closed = work_.answered == HostDialogChoice::yes || work_.answered == HostDialogChoice::no;
+    }
+
+private:
+    Window& window_;
+    UnsavedWork& work_;
+};
+
+class SaveWork final {
+public:
+    explicit SaveWork(UnsavedWork& work) noexcept : work_(work) {}
+    void operator()(ButtonBase&) const { work_.dirty = false; }
+
+private:
+    UnsavedWork& work_;
+};
+
+// Owner, round 3: a question the program raises during the model's close
+// is the model's. It is never shown; with no answer the program stays as
+// it was and nothing is left waiting; on_unsaved answers it; save, then
+// close, needs no question; the user's own close still shows it.
+void a_models_close_answers_the_programs_question() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.unsaved.root"));
+    const std::shared_ptr<Button> close = make_control<Button>(StableId("auto.unsaved.close"), "Close");
+    (*close).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*root).add_child(close);
+    const std::shared_ptr<Button> save = make_control<Button>(StableId("auto.unsaved.save"), "Save");
+    (*save).set_requested_bounds(Rect{100.0, 10.0, 80.0, 28.0});
+    (*root).add_child(save);
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    require(window_host.dispatch(HostAttachEvent{{300.0, 200.0}, 1.0}, 500U).accepted(), "the host attaches");
+    UnsavedWork work{};
+    SubscriptionToken asking = (*close).clicked().subscribe(AskToSave(window, work));
+    SubscriptionToken saving = (*save).clicked().subscribe(SaveWork(work));
+    TestPresenter presenter{};
+    ControlSettings settings{};
+    settings.ai_led = true;
+    AutomationControl control(settings, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.unsaved.window"), "the window joins");
+    WindowPump pump(window, control, presenter);
+    control.begin_ai_led(pump.now());
+    const std::string press_close = "{\"action\":\"press\",\"target\":\"auto.unsaved.close\"";
+
+    const std::string unanswered = success_text(core.run("act", press_close + "}", pump));
+    require(contains(unanswered, "question: the program asked \"Save changes?: Save changes to Untitled?\" (Yes, No, "
+                                 "Cancel), answered Cancel; not shown to the user") &&
+                contains(unanswered, "stays as it was") && !work.closed && work.dirty,
+            "an unanswered question cancels the close and comes back in the reply");
+    require(window_host.headless_services().dialog_trace().empty() && !gui_forms::detail::model_questions_open(),
+            "nothing was shown and nothing is left waiting");
+    require(succeeded(core.run("snapshot", "{}", pump)), "other tools work at once");
+
+    const std::string discarded =
+        success_text(core.run("act", press_close + ",\"on_unsaved\":\"discard\"}", pump));
+    require(work.closed && work.answered == HostDialogChoice::no && contains(discarded, "answered No"),
+            "on_unsaved discard answers No");
+    work = UnsavedWork{};
+    const std::string saved = success_text(core.run("act", press_close + ",\"on_unsaved\":\"save\"}", pump));
+    require(work.closed && !work.dirty && contains(saved, "answered Yes"), "on_unsaved save answers Yes");
+    require(failed_with(core.run("act", press_close + ",\"on_unsaved\":\"maybe\"}", pump),
+                        ToolError::invalid_arguments),
+            "on_unsaved takes save or discard");
+
+    work = UnsavedWork{};
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.unsaved.save\"}", pump)),
+            "the model saves first");
+    const std::string after_save = success_text(core.run("act", press_close + "}", pump));
+    require(work.closed && !contains(after_save, "question:"), "save, then close, needs no question");
+
+    // The user's own close shows the question.
+    work = UnsavedWork{};
+    HostDialogResult users{};
+    users.request_id = 1U;
+    HostMessageDialogResult cancelled{};
+    cancelled.outcome = HostDialogOutcome::cancelled;
+    users.payload = cancelled;
+    window_host.headless_services().queue_dialog_result(users);
+    static_cast<void>((*close).perform_click());
+    require(contains(window_host.headless_services().dialog_trace(), "dialog="),
+            "a close the user starts shows the program's question");
+}
+
 void popup_windows_carry_no_sign() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.popup.root"));
     Window window(root, Size{300.0, 200.0});
@@ -1303,6 +1417,7 @@ int main() {
     a_modal_window_is_a_dialog();
     a_model_opened_modal_window_closes_by_its_id();
     take_back_answers_over_model_modals();
+    a_models_close_answers_the_programs_question();
     the_users_pointer_never_feeds_a_model_gesture();
     idle_ignores_the_signs_motion();
     the_tool_list_is_stable_for_the_launch();
