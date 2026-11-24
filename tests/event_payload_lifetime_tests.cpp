@@ -239,6 +239,39 @@ void test_semantic_feedback_record_outlives_a_nested_emission() {
             "the outer emission's later handler reads its own record after a nested emission grew the history");
 }
 
+// Hunt r57 S8: a feedback object kept past its window throws on every
+// call instead of reaching the freed window.
+void test_semantic_feedback_after_its_window_throws() {
+    std::unique_ptr<SemanticFeedback> feedback{};
+    {
+        std::shared_ptr<Panel> root = make_control<Panel>(StableId("payload.feedback.gone"));
+        Window window(root, {100.0, 60.0});
+        feedback = std::make_unique<SemanticFeedback>(window);
+        static_cast<void>((*feedback).emit(SemanticFeedbackKind::location_changed));
+    }
+    bool emit_refused = false;
+    try {
+        static_cast<void>((*feedback).emit(SemanticFeedbackKind::option_committed));
+    } catch (const std::logic_error&) {
+        emit_refused = true;
+    }
+    bool clear_refused = false;
+    try {
+        (*feedback).clear();
+    } catch (const std::logic_error&) {
+        clear_refused = true;
+    }
+    bool bound_refused = false;
+    try {
+        (*feedback).set_maximum_records(8U);
+    } catch (const std::logic_error&) {
+        bound_refused = true;
+    }
+    require(emit_refused && clear_refused && bound_refused,
+            "semantic feedback refuses emit, clear and set_maximum_records after its window ended");
+    require((*feedback).records().size() == 1U, "the history from before stays readable");
+}
+
 // -- Window theme ----------------------------------------------------------
 
 std::shared_ptr<const Theme> theme_named(const char* id) {
@@ -329,12 +362,13 @@ struct NamedTest final {
     void (*run)();
 };
 
-const std::array<NamedTest, 7> tests{{
+const std::array<NamedTest, 8> tests{{
     {"object_view", test_object_view_activation_outlives_replaced_items},
     {"tree_view_activation", test_tree_view_activation_outlives_a_selection_handler},
     {"tree_view_collapse", test_tree_view_collapse_outlives_an_expansion_handler},
     {"correspondence", test_correspondence_activation_looks_the_item_up_again},
     {"semantic_feedback", test_semantic_feedback_record_outlives_a_nested_emission},
+    {"semantic_feedback_after_window", test_semantic_feedback_after_its_window_throws},
     {"theme", test_theme_outlives_a_nested_theme_change},
     {"property_grid", test_property_grid_error_outlives_a_new_selection},
 }};

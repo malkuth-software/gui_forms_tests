@@ -218,6 +218,57 @@ void test_form_export() {
             "forms: apply is destructive, export read-only");
 }
 
+// Hunt r06 C10: a targeted apply whose candidate the live window refuses
+// (a child reusing a stable ID held elsewhere in the window) is refused
+// and leaves the target as it was; a targeted apply that lands is marked
+// patched, since the exported document does not carry it.
+void test_refused_patch_is_undone() {
+    const fl::FormSchema schema = sample_schema();
+    const fl::FormSources sources{};
+    const std::string original = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app\">\n"
+                                 "  <user-control id=\"app.part\">\n"
+                                 "    <button id=\"app.part.go\" text=\"Go\"/>\n"
+                                 "  </user-control>\n"
+                                 "  <button id=\"app.other\" text=\"Other\"/>\n"
+                                 "</user-control>\n";
+    fl::LoadedForm loaded{};
+    const gui_forms::Control::Ptr root = load(original, schema, sources, loaded);
+    require(root != nullptr, "patch: the original loads");
+    if (root == nullptr) return;
+    gui_forms::Window window(root, gui_forms::Size{200.0, 100.0});
+    fl::FormExportRegistry registry{};
+    require(registry.add(root, "app.form", original, sources), "patch: registered");
+    const gui_forms::Control::Ptr part = (*root).children()[0];
+    const std::string_view colliding = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.part\">\n"
+                                       "  <button id=\"app.part.first\" text=\"First\"/>\n"
+                                       "  <button id=\"app.other\" text=\"Again\"/>\n"
+                                       "</user-control>\n";
+    ThemeDiagnosticList refused{};
+    require(registry.apply(*root, schema, "part.form", colliding, "app.part", refused) ==
+                fl::FormExportOutcome::refused,
+            "patch: a candidate colliding with the window's stable IDs is refused");
+    require((*part).children().size() == 1U && (*(*part).children()[0]).stable_id().value() == "app.part.go",
+            "patch: the refused target keeps its children");
+    require(!refused.records().empty(), "patch: the refusal is reported");
+    require(registry.state(*root) == fl::FormExportState::registered && !registry.replaced(*root),
+            "patch: a refused and undone apply leaves the window as registered");
+    const std::string_view accepted = "<user-control xmlns=\"urn:gui-forms:form:1\" id=\"app.part\">\n"
+                                      "  <button id=\"app.part.new\" text=\"New\"/>\n"
+                                      "</user-control>\n";
+    ThemeDiagnosticList patched{};
+    require(registry.apply(*root, schema, "part.form", accepted, "app.part", patched) == fl::FormExportOutcome::done,
+            "patch: a valid targeted apply lands");
+    require(registry.state(*root) == fl::FormExportState::patched && registry.replaced(*root),
+            "patch: a landed targeted apply is marked patched");
+    std::string exported{};
+    require(registry.export_document(*root, exported) == fl::FormExportOutcome::done && exported == original,
+            "patch: export still returns the document, which the patch is not in");
+    ThemeDiagnosticList reverted{};
+    require(registry.revert(*root, schema, reverted) == fl::FormExportOutcome::done &&
+                registry.state(*root) == fl::FormExportState::registered,
+            "patch: revert clears the patch");
+}
+
 // The build toggle's entry point: generated code's register_form_document
 // lands in the process registry the forms tools read.
 void test_register_form_document() {
@@ -262,6 +313,7 @@ int main() {
     test_state_summary();
     test_layout_and_resources();
     test_form_export();
+    test_refused_patch_is_undone();
     test_register_form_document();
     if (failures != 0) {
         std::cerr << failures << " model inspection checks failed\n";

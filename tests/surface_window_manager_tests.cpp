@@ -23,7 +23,10 @@
 #include "src/surface/posix/fonts/sealed_pages_posix.hpp"
 #endif
 
+#include <chrono>
+#include <cstddef>
 #include <cstdlib>
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -632,6 +635,49 @@ void test_full_queue_keeps_control_records() {
     require(queue.dropped() == 2U, "the dropped motion is counted");
 }
 
+// Hunt r48 C38: on a queue full even for control records, the level
+// records (presented, focus, close and the rest) still enter; the newer
+// one of a kind supersedes the older, so the newest state is taken.
+void test_full_queue_keeps_level_records() {
+    SurfaceInputQueue queue;
+    SurfaceInputRecord release{};
+    release.kind = SurfaceInputKind::pointer;
+    release.action = SurfacePointerAction::up;
+    SurfaceInputRecord focus{};
+    focus.kind = SurfaceInputKind::focus;
+    focus.down = true;
+    require(queue.post(focus), "a focus record enters an empty queue");
+    for (std::size_t index = 1U; index < SurfaceInputQueue::maximum_control_records; ++index) {
+        require(queue.post(release), "control records are admitted up to their limit");
+    }
+    require(!queue.post(release), "a control record past the limit is dropped");
+    SurfaceInputRecord presented{};
+    presented.kind = SurfaceInputKind::presented;
+    require(queue.post(presented), "presented enters a full queue");
+    SurfaceInputRecord close{};
+    close.kind = SurfaceInputKind::close;
+    require(queue.post(close), "close enters a full queue");
+    focus.down = false;
+    require(queue.post(focus), "a newer focus enters a full queue");
+    std::deque<SurfaceInputRecord> taken{};
+    require(queue.take(taken, std::chrono::steady_clock::now()), "the records are taken");
+    std::size_t focus_records = 0U;
+    bool focus_lost = false;
+    bool presented_taken = false;
+    bool close_taken = false;
+    for (const SurfaceInputRecord& record : taken) {
+        if (record.kind == SurfaceInputKind::focus) {
+            ++focus_records;
+            focus_lost = !record.down;
+        }
+        if (record.kind == SurfaceInputKind::presented) presented_taken = true;
+        if (record.kind == SurfaceInputKind::close) close_taken = true;
+    }
+    require(presented_taken && close_taken, "presented and close are not lost");
+    require(focus_records == 1U && focus_lost, "the newer focus superseded the older one");
+    require(taken.size() <= SurfaceInputQueue::maximum_control_records + 7U, "the queue stays bounded");
+}
+
 std::vector<presentation::PresentTraceRecord> trace_records(const presentation::PresentTrace& trace) {
     std::vector<presentation::PresentTraceRecord> records(trace.size());
     const std::size_t count = trace.fill(records);
@@ -741,6 +787,7 @@ void test_reference_host_scroll() {
 int main() {
     try {
         test_full_queue_keeps_control_records();
+    test_full_queue_keeps_level_records();
         test_compose_and_damage();
         test_resize_by_grip();
         test_minimize_maximize_restore();

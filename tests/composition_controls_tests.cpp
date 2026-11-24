@@ -128,6 +128,33 @@ void test_interactive_card_state_input_and_semantics() {
             "semantic press must share card activation authority");
 }
 
+// Hunt r22 C23: the pointer's press and a key's press are separate facts. A
+// primary release between Space down and Space up used to leave the key
+// recorded with the press cleared, after which any stray Space release
+// activated the card and dropped a later mouse press.
+void test_card_pointer_and_key_presses_stay_apart() {
+    std::shared_ptr<gui_forms::Card> card = make_control<Card>(StableId("card.presses"));
+    (*card).set_requested_bounds({10.0, 10.0, 180.0, 100.0});
+    (*card).interactive = true;
+    Window window(card, {200.0, 120.0});
+    window.perform_layout();
+    require(window.request_focus(card), "an interactive card takes focus");
+    unsigned activations{};
+    SubscriptionToken activation = (*card).activated().subscribe(
+        test_support::IncrementCounter<unsigned, Card&>(activations));
+    static_cast<void>(window.dispatch_key(KeyEvent{KeyAction::down, PhysicalKey::space}));
+    static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, {50.0, 50.0}}));
+    static_cast<void>(window.dispatch_key(KeyEvent{KeyAction::up, PhysicalKey::space}));
+    require(activations == 1U && !(*card).pressed_visual(),
+            "Space's own release activates once, a primary release between does not cancel it");
+    static_cast<void>(window.dispatch_pointer({PointerAction::down, PointerButton::primary, {50.0, 50.0}}));
+    static_cast<void>(window.dispatch_key(KeyEvent{KeyAction::up, PhysicalKey::space}));
+    require(activations == 1U && (*card).pressed_visual(),
+            "a Space release with no Space press neither activates nor drops the mouse press");
+    static_cast<void>(window.dispatch_pointer({PointerAction::up, PointerButton::primary, {50.0, 50.0}}));
+    require(activations == 2U && !(*card).pressed_visual(), "the mouse release activates");
+}
+
 void test_card_selection_behavior_is_explicit_and_ordered() {
     std::shared_ptr<gui_forms::Card> card = make_control<Card>(StableId("card.selection-behavior"));
     (*card).set_requested_bounds({0.0, 0.0, 180.0, 80.0});
@@ -399,6 +426,7 @@ int main() {
     try {
         test_card_section_ownership_and_layout();
         test_interactive_card_state_input_and_semantics();
+        test_card_pointer_and_key_presses_stay_apart();
         test_card_selection_behavior_is_explicit_and_ordered();
         test_card_theme_status_and_outsets_are_reusable();
         test_compositions_follow_structural_theme_tokens_until_overridden();

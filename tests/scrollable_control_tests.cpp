@@ -152,6 +152,12 @@ void test_auto_scroll_projection_viewport_and_resize() {
                 initial.viewport_rectangle == Rect{0.0, 0.0, 84.0, 64.0} &&
                 initial.display_rectangle == Rect{0.0, 0.0, 248.0, 180.0},
             "automatic scroll layout must solve two-axis scrollbar interdependence");
+    // Hunt r28 C28: the state bits read the bars and auto_scroll as they
+    // are, not a copy set at some later point.
+    require((*panel).get_scroll_state(ScrollableControl::scroll_state_auto_scrolling) &&
+                (*panel).get_scroll_state(ScrollableControl::scroll_state_hscroll_visible) &&
+                (*panel).get_scroll_state(ScrollableControl::scroll_state_vscroll_visible),
+            "the scroll state bits follow auto_scroll and the visible bars");
 
     const Rect authored = (*child).requested_bounds();
     require((*panel).scroll_to({50.0, 40.0}),
@@ -185,6 +191,15 @@ void test_auto_scroll_projection_viewport_and_resize() {
                 (*panel).scroll_position() == Point{} &&
                 (*child).committed_arranged_bounds() == authored,
             "viewport growth must hide unnecessary bars, clamp position, and restore projection");
+    require(!(*panel).get_scroll_state(ScrollableControl::scroll_state_hscroll_visible) &&
+                !(*panel).get_scroll_state(ScrollableControl::scroll_state_vscroll_visible),
+            "the bar state bits clear with the bars");
+    (*panel).auto_scroll = false;
+    require(!(*panel).get_scroll_state(ScrollableControl::scroll_state_auto_scrolling),
+            "the auto-scrolling bit follows auto_scroll at once");
+    (*panel).set_hscroll(true);
+    require((*panel).hscroll() && (*panel).get_scroll_state(ScrollableControl::scroll_state_hscroll_visible),
+            "a bar shown by set_hscroll reads as visible before the next arrange");
 }
 
 void test_scroll_gestures_events_semantics_and_state() {
