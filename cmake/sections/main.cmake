@@ -3372,7 +3372,9 @@ add_executable(gui_forms_macos_host_close_tests tests/macos_host_close_tests.mm)
                  -DBUNDLE=$<TARGET_BUNDLE_DIR:gui_forms_macos_message_dialog_key_tests>
                  -DOUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
                  -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/run_macos_activated_test.cmake)
-    set_tests_properties(gui_forms_macos_message_dialog_key_tests PROPERTIES TIMEOUT 60)
+    # Serial: each case needs its alert to be the key window, which another
+    # test's window activating at the same time takes away.
+    set_tests_properties(gui_forms_macos_message_dialog_key_tests PROPERTIES TIMEOUT 60 RUN_SERIAL TRUE)
 
     # Stage A: the NSAccessibility tree of every stock control, read in
     # process (no Accessibility permission needed).
