@@ -3312,7 +3312,9 @@ add_test(NAME gui_forms_macos_application_menu_tests COMMAND gui_forms_macos_app
     target_compile_options(gui_forms_macos_damage_rectangles_tests PRIVATE -fobjc-arc)
     target_link_libraries(gui_forms_macos_damage_rectangles_tests PRIVATE gui_forms_host_macos)
     add_test(NAME gui_forms_macos_damage_rectangles_tests COMMAND gui_forms_macos_damage_rectangles_tests)
-    set_tests_properties(gui_forms_macos_damage_rectangles_tests PROPERTIES TIMEOUT 60)
+    # Serial: it hides, reveals and captures its window from the screen, which
+    # another test's window would cover.
+    set_tests_properties(gui_forms_macos_damage_rectangles_tests PROPERTIES TIMEOUT 60 RUN_SERIAL TRUE)
 
     add_executable(gui_forms_macos_scroll_phase_tests tests/macos_scroll_phase_tests.mm)
     target_compile_options(gui_forms_macos_scroll_phase_tests PRIVATE -fobjc-arc)
@@ -3325,7 +3327,11 @@ add_test(NAME gui_forms_macos_application_menu_tests COMMAND gui_forms_macos_app
     target_link_libraries(gui_forms_macos_display_link_tests PRIVATE gui_forms_host_macos gui_forms_controls)
     add_test(NAME gui_forms_macos_display_link_tests COMMAND gui_forms_macos_display_link_tests)
     add_test(NAME gui_forms_macos_display_link_overlay_tests COMMAND gui_forms_macos_display_link_tests --overlay)
-    set_tests_properties(gui_forms_macos_display_link_tests gui_forms_macos_display_link_overlay_tests PROPERTIES TIMEOUT 45)
+    # Serial: another test's window covering or uncovering this one makes the
+    # idle phase present again (an occlusion change), and the probe then sees
+    # ticks it did not cause.
+    set_tests_properties(gui_forms_macos_display_link_tests gui_forms_macos_display_link_overlay_tests PROPERTIES
+        TIMEOUT 45 RUN_SERIAL TRUE)
 
     add_executable(gui_forms_macos_text_input_caret_tests tests/macos_text_input_caret_tests.mm)
     target_compile_options(gui_forms_macos_text_input_caret_tests PRIVATE -fobjc-arc)
