@@ -32,7 +32,35 @@ if(NOT CMAKE_CXX_COMPILER_VERSION STREQUAL _gf_tests_cache_compiler)
                         "uses ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 endif()
 message(STATUS "GUI.Forms test cache: ${_gf_tests_cache_commit} ${_gf_tests_cache_platform} (${_gf_tests_cache_kind})")
-include("${GUI_FORMS_TEST_CACHE}/GUIFormsTestCache.cmake")
+# The loader re-sets the variables the gui_forms configure left at directory
+# scope as GUI.Forms' CI had them, the own runtime's three locations among
+# them (Windows), and those would reach try_compile's projects over the cache
+# entries. This machine's locations are the cache entries the settings give
+# (tools/ci_tests.py remaps them), so where the loader names others, the
+# configure includes a copy that names these.
+file(READ "${GUI_FORMS_TEST_CACHE}/GUIFormsTestCache.cmake" _gf_tests_loader)
+set(_gf_tests_relocated FALSE)
+foreach(_gf_tests_setting IN ITEMS GUI_FORMS_OWN_RUNTIME_SOURCE GUI_FORMS_OWN_RUNTIME_PREFIX
+                                   GUI_FORMS_LIBCXX_PREFIX)
+    if(NOT "$CACHE{${_gf_tests_setting}}" STREQUAL "" AND
+       _gf_tests_loader MATCHES "_gf_tc_set\\(${_gf_tests_setting} \\[=*\\[([^]\n]+)\\]=*\\]\\)")
+        set(_gf_tests_recorded "${CMAKE_MATCH_1}")
+        if(NOT _gf_tests_recorded STREQUAL "$CACHE{${_gf_tests_setting}}")
+            message(STATUS "GUI.Forms test cache: ${_gf_tests_setting} ${_gf_tests_recorded} is "
+                           "$CACHE{${_gf_tests_setting}} here")
+            string(REPLACE "${_gf_tests_recorded}" "$CACHE{${_gf_tests_setting}}" _gf_tests_loader
+                   "${_gf_tests_loader}")
+            set(_gf_tests_relocated TRUE)
+        endif()
+    endif()
+endforeach()
+if(_gf_tests_relocated)
+    string(REPLACE "\${CMAKE_CURRENT_LIST_DIR}" "${GUI_FORMS_TEST_CACHE}" _gf_tests_loader "${_gf_tests_loader}")
+    file(WRITE "${CMAKE_BINARY_DIR}/GUIFormsTestCache.cmake" "${_gf_tests_loader}")
+    include("${CMAKE_BINARY_DIR}/GUIFormsTestCache.cmake")
+else()
+    include("${GUI_FORMS_TEST_CACHE}/GUIFormsTestCache.cmake")
+endif()
 
 # The tests that reach into gui_forms' private sources include them from the
 # root of the gui_forms tree ("src/...", "demo/...", "lab/..."), which the
