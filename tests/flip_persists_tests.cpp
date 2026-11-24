@@ -36,6 +36,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -202,10 +203,17 @@ void enumerator_mode() {
 // A control whose one table property reads retained state that throws
 // length_error on the copy, as a corrupted vector or string header does
 // (run 7 F2: `classes` at 0x170, `accessible_description` at 0x248).
+// Read-only: the table entry has a reader and no writer, which the
+// descriptor check requires a non-writable descriptor for.
+PropertyDescriptor hollow_descriptor() {
+    PropertyDescriptor descriptor{"hollow", BindingValueKind::text, "Behavior", "", BindingValue{std::string()},
+                                  Dirty::none};
+    descriptor.writable = false;
+    return property_table_descriptor(std::move(descriptor), PropertyOperations{true, false, false, false});
+}
+
 const PropertyDescriptor& describe_hollow() {
-    static const PropertyDescriptor descriptor = property_table_descriptor(
-        PropertyDescriptor{"hollow", BindingValueKind::text, "Behavior", "", BindingValue{std::string()}, Dirty::none},
-        PropertyOperations{true, false, false, false});
+    static const PropertyDescriptor descriptor = hollow_descriptor();
     return descriptor;
 }
 
