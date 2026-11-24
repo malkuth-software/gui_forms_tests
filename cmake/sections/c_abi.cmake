@@ -268,9 +268,9 @@ if(TARGET gui_forms_abi)
     add_test(NAME gui_forms_ic_abi_blocks_current
         COMMAND ${Python3_EXECUTABLE} -B ${GUI_FORMS_SOURCE_DIR}/tools/ic_abi_fuzz.py --check
             --tests-root ${CMAKE_CURRENT_SOURCE_DIR})
-    add_test(NAME gui_forms_ic_declarations_current
-        COMMAND ${Python3_EXECUTABLE} -B ${GUI_FORMS_SOURCE_DIR}/tools/ic_declarations.py check
-            --config ${GUI_FORMS_SOURCE_DIR}/tools/ic/project.toml --root ${GUI_FORMS_SOURCE_DIR})
+    # The declarations' own currency check (tools/ic_declarations.py check)
+    # needs template_harness beside the source tree, which the test cache
+    # does not carry: gui_forms' native workflow runs it.
 
     # The C++ wrappers against the built library, linking only the ABI.
     add_executable(gui_forms_abi_cpp_wrappers tests/abi/cpp/gf_abi_cpp_wrappers.cpp)
