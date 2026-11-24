@@ -54,7 +54,7 @@ constexpr std::string_view coverage_chip_document = R"xml(<?xml version="1.0" en
 // Registry entries that are not controls: nonvisual components and the
 // LiveSurface service type. They have no parts; a component that shows
 // something (a context menu, a tool tip) does so through an internal control.
-constexpr std::array<std::string_view, 34> nonvisual_entries{
+constexpr std::array<std::string_view, 35> nonvisual_entries{
     "command",
     "gallery_command",
     "font_command",
@@ -65,6 +65,8 @@ constexpr std::array<std::string_view, 34> nonvisual_entries{
     "timer",
     "background_worker",
     "notify_icon",
+    // A desktop notification through each host's own service, as NotifyIcon.
+    "toast_notification",
     "open_file_dialog",
     "save_file_dialog",
     "color_dialog",
