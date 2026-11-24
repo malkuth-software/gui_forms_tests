@@ -209,7 +209,8 @@ void layout_and_columns() {
             "an in-ribbon gallery asks for its columns and rows plus the scroll column");
     Window window(gallery, wanted);
     window.perform_layout();
-    require((*gallery).realized_items().size() == 12U && (*gallery).line_count() == 5U,
+    require((*gallery).realized_items().size() == 12U && (*gallery).line_count() == 5U &&
+                (*gallery).agrees_with_itself(),
             "two rows of six are realized out of five rows");
     const RibbonGallery::Parts parts = (*gallery).parts();
     require(parts.scroll_up.present && parts.scroll_down.present && parts.more_button.present &&
@@ -218,7 +219,8 @@ void layout_and_columns() {
             "scroll up is disabled at the top; scroll down and more are present");
     (*gallery).columns = 5U;
     window.perform_layout();
-    require((*gallery).realized_items().size() == 10U && (*gallery).line_count() == 6U,
+    require((*gallery).realized_items().size() == 10U && (*gallery).line_count() == 6U &&
+                (*gallery).agrees_with_itself(),
             "giving up one column reflows the rows");
     bool refused = false;
     try {
@@ -248,7 +250,8 @@ void virtualization() {
     std::shared_ptr<RibbonGallery> gallery = in_ribbon_gallery("gallery.large", 10000U);
     Window window(gallery, (*gallery).measure({1000.0, 1000.0}));
     window.perform_layout();
-    require((*gallery).realized_item_count() == 12U && (*gallery).line_count() == 1667U,
+    require((*gallery).realized_item_count() == 12U && (*gallery).line_count() == 1667U &&
+                (*gallery).agrees_with_itself(),
             "a 10,000-item gallery realizes only the rows in view");
     (*gallery).scroll_to_line(5000U);
     window.perform_layout();
@@ -268,7 +271,8 @@ void virtualization() {
     require(!captions.empty() && captions.front().stable_id == "warm" && captions.front().parts.category_caption.present &&
                 captions.front().parts.category_divider.present,
             "the drop-down form shows a caption before each category");
-    require((*full).realized_items().size() <= 12U && (*full).line_count() == 1U + 2U + 1U + 125U,
+    require((*full).realized_items().size() <= 12U && (*full).line_count() == 1U + 2U + 1U + 125U &&
+                (*full).agrees_with_itself(),
             "the drop-down form realizes only rows in view; categories start new rows");
 }
 
