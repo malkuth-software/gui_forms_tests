@@ -471,8 +471,42 @@ void test_close_and_reopen_from_handlers() {
     static_cast<void>(overlay);
 }
 
+// N3 (state hunt, 2026-11-23): a calendar the window refuses a scope
+// (outside an active containing scope) is rolled back: the picker is not
+// left down, keeps no overlay, and agrees with itself.
+void test_calendar_refused_by_a_containing_scope() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("date.fenced.root"));
+    std::shared_ptr<DateTimePicker> picker = make_control<DateTimePicker>(StableId("date.fenced.picker"));
+    (*picker).set_requested_bounds({10.0, 10.0, 180.0, 28.0});
+    std::shared_ptr<Panel> fence = make_control<Panel>(StableId("date.fenced.fence"));
+    (*fence).focusable = true;
+    (*fence).set_requested_bounds({10.0, 300.0, 80.0, 28.0});
+    (*root).add_child(picker);
+    (*root).add_child(fence);
+    Window window(root, {360.0, 360.0});
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        (*picker).dropped_down = true;
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !(*picker).dropped_down.read() && (*picker).agrees_with_itself() &&
+                !window.find("date.fenced.picker.overlay.calendar") && window.focus_scope_depth() == 1U,
+            "a calendar the window refuses a scope is not left down");
+    require(window.end_focus_scope(fenced), "the containing scope ends");
+    (*picker).dropped_down = true;
+    require((*picker).dropped_down.read() && (*picker).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "then the calendar drops down");
+    (*picker).dropped_down = false;
+    require(!(*picker).dropped_down.read() && (*picker).agrees_with_itself() && window.focus_scope_depth() == 0U,
+            "and folds cleanly");
+}
+
 int main() {
     try {
+        test_calendar_refused_by_a_containing_scope();
         test_civil_arithmetic_and_validation();
         test_formats_provider_and_transactional_validation();
         test_range_events_checkbox_and_spinner();
