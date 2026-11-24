@@ -1562,6 +1562,45 @@ void test_refused_header_and_groups_leave_the_list_whole() {
             "a refused group list keeps the groups and editors before");
 }
 
+// N3 (state hunt, 2026-11-23): a flags list the window refuses a scope is
+// rolled back: the editor is not left down, keeps no overlay, and agrees
+// with itself.
+void test_flags_list_refused_by_a_containing_scope() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("inspection.flags.root"));
+    std::shared_ptr<Label> target = make_control<Label>(StableId("inspection.flags.target"), "Target");
+    (*target).set_requested_bounds({12.0, 12.0, 190.0, 30.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("inspection.flags.fence"), "Fence");
+    (*fence).set_requested_bounds({12.0, 400.0, 120.0, 28.0});
+    std::shared_ptr<PropertyGrid> grid = make_control<PropertyGrid>(StableId("inspection.flags.grid"));
+    (*grid).set_requested_bounds({210.0, 0.0, 410.0, 440.0});
+    (*root).add_child(target);
+    (*root).add_child(fence);
+    (*root).add_child(grid);
+    (*grid).set_selected_object(target);
+    Window window(root, {620.0, 440.0});
+    window.perform_layout();
+    std::shared_ptr<FlagsValueEditor> flags = std::dynamic_pointer_cast<FlagsValueEditor>((*grid).editor("Anchor"));
+    require(flags != nullptr, "the grid has a flags editor");
+    const std::string list_id = std::string((*flags).stable_id().value()) + ".overlay.list";
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        (*flags).dropped_down = true;
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !(*flags).dropped_down.read() && (*flags).agrees_with_itself() && !window.find(list_id) &&
+                window.focus_scope_depth() == 1U,
+            "a flags list the window refuses a scope is not left down");
+    require(window.end_focus_scope(fenced), "the containing scope ends");
+    (*flags).dropped_down = true;
+    require((*flags).dropped_down.read() && (*flags).agrees_with_itself() && window.find(list_id),
+            "then the list drops down");
+    (*flags).dropped_down = false;
+    require(!(*flags).dropped_down.read() && (*flags).agrees_with_itself() && window.focus_scope_depth() == 0U,
+            "and folds cleanly");
+}
+
 // N3 (state hunt, 2026-11-23): a colour picker the window refuses a scope
 // (outside an active containing scope) is closed again, not left open.
 void test_color_picker_refused_by_a_containing_scope() {
@@ -1600,6 +1639,7 @@ int main() {
         test_rebuild_with_a_row_drop_down_open();
         test_refused_header_and_groups_leave_the_list_whole();
         test_color_picker_refused_by_a_containing_scope();
+        test_flags_list_refused_by_a_containing_scope();
         test_grouped_editors_commit_cancel_validation_and_semantics();
         test_scrolling_responsive_layout_and_validation_bounds();
         test_property_row_hierarchy_pointer_and_reset_contract();

@@ -361,13 +361,16 @@ void list_refused_by_a_containing_scope() {
     } catch (const std::logic_error&) {
         refused = true;
     }
-    require(refused && !(*listed).dropped_down.read() && window.focus_scope_depth() == 1U,
+    require(refused && !(*listed).dropped_down.read() && (*listed).agrees_with_itself() &&
+                !window.find("fenced.listed.overlay.layer") && window.focus_scope_depth() == 1U,
             "a list the window refuses a scope is not left down");
     require(window.end_focus_scope(fenced), "the containing scope ends");
     (*listed).dropped_down = true;
-    require((*listed).dropped_down.read() && window.focus_scope_depth() == 1U, "then the list drops down");
+    require((*listed).dropped_down.read() && (*listed).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "then the list drops down");
     (*listed).dropped_down = false;
-    require(!(*listed).dropped_down.read() && window.focus_scope_depth() == 0U, "and folds cleanly");
+    require(!(*listed).dropped_down.read() && (*listed).agrees_with_itself() && window.focus_scope_depth() == 0U,
+            "and folds cleanly");
 }
 
 int main() {
