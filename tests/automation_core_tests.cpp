@@ -51,6 +51,13 @@ std::string success_text(const ToolReply& reply) {
     return (*success).text;
 }
 
+// Whether the reply succeeded; takes a temporary reply, whose success_value()
+// is deleted (it would point into the temporary).
+bool succeeded(const ToolReply& reply) {
+    const bool success = reply.success_value() != nullptr;
+    return success;
+}
+
 bool failed_with(const ToolReply& reply, ToolError error) {
     const ToolFailure* const failure = reply.failure_value();
     const bool matched = failure != nullptr && (*failure).error == error;
@@ -193,7 +200,7 @@ void a_user_step_needs_the_user() {
             "a pending user step refuses the model");
     require(fixture.presenter.user_steps == 1U && fixture.presses == 0U, "the step is shown and nothing is pressed");
     complete_user_step("auto.press");
-    require(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}").success_value() != nullptr &&
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
                 fixture.presses == 1U,
             "once the user did the step the model carries on");
 }
@@ -206,15 +213,15 @@ void destructive_acts_ask_once_per_launch() {
         require(failed_with(declined.call("act", arguments), ToolError::declined), "Don't Allow refuses the act");
         require(failed_with(declined.call("act", arguments), ToolError::declined), "the answer holds for the launch");
         require(declined.presenter.questions == 1U && declined.erases == 0U, "the question is asked once");
-        require(declined.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}").success_value() != nullptr,
+        require(succeeded(declined.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
                 "non-destructive acts still work");
     }
     {
         Fixture allowed(true);
         const std::string arguments = "{\"action\":\"press\",\"target\":\"auto.erase\"}";
-        require(allowed.call("act", arguments).success_value() != nullptr && allowed.erases == 1U,
+        require(succeeded(allowed.call("act", arguments)) && allowed.erases == 1U,
                 "Allow performs the act");
-        require(allowed.call("act", arguments).success_value() != nullptr && allowed.erases == 2U &&
+        require(succeeded(allowed.call("act", arguments)) && allowed.erases == 2U &&
                     allowed.presenter.questions == 1U,
                 "the answer holds without asking again");
     }
@@ -245,10 +252,9 @@ void dialogs_refuse_the_model_until_instrumented() {
     require(failed_with(core.run("act", "{\"action\":\"press\",\"target\":\"auto.modal.inside\"}", pump),
                         ToolError::dialog_open),
             "a dialog the program did not instrument refuses acts");
-    require(core.run("snapshot", "{}", pump).success_value() != nullptr, "the dialog can still be read");
+    require(succeeded(core.run("snapshot", "{}", pump)), "the dialog can still be read");
     set_model_drivable(window, true);
-    require(core.run("act", "{\"action\":\"press\",\"target\":\"auto.modal.inside\"}", pump).success_value() !=
-                nullptr,
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.modal.inside\"}", pump)),
             "an instrumented dialog admits the model");
     set_model_drivable(window, false);
 }
