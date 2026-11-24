@@ -225,7 +225,7 @@ class Program:
         if name == 'snapshot':
             ok, _, _ = self.client.call('snapshot', {'limit': 50}, timeout=max(1.0, self.answer_ms / 1000.0))
             return ok
-        if name == 'capture-composite':
+        if name == 'capture':
             return self.client.call_later('capture', {})
         if name in ('click-at', 'move'):
             action = 'click' if name == 'click-at' else 'move'
@@ -238,6 +238,18 @@ class Program:
             return key is not None and self.client.call_later('keyboard', {'keys': [key]})
         # 'overlay on|off': the invalidation overlay has no tool; the step is
         # a no-op.
+        return True
+
+    def capture(self, path):
+        """Writes the window's capture to `path`: the MCP capture tool, which
+        composites the open Popup windows and the tooltip over the owner.
+        Waits for the reply (answer_ms, at least 5 seconds); True when the
+        PNG was written."""
+        ok, _, images = self.client.call('capture', {}, timeout=max(5.0, self.answer_ms / 1000.0))
+        if not ok or not images:
+            return False
+        with open(path, 'wb') as image:
+            image.write(images[0])
         return True
 
     def client_size(self):
@@ -314,7 +326,7 @@ def make_steps(seed, count, profile):
     return steps
 
 
-def run_step(program, step, capture_path):
+def run_step(program, step):
     """Runs one step; returns False when an automation command that must succeed was refused."""
     kind = step['kind']
     main = program.main
@@ -322,7 +334,7 @@ def run_step(program, step, capture_path):
     if kind == 'snapshot':
         return program.automation('snapshot')
     if kind == 'capture':
-        program.automation('capture-composite ' + capture_path)
+        program.automation('capture')
     elif kind == 'click_at':
         program.automation('click-at %s %d %d' % (step['target'], step['x'], step['y']))
     elif kind == 'activate':
@@ -415,7 +427,6 @@ def run(program_path, steps, options, log_path=None):
         return {'reason': 'the program never showed its window'}, -1, None
     baseline = len(program.windows())
     log = open(log_path, 'w', encoding='utf-8') if log_path else None
-    capture_path = os.path.abspath(os.path.join(options.out, 'step-capture.png'))
     failure = None
     index = -1
     try:
@@ -423,7 +434,7 @@ def run(program_path, steps, options, log_path=None):
             if log:
                 log.write(json.dumps({'step': index, **step}) + '\n')
                 log.flush()
-            accepted = run_step(program, step, capture_path)
+            accepted = run_step(program, step)
             if not program.alive():
                 failure = {'reason': 'the program exited', 'code': program.process.poll()}
                 break
@@ -473,7 +484,7 @@ def keep_evidence(program, folder):
         return evidence
     if program.answers():
         capture = os.path.abspath(os.path.join(folder, 'last.png'))
-        evidence['capture'] = capture if program.automation('capture-composite ' + capture) else None
+        evidence['capture'] = capture if program.capture(capture) else None
     dump = os.path.abspath(os.path.join(folder, 'program.dmp'))
     evidence['minidump'] = dump if program.minidump(dump) else None
     return evidence
