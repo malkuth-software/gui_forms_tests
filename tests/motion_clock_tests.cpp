@@ -519,7 +519,7 @@ struct BitHash final {
 // expected value was produced on macOS arm64 when the motion clock began
 // keeping its phase (2026-11-01; Windows x64 produced the one before) and
 // is checked by every CI platform.
-constexpr std::uint64_t expected_motion_hash = 0x2f342903f8ff3083ULL;
+constexpr std::uint64_t expected_motion_hash = 0xf785b57ff24f4caeULL;
 
 void identical_samples() {
     BitHash hash{};

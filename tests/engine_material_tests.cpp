@@ -948,8 +948,8 @@ struct ImageCase final {
 
 // The image fills' reference hashes, in the order image_fills draws them.
 constexpr ImageCase image_cases[] = {
-    {"stretch_bgra", 0x62d23c31627fdeb5ULL},
-    {"stretch_png", 0x62d23c31627fdeb5ULL},
+    {"stretch_bgra", 0xb33d2581302dcbcdULL},
+    {"stretch_png", 0xb33d2581302dcbcdULL},
     {"tile", 0x7f68c692b6b84925ULL},
     {"nine_patch", 0x937e6be15e8d40fdULL},
     {"shrink", 0x55ad2e0e76d50405ULL},

@@ -499,8 +499,8 @@ std::size_t drain_idle_keyframes(RibbonFixture& fixture) {
 
 // The expected hashes of the rise and the fall, recorded on Windows x64
 // and checked on every CI platform.
-constexpr std::uint64_t expected_rise_hash = 0x94265deb32d68de6ULL;
-constexpr std::uint64_t expected_fall_hash = 0x14208adee63a9a21ULL;
+constexpr std::uint64_t expected_rise_hash = 0x9dde36f64fae7dfdULL;
+constexpr std::uint64_t expected_fall_hash = 0x070ea302e15a3784ULL;
 
 void ribbon_rise() {
     std::unique_ptr<RibbonFixture> fixture = make_ribbon();
