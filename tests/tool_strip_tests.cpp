@@ -484,7 +484,7 @@ void hosted_item_width_follows_the_application() {
 // closes the menu while the control is no longer alive; the menu's close
 // report must not reach a repaint (the refusal left a noexcept function and
 // ended the process). The window comes to rest, as the breaker's last step.
-void disposed_with_its_menu_open() {
+static void disposed_with_its_menu_open() {
     const std::shared_ptr<Command> save = std::make_shared<Command>("save", "Save");
     const std::shared_ptr<Command> choice = std::make_shared<Command>("choice", "Choice");
     std::shared_ptr<Panel> root = make_control<Panel>(StableId("disposed.root"));

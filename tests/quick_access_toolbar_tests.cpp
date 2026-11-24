@@ -295,7 +295,7 @@ void unknown_ids_and_semantics() {
 // closes the menu while the control is no longer alive; the menu's close
 // report must not reach a repaint (the refusal left a noexcept function and
 // ended the process). The window comes to rest, as the breaker's last step.
-void disposed_with_its_menu_open() {
+static void disposed_with_its_menu_open() {
     const Commands commands;
     std::shared_ptr<QuickAccessToolbar> toolbar = make_control<QuickAccessToolbar>(StableId("qat.disposed"));
     (*toolbar).set_commands(declared(commands));

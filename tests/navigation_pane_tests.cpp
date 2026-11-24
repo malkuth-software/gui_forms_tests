@@ -716,7 +716,7 @@ void close_and_reopen_from_handlers() {
 // closes the menu while the control is no longer alive; the menu's close
 // report must not reach a repaint (the refusal left a noexcept function and
 // ended the process). The window comes to rest, as the breaker's last step.
-void disposed_with_its_menu_open() {
+static void disposed_with_its_menu_open() {
     std::unique_ptr<Fixture> fixture = make_fixture();
     NavigationPane& pane = *(*fixture).pane;
     Window& window = *(*fixture).window;
