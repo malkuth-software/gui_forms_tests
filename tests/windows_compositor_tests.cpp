@@ -31,13 +31,13 @@
 #include "gui_forms/window.hpp"
 
 #include "support/windows_own_window.hpp"
+#include "support/windows_ui_settings.hpp"
 
 #include <windows.h>
 #include <dwmapi.h>
 #include <inspectable.h>
 #include <roapi.h>
 #include <winstring.h>
-#include <windows.ui.viewmanagement.h>
 
 #include <array>
 #include <cstddef>
@@ -191,9 +191,6 @@ unsigned long operating_system_build() {
     return build;
 }
 
-// The interface identifier windows.ui.viewmanagement.h declares for
-// IUISettings4 (Windows 10 1803).
-constexpr GUID ui_settings4_interface{0x52bb3002, 0x919b, 0x4d6b, {0x9b, 0x78, 0x8d, 0xd6, 0x6f, 0xf4, 0xb9, 0x3b}};
 
 int advanced_effects_setting() {
     const HRESULT initialized = RoInitialize(RO_INIT_SINGLETHREADED);
@@ -201,15 +198,15 @@ int advanced_effects_setting() {
     int setting = -1;
     HSTRING_HEADER header{};
     HSTRING class_name = nullptr;
-    const wchar_t* const name = RuntimeClass_Windows_UI_ViewManagement_UISettings;
+    const wchar_t* const name = gui_forms_tests::ui_settings_class_name;
     if (SUCCEEDED(WindowsCreateStringReference(name, static_cast<UINT32>(std::wcslen(name)), &header, &class_name))) {
         IInspectable* instance = nullptr;
         if (SUCCEEDED(RoActivateInstance(class_name, &instance)) && instance != nullptr) {
             void* queried = nullptr;
-            if (SUCCEEDED((*instance).QueryInterface(ui_settings4_interface, &queried)) && queried != nullptr) {
-                ABI::Windows::UI::ViewManagement::IUISettings4* const settings =
-                    static_cast<ABI::Windows::UI::ViewManagement::IUISettings4*>(queried);
-                boolean enabled = 0;
+            if (SUCCEEDED((*instance).QueryInterface(gui_forms_tests::ui_settings4_interface, &queried)) && queried != nullptr) {
+                gui_forms_tests::UISettings4* const settings =
+                    static_cast<gui_forms_tests::UISettings4*>(queried);
+                unsigned char enabled = 0;
                 if (SUCCEEDED((*settings).get_AdvancedEffectsEnabled(&enabled))) setting = enabled != 0 ? 1 : 0;
                 (*settings).Release();
             }
