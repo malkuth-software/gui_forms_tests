@@ -420,7 +420,65 @@ void navigation_and_cancel() {
 
 } // namespace
 
+// State hunt, run 6 (2026-11-23): a page whose default button is disabled
+// shows with a focus scope; a show the window refuses a scope (outside an
+// active containing scope) is not left shown; and a page whose child the
+// window refuses (C21) leaves the page shown before, matching its children.
+void scope_and_page_agreement() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("dialog.agree.root"));
+    std::shared_ptr<Button> owner = make_control<Button>(StableId("dialog.agree.owner"), "Scan");
+    (*owner).set_requested_bounds({20.0, 20.0, 120.0, 32.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("dialog.agree.fence"), "Fence");
+    (*fence).set_requested_bounds({20.0, 500.0, 120.0, 32.0});
+    // Holds the identity the dialog's Preview button would take.
+    std::shared_ptr<Button> taken = make_control<Button>(StableId("dialog.agree.button.preview"), "Taken");
+    (*taken).set_requested_bounds({200.0, 500.0, 120.0, 32.0});
+    (*root).add_child(owner);
+    (*root).add_child(fence);
+    (*root).add_child(taken);
+    Window window(root, {720.0, 560.0});
+    window.perform_layout();
+    std::shared_ptr<TaskDialog> dialog = make_control<TaskDialog>(StableId("dialog.agree"));
+    TaskDialogPage disabled_default{};
+    disabled_default.heading = "Nothing to confirm";
+    disabled_default.buttons = {{.standard = TaskDialogStandardButton::ok, .enabled = false},
+                                {.standard = TaskDialogStandardButton::cancel}};
+    disabled_default.default_button = "ok";
+    (*dialog).set_page(disabled_default);
+    require((*dialog).show(owner) && (*dialog).shown() && window.focus_scope_depth() == 1U &&
+                (*dialog).agrees_with_itself(),
+            "a disabled default button does not keep the dialog from its focus scope");
+    TaskDialogPage with_preview = disabled_default;
+    with_preview.buttons.push_back({.stable_id = "preview", .text = "Preview"});
+    bool refused = false;
+    try {
+        (*dialog).set_page(with_preview);
+    } catch (const std::exception&) {
+        refused = true;
+    }
+    require(refused && (*dialog).page().buttons.size() == 2U && (*dialog).agrees_with_itself() && (*dialog).button("cancel"),
+            "a page whose child is refused leaves the page before, with its children");
+    (*dialog).close("cancel");
+    require(!(*dialog).shown() && (*dialog).agrees_with_itself() && window.focus_scope_depth() == 0U, "it closes");
+
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool show_refused = false;
+    try {
+        static_cast<void>((*dialog).show(owner));
+    } catch (const std::logic_error&) {
+        show_refused = true;
+    }
+    require(show_refused && !(*dialog).shown() && !(*dialog).parent() && (*dialog).agrees_with_itself() &&
+                window.focus_scope_depth() == 1U,
+            "a show refused a scope is not left shown");
+    require(window.end_focus_scope(fenced) && (*dialog).show(owner) && (*dialog).shown() && (*dialog).agrees_with_itself(),
+            "the dialog shows afterwards");
+    (*dialog).close("cancel");
+    require(!(*dialog).shown() && window.focus_scope_depth() == 0U, "and closes cleanly");
+}
+
 int main() {
+    scope_and_page_agreement();
     validation();
     modal_presentation();
     closed_while_opening();
