@@ -325,12 +325,26 @@ Grandchild build_grandchild() {
     return built;
 }
 
+// The containing-block warnings among the window's diagnostics (VA's
+// content_overflow records sit beside them).
+std::size_t warning_count(const Window& window) {
+    std::size_t count = 0U;
+    for (const LayoutDiagnostic& diagnostic : window.layout_diagnostics()) {
+        if (diagnostic.code == LayoutDiagnosticCode::containing_block_not_parent) ++count;
+    }
+    return count;
+}
+
 void require_warning(const Window& window, std::size_t index, const std::string& ancestor) {
-    const std::span<const LayoutDiagnostic> diagnostics = window.layout_diagnostics();
-    require(index < diagnostics.size(), "warning " + std::to_string(index) + " is recorded");
-    const LayoutDiagnostic& diagnostic = diagnostics[index];
-    require(diagnostic.code == LayoutDiagnosticCode::containing_block_not_parent &&
-                diagnostic.severity == LayoutDiagnosticSeverity::warning,
+    // The index-th containing-block warning: VA's content_overflow records
+    // sit beside them.
+    std::vector<LayoutDiagnostic> warnings{};
+    for (const LayoutDiagnostic& recorded : window.layout_diagnostics()) {
+        if (recorded.code == LayoutDiagnosticCode::containing_block_not_parent) warnings.push_back(recorded);
+    }
+    require(index < warnings.size(), "warning " + std::to_string(index) + " is recorded");
+    const LayoutDiagnostic& diagnostic = warnings[index];
+    require(diagnostic.severity == LayoutDiagnosticSeverity::warning,
             "the warning is containing_block_not_parent");
     require(diagnostic.child == "pos.pinned" && diagnostic.ancestor == ancestor,
             "the warning names the child and " + ancestor + ", got " + diagnostic.ancestor);
@@ -344,7 +358,8 @@ void test_resizing_the_ancestor_moves_the_grandchild() {
     // The warning, then the middle container's own overflow: the pinned
     // child lies past its 100 x 100 box and a GridPanel without auto
     // scroll records it unanswered (stage VA, content_overflow).
-    require(window.layout_diagnostics().size() == 2U, "one warning and the middle container's overflow");
+    require(warning_count(window) == 1U && window.layout_diagnostics().size() == 2U,
+            "one warning and the middle container's overflow");
     require_warning(window, 0U, "pos.ancestor");
     require(window.layout_diagnostics()[1].code == LayoutDiagnosticCode::content_overflow &&
                 window.layout_diagnostics()[1].child == "pos.middle",
@@ -364,7 +379,7 @@ void test_resizing_the_ancestor_moves_the_grandchild() {
     require_bounds(*built.middle, 0.0, 0.0, 100.0, 100.0, "the middle container stays");
     require_bounds(*built.pinned, 0.0, 290.0, 30.0, 10.0, "the grandchild follows the ancestor's bottom");
     require(resized.arrange_passes == 1U, "in one arrange pass, got " + std::to_string(resized.arrange_passes));
-    require(window.layout_diagnostics().size() == 2U, "an unchanged resolution records nothing new");
+    require(warning_count(window) == 1U, "an unchanged resolution records nothing");
 
     // Disposing the ancestor leaves no dependent behind.
     const RuntimeId ancestor_id = (*built.ancestor).runtime_id();
@@ -385,7 +400,7 @@ void test_removing_positioning_re_resolves() {
     window.perform_layout();
     // The next box up is the window's root, whose box is the client area.
     require_bounds(*built.pinned, 0.0, 590.0, 30.0, 10.0, "bottom 0 in the client area");
-    require(window.layout_diagnostics().size() == 2U, "the new resolution records a new warning");
+    require(warning_count(window) == 2U, "the new resolution records a new warning");
     require_warning(window, 1U, "pos.root");
     require(window.containing_block_dependent_count((*built.root).runtime_id()) == 1U &&
                 window.containing_block_dependent_count((*built.ancestor).runtime_id()) == 1U,
@@ -395,7 +410,7 @@ void test_removing_positioning_re_resolves() {
     (*built.root).set_item_layout(*built.ancestor, ancestor_layout(200.0, true));
     window.perform_layout();
     require_bounds(*built.pinned, 0.0, 190.0, 30.0, 10.0, "bottom 0 in the ancestor's box again");
-    require(window.layout_diagnostics().size() == 3U, "a third resolution, a third warning");
+    require(warning_count(window) == 3U, "a third resolution, a third warning");
     require_warning(window, 2U, "pos.ancestor");
     require(window.containing_block_dependent_count((*built.root).runtime_id()) == 0U,
             "the root's watch is withdrawn");
@@ -408,7 +423,7 @@ void test_removing_positioning_re_resolves() {
     (*built.ancestor).set_item_layout(*built.middle, middle_layout);
     window.perform_layout();
     require_bounds(*built.pinned, 0.0, 90.0, 30.0, 10.0, "bottom 0 in its parent's box");
-    require(window.layout_diagnostics().size() == 3U, "the parent as the block records nothing");
+    require(warning_count(window) == 3U, "the parent as the block records nothing");
     require(window.containing_block_watch_count() == 0U, "the middle container withdraws its dependencies");
     window.clear_layout_diagnostics();
     require(window.layout_diagnostics().empty() && window.dropped_layout_diagnostics() == 0U, "clearing empties both");
