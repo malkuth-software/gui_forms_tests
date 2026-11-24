@@ -141,6 +141,15 @@ public:
         shape.width = width;
         shapes.push_back(shape);
     }
+    // A path stroke (a moving band's outline) records its colour and width;
+    // a trimmed stroke (a glint) is marked by a zero rect width.
+    void stroke_path(PaintPathView, const StrokeStyle& style) override {
+        PaintedShape shape{};
+        shape.rect = Rect{0.0, 0.0, stroke_trim_keeps_whole(style.trim) ? 1.0 : 0.0, 0.0};
+        shape.colour = style.color;
+        shape.width = style.width;
+        shapes.push_back(shape);
+    }
     void draw_line(Point from, Point to, Color colour, double width) override {
         PaintedShape shape{};
         shape.rect = Rect{from.x, from.y, to.x - from.x, to.y - from.y};
@@ -162,7 +171,14 @@ public:
         shapes.push_back(shape);
     }
 
+    // Groups begun with an effect (the content wash), and with none.
+    void begin_group(const PaintGroup& group) override {
+        if (group.effect) ++effect_groups;
+        Painter::begin_group(group);
+    }
+
     std::vector<PaintedShape> shapes;
+    std::size_t effect_groups{};
 };
 
 // The node with `stable_id` among `nodes` and their descendants, or null.
@@ -887,6 +903,121 @@ void test_shaping_report() {
             "the capabilities carry the shapes");
 }
 
+// The corner report names its source (MCP round 1, owner 2026-11-24): the
+// band follows the report whole, a source change is a change, and the
+// corners are read again when the safe area moves (a title bar or toolbar
+// change can make them rounder).
+void test_corner_sources() {
+    require(std::string_view(window_corner_source_name(WindowCornerSource::unknown)) == "unknown" &&
+                std::string_view(window_corner_source_name(WindowCornerSource::platform)) == "platform" &&
+                std::string_view(window_corner_source_name(WindowCornerSource::layout_region)) == "layout_region" &&
+                std::string_view(window_corner_source_name(WindowCornerSource::private_getter)) == "private_getter",
+            "each corner source has its name");
+    WindowCornerReport layout{};
+    layout.shape = WindowCornerShape::rounded;
+    layout.radius = 16.0;
+    layout.complied = true;
+    layout.source = WindowCornerSource::layout_region;
+    WindowCornerReport getter = layout;
+    getter.source = WindowCornerSource::private_getter;
+    require(!(layout == getter), "reports from different sources differ");
+
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("source.root"));
+    Window window(root, Size{200.0, 120.0});
+    host::HeadlessHost host(window);
+    require(host.dispatch(HostAttachEvent{{200.0, 120.0}, 1.0}, 1).accepted(), "attach refused");
+    host::HeadlessHostServices& services = host.headless_services();
+    services.set_corner_report(WindowCornerPreference::system, layout);
+    require(host.dispatch(HostWindowStateEvent{false}, 2).accepted(), "a window state report is accepted");
+    require(window.band_snapshot().corners == layout, "the band follows a layout-region report");
+    WindowCornerReport toolbar = layout;
+    toolbar.radius = 26.0;
+    services.set_corner_report(WindowCornerPreference::system, toolbar);
+    require(host.dispatch(HostSafeInsetsEvent{SafeInsets{0.0, 0.0, 0.0, 0.0}}, 3U).accepted(),
+            "a safe-area report is accepted");
+    require(window.band_snapshot().corners == toolbar, "a safe-area change reads the corners again");
+
+    // The in-use sign's system border colour: kept, and given to the host
+    // (the reference host draws no system border and says so).
+    window.set_system_border_colour(stxlib::Optional<Color>::of(Color::rgba(38, 114, 185)));
+    require(host.dispatch(HostWindowStateEvent{false}, 4).accepted(), "the colour is given again on a state report");
+    window.set_system_border_colour(stxlib::Optional<Color>{});
+}
+
+// The sign's band (owner, 2026-11-24): sweeping draws the rest colour with
+// a glint running round; where motion is stilled it draws one stroke in a
+// tint between rest and lit instead.
+void test_sweeping_and_its_still_tint() {
+    ManualTime time{};
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("sweep.root"));
+    Window window(root, Size{200.0, 100.0});
+    window.motion_clock().set_time_source(&time);
+    window.declare_band(WindowBandOptions{5.0, WindowBandFullScreen::stays});
+    window.perform_layout();
+    paint_all(window);
+    const Color rest = Color::rgba(0, 0, 200);
+    const Color lit = Color::rgba(255, 255, 255);
+    WindowBandAppearance sweeping{};
+    sweeping.state = WindowBandState::sweeping;
+    sweeping.rest_colour.set(rest);
+    sweeping.lit_colour.set(lit);
+    sweeping.frequency = 0.6;
+    window.set_band_appearance(sweeping);
+    require(window.band_snapshot().moving, "a sweep moves");
+    paint_all(window);
+    require(window.next_wake().present() && window.next_settling_wake().absent(),
+            "a sweep wakes the window, but a caller waiting for it to settle does not wait on the sweep");
+    ShapePainter moving{};
+    static_cast<void>(window.paint(moving, Rect{0.0, 0.0, 200.0, 100.0}));
+    std::size_t glints = 0U;
+    bool rest_drawn = false;
+    for (const PaintedShape& shape : moving.shapes) {
+        if (!near(shape.width, 5.0)) continue;
+        if (shape.rect.width == 0.0) ++glints;
+        if (shape.rect.width != 0.0 && shape.colour == rest) rest_drawn = true;
+    }
+    require(rest_drawn && glints == 3U, "a moving sweep draws the rest colour and a three-layer glint");
+
+    sweeping.frequency = 0.0;
+    window.set_band_appearance(sweeping);
+    require(!window.band_snapshot().moving, "a sweep below the slowest frequency stands still");
+    ShapePainter still{};
+    static_cast<void>(window.paint(still, Rect{0.0, 0.0, 200.0, 100.0}));
+    std::size_t tinted = 0U;
+    std::size_t trimmed = 0U;
+    for (const PaintedShape& shape : still.shapes) {
+        if (!near(shape.width, 5.0)) continue;
+        if (shape.rect.width == 0.0) ++trimmed;
+        const bool between = shape.colour.blue >= rest.blue && shape.colour.red > rest.red &&
+                             shape.colour.red < lit.red;
+        if (shape.rect.width != 0.0 && between) ++tinted;
+    }
+    require(trimmed == 0U && tinted != 0U, "a stilled sweep draws one tinted stroke and no glint");
+    window.motion_clock().set_time_source(nullptr);
+}
+
+// The MCP in-use sign's wash (owner, 2026-11-24): while set, a frame draws
+// the application's planes in one group carrying the wash; at 1, none.
+void test_content_wash_group() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("wash.root"));
+    std::shared_ptr<Button> button = make_control<Button>(StableId("wash.button"), "Washed");
+    (*button).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*root).add_child(button);
+    Window window(root, Size{200.0, 100.0});
+    window.perform_layout();
+    ShapePainter plain{};
+    static_cast<void>(window.paint(plain, Rect{0.0, 0.0, 200.0, 100.0}));
+    const std::size_t own = plain.effect_groups;
+    window.set_content_wash(0.12);
+    ShapePainter washed{};
+    static_cast<void>(window.paint(washed, Rect{0.0, 0.0, 200.0, 100.0}));
+    require(washed.effect_groups == own + 1U, "a washed frame draws its content in one wash group");
+    window.set_content_wash(1.0);
+    ShapePainter restored{};
+    static_cast<void>(window.paint(restored, Rect{0.0, 0.0, 200.0, 100.0}));
+    require(restored.effect_groups == own, "the wash ends with no group left");
+}
+
 void test_capability_names() {
     const std::string json = host::headless_capabilities().to_json();
     require(json.find("\"window_corners\"") != std::string::npos &&
@@ -916,6 +1047,9 @@ int main() {
         test_roles_and_texture();
         test_shaping_report();
         test_capability_names();
+        test_corner_sources();
+        test_sweeping_and_its_still_tint();
+        test_content_wash_group();
         std::cout << "gui_forms_window_band_tests: all tests passed\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {

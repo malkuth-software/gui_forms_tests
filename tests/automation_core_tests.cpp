@@ -4,11 +4,15 @@
 // tools called as a model would call them. Covers the reads (windows,
 // snapshot), acts and their diffs, the protected field, the user step, the
 // destructive question (one per launch), the dialog rule, batch, the
-// public model-tool registry and the event-propagation trace.
+// public model-tool registry and the event-propagation trace; and MCP round
+// 1: strict arguments, find, per-node actions, rows a list does not show,
+// dialogs a model opened (closed as Cancel, never submitted), reset, the
+// wash that goes with the in-use sign, and the appearance-review refusal.
 
 #include "gui_forms/automation/marks/automation_marks.hpp"
 #include "gui_forms/automation/tools/model_tools.hpp"
 #include "gui_forms/basic_controls.hpp"
+#include "gui_forms/controls/list_box.hpp"
 #include "gui_forms/controls/modal_layer.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/controls/text_box.hpp"
@@ -17,10 +21,15 @@
 #include "src/controls/automation/core/automation_core.hpp"
 #include "src/controls/automation/presenter/stock_presenter.hpp"
 #include "src/controls/automation/tools/automation_tools.hpp"
+#if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
+#include "src/runtime/automation/automation_run.hpp"
+#endif
 #include "support/named_callbacks.hpp"
 
 #include <cstdint>
+#include <cmath>
 #include <cstdlib>
+#include <stdexcept>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -407,6 +416,217 @@ void the_stock_presenter_shows_the_tag_line_on_hover() {
     require(client_label(client) == "Claude Opus 5.5 via Claude Code", "the tag line names the model and client");
 }
 
+// A call's failure detail, empty when it succeeded.
+std::string failure_text(const ToolReply& reply) {
+    const ToolFailure* const failure = reply.failure_value();
+    if (failure == nullptr) return std::string{};
+    return (*failure).message + " / " + (*failure).hint;
+}
+
+// Every tool schema stays inside the MCP server's JSON Schema subset
+// (stxlib/mcp.hpp): a keyword outside it leaves the tool unbound, unseen by
+// the model (MCP round 1: batch's first published schema used anyOf).
+void tool_schemas_stay_in_the_served_subset() {
+    Fixture fixture(false);
+    std::vector<ToolSpec> specs{};
+    fixture.core.fill_tool_specs(specs);
+    const std::string_view refused[] = {"\"anyOf\"", "\"oneOf\"", "\"allOf\"", "\"$ref\"", "\"not\"",
+                                        "\"pattern\"", "\"if\"", "\"prefixItems\"", "\"uniqueItems\""};
+    bool batch = false;
+    bool find = false;
+    bool reset = false;
+    for (const ToolSpec& spec : specs) {
+        for (const std::string_view keyword : refused) {
+            if (contains(spec.input_schema, keyword)) {
+                std::cerr << spec.name << " uses " << keyword << '\n';
+                require(false, "a tool schema uses a keyword the MCP server refuses");
+            }
+        }
+        batch = batch || spec.name == "batch";
+        find = find || spec.name == "find";
+        reset = reset || spec.name == "reset";
+    }
+    require(batch && find && reset, "batch, find and reset are served");
+}
+
+void arguments_are_strict_and_find_finds() {
+    Fixture fixture(false);
+    const ToolReply unknown = fixture.call("snapshot", "{\"limt\":5}");
+    require(failed_with(unknown, ToolError::invalid_arguments), "an unknown argument is refused");
+    require(contains(failure_text(unknown), "takes no limt"), "the refusal names the unknown argument");
+    require(failed_with(fixture.call("batch", "{\"steps\":[{\"expect\":\"node\",\"target\":\"auto.press\","
+                                              "\"colour\":\"red\"}]}"),
+                        ToolError::invalid_arguments),
+            "an expect step with an unknown member is refused");
+
+    const std::string found = success_text(fixture.call("find", "{\"role\":\"button\",\"name\":\"apply\"}"));
+    require(contains(found, "auto.press") && !contains(found, "auto.erase"),
+            "find matches the role and a part of the name, in any case");
+    require(failed_with(fixture.call("find", "{\"role\":\"spaceship\"}"), ToolError::invalid_arguments),
+            "find refuses a role that does not exist");
+    require(failed_with(fixture.call("find", "{}"), ToolError::invalid_arguments), "find names something");
+    require(contains(success_text(fixture.call("find", "{\"name\":\"no such name\"}")), "no node matches"),
+            "find says when nothing matches");
+
+    const std::string outline = success_text(fixture.call("snapshot", "{}"));
+    require(contains(outline, "actions="), "the snapshot lists each node's actions");
+    require(contains(success_text(fixture.call("text", "{\"target\":\"auto.press\"}")), "Apply"),
+            "text reads a button's whole name");
+    require(succeeded(fixture.call("act", "{\"action\":\"scroll_into_view\",\"target\":\"auto.press\"}")),
+            "scroll_into_view brings a control into view");
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.check\",\"terse\":true}")),
+            "a terse act runs");
+}
+
+void rows_a_list_does_not_show_are_reached_by_id() {
+    const std::shared_ptr<ListBox> list = make_control<ListBox>(StableId("auto.rows"));
+    std::vector<std::string> names{};
+    for (int index = 0; index < 40; ++index) names.push_back("Row " + std::to_string(index));
+    (*list).items = names;
+    (*list).set_requested_bounds(Rect{0.0, 0.0, 180.0, 86.0});
+    Window window(list, Size{180.0, 86.0});
+    window.perform_layout();
+    TestPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.rows.window"), "the window joins the automation");
+    WindowPump pump(window, control, presenter);
+    const std::string outline = success_text(core.run("snapshot", "{}", pump));
+    require(contains(outline, "more rows not shown"), "the snapshot says the list holds rows it does not show");
+    const ToolReply pressed = core.run("act", "{\"action\":\"select\",\"target\":\"auto.rows.item.31\"}", pump);
+    require(succeeded(pressed), "a row the list does not show is acted on by its ID");
+    require((*list).selected_index() == stxlib::Optional<std::size_t>::of(31U), "the row is selected");
+    require(failed_with(core.run("act", "{\"action\":\"select\",\"target\":\"auto.rows.item.99\"}", pump),
+                        ToolError::unsupported_action) ||
+                failed_with(core.run("act", "{\"action\":\"select\",\"target\":\"auto.rows.item.99\"}", pump),
+                            ToolError::not_found),
+            "a row the list does not have is refused");
+}
+
+// Opens the modal layer over its owner, as a dialog command would.
+class ShowLayer final {
+public:
+    ShowLayer(ModalLayer& layer, Control::Ptr owner, Control::Ptr content) noexcept
+        : layer_(layer), owner_(std::move(owner)), content_(std::move(content)) {}
+
+    void operator()(ButtonBase&) const { static_cast<void>(layer_.show(owner_, content_)); }
+
+private:
+    ModalLayer& layer_;
+    Control::Ptr owner_;
+    Control::Ptr content_;
+};
+
+// The dialog ID a reply names after "a dialog opened: [".
+std::string opened_dialog(const std::string& text) {
+    const std::string_view lead = "a dialog opened: [";
+    const std::size_t start = text.find(lead);
+    if (start == std::string::npos) return std::string{};
+    const std::size_t first = start + lead.size();
+    const std::size_t end = text.find(']', first);
+    if (end == std::string::npos) return std::string{};
+    return text.substr(first, end - first);
+}
+
+void a_model_closes_the_dialog_it_opened_but_never_submits_it() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.opener.root"));
+    const std::shared_ptr<Button> opener = make_control<Button>(StableId("auto.opener"), "Settings...");
+    (*opener).set_requested_bounds(Rect{10.0, 10.0, 100.0, 28.0});
+    (*root).add_child(opener);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    const std::shared_ptr<ModalLayer> layer = make_control<ModalLayer>(StableId("auto.opener.modal"));
+    const std::shared_ptr<Panel> content = make_control<Panel>(StableId("auto.opener.content"));
+    (*content).set_requested_bounds(Rect{0.0, 0.0, 200.0, 120.0});
+    const std::shared_ptr<Button> submit = make_control<Button>(StableId("auto.opener.ok"), "OK");
+    (*submit).set_requested_bounds(Rect{60.0, 80.0, 80.0, 28.0});
+    (*content).add_child(submit);
+    SubscriptionToken opened = (*opener).clicked().subscribe(ShowLayer(*layer, opener, content));
+    require(set_opens_dialog("auto.opener", true, "auto.settings"), "the opener is marked");
+    require(opens_dialog("auto.opener"), "the mark reads back");
+
+    TestPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.opener.window"), "the window joins the automation");
+    WindowPump pump(window, control, presenter);
+    const std::string outline = success_text(core.run("snapshot", "{}", pump));
+    require(contains(outline, "needs_user") && contains(outline, "press=opens_dialog instead=auto.settings"),
+            "the snapshot marks the opener and names its dialog-free tool");
+
+    const std::string first = success_text(core.run("act", "{\"action\":\"press\",\"target\":\"auto.opener\"}", pump));
+    const std::string dialog = opened_dialog(first);
+    require(!dialog.empty() && contains(first, "never submits"), "the reply says the dialog needs the user");
+    require(contains(first, "auto.settings"), "the reply names the tool that does this without a dialog");
+    require(failed_with(core.run("act", "{\"action\":\"press\",\"target\":\"auto.opener.ok\"}", pump),
+                        ToolError::dialog_open),
+            "the model never submits the dialog it opened");
+    const std::string close = "{\"action\":\"close\",\"target\":\"" + dialog + "\"}";
+    const ToolReply closed = core.run("act", close, pump);
+    if (!succeeded(closed)) std::cerr << "close [" << dialog << "]: " << failure_text(closed) << '\n';
+    require(succeeded(closed), "the model closes the dialog it opened");
+    require(!(*layer).is_shown(), "the dialog closed as Cancel");
+
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.opener\"}", pump)) &&
+                (*layer).is_shown(),
+            "the dialog opens again");
+    const std::string reset = success_text(core.run("reset", "{}", pump));
+    require(contains(reset, "closed the dialog") && !(*layer).is_shown(), "reset closes the model's dialog");
+    require(contains(success_text(core.run("reset", "{}", pump)), "nothing needed resetting"),
+            "a second reset finds nothing to do");
+    require(set_opens_dialog("auto.opener", false, nullptr), "the mark is cleared");
+}
+
+void the_sign_washes_the_content_and_review_mode_shows_none() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.wash.root"));
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    require(window.content_wash() == 1.0, "no wash without a model");
+    bool refused = false;
+    try {
+        window.set_content_wash(std::nan(""));
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused, "a wash that is not a number is refused");
+    window.set_content_wash(4.0);
+    require(window.content_wash() == 1.0, "the wash is clamped to 0..1");
+
+    ClientIdentity client{};
+    client.client_name = "Claude Code";
+    client.model_name = "Claude Opus 5.5";
+    {
+        StockPresenter presenter{};
+        presenter.window_attached(window);
+        presenter.client_changed(client);
+        require(window.content_wash() < 0.5, "a connected model washes the content");
+        require(window.title_note() != nullptr && contains(window.title_note(), "is using this"),
+                "a connected model is named in the title");
+        presenter.disconnected();
+        require(window.content_wash() == 1.0, "the wash ends on disconnect");
+        presenter.window_detached(window);
+        window.undeclare_band();
+    }
+    {
+        StockPresenter presenter{};
+        presenter.set_unsigned(true);
+        presenter.window_attached(window);
+        presenter.client_changed(client);
+        require(!window.band_snapshot().declared && window.content_wash() == 1.0,
+                "appearance review shows no band and no wash");
+        presenter.disconnected();
+        presenter.window_detached(window);
+    }
+#if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
+    AutomationLaunch launch{};
+    launch.mcp = true;
+    require(automation_launch_refusal(launch, false) == nullptr, "a plain --mcp launch is not refused");
+    launch.appearance_review = true;
+    require(automation_launch_refusal(launch, false) != nullptr, "a release build refuses appearance review");
+    require(automation_launch_refusal(launch, true) == nullptr, "a test build takes appearance review");
+#endif
+}
+
 } // namespace
 
 int main() {
@@ -420,6 +640,11 @@ int main() {
     a_program_tool_meets_the_dialog_rule();
     inspect_traces_the_routed_events();
     the_stock_presenter_shows_the_tag_line_on_hover();
+    tool_schemas_stay_in_the_served_subset();
+    arguments_are_strict_and_find_finds();
+    rows_a_list_does_not_show_are_reached_by_id();
+    a_model_closes_the_dialog_it_opened_but_never_submits_it();
+    the_sign_washes_the_content_and_review_mode_shows_none();
     std::cout << "automation core tests passed\n";
     return 0;
 }
