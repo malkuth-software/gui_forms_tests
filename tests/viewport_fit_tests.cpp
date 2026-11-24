@@ -177,6 +177,7 @@ const SemanticNode* semantic_node(const std::vector<SemanticNode>& nodes, std::s
     }
     return nullptr;
 }
+const SemanticNode* semantic_node(std::vector<SemanticNode>&& nodes, std::string_view stable_id) = delete;
 
 // -- the placement ------------------------------------------------------------------------
 

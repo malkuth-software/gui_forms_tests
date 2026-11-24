@@ -49,7 +49,7 @@ void require(const bool condition, const std::string_view message) {
     }
 }
 
-using GetTable = gf_status (*)(gf_table_id, std::uint32_t, std::uint32_t, void*, std::uint64_t);
+using GetTable = decltype(&gf_abi_get_table);
 
 // The loaded library, and its entry point.
 struct LoadedLibrary final {
