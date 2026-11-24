@@ -31,6 +31,7 @@
 #include "gui_forms/types/geometry/geometry.hpp"
 #include "gui_forms/types/paint_types/paint_types.hpp"
 #include "gui_forms/types/painter/painter.hpp"
+#include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 #include "support/theme_definition_heap.hpp"
 
@@ -38,6 +39,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <stxlib/optional.hpp>
@@ -676,6 +678,118 @@ void backstage_closed_while_opening() {
     static_cast<void>(recorded);
 }
 
+// Closes the ribbon's group overlay, plane popup and menus when the ribbon
+// loses focus: the focus move each of them makes as it opens runs this.
+struct CloseOverlaysOnBlur final {
+    Ribbon* ribbon{};
+    void operator()(bool focused) const {
+        if (focused) return;
+        (*ribbon).close_group_overlay();
+        (*ribbon).close_plane_popup();
+        (*ribbon).close_menus();
+    }
+};
+
+// The group overlay, the plane popup and the two-pane menu as presentation
+// states: each closed by a focus handler while it opens is served, ends the
+// scope its show began, and opens again afterwards.
+void ribbon_overlays_closed_while_opening() {
+    std::shared_ptr<Ribbon> ribbon = make_ribbon(make_control<RibbonFontControl>(StableId("ribbon.font")),
+                                                 make_control<RibbonColorPicker>(StableId("ribbon.colour")));
+    (*ribbon).set_application_menu({MenuItemSpec("file.open", MenuItemKind::command,
+                                                 std::make_shared<Command>("open", "&Open"))});
+    (*ribbon).set_recent_items({{"recent.report", "Report.txt", "C:\\Documents"}});
+    Window window(ribbon, {900.0, 400.0});
+    window.perform_layout();
+    const std::vector<RibbonLadderEntry> ladder = (*ribbon).reduction_ladder(0U);
+    window.resize({ladder.back().width, 400.0});
+    window.perform_layout();
+
+    require(window.request_focus(ribbon), "the ribbon takes focus");
+    SubscriptionToken blurred = (*ribbon).focus_observed().subscribe(CloseOverlaysOnBlur{ribbon.get()});
+    static_cast<void>((*ribbon).show_group_overlay("font-group"));
+    require(!(*ribbon).overlay_group().has_value() && window.focus_scope_depth() == 0U,
+            "a group overlay closed while it opens leaves no group and no scope");
+    require(window.request_focus(ribbon), "the ribbon takes focus again");
+    static_cast<void>((*ribbon).show_application_menu(MenuOpenMode::keyboard));
+    require(!(*ribbon).menu_open() && window.focus_scope_depth() == 0U,
+            "a two-pane menu closed while it opens leaves no scope");
+    blurred.disconnect();
+    require((*ribbon).show_group_overlay("font-group") && (*ribbon).overlay_group() == std::optional<std::string>("font-group"),
+            "the group overlay opens afterwards");
+    (*ribbon).close_group_overlay();
+    require(window.focus_scope_depth() == 0U, "and closes cleanly");
+
+    window.resize({900.0, 400.0});
+    (*ribbon).minimized = true;
+    window.perform_layout();
+    require(window.request_focus(ribbon), "the minimized ribbon takes focus");
+    blurred = (*ribbon).focus_observed().subscribe(CloseOverlaysOnBlur{ribbon.get()});
+    static_cast<void>((*ribbon).show_plane_popup());
+    blurred.disconnect();
+    require(!(*ribbon).plane_popup_open() && window.focus_scope_depth() == 0U,
+            "a plane popup closed while it opens leaves no scope");
+    require((*ribbon).show_plane_popup() && (*ribbon).plane_popup_open(), "the plane popup opens afterwards");
+    (*ribbon).close_plane_popup();
+    require(!(*ribbon).plane_popup_open() && window.focus_scope_depth() == 0U, "and closes cleanly");
+}
+
+// Opens the palette again from its close report, once.
+struct ReopenPaletteOnClose final {
+    RibbonColorPicker* picker{};
+    bool* reopened{};
+    void operator()(bool open) const {
+        if (open || *reopened) return;
+        *reopened = true;
+        static_cast<void>((*picker).open_palette());
+    }
+};
+
+// An anchored picker opened again from its close report shows one palette.
+void palette_reopens_from_its_close_report() {
+    std::shared_ptr<ColorCommand> command = std::make_shared<ColorCommand>(std::make_shared<Command>("color", "Colour"));
+    std::shared_ptr<RibbonColorPicker> picker = make_control<RibbonColorPicker>(StableId("picker.reopen"));
+    (*picker).command = command;
+    (*picker).text = "Font &colour";
+    Window window(picker, {300.0, 300.0});
+    window.perform_layout();
+    std::vector<bool> changes;
+    SubscriptionToken recorded = (*picker).palette_open_changed().subscribe(RecordOpen{&changes});
+    bool reopened = false;
+    SubscriptionToken reopening = (*picker).palette_open_changed().subscribe(ReopenPaletteOnClose{picker.get(), &reopened});
+    require((*picker).open_palette(), "the palette opens");
+    (*picker).close_palette();
+    reopening.disconnect();
+    require(reopened && (*picker).palette_open() && changes == std::vector<bool>({true, false, true}) &&
+                window.focus_scope_depth() == 1U,
+            "an open from the close report presents the palette again");
+    (*picker).close_palette();
+    require(!(*picker).palette_open() && window.focus_scope_depth() == 0U, "and it closes cleanly");
+    static_cast<void>(recorded);
+}
+
+// The two-pane menu's panes widen to their labels at text scale 2.
+void application_menu_measures_its_labels() {
+    std::shared_ptr<Ribbon> ribbon = make_ribbon(make_control<RibbonFontControl>(StableId("ribbon.font")),
+                                                 make_control<RibbonColorPicker>(StableId("ribbon.colour")));
+    std::shared_ptr<Command> open = std::make_shared<Command>("open", "&Open a document from anywhere on this computer");
+    (*ribbon).set_application_menu({MenuItemSpec("file.open", MenuItemKind::command, open)});
+    (*ribbon).set_recent_items({{"recent.long", "Quarterly report for the northern region, final revision.txt",
+                                 "C:\\Documents"}});
+    Window window(ribbon, {3000.0, 900.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    require((*ribbon).show_application_menu(MenuOpenMode::keyboard), "the two-pane menu opens");
+    window.perform_layout();
+    const std::vector<SemanticNode> rows = (*(*ribbon).application_menu_overlay()).semantic_virtual_children();
+    require(rows.size() == 2U && rows[0].bounds.width > 190.0 * 2.0 && rows[1].bounds.width > 250.0 * 2.0,
+            "each pane is wider than its old fixed width when its label needs it");
+    require(rows[1].bounds.x >= rows[0].bounds.x + rows[0].bounds.width - 1.0, "the panes still sit side by side");
+    (*ribbon).close_menus();
+}
+
 int main() {
     value_commands();
     font_control();
@@ -687,6 +801,9 @@ int main() {
     font_field_widths();
     color_palette_shrinks_while_open();
     backstage_closed_while_opening();
+    ribbon_overlays_closed_while_opening();
+    palette_reopens_from_its_close_report();
+    application_menu_measures_its_labels();
     std::cout << "Ribbon file area: value commands, font control, colour picker, hosting, recent pane and Backstage "
                  "passed\n";
     return 0;

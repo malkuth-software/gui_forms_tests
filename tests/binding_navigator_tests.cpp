@@ -20,6 +20,7 @@
 #include "gui_forms/semantics/types/semantic_types.hpp"
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
+#include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 
 #include <cstdlib>
@@ -185,9 +186,44 @@ void add_and_delete() {
 
 } // namespace
 
+double position_width(const BindingNavigator& navigator) {
+    for (const ToolStripItemSpec& item : navigator.items()) {
+        if (item.stable_id == "position") return item.width;
+    }
+    return 0.0;
+}
+
+void position_box_at_text_scale_two() {
+    std::shared_ptr<BindingNavigator> navigator = make_control<BindingNavigator>(StableId("navigator.scaled"));
+    Window window(navigator, {1400.0, 60.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    std::shared_ptr<BindingSource> source = std::make_shared<BindingSource>(window);
+    fill_rows(*source, 3U);
+    (*navigator).binding_source = source;
+    window.perform_layout();
+    const double few = position_width(*navigator);
+    const std::shared_ptr<TextBox> box = (*navigator).text_box("position");
+    require(few == 50.0 && (*box).committed_arranged_bounds().width == 100.0,
+            "a short count keeps the 50-unit box, which the strip doubles at text scale two");
+    fill_rows(*source, 100000U);
+    (*source).set_position(99999);
+    window.perform_layout();
+    const double many = position_width(*navigator);
+    require(many >= few && (*(*navigator).text_box("position")).text.read() == "100000" &&
+                (*(*navigator).text_box("position")).committed_arranged_bounds().width == many * 2.0,
+            "a six-digit count keeps or widens the box to its digits, scaled like the default width");
+    fill_rows(*source, 3U);
+    window.perform_layout();
+    require(position_width(*navigator) == 50.0, "the box returns to its default once the count is short again");
+}
+
 int main() {
     standard_items_and_states();
     position_box();
+    position_box_at_text_scale_two();
     add_and_delete();
     std::cout << "BindingNavigator: items, command states, moves, position box, add, delete and source loss passed\n";
     return 0;

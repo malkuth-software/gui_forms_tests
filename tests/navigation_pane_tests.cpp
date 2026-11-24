@@ -653,11 +653,71 @@ void refusals() {
 
 } // namespace
 
+// Closes the overlay from the control that loses focus as it opens.
+struct CloseOverlayOnBlur final {
+    NavigationPane* pane{};
+    void operator()(bool focused) const {
+        if (!focused) (*pane).close_overlay();
+    }
+};
+
+// Opens the overlay again from its close report, once.
+struct ReopenOverlayOnClose final {
+    NavigationPane* pane{};
+    bool* reopened{};
+    void operator()(bool open) const {
+        if (open || *reopened) return;
+        *reopened = true;
+        static_cast<void>((*pane).open_overlay());
+    }
+};
+
+// The overlay as one presentation state: a close while it opens is served
+// (no open report, no scope left, the content back in the pane), and an
+// open from the close report presents it whole.
+void close_and_reopen_from_handlers() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    NavigationPane& pane = *(*fixture).pane;
+    Window& window = *(*fixture).window;
+    pane.collapsed = true;
+    window.perform_layout();
+    std::shared_ptr<Button> editor = make_control<Button>(StableId("content.handlers"), "Compose");
+    std::unique_ptr<PageContent> content = std::make_unique<PageControlContent>(editor);
+    const PageRecord record{.id = PageId{"handlers"}, .title = "Handlers"};
+    require(pane.pages().insert(record, PagePlacement::end_of_group()) == PageEditStatus::applied &&
+                pane.pages().set_content(record.id, content) == PageEditStatus::applied &&
+                pane.pages().select(record.id, PageSelectionCause::programmatic) == PageEditStatus::applied,
+            "a page with a button is selected while collapsed");
+    std::vector<std::string> order;
+    SubscriptionToken reports = pane.overlay_open_changed().subscribe(RecordOverlay{&order});
+    require(window.request_focus((*fixture).outside), "the button beside the pane takes focus");
+    SubscriptionToken blurred = (*(*fixture).outside).focus_observed().subscribe(CloseOverlayOnBlur{&pane});
+    static_cast<void>(pane.open_overlay());
+    blurred.disconnect();
+    const Control::Ptr host = window.find("nav.content");
+    require(!pane.overlay_open() && order.empty() && window.focus_scope_depth() == 0U && !window.find("nav.overlay") &&
+                host && (*host).parent() == (*fixture).pane,
+            "a close while the overlay opens is served and leaves nothing behind");
+
+    bool reopened = false;
+    SubscriptionToken reopening = pane.overlay_open_changed().subscribe(ReopenOverlayOnClose{&pane, &reopened});
+    require(pane.open_overlay(), "the overlay opens");
+    pane.close_overlay();
+    reopening.disconnect();
+    require(reopened && pane.overlay_open() && order == std::vector<std::string>({"opened", "closed", "opened"}) &&
+                window.find("nav.overlay") != nullptr && window.focus_scope_depth() == 1U,
+            "an open from the close report presents the overlay again");
+    pane.close_overlay();
+    require(!pane.overlay_open() && window.focus_scope_depth() == 0U, "and it closes cleanly");
+    static_cast<void>(reports);
+}
+
 int main() {
     layout_and_content();
     grip_steps();
     hidden_pages_and_menu();
     collapse_and_overlay();
+    close_and_reopen_from_handlers();
     keyboard_and_semantics();
     state_round_trip();
     published_states();

@@ -40,6 +40,7 @@
 #include "gui_forms/surface_root/surface_root.hpp"
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
+#include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 #include "gui_forms/xml/types/xml_types.hpp"
 
@@ -1472,6 +1473,55 @@ void add_panels_docked_only() {
     require(workspace.created_panel_count() == 3U, "the docked-only site creates every shown panel's content");
 }
 
+// Closes the navigator from the control that loses focus as it opens.
+struct CloseNavigatorOnBlur final {
+    DockSite* site{};
+    void operator()(bool focused) const {
+        if (!focused) (*site).close_navigator();
+    }
+};
+
+// The navigator as one presentation state: a close while it opens is
+// served (open_navigator reports false and its scope is ended), and it
+// opens and closes cleanly afterwards.
+void navigator_closed_while_opening() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    DockWorkspace& workspace = *(*fixture).workspace;
+    DockSite& site = *(*fixture).site;
+    Window& window = *(*fixture).window;
+    require(workspace.activate_panel(DockPanelId("doc.first")) && workspace.activate_panel(DockPanelId("properties")),
+            "two panels activate");
+    const Control::Ptr edit = content_edit(window, "properties");
+    require(window.request_focus(edit), "the properties panel's field takes focus");
+    SubscriptionToken blurred = (*edit).focus_observed().subscribe(CloseNavigatorOnBlur{&site});
+    const bool opened = site.open_navigator(DockNavigatorList::documents, 1, Modifier::control);
+    blurred.disconnect();
+    require(!opened && !site.navigator_open() && !site.navigator() && window.focus_scope_depth() == 0U,
+            "a close while the navigator opens is served and leaves no scope");
+    require(site.open_navigator(DockNavigatorList::documents, 1, Modifier::control) && site.navigator_open() &&
+                window.focus_scope_depth() == 1U,
+            "the navigator opens afterwards");
+    site.close_navigator();
+    require(!site.navigator_open() && window.focus_scope_depth() == 0U, "and closes cleanly");
+}
+
+// The navigator's columns widen to a long title at text scale 2, within
+// the width offered.
+void navigator_measures_its_titles() {
+    std::shared_ptr<DockNavigator> navigator = make_control<DockNavigator>(StableId("navigator.wide"));
+    (*navigator).set_entries({{DockPanelId("tool"), "A tool window with a remarkably long and descriptive title"}},
+                             {{DockPanelId("doc"), "Short.txt"}}, DockNavigatorList::tools);
+    Window window(navigator, Size{3000.0, 600.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    const Size wide = (*navigator).measure(Size{1.0e6, 1.0e6});
+    require(wide.width > (8.0 * 2.0 + 200.0 * 2.0 + 8.0) * 2.0, "the columns widen past 200 units for a long title");
+    const Size offered = (*navigator).measure(Size{600.0, 1.0e6});
+    require(offered.width <= 600.0, "the offered width bounds the navigator (titles then shorten)");
+}
+
 int main() {
     anatomy_and_parts();
     add_panels_docked_only();
@@ -1482,6 +1532,8 @@ int main() {
     collapse_by_priority();
     activation_and_commands();
     navigator_order_and_keys();
+    navigator_closed_while_opening();
+    navigator_measures_its_titles();
     regions_and_escape_keys();
     rebound_docking_keys();
     position_menu();

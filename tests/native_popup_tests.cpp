@@ -290,6 +290,137 @@ void font_dialog_opens_natively() {
     require(result == DialogResult::ok, "OK closes it");
 }
 
+// The presentation state through the dialogs' own handlers on the native
+// path: closed from inside a handler, shown again from inside closed. Each
+// leaves the dialog either shown in one popup window with the owner's
+// scope, or closed with no popup window and no scope.
+struct CloseTaskOnClick final {
+    TaskDialog* dialog{};
+    void operator()(TaskDialogButtonClick&) const { (*dialog).close("cancel"); }
+};
+
+struct ShowTaskOnClosed final {
+    TaskDialog* dialog{};
+    Control::Ptr owner{};
+    int* shown{};
+    void operator()(const TaskDialogResult&) const {
+        if (*shown > 0) return;
+        ++(*shown);
+        static_cast<void>((*dialog).show(owner));
+    }
+};
+
+void task_dialog_handlers_natively() {
+    Desk desk;
+    std::shared_ptr<TaskDialog> dialog = make_control<TaskDialog>(StableId("handlers.task"));
+    TaskDialogPage page;
+    page.heading = "Handlers";
+    (*dialog).set_page(std::move(page));
+    (*dialog).set_surface(DialogSurface::native_popup);
+    std::string button;
+    SubscriptionToken kept = (*dialog).closed().subscribe(KeepTaskResult{&button});
+    SubscriptionToken closing = (*dialog).button_clicked().subscribe(CloseTaskOnClick{dialog.get()});
+    require((*dialog).show(desk.opener) && (*dialog).presented_surface() == NativePopupSurface::native,
+            "the dialog shows natively");
+    require((*dialog).click("ok") && !(*dialog).shown() && button == "cancel",
+            "a click handler that closes the dialog wins over the click");
+    require(desk.windowing().window_count() == 1U && (*desk.model).focus_scope_depth() == 0U &&
+                (*dialog).presented_surface() == NativePopupSurface::none && !(*dialog).parent(),
+            "closed from a handler, no popup window, scope or parent is left");
+    closing.disconnect();
+
+    int shown = 0;
+    SubscriptionToken showing = (*dialog).closed().subscribe(ShowTaskOnClosed{dialog.get(), desk.opener, &shown});
+    require((*dialog).show(desk.opener), "the dialog shows again");
+    (*dialog).close("ok");
+    require(shown == 1 && (*dialog).shown() && (*dialog).presented_surface() == NativePopupSurface::native &&
+                desk.windowing().window_count() == 2U && (*desk.model).focus_scope_depth() == 1U,
+            "shown again from its closed handler: one popup window and one scope");
+    showing.disconnect();
+    (*dialog).close("ok");
+    require(!(*dialog).shown() && desk.windowing().window_count() == 1U && (*desk.model).focus_scope_depth() == 0U,
+            "and closes once more");
+}
+
+struct CloseFontOnApply final {
+    FontDialog* dialog{};
+    void operator()(const FontSpec&) const { (*dialog).close(DialogResult::cancel); }
+};
+
+struct OpenFontOnClosed final {
+    FontDialog* dialog{};
+    Control::Ptr owner{};
+    int* opened{};
+    void operator()(const FontDialogResult&) const {
+        if (*opened > 0) return;
+        ++(*opened);
+        static_cast<void>((*dialog).show(owner));
+    }
+};
+
+void font_dialog_handlers_natively() {
+    Desk desk;
+    std::shared_ptr<FontDialog> dialog = make_control<FontDialog>(StableId("handlers.font"));
+    (*dialog).set_surface(DialogSurface::native_popup);
+    DialogResult result{DialogResult::none};
+    SubscriptionToken kept = (*dialog).closed().subscribe(KeepFontResult{&result});
+    SubscriptionToken closing = (*dialog).apply().subscribe(CloseFontOnApply{dialog.get()});
+    require((*dialog).show(desk.opener) && (*dialog).presented_surface() == NativePopupSurface::native,
+            "the font dialog opens natively");
+    require((*(*dialog).apply_button()).perform_click() && !(*dialog).is_open() && result == DialogResult::cancel,
+            "an Apply handler closes it");
+    require(desk.windowing().window_count() == 1U && (*desk.model).focus_scope_depth() == 0U &&
+                (*dialog).attached_surface_root() == nullptr && (*dialog).presented_surface() == NativePopupSurface::none,
+            "closed from a handler, no popup window, scope or parent is left");
+    closing.disconnect();
+
+    int opened = 0;
+    SubscriptionToken opening = (*dialog).closed().subscribe(OpenFontOnClosed{dialog.get(), desk.opener, &opened});
+    require((*dialog).show(desk.opener), "the font dialog opens again");
+    (*dialog).close(DialogResult::ok);
+    require(opened == 1 && (*dialog).is_open() && (*dialog).presented_surface() == NativePopupSurface::native &&
+                desk.windowing().window_count() == 2U && (*desk.model).focus_scope_depth() == 1U,
+            "opened again from its closed handler: one popup window and one scope");
+    opening.disconnect();
+    // The host closing the popup window cancels the dialog.
+    const std::vector<HostWindowId> ids = desk.windowing().z_order();
+    HostWindowId popup{};
+    for (std::size_t index = 0U; index < ids.size(); ++index) {
+        if (desk.windowing().kind(ids[index]) == stxlib::Optional<HostWindowKind>::of(HostWindowKind::popup)) popup = ids[index];
+    }
+    result = DialogResult::none;
+    require(desk.windowing().destroy_window(popup).accepted(), "the host destroys the popup window");
+    require(!(*dialog).is_open() && result == DialogResult::cancel && desk.windowing().window_count() == 1U &&
+                (*desk.model).focus_scope_depth() == 0U && (*dialog).attached_surface_root() == nullptr,
+            "the font dialog closes as cancelled and leaves nothing behind");
+    require((*dialog).show(desk.opener) && (*dialog).presented_surface() == NativePopupSurface::native,
+            "and opens natively once more");
+    (*dialog).close(DialogResult::cancel);
+}
+
+void font_dialog_falls_back_to_an_overlay() {
+    HostCapabilities limited = host::headless_capabilities();
+    using CapabilityBits = std::underlying_type_t<HostCapability>;
+    const CapabilityBits kept = static_cast<CapabilityBits>(limited.available) &
+                                static_cast<CapabilityBits>(~static_cast<CapabilityBits>(HostCapability::runtime_windows));
+    limited.available = static_cast<HostCapability>(kept);
+    Desk desk(limited);
+    std::shared_ptr<FontDialog> dialog = make_control<FontDialog>(StableId("overlay.font"));
+    (*dialog).set_surface(DialogSurface::native_popup);
+    require((*dialog).show(desk.opener) && (*dialog).presented_surface() == NativePopupSurface::overlay,
+            "the font dialog opens as an overlay without popup windows");
+    require(desk.windowing().window_count() == 1U && (*desk.model).focus_scope_depth() == 1U &&
+                (*dialog).attached_surface_root() != nullptr,
+            "in its owner's window, with the owner's scope");
+    (*dialog).close(DialogResult::ok);
+    require((*dialog).presented_surface() == NativePopupSurface::none && (*desk.model).focus_scope_depth() == 0U &&
+                (*dialog).attached_surface_root() == nullptr,
+            "and closes");
+    require((*dialog).show(desk.opener) && (*dialog).presented_surface() == NativePopupSurface::overlay,
+            "it reopens as an overlay");
+    (*dialog).close(DialogResult::cancel);
+}
+
 } // namespace
 
 // Plan Paint's Settings dialog, reported 2026-11-13 to 2026-11-17: open
@@ -421,6 +552,9 @@ int main() {
         task_dialog_opens_natively();
         task_dialog_falls_back_to_an_overlay();
         font_dialog_opens_natively();
+        task_dialog_handlers_natively();
+        font_dialog_handlers_natively();
+        font_dialog_falls_back_to_an_overlay();
         a_window_whose_drop_down_was_used_closes();
     } catch (const std::exception& error) {
         std::cerr << "gui_forms_native_popup_tests: " << error.what() << '\n';
