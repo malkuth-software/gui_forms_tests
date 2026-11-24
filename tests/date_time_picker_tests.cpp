@@ -420,6 +420,57 @@ void test_focus_handler_reopens_the_drop_down() {
     static_cast<void>(overlay);
 }
 
+// Closes the drop-down when the field loses focus: the focus move that
+// opening it makes runs this while the open is in progress.
+struct CloseOnBlur final {
+    DateTimePicker* picker{};
+    void operator()(bool focused) const {
+        if (!focused) (*picker).dropped_down = false;
+    }
+};
+
+// Opens the drop-down again from its close report, once.
+struct ReopenOnClose final {
+    DateTimePicker* picker{};
+    bool* reopened{};
+    void operator()(bool open) const {
+        if (open || *reopened) return;
+        *reopened = true;
+        (*picker).dropped_down = true;
+    }
+};
+
+// One presentation state: a close asked while the drop-down opens is served
+// (the scope that open began is ended and nothing is reported), and an open
+// asked from the close report presents one whole calendar.
+void test_close_and_reopen_from_handlers() {
+    Fixture fixture;
+    std::vector<std::string> events;
+    SubscriptionToken overlay = (*fixture.picker).drop_down_changed().subscribe(RecordDropDownState(events));
+    SubscriptionToken blurred = (*fixture.picker).focus_observed().subscribe(CloseOnBlur{fixture.picker.get()});
+    (*fixture.picker).dropped_down = true;
+    blurred.disconnect();
+    require(!(*fixture.picker).dropped_down.read() && fixture.window.focus_scope_depth() == 0U && events.empty() &&
+                !fixture.window.find("date.picker.overlay.calendar"),
+            "a close while opening leaves no scope, no calendar and no report");
+
+    require(fixture.window.request_focus(fixture.picker), "the picker takes focus again");
+    bool reopened = false;
+    SubscriptionToken reopening = (*fixture.picker).drop_down_changed().subscribe(
+        ReopenOnClose{fixture.picker.get(), &reopened});
+    (*fixture.picker).dropped_down = true;
+    (*fixture.picker).dropped_down = false;
+    reopening.disconnect();
+    require(reopened && (*fixture.picker).dropped_down.read() && fixture.window.focus_scope_depth() == 1U &&
+                events == std::vector<std::string>({"open", "close", "open"}) &&
+                fixture.window.find("date.picker.overlay.calendar") != nullptr,
+            "an open from the close report presents the calendar again");
+    (*fixture.picker).dropped_down = false;
+    require(!(*fixture.picker).dropped_down.read() && fixture.window.focus_scope_depth() == 0U,
+            "and it closes cleanly");
+    static_cast<void>(overlay);
+}
+
 int main() {
     try {
         test_civil_arithmetic_and_validation();
@@ -431,6 +482,7 @@ int main() {
         test_semantic_month_navigation_and_range_capability();
         test_owner_cleanup_and_ui_thread_enforcement();
         test_focus_handler_reopens_the_drop_down();
+        test_close_and_reopen_from_handlers();
         std::cout << "date time picker tests passed\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {

@@ -1,5 +1,6 @@
 #include "gui_forms/inspection_controls.hpp"
 #include "gui_forms/window.hpp"
+#include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/detail/bound_member_function.hpp"
 #include "gui_forms/detail/property_binding_adapters.hpp"
 #include "support/named_callbacks.hpp"
@@ -1271,6 +1272,90 @@ void test_flags_editor_form_properties() {
             "a checked name that is no flag's is refused and changes nothing");
 }
 
+// Closes the flags list when the editor loses focus: the focus move that
+// opening it makes runs this while the open is in progress.
+struct CloseFlagsOnBlur final {
+    FlagsValueEditor* flags{};
+    void operator()(bool focused) const {
+        if (!focused) (*flags).dropped_down = false;
+    }
+};
+
+// Opens the flags list again from its close report, once.
+struct ReopenFlagsOnClose final {
+    FlagsValueEditor* flags{};
+    bool* reopened{};
+    void operator()(bool open) const {
+        if (open || *reopened) return;
+        *reopened = true;
+        (*flags).dropped_down = true;
+    }
+};
+
+// Records a drop-down's reports as text.
+struct RecordFlagsDropDown final {
+    std::vector<std::string>* events{};
+    void operator()(bool open) const { (*events).push_back(open ? "open" : "close"); }
+};
+
+// The flags list as one presentation state: a close while it opens is
+// served and ends the scope that open began; an open from the close report
+// presents one list.
+void test_flags_editor_close_and_reopen_from_handlers() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("flags.handlers.root"));
+    std::shared_ptr<FlagsValueEditor> flags = make_control<FlagsValueEditor>(StableId("flags.handlers"));
+    (*flags).set_property_value("flag_names", text_list({"Top", "Left", "Right", "Bottom"}));
+    (*flags).set_property_value("none_name", BindingValue{std::string("None")});
+    (*flags).set_property_value("enumeration_name", BindingValue{std::string("Edges")});
+    (*flags).set_requested_bounds({12.0, 12.0, 200.0, 26.0});
+    (*root).add_child(flags);
+    Window window(root, {420.0, 320.0});
+    window.perform_layout();
+    require(window.request_focus(flags), "the flags editor takes focus");
+    std::vector<std::string> events;
+    SubscriptionToken reports = (*flags).drop_down_changed().subscribe(RecordFlagsDropDown{&events});
+    SubscriptionToken blurred = (*flags).focus_observed().subscribe(CloseFlagsOnBlur{flags.get()});
+    (*flags).dropped_down = true;
+    blurred.disconnect();
+    require(!(*flags).dropped_down.read() && window.focus_scope_depth() == 0U && events.empty() &&
+                !window.find("flags.handlers.overlay.list"),
+            "a close while the list opens leaves no scope, no list and no report");
+
+    require(window.request_focus(flags), "the flags editor takes focus again");
+    bool reopened = false;
+    SubscriptionToken reopening = (*flags).drop_down_changed().subscribe(ReopenFlagsOnClose{flags.get(), &reopened});
+    (*flags).dropped_down = true;
+    (*flags).dropped_down = false;
+    reopening.disconnect();
+    require(reopened && (*flags).dropped_down.read() && window.focus_scope_depth() == 1U &&
+                events == std::vector<std::string>({"open", "close", "open"}) &&
+                window.find("flags.handlers.overlay.list") != nullptr,
+            "an open from the close report presents the list again");
+    (*flags).dropped_down = false;
+    require(!(*flags).dropped_down.read() && window.focus_scope_depth() == 0U, "and it closes cleanly");
+    static_cast<void>(reports);
+}
+
+// The name column measures its names: one that fits beside the values at
+// text scale 2 widens the column past label_width, and one too long for
+// any column is shortened, its full name its tooltip.
+void test_property_names_measure_and_shorten_at_text_scale_two() {
+    std::shared_ptr<PropertyList> properties = make_control<PropertyList>(StableId("names.list"));
+    const std::string long_name = "An exceptionally long property name that cannot fit beside any value column";
+    (*properties).set_groups({{"names", "Names", {{"names.short", "Moderately long name", "1"},
+                                                  {"names.long", long_name, "2"}}}});
+    Window window(properties, {1000.0, 300.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    const std::vector<SemanticNode> tips = (*properties).tool_tip_items();
+    require(tips.size() == 1U && tips[0].stable_id == "names.long.name" && tips[0].tool_tip == long_name,
+            "only the name too long for the column is shortened, with its full name as its tooltip");
+    require(tips[0].bounds.width > (*properties).label_width.read() * 2.0,
+            "the column widened past the authored label width for the names it can hold");
+}
+
 // set_group_expanded: the group's expanded flag reads back through
 // groups(), a collapsed group hides its editors and shortens the content,
 // one group_changed is published per actual change, and an unknown group
@@ -1425,6 +1510,8 @@ int main() {
         test_recursive_object_and_collection_projection_and_mutation();
         test_property_typography_preserves_editors_and_updates_geometry();
         test_flags_editor_form_properties();
+        test_flags_editor_close_and_reopen_from_handlers();
+        test_property_names_measure_and_shorten_at_text_scale_two();
         test_group_expansion();
         test_edit_failed_handler_rebuilds_the_grid();
         test_commit_refreshes_properties_its_setter_moved();

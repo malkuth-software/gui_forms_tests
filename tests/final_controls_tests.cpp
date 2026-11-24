@@ -490,6 +490,24 @@ void test_wizard_buttons_at_text_scale_two() {
     }
 }
 
+// A step's natural width follows its name: a long name at text scale 2 no
+// longer squeezes into the old 120 units a step.
+void test_step_names_at_text_scale_two() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.steps2.root"));
+    std::shared_ptr<StepIndicator> steps = make_control<StepIndicator>(StableId("final.steps2"));
+    (*steps).set_steps({"Account settings and preferences", "Done"});
+    (*root).add_child(steps);
+    Window window(root, Size{2000.0, 200.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    const Size natural = (*steps).measure(Size{1.0e6, 1.0e6});
+    require(natural.width > 240.0, "two steps are wider than 120 units each when a name needs it");
+    const Size half = (*steps).measure(Size{natural.width * 0.5, 1.0e6});
+    require(half.width <= natural.width * 0.5, "the offered width still bounds the indicator (names then shorten)");
+}
+
 // -- overlays ----------------------------------------------------------------------
 
 void test_callout() {
@@ -646,6 +664,99 @@ void test_modal_layer() {
     require((*layer).show(behind, content) && (*layer).scrim_opacity() == 1.0,
             "under reduced motion the scrim does not fade");
     require((*layer).close(DialogResult::ok), "the calm layer closes");
+}
+
+// Closes the layer from the control that loses focus as the layer opens:
+// the close is served while the layer is opening.
+struct CloseLayerOnBlur final {
+    ModalLayer* layer{};
+    void operator()(bool focused) const {
+        if (!focused) static_cast<void>((*layer).close(DialogResult::abort));
+    }
+};
+
+// Shows the layer again from its closed event, once.
+struct ReshowOnClosed final {
+    ModalLayer* layer{};
+    Control::Ptr owner{};
+    Control::Ptr content{};
+    bool* reshown{};
+    void operator()(DialogResult) const {
+        if (*reshown) return;
+        *reshown = true;
+        static_cast<void>((*layer).show(owner, content));
+    }
+};
+
+// A ModalLayer closed by a focus handler while it opens ends the scope it
+// began; one shown again from its closed handler is whole.
+void test_modal_layer_from_handlers() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.modal2.root"));
+    std::shared_ptr<Button> behind = make_control<Button>(StableId("final.modal2.behind"), "Behind");
+    (*behind).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*root).add_child(behind);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    std::shared_ptr<ModalLayer> layer = make_control<ModalLayer>(StableId("final.modal2"));
+    std::shared_ptr<Button> content = make_control<Button>(StableId("final.modal2.content"), "OK");
+    (*content).set_requested_bounds(Rect{0.0, 0.0, 120.0, 28.0});
+    Recorder recorder;
+    recorder.tokens.push_back(
+        (*layer).closed().subscribe(Delegate<DialogResult>::bind<Recorder, &Recorder::modal_closed>(recorder)));
+
+    require(window.request_focus(behind), "the button behind takes focus");
+    SubscriptionToken blurred = (*behind).focus_observed().subscribe(CloseLayerOnBlur{layer.get()});
+    static_cast<void>((*layer).show(behind, content));
+    blurred.disconnect();
+    require(!(*layer).is_shown() && !(*content).parent() && window.focus_scope_depth() == 0U &&
+                recorder.seen.size() == 1U && recorder.seen.back() == "modal:3",
+            "a close from a focus handler while the layer opens is served, and no scope is left");
+
+    bool reshown = false;
+    SubscriptionToken reshowing = (*layer).closed().subscribe(ReshowOnClosed{layer.get(), behind, content, &reshown});
+    require((*layer).show(behind, content) && (*layer).is_shown(), "the layer shows again");
+    require((*layer).close(DialogResult::ok), "the layer closes");
+    reshowing.disconnect();
+    require(reshown && (*layer).is_shown() && (*layer).content() == content && window.focus_scope_depth() == 1U,
+            "a show from the closed handler presents the layer whole");
+    require((*layer).close(DialogResult::cancel) && !(*layer).is_shown() && window.focus_scope_depth() == 0U,
+            "it closes again, leaving no scope");
+}
+
+// Opens the list again from its closed report, once.
+struct ReopenLookupOnClose final {
+    LookupComboBox* lookup{};
+    bool* reopened{};
+    void operator()(bool open) const {
+        if (open || *reopened) return;
+        *reopened = true;
+        (*lookup).open_drop_down();
+    }
+};
+
+// A LookupComboBox opened again from its closed report shows one list.
+void test_lookup_reopens_from_its_close_report() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.lookup3.root"));
+    std::shared_ptr<LookupComboBox> lookup = make_control<LookupComboBox>(StableId("final.lookup3"));
+    (*lookup).set_requested_bounds(Rect{20.0, 20.0, 220.0, 24.0});
+    (*root).add_child(lookup);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    (*lookup).set_columns({{"Code", 60.0}, {"Country", 140.0}});
+    (*lookup).set_rows({{"de", {"DE", "Germany"}}, {"fr", {"FR", "France"}}});
+    Recorder recorder;
+    recorder.tokens.push_back((*lookup).drop_down_changed().subscribe(Delegate<bool>::bind<Recorder, &Recorder::dropped>(recorder)));
+    bool reopened = false;
+    SubscriptionToken reopening = (*lookup).drop_down_changed().subscribe(ReopenLookupOnClose{lookup.get(), &reopened});
+    (*lookup).open_drop_down();
+    (*lookup).close_drop_down();
+    reopening.disconnect();
+    require(reopened && (*lookup).is_dropped_down() &&
+                recorder.seen == std::vector<std::string>({"open", "closed", "open"}),
+            "the list opens again from its close report");
+    require(window.find("final.lookup3.overlay.list") != nullptr, "one list shows");
+    (*lookup).close_drop_down();
+    require(!(*lookup).is_dropped_down() && !window.find("final.lookup3.overlay.list"), "and closes");
 }
 
 void test_lookup_combo_box() {
@@ -989,12 +1100,15 @@ int main() {
     test_gauges_in_window();
     test_dial();
     test_step_indicator();
+    test_step_names_at_text_scale_two();
     test_wizard();
     test_wizard_buttons_at_text_scale_two();
     test_callout();
     test_released_callout_closes_whole();
     test_modal_layer();
+    test_modal_layer_from_handlers();
     test_lookup_combo_box();
+    test_lookup_reopens_from_its_close_report();
     test_lookup_released_by_its_choice();
     test_about_dialog();
     test_dial_parts_in_the_stock_themes();

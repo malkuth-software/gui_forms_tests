@@ -720,6 +720,46 @@ void semantics() {
 
 } // namespace
 
+// Opens the flyout again from its close report, once.
+struct ReopenFlyoutOnClose final {
+    DockSite* site{};
+    bool* reopened{};
+    void operator()(const DockFlyoutChange& change) const {
+        if (change.open || *reopened) return;
+        *reopened = true;
+        static_cast<void>((*site).open_flyout(change.panel, DockFlyoutCause::programmatic));
+    }
+};
+
+// The flyout as one presentation state: opened again from its close report
+// it shows whole, with its view inside it.
+void flyout_reopens_from_its_close_report() {
+    std::unique_ptr<Fixture> fixture = make_fixture();
+    DockWorkspace& workspace = *(*fixture).workspace;
+    DockSite& site = *(*fixture).site;
+    Window& window = *(*fixture).window;
+    reduce_motion(window);
+    apply(workspace, DockEdit::auto_hide(DockSubject::of_stack(stack_of(workspace, "output")), DockSide::bottom, 150.0));
+    window.perform_layout();
+    bool reopened = false;
+    SubscriptionToken reopening = site.flyout_changed().subscribe(ReopenFlyoutOnClose{&site, &reopened});
+    require(site.open_flyout(DockPanelId("output"), DockFlyoutCause::programmatic), "the flyout opens");
+    site.close_flyout();
+    reopening.disconnect();
+    require(reopened && site.flyout_open() && site.flyout_panel() == std::optional<DockPanelId>(DockPanelId("output")) &&
+                site.flyout_control() != nullptr,
+            "an open from the close report shows the flyout again");
+    std::vector<std::string> opens;
+    for (const std::string& line : (*fixture).trace.lines) {
+        if (line.rfind("open ", 0U) == 0U || line.rfind("close ", 0U) == 0U) opens.push_back(line);
+    }
+    require(opens == std::vector<std::string>({"open output programmatic", "close output programmatic",
+                                               "open output programmatic"}),
+            "open, close and open are reported in turn");
+    site.close_flyout();
+    require(!site.flyout_open() && !site.flyout_panel().has_value(), "and it closes cleanly");
+}
+
 int main() {
     pin_round_trip();
     hover_order();
@@ -728,6 +768,7 @@ int main() {
     collapse_into_side_tabs();
     slide();
     slide_frames();
+    flyout_reopens_from_its_close_report();
     semantics();
     std::cout << "DockSite auto-hide: pin round trip, hover, click, focus, Escape, outside press, grip, keyboard, "
                  "collapse into side tabs, slide, its frames and semantics passed\n";
