@@ -1142,6 +1142,33 @@ void test_overlays_refused_by_a_containing_scope() {
             "and closes cleanly");
 }
 
+// Bit-flip examination (2026-11-23): a callout whose target goes while it
+// is shown closes with owner_unavailable and keeps no target; shown, it
+// agrees with itself only with a target.
+void test_callout_closes_when_its_target_goes() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.lost.root"));
+    std::shared_ptr<Button> target = make_control<Button>(StableId("final.lost.target"), "New");
+    (*target).set_requested_bounds(Rect{20.0, 20.0, 80.0, 28.0});
+    (*root).add_child(target);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    std::shared_ptr<Callout> callout = make_control<Callout>(StableId("final.lost.callout"));
+    (*callout).title = std::string{"Try the new view"};
+    Recorder recorder;
+    recorder.tokens.push_back(
+        (*callout).closed().subscribe(Delegate<CalloutCloseReason>::bind<Recorder, &Recorder::callout_closed>(recorder)));
+    require((*callout).show(target) && (*callout).agrees_with_itself(), "the callout shows with its target");
+    const RuntimeId target_id = (*target).runtime_id();
+    target.reset();
+    static_cast<void>((*root).remove_child(target_id));
+    window.perform_layout();
+    const std::string expected =
+        "callout:" + std::to_string(static_cast<int>(CalloutCloseReason::owner_unavailable));
+    require(!(*callout).is_shown() && !(*callout).target() && (*callout).agrees_with_itself() &&
+                recorder.seen.size() == 1U && recorder.seen.back() == expected && window.focus_scope_depth() == 0U,
+            "a callout whose target goes closes with owner_unavailable");
+}
+
 // C43 (state hunt, 2026-11-23): fewer steps bring the current step down
 // with them, and the indicator agrees with itself throughout.
 void test_step_indicator_agrees_with_itself() {
@@ -1160,6 +1187,7 @@ void test_step_indicator_agrees_with_itself() {
 
 int main() {
     test_step_indicator_agrees_with_itself();
+    test_callout_closes_when_its_target_goes();
     test_overlays_refused_by_a_containing_scope();
     test_seven_segment_patterns();
     test_seven_segment_in_window();
