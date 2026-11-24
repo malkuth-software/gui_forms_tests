@@ -3,7 +3,8 @@
 // the library at run time (dlopen, LoadLibrary), negotiates the objects
 // table through gf_abi_get_table, makes and releases objects, and then
 // either
-// - unload: releases them all and unloads the library (dlclose,
+// - unload: makes and releases them on a thread that ends first, and then
+//   unloads the library (dlclose,
 //   FreeLibrary), whose static destructors run at its detach; the program
 //   then allocates on its own and exits cleanly; or
 // - exit: keeps some objects alive and returns from main with the library
@@ -26,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 #if defined(_WIN32)
@@ -141,20 +143,32 @@ int main(const int argument_count, char** const arguments) {
 
     // Rounds of make and release, so the library's allocator has served,
     // cached and released blocks before its teardown.
-    for (std::uint32_t round = 0U; round < 8U; ++round) {
-        const std::vector<gf_object> made = make_objects(objects, 32U);
-        release_objects(objects, made);
-    }
+    const auto rounds = [&objects]() {
+        for (std::uint32_t round = 0U; round < 8U; ++round) {
+            const std::vector<gf_object> made = make_objects(objects, 32U);
+            release_objects(objects, made);
+        }
+    };
 
     if (unload) {
-        const std::vector<gf_object> made = make_objects(objects, 16U);
-        release_objects(objects, made);
+        // On a thread that ends before the unload: its end runs the library's
+        // thread_local destructors and frees what STXlib keeps per thread,
+        // which a thread still running at the unload keeps past it (the
+        // library cannot reach another thread's storage). LeakSanitizer then
+        // reports only what the library itself leaves behind.
+        std::thread worker([&objects, &rounds]() {
+            rounds();
+            const std::vector<gf_object> made = make_objects(objects, 16U);
+            release_objects(objects, made);
+        });
+        worker.join();
         require(unload_library(loaded), "the library unloads");
         // The program's own allocator is untouched by the library's end.
         std::unique_ptr<std::array<std::uint8_t, 4096>> after = std::make_unique<std::array<std::uint8_t, 4096>>();
         (*after)[0] = 1U;
         require((*after)[0] == 1U, "the program allocates after the unload");
     } else {
+        rounds();
         // Left alive: the library's teardown at the process's end owns them.
         const std::vector<gf_object> kept = make_objects(objects, 16U);
         require(kept.size() == 16U, "objects stay alive into the process's end");
