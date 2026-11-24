@@ -115,9 +115,9 @@ void test_reading() {
 
 void test_program_arguments() {
     const std::vector<std::string_view> given{"--theme", "dx.css", "--page", "buttons", "--export-themes",
-                                              "--automation", "--export-themes", "out"};
+                                              "--mcp", "--export-themes", "out"};
     const std::vector<std::string_view> kept = program_arguments(given);
-    const std::vector<std::string_view> expected{"--page", "buttons", "--automation"};
+    const std::vector<std::string_view> expected{"--page", "buttons", "--mcp"};
     require(kept == expected, "the user-theme options and their values are passed over, the rest kept in order");
 }
 

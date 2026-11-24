@@ -222,11 +222,6 @@ add_test(NAME gui_forms_application_contract_tests COMMAND gui_forms_application
 if(TARGET gui_forms_application)
     add_executable(gui_forms_application_native_tests tests/application_native_tests.cpp)
     target_link_libraries(gui_forms_application_native_tests PRIVATE gui_forms_application)
-    if(GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONMENT)
-        # The test's accepted automation case runs only where the host honours the variable.
-        target_compile_definitions(gui_forms_application_native_tests PRIVATE
-            GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONMENT=1)
-    endif()
     add_test(NAME gui_forms_application_native_tests COMMAND gui_forms_application_native_tests)
     set_tests_properties(gui_forms_application_native_tests PROPERTIES TIMEOUT 30)
     # One stxlib_state in a program that reaches STXlib through the
@@ -3770,4 +3765,11 @@ if(TARGET gui_forms_renderer_benchmark)
             -DSKIA_ARCHIVE=$<TARGET_FILE:stx_skia::stx_skia>
             -P ${GUI_FORMS_SOURCE_DIR}/cmake/check_renderer_boundaries.cmake
     )
+endif()
+
+# The automation core driven headless (G1 of the MCP automation study).
+if(GUI_FORMS_MCP)
+    add_executable(gui_forms_automation_core_tests tests/automation_core_tests.cpp)
+    target_link_libraries(gui_forms_automation_core_tests PRIVATE gui_forms_controls)
+    add_test(NAME gui_forms_automation_core_tests COMMAND gui_forms_automation_core_tests)
 endif()
