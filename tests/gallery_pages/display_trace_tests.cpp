@@ -685,6 +685,10 @@ struct PageDigest final {
 // by VA's panel contain (decision 4) until the page's copy was sized to fit
 // them; they draw as on cp36 but for the copy's narrower clip. Compared page by page against cp36's
 // traces and recorded by the integrator on the cp37 head (M4), both tables.
+// Recorded again after the presentation-and-widths fold: values-and-spinners'
+// property grid measures its name column (at most 45% of the width,
+// a7007009b), so its names clip wider and its values start further right;
+// nothing else on the page moves. Both tables.
 //
 // typography-and-inspection's entry is the trace with the RuntimeId the
 // specimen has when this test runs first (#1328 since L8a on main); the digest
@@ -701,7 +705,7 @@ constexpr std::array<PageDigest, 48> expected_digests{{
     {"states-and-diagnostics", 0x78c3c83f35ad5550ULL},
     {"text-and-input", 0xd121e4ab66ab1fe2ULL},
     {"collections-and-overlays", 0x70f601de64bde771ULL},
-    {"values-and-spinners", 0xc806c9bab02997beULL},
+    {"values-and-spinners", 0xeeaa204ce13de6faULL},
     {"images-and-drawing", 0x9153fcb9adc6ef04ULL},
     {"tabs-and-pages", 0xf513d2f42aca7d65ULL},
     {"checked-collections", 0xd1e67e4c04c8f490ULL},
@@ -765,7 +769,7 @@ constexpr std::array<PageDigest, 48> professional_digests{{
     {"states-and-diagnostics", 0x0000000000000000ULL},
     {"text-and-input", 0x11dcfa5a35c5f2a5ULL},
     {"collections-and-overlays", 0x66df9dd9d82f1f95ULL},
-    {"values-and-spinners", 0x2a3c3c86988d32ceULL},
+    {"values-and-spinners", 0x11a5e857a6c476c9ULL},
     {"images-and-drawing", 0xe5462afcb336b803ULL},
     {"tabs-and-pages", 0x022d4dc1e4456473ULL},
     {"checked-collections", 0x7d80c29d42e5e5baULL},
