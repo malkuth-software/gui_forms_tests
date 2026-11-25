@@ -80,8 +80,11 @@ int main(void) {
 
     memset(&api, 0, sizeof(api));
     api.struct_size = sizeof(api);
-    CHECK(gd_get_api_v0(GD_ABI_VERSION_0_1, &api) == GD_OK);
+    /* 0.2: native_surface_refresh (the staging tests below) comes after
+       bitmap_edit_begin, outside the 0.1 prefix, which leaves it NULL. */
+    CHECK(gd_get_api_v0(GD_ABI_VERSION_0_2, &api) == GD_OK);
     CHECK(api.bitmap_export_hbitmap != NULL && api.bitmap_import_hbitmap != NULL);
+    CHECK(api.native_surface_refresh != NULL);
     CHECK(api.bitmap_create(3, 2, GD_PIXEL_BGRA32_PREMULTIPLIED, &source) == GD_OK);
     CHECK(api.bitmap_set_pixel(source, 0, 0,
                                (gd_color){UINT32_C(0xffff0000), 0}) == GD_OK);
