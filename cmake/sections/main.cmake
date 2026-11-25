@@ -3666,3 +3666,57 @@ if(GUI_FORMS_MCP)
         add_test(NAME gui_forms_automation_attach_tests COMMAND gui_forms_automation_attach_tests)
     endif()
 endif()
+
+# The lab suites that read GUI.Forms' private sources stay with the library
+# (coordinator, 2026-11-25): the models are gui_forms' test-cache targets
+# (demo/labs); the lab programs are gui_forms_devkit's.
+    add_executable(gui_forms_layered_material_lab_tests
+        tests/layered_material_lab_tests.cpp)
+    target_include_directories(gui_forms_layered_material_lab_tests PRIVATE
+        ${GUI_FORMS_SOURCE_DIR}/demo)
+    target_link_libraries(gui_forms_layered_material_lab_tests PRIVATE
+        gui_forms_layered_material_lab_model)
+    add_test(NAME gui_forms_layered_material_lab_tests
+             COMMAND gui_forms_layered_material_lab_tests)
+
+    if(TARGET gui_forms_skia)
+        add_executable(gui_forms_layered_material_raster_tests
+            tests/layered_material_raster_tests.cpp)
+        target_include_directories(gui_forms_layered_material_raster_tests PRIVATE
+            ${GUI_FORMS_SOURCE_DIR}/demo
+            ${GUI_FORMS_SOURCE_DIR}/src/render/skia/raster)
+        target_link_libraries(gui_forms_layered_material_raster_tests PRIVATE
+            gui_forms_layered_material_lab_model
+            gui_forms_skia)
+        add_test(NAME gui_forms_layered_material_raster_tests
+                 COMMAND gui_forms_layered_material_raster_tests)
+    endif()
+endif()
+
+if(TARGET gui_forms_compositor_lab_model AND TARGET gui_forms_skia)
+    # The lab in each compositor state, drawn on the Skia raster every
+    # host presents with: grants, fallbacks and the frame's alpha.
+    add_executable(gui_forms_compositor_lab_tests
+        tests/compositor_lab_tests.cpp)
+    target_include_directories(gui_forms_compositor_lab_tests PRIVATE
+        ${GUI_FORMS_SOURCE_DIR}/demo
+        ${GUI_FORMS_SOURCE_DIR}/src/render/skia/raster)
+    target_link_libraries(gui_forms_compositor_lab_tests PRIVATE
+        gui_forms_compositor_lab_model
+        gui_forms_skia)
+    add_test(NAME gui_forms_compositor_lab_tests
+             COMMAND gui_forms_compositor_lab_tests)
+endif()
+
+if(TARGET gui_forms_custom_chrome_lab_model)
+    add_executable(gui_forms_custom_chrome_lab_tests
+        tests/custom_chrome_lab_tests.cpp)
+    target_include_directories(gui_forms_custom_chrome_lab_tests PRIVATE
+        ${GUI_FORMS_SOURCE_DIR}/demo
+        ${GUI_FORMS_SOURCE_DIR}/src/host/headless)
+    target_link_libraries(gui_forms_custom_chrome_lab_tests PRIVATE
+        gui_forms_custom_chrome_lab_model
+        gui_forms_host_headless)
+    add_test(NAME gui_forms_custom_chrome_lab_tests
+             COMMAND gui_forms_custom_chrome_lab_tests)
+endif()

@@ -15,7 +15,7 @@
  ],
  "test_areas": [
   {"area": "a11y", "pattern": "accessibility"},
-  {"area": "gui", "pattern": "^gui_forms_gallery_|visual_inspect|^cursor_interaction$"},
+  {"area": "gui", "pattern": "^gui_forms_gallery_|_lab_tests$|visual_inspect|^cursor_interaction$"},
   {"area": "host", "pattern": "^gui_forms_(windows|macos|linux|x11)_|^gui_forms_(runtime_windows_tests|cursor_images|window_teardown_tests|floating_windows_tests|host_image_tests|host_protocol_tests|host_boundary_audit|application_native_tests|notify_icon_tests)$"},
   {"area": "codec", "pattern": "^stx_(zlib|png|conv)_|^gui_forms_(png_|resource_pixels|inflate|deflate|freetype_zlib|malformed_sweep|interpolation)"},
   {"area": "audio", "pattern": "audio|vorbis|ogg"},
