@@ -206,8 +206,8 @@ int main()
     expect((*folders).selected_id.read() == correspondence::folder_id(Folder::inbox),
            "folder tree reflects the model folder");
     expect((*folders).items().size() == 6U, "six folders are listed");
-    expect((*folders).items()[0].text == "Inbox  (6)", "Inbox shows its unread count");
-    expect((*folders).items()[4].text == "Junk  (3)", "Junk shows its unread count");
+    expect((*folders).items()[0].text == "Inbox (6)", "Inbox shows its unread count");
+    expect((*folders).items()[4].text == "Junk (3)", "Junk shows its unread count");
     expect((*folders).items()[2].text == "Sent", "folders without unread mail show no count");
     expect((*messages).items().size() == 16U, "Inbox lists sixteen messages");
     // Windows field report D4: sixteen messages overflow the list, and its
@@ -251,7 +251,7 @@ int main()
     expect((*date).text.read() == "2026-10-10 17:42 · Inbox · Flagged",
            "reading pane shows date, folder and flag");
     expect((*body).text.read() == (*first_message).body, "reading pane shows the full body");
-    expect((*folders).items()[0].text == "Inbox  (5)", "folder count follows the read mark");
+    expect((*folders).items()[0].text == "Inbox (5)", "folder count follows the read mark");
     expect((*status).text.read().rfind("Inbox · 16 messages · 5 unread", 0) == 0,
            "status follows the read mark");
 

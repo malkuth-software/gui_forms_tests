@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -752,6 +753,21 @@ void test_menu_strip_retained_switching_commands_and_semantics() {
             "MenuStrip must reject a hidden selected top-level identity");
 }
 
+// Windows field report D6: "ARRANGE & INSPECT" published the access key
+// "Alt+ ". A space (or any white space) after '&' marks nothing: the
+// ampersand still disappears, as Windows draws it, but no key reaches it.
+void test_white_space_is_no_mnemonic() {
+    const char* const texts[] = {"ARRANGE & INSPECT", "Tab&\tstop", "No&\u00a0break", "Wide&\u3000space"};
+    for (const char* text : texts) {
+        const MnemonicText parsed = parse_mnemonic_text(text);
+        require(parsed.mnemonic.absent() && mnemonic_access_key(text).empty() && !is_mnemonic(U' ', text) &&
+                    parsed.display_text.find('&') == std::string::npos,
+                "white space after an ampersand must mark no mnemonic");
+    }
+    require(is_first_letter(U'A', "ARRANGE & INSPECT"), "a text whose ampersand marks nothing jumps by its first letter");
+    require(mnemonic_access_key("Save & &Close") == "C", "a later ampersand still marks its mnemonic");
+}
+
 void test_menu_mnemonics_strip_markers_and_overlay_activation() {
     std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("mnemonic.root"));
     std::shared_ptr<gui_forms::MenuStrip> strip = make_control<MenuStrip>(StableId("mnemonic.strip"));
@@ -1201,6 +1217,7 @@ int main() {
         test_item_ids_follow_the_stable_id_segment_rule();
         test_menu_strip_retained_switching_commands_and_semantics();
         test_menu_mnemonics_strip_markers_and_overlay_activation();
+        test_white_space_is_no_mnemonic();
         test_menu_plain_letter_mnemonics();
         test_menu_first_letter_jumps();
         test_menu_font_controls_geometry_paint_and_hit_testing();
