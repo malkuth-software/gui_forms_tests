@@ -1286,6 +1286,14 @@ endif()
 add_executable(gui_forms_form_documents_tests tests/form_language/form_documents_tests.cpp)
 target_link_libraries(gui_forms_form_documents_tests PRIVATE gui_forms_controls)
 add_test(NAME gui_forms_form_documents_tests COMMAND gui_forms_form_documents_tests)
+# Mockups: a document, its fixture data and a theme sheet loaded at run time
+# (gui_forms/forms/form_mockup), and the fixture reader on its own.
+add_executable(gui_forms_form_mockup_tests tests/form_language/form_mockup_tests.cpp)
+target_link_libraries(gui_forms_form_mockup_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_form_mockup_tests COMMAND gui_forms_form_mockup_tests)
+add_executable(gui_forms_form_fixture_tests tests/form_language/form_fixture_tests.cpp)
+target_link_libraries(gui_forms_form_fixture_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_form_fixture_tests COMMAND gui_forms_form_fixture_tests)
 add_executable(gui_forms_form_generator_tests tests/form_language/form_generator_tests.cpp
     ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_catalog.cpp ${GUI_FORMS_SOURCE_DIR}/tools/form_compiler/form_lab_catalog.cpp)
 target_link_libraries(gui_forms_form_generator_tests PRIVATE gui_forms_lab gui_forms_demo_controls)
