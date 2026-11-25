@@ -40,6 +40,9 @@ struct MessageBoxProbe final {
     int icon_width{};
     int icon_height{};
     unsigned ticks{};
+    // When the probe gives up: the title of a dialog of this thread that
+    // was not the probe's box, if any (closed so that the run ends).
+    std::wstring other_dialog;
 };
 
 // The probe the timer fills; the timer procedure has no context argument.
@@ -52,6 +55,15 @@ BOOL CALLBACK find_probe_box(HWND window, LPARAM found) {
     if (length <= 0 || std::wstring_view(title.data(), static_cast<std::size_t>(length)) != probe_title) {
         return TRUE;
     }
+    *reinterpret_cast<HWND*>(found) = window;
+    return FALSE;
+}
+
+// EnumThreadWindows target: stops at any dialog box and stores it.
+BOOL CALLBACK find_any_dialog(HWND window, LPARAM found) {
+    std::array<wchar_t, 16> name{};
+    const int length = GetClassNameW(window, name.data(), static_cast<int>(name.size()));
+    if (length <= 0 || std::wstring_view(name.data(), static_cast<std::size_t>(length)) != L"#32770") return TRUE;
     *reinterpret_cast<HWND*>(found) = window;
     return FALSE;
 }
@@ -93,8 +105,9 @@ void read_icon(HICON icon, MessageBoxProbe& probe) {
 }
 
 // The thread timer: finds the box, reads its icon control and presses OK;
-// gives up after maximum_probe_ticks (the box stays, and the test's
-// timeout ends the run).
+// gives up after maximum_probe_ticks, and then closes any other dialog of
+// this thread, so that the call returns and the run names what it saw
+// instead of reaching the test's timeout.
 void CALLBACK probe_message_box(HWND, UINT, UINT_PTR timer, DWORD) {
     MessageBoxProbe* const probe = active_probe;
     if (probe == nullptr) return;
@@ -102,17 +115,30 @@ void CALLBACK probe_message_box(HWND, UINT, UINT_PTR timer, DWORD) {
     HWND box = nullptr;
     EnumThreadWindows(GetCurrentThreadId(), find_probe_box, reinterpret_cast<LPARAM>(&box));
     if (box == nullptr) {
-        if ((*probe).ticks >= maximum_probe_ticks) KillTimer(nullptr, timer);
+        if ((*probe).ticks < maximum_probe_ticks) return;
+        KillTimer(nullptr, timer);
+        HWND other = nullptr;
+        EnumThreadWindows(GetCurrentThreadId(), find_any_dialog, reinterpret_cast<LPARAM>(&other));
+        if (other != nullptr) {
+            std::array<wchar_t, 64> title{};
+            const int length = GetWindowTextW(other, title.data(), static_cast<int>(title.size()));
+            (*probe).other_dialog.assign(title.data(), length > 0 ? static_cast<std::size_t>(length) : 0U);
+            PostMessageW(other, WM_COMMAND, MAKEWPARAM(IDCANCEL, BN_CLICKED), 0);
+            PostMessageW(other, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
+        }
         return;
     }
     KillTimer(nullptr, timer);
     (*probe).box_found = true;
     HWND control = nullptr;
     EnumChildWindows(box, find_message_icon_control, reinterpret_cast<LPARAM>(&control));
-    if (control != nullptr) {
+    // An icon control counts when it shows an icon: Wine's box keeps an
+    // empty one when it has no icon.
+    const HICON icon = control != nullptr && IsWindowVisible(control) != FALSE
+        ? reinterpret_cast<HICON>(SendMessageW(control, STM_GETICON, 0, 0)) : nullptr;
+    if (icon != nullptr) {
         (*probe).icon_control_found = true;
-        const HICON icon = reinterpret_cast<HICON>(SendMessageW(control, STM_GETICON, 0, 0));
-        if (icon != nullptr) read_icon(icon, *probe);
+        read_icon(icon, *probe);
     }
     PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
 }
@@ -150,10 +176,14 @@ struct MessageBoxFixture final {
         const HostDialogResult result = native_message_dialog(nullptr, 7U, request);
         KillTimer(nullptr, timer);
         active_probe = nullptr;
+        require(probe.box_found, "the probe found the box (" + std::to_string(probe.ticks) + " ticks; " +
+                                     (probe.other_dialog.empty() ? std::string("no other dialog of this thread")
+                                                                 : "another dialog of this thread, titled \"" +
+                                                                       utf8_from_wide(probe.other_dialog) + "\"") +
+                                     ")");
         require(result.status.accepted(), "the box answers");
         const HostMessageDialogResult* const value = std::get_if<HostMessageDialogResult>(&result.payload);
         require(value != nullptr && (*value).choice == HostDialogChoice::ok, "the probe's OK is the choice");
-        require(probe.box_found, "the probe found the box");
         return probe;
     }
 
@@ -161,6 +191,7 @@ struct MessageBoxFixture final {
         HostMessageDialogRequest pictured{};
         pictured.icon = HostMessageIcon::information;
         pictured.icon_image = red_square(32U);
+        std::cerr << "windows message box: the pictured box\n";
         const MessageBoxProbe shown = show(pictured);
         require(shown.icon_control_found, "an information box has an icon control");
         require(shown.red > 200U && shown.green < 40U && shown.blue < 40U && shown.alpha > 200U,
@@ -169,6 +200,7 @@ struct MessageBoxFixture final {
 
         HostMessageDialogRequest system{};
         system.icon = HostMessageIcon::information;
+        std::cerr << "windows message box: the system box\n";
         const MessageBoxProbe kept = show(system);
         require(kept.icon_control_found, "a box without a picture has its icon control");
         require(!(kept.red > 200U && kept.green < 40U && kept.blue < 40U), "a box without a picture keeps the system icon");
@@ -176,6 +208,7 @@ struct MessageBoxFixture final {
         HostMessageDialogRequest no_icon{};
         no_icon.icon = HostMessageIcon::none;
         no_icon.icon_image = red_square(32U);
+        std::cerr << "windows message box: the no icon box\n";
         const MessageBoxProbe plain = show(no_icon);
         require(!plain.icon_control_found, "a box without an icon has no icon control");
 
