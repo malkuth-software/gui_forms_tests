@@ -193,6 +193,7 @@ bool report_pass(ProbeState& state, const Pass& pass, NSView* const view, const 
     std::size_t live_resize_draws{};
     std::size_t stale{};
     std::size_t stalls{};
+    double last_change{};
     std::vector<double> intervals{};
     std::vector<double> durations{};
     intervals.reserve(records.size());
@@ -208,7 +209,13 @@ bool report_pass(ProbeState& state, const Pass& pass, NSView* const view, const 
         const bool resized = record.width != previous.width || record.height != previous.height;
         if (!resized) continue;
         ++size_changes;
-        if (interval > stall_limit_ms) ++stalls;
+        // The first draw after the turn follows the probe's own hold (hold_ms,
+        // longer under a drag, where AppKit waits for the pointer to move
+        // again): that gap is the script's, not a stall.
+        const double change = (record.width - previous.width) + (record.height - previous.height);
+        const bool turned = last_change > 0.0 && change < 0.0;
+        if (change != 0.0) last_change = change;
+        if (interval > stall_limit_ms && !turned) ++stalls;
         // The view is flipped: growth exposes a strip on the right and one
         // at the bottom.
         if (record.width > previous.width &&

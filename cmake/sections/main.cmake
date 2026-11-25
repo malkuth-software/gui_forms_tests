@@ -3645,6 +3645,16 @@ endif()
 if(GUI_FORMS_MCP)
     add_executable(gui_forms_automation_core_tests tests/automation_core_tests.cpp)
     target_link_libraries(gui_forms_automation_core_tests PRIVATE gui_forms_controls gui_forms_host_headless)
+    # capture's points draw through the bundled faces' offscreen raster, as
+    # gui_forms_offscreen_capture_tests builds it.
+    if(TARGET gui_forms_skia AND TARGET gui_forms_sealed_pages_objects)
+        target_sources(gui_forms_automation_core_tests PRIVATE
+            ${GUI_FORMS_SOURCE_DIR}/src/runtime/offscreen/offscreen_raster_create.cpp
+            $<TARGET_OBJECTS:gui_forms_sealed_pages_objects>)
+        target_compile_definitions(gui_forms_automation_core_tests PRIVATE
+            GUI_FORMS_TEST_FONT_DIR="${GUI_FORMS_SOURCE_DIR}/assets/fonts")
+        target_link_libraries(gui_forms_automation_core_tests PRIVATE gui_forms_skia)
+    endif()
     # The launch checks (--mcp-appearance-review refused in a release build)
     # where the archive carries the automation run.
     if(TARGET gui_forms_automation)

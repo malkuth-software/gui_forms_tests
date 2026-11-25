@@ -18,6 +18,7 @@
 #include "gui_forms/automation/marks/automation_marks.hpp"
 #include "gui_forms/automation/tools/model_tools.hpp"
 #include "gui_forms/basic_controls.hpp"
+#include "gui_forms/capture/offscreen_raster/offscreen_raster.hpp"
 #include "gui_forms/commands/command/command.hpp"
 #include "gui_forms/controls/card.hpp"
 #include "gui_forms/controls/list_box.hpp"
@@ -1595,6 +1596,20 @@ void large_batches_run() {
 // Round 3, item 6: capture points answers colours instead of an image.
 void capture_samples_points() {
     Fixture fixture(false);
+#if defined(GUI_FORMS_TEST_FONT_DIR)
+    // A capture draws through a framebuffer painter: the bundled faces'
+    // offscreen raster, attached for this check (offscreen_capture_tests).
+    OffscreenRasterOptions options{};
+    options.font_directory = GUI_FORMS_TEST_FONT_DIR;
+    OffscreenRasterCreateResult made = OffscreenRaster::create(options);
+    require(made.succeeded(), "the bundled faces make a raster");
+    const std::unique_ptr<OffscreenRaster> raster = made.take_raster();
+    OffscreenAttachment attached(*raster, *fixture.window);
+#else
+    // No raster in this build: a headless window captures nothing.
+    require(!succeeded(fixture.call("capture", "{\"points\":[[1,1]]}")), "a capture without a raster is refused");
+    return;
+#endif
     const ToolReply sampled = fixture.call("capture", "{\"points\":[[1,1],[5000,5000]]}");
     require(succeeded(sampled), "a capture with points succeeds");
     const ToolSuccess* const success = sampled.success_value();
