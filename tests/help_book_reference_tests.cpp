@@ -1,6 +1,6 @@
 // HelpBook as a reference page (Pocket Reference's page view, 2026-11-24):
 // leading and one shared baseline per line for body, code and link runs;
-// inline code in Portsmouth Mono on a chip; the hover event; layout only
+// inline code in the monospace role's face on a chip; the hover event; layout only
 // when the page or the width changes, never from the pointer; definition
 // lists; tables sized to their content (long names wrap inside their cell,
 // links work in cells, empty cells stay empty) and pipe tables in markdown;
@@ -147,7 +147,11 @@ void shared_baseline_and_chip() {
     require(body != nullptr && code != nullptr && linked != nullptr, "the body, code and link runs are drawn");
     require((*code).origin.y == (*body).origin.y && (*linked).origin.y == (*body).origin.y,
             "body, code and link runs on one line share one baseline");
-    require((*code).font.family == portsmouth_mono_font_family, "inline code is set in Portsmouth Mono");
+    require((*body).font.role == FontRole::content, "body text is set in the content role's face");
+    require((*code).font.role == FontRole::monospace && (*code).font.family != portsmouth_mono_font_family,
+            "inline code is set in the monospace role's face, not the console face");
+    require((*body).font.family != portsmouth_mono_font_family && (*linked).font.role == FontRole::monospace,
+            "code runs, linked ones included, are mono and prose is not");
     require((*code).font.size <= (*body).font.size, "the code face is sized to the body's x-height, not larger");
     // The chip under the code: around its baseline, padded beside it, and
     // shorter than the line, so chips on neighbouring lines stay apart.
