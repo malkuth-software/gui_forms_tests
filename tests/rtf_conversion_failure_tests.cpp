@@ -5,6 +5,7 @@
 
 #include "gui_forms/text/markdown/rtf_conversion.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <stxlib/optional.hpp>
 #include <cstddef>

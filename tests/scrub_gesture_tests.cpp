@@ -20,6 +20,7 @@
 #include "src/core/drag_engine/scrub_gesture.hpp"
 #include "support/routed_input_probe.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <array>
 #include <cmath>

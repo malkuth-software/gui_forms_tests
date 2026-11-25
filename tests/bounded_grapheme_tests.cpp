@@ -1,6 +1,7 @@
 #include "unicode_grapheme.hpp"
 #include "gui_forms/text.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <algorithm>
 #include <array>

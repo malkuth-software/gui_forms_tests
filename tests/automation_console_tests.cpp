@@ -51,11 +51,11 @@ void formula_poles() {
     const ConsoleRgb green = console_formula(ConsoleShade{1.0, 0.8});
     require(near(green.r, 0.4) && near(green.g, 0.8) && near(green.b, 0.2), "c 1 is green");
     const Color orange_colour = console_colour(ConsoleShade{0.0, 0.8}, 7U);
-    require(near_level(orange_colour.r, 0xcc) && near_level(orange_colour.g, 0x66) && orange_colour.b <= 1U &&
-                orange_colour.a == 255U,
+    require(near_level(orange_colour.red(), 0xcc) && near_level(orange_colour.green(), 0x66) && orange_colour.blue() <= 1U &&
+                orange_colour.alpha() == 255U,
             "the dithered orange is within a step of #CC6600");
     const Color green_colour = console_colour(ConsoleShade{1.0, 0.8}, 7U);
-    require(near_level(green_colour.r, 0x66) && near_level(green_colour.g, 0xcc) && near_level(green_colour.b, 0x33),
+    require(near_level(green_colour.red(), 0x66) && near_level(green_colour.green(), 0xcc) && near_level(green_colour.blue(), 0x33),
             "the dithered green is within a step of #66CC33");
 }
 
@@ -77,7 +77,7 @@ void shades_cluster_and_hold() {
     require(near(again.c, first.c) && near(again.v, first.v), "a run's shade is the same at every repaint");
     const Color one = console_colour(first, console_run_hash(1U, 0U));
     const Color two = console_colour(first, console_run_hash(1U, 0U));
-    require(one.r == two.r && one.g == two.g && one.b == two.b, "a run's dither is the same at every repaint");
+    require(one.red() == two.red() && one.green() == two.green() && one.blue() == two.blue(), "a run's dither is the same at every repaint");
 }
 
 void record_lines() {

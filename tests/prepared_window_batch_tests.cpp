@@ -1,5 +1,6 @@
 #include "src/core/text/prepared_window/prepared_window_batch.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 #include <array>
 #include <cstdlib>
 #include <iostream>

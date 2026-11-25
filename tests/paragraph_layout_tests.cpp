@@ -21,6 +21,7 @@
 
 #include "src/controls/text_block/line_wrapping.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <array>
 #include <cmath>

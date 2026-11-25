@@ -9,6 +9,8 @@
 // it is and new still takes STXlib's blocks while they are served.
 
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_teardown.hpp"
+#include "gui_forms/allocation/library_memory/program_allocator.hpp"
 
 #include <stxlib/memory.hpp>
 

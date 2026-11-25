@@ -29,6 +29,7 @@
 #include "application/headless_splashscreen.hpp"
 #include "src/core/image/png_writer.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <chrono>
 #include <cstddef>

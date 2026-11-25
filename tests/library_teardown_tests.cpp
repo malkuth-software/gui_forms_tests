@@ -11,6 +11,8 @@
 // at Windows' process end.
 
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
+#include "gui_forms/allocation/library_memory/library_teardown.hpp"
 
 #include <array>
 #include <cstddef>

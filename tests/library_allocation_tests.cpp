@@ -15,6 +15,7 @@
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/panel.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <stxlib/memory.hpp>
 
