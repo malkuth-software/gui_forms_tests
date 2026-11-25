@@ -336,19 +336,45 @@ void tokens_take_their_tone() {
     }
 }
 
-// A new line grows in place: its instruction glyphs appear one a step, its
-// values as a block; once shown and scrolled, the screen asks for nothing.
+// A new line grows in place at a human pace (owner, 2026-11-25): its
+// instruction glyphs type left to right at about twelve keystrokes a second
+// with a seeded jitter; its values appear as a lit block that eases to the
+// formula's colour; a newer entry completes the older one at once; once all
+// is shown and settled, the screen asks for nothing.
 void lines_type_in() {
+    // The keystroke rhythm: about 1/12 s, within 30% either way, varied and
+    // the same every time.
+    bool varied = false;
+    for (std::size_t glyph = 0U; glyph < 64U; ++glyph) {
+        const double seconds = ConsoleScreen::keystroke_seconds(3U, glyph);
+        require(seconds >= 0.7 / 12.0 - 1e-9 && seconds <= 1.3 / 12.0 + 1e-9, "a keystroke takes 1/12 s, +-30%");
+        require(near(seconds, ConsoleScreen::keystroke_seconds(3U, glyph)), "the rhythm is seeded");
+        if (!near(seconds, ConsoleScreen::keystroke_seconds(3U, 0U))) varied = true;
+    }
+    require(varied, "keystrokes vary");
+    // The glow's endpoints: lit is brighter, settled is the formula.
+    const ConsoleShade value_shade{1.0, 0.85};
+    const ConsoleRgb settled = console_glow(value_shade, 0.0);
+    const ConsoleRgb formula = console_formula(value_shade);
+    require(near(settled.r, formula.r) && near(settled.g, formula.g) && near(settled.b, formula.b),
+            "a settled glow is exactly the formula's colour");
+    const ConsoleRgb lit = console_glow(value_shade, 1.0);
+    require(lit.r > formula.r && lit.g > formula.g && lit.b > formula.b && lit.g >= lit.r,
+            "a lit value is brighter, its hue kept");
+
     ConsoleLog log{};
     log.record_call("act", "{\"a\":1}");
+    log.record_call("windows", "{}");
     std::vector<ConsoleLine> lines{};
     log.copy_since(0U, lines);
     std::vector<ConsoleGlyphRow> rows{};
     console_wrap(lines[0], 80U, rows);
+    std::vector<ConsoleGlyphRow> second{};
+    console_wrap(lines[1], 80U, second);
     ConsoleScreen screen{};
     screen.set_visible_rows(4U);
     require(!screen.busy() && !screen.advance(0.016), "an empty screen is idle and changes nothing");
-    screen.queue_line(rows);
+    screen.queue_line(rows, true);
     require(screen.busy(), "a queued line wants frames");
     const std::vector<ConsoleGlyph>& glyphs = rows[0].glyphs;
     const std::size_t total = glyphs.size();
@@ -359,41 +385,70 @@ void lines_type_in() {
     require(instruction == 11U, "call act and the braces and quotes are eleven typed glyphs");
     std::size_t shown = 0U;
     std::size_t frames = 0U;
+    double elapsed = 0.0;
     bool block = false;
-    while (screen.busy() && frames < 1000U) {
+    bool lit_seen = false;
+    while ((screen.unshown() > 0U || screen.rows().empty()) && frames < 5000U) {
         static_cast<void>(screen.advance(0.004));
         ++frames;
+        elapsed += 0.004;
         const std::size_t now = screen.rows().empty() ? 0U : screen.rows().back().shown;
-        // Each step shows one instruction glyph, or a whole run of values.
-        std::size_t units = 0U;
+        // Each step shows at most one keystroke; a value's run comes whole.
+        std::size_t keystrokes = 0U;
         std::size_t at = shown;
         while (at < now) {
-            ++units;
             if (glyphs[at].tone == ConsoleTone::instruction) {
+                ++keystrokes;
                 ++at;
                 continue;
             }
             std::size_t end = at;
             while (end < total && glyphs[end].tone == ConsoleTone::value) ++end;
             require(now >= end, "a value's run appears at once, as a block");
+            require(near(screen.glow(screen.rows().back().key, at), 1.0), "a value's run appears lit");
+            lit_seen = true;
             if (end - at > 1U) block = true;
             at = end;
         }
-        require(units <= 1U, "the instruction types a glyph a step");
+        require(keystrokes <= 1U, "the instruction types a glyph at a time");
         shown = now;
     }
-    require(block && shown == total, "the whole line shows");
-    require(frames > instruction, "typing takes several frames");
+    require(block && lit_seen && shown == total, "the whole line shows");
+    // Eleven keystrokes, the first at once: ten intervals of 1/12 s +-30%.
+    require(elapsed >= 10.0 * 0.7 / 12.0 - 0.01 && elapsed <= 10.0 * 1.3 / 12.0 + 0.01,
+            "the line types at a human pace");
+    // The glow settles, then the screen is idle.
+    std::size_t settle = 0U;
+    while (screen.busy() && settle < 1000U) {
+        static_cast<void>(screen.advance(0.016));
+        ++settle;
+    }
+    require(settle * 0.016 <= ConsoleScreen::fade_seconds + 0.05, "the glow settles within its fade");
+    require(screen.fades().empty(), "every run has settled to its colour");
     require(!screen.busy() && !screen.advance(0.016) && !screen.advance(1.0),
             "after the line, the screen is idle and asks for no frames");
-    // A burst catches up: forty lines queued type faster than one.
-    for (int index = 0; index < 40; ++index) screen.queue_line(rows);
+
+    // A newer entry completes the one still typing.
+    screen.queue_line(rows, true);
+    static_cast<void>(screen.advance(0.2));
+    require(screen.rows().back().shown < total, "the first entry is still typing");
+    const std::uint64_t older = screen.rows().back().key;
+    screen.queue_line(second, true);
+    bool completed = false;
+    for (const ConsoleScreenRow& row : screen.rows()) {
+        if (row.key == older) completed = row.shown == row.row.glyphs.size();
+    }
+    require(completed, "a newer entry shows the older one whole at once");
+    require(screen.unshown() == second[0].glyphs.size(), "only the newest entry is left to type");
+    // A burst of forty entries leaves only the last one to type.
+    for (int index = 0; index < 40; ++index) screen.queue_line(rows, true);
+    require(screen.unshown() == total, "a burst never falls behind: only the newest entry animates");
     std::size_t burst_frames = 0U;
     while (screen.busy() && burst_frames < 100000U) {
         static_cast<void>(screen.advance(0.016));
         ++burst_frames;
     }
-    require(burst_frames < 5U * frames, "a queue speeds the typing up");
+    require(burst_frames * 0.016 < 2.0, "the burst settles as fast as one line");
     require(screen.rows().size() <= 5U, "the screen keeps only the rows in view and one above");
 }
 
