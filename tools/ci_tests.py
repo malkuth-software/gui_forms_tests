@@ -76,11 +76,36 @@ RECORDED_RUNTIME: re.Pattern[str] = re.compile(r'[^"\s]*/llvm-\d+\.\d+\.\d+-[A-Z
 OWN_RUNTIME_SETTINGS: tuple[str, ...] = ('GUI_FORMS_OWN_RUNTIME_SOURCE', 'GUI_FORMS_OWN_RUNTIME_PREFIX',
                                          'GUI_FORMS_LIBCXX_PREFIX')
 
+# The clang resource directory a test cache's flags name: on Windows the own
+# runtime's toolchain file passes -nostdinc and names clang's resource headers
+# again (gui_forms cmake/llvm22-windows-msvc-own.cmake), so the recorded flags
+# carry GUI.Forms' CI's toolchain
+# (D:/a/gui_forms/gui_forms/.toolchain/<digest>/msys64/clang64/lib/clang/22).
+# libc++'s stddef.h reaches clang's through #include_next; without it the
+# build fails with "'stddef.h' file not found".
+RECORDED_RESOURCE_DIR: re.Pattern[str] = re.compile(r'[^"\s]*/lib/clang/\d+(?=/include\b)')
+
+
+def local_resource_dir() -> str | None:
+    """This machine's clang resource directory (clang -print-resource-dir,
+    with the compiler CXX names), or None when the compiler cannot say."""
+    compiler: str | None = shutil.which(os.environ.get('CXX') or 'clang++')
+    if compiler is None:
+        return None
+    completed: subprocess.CompletedProcess[str] = subprocess.run([compiler, '-print-resource-dir'], check=False,
+                                                                 capture_output=True, text=True)
+    directory: str = completed.stdout.strip()
+    if completed.returncode != 0 or not directory:
+        return None
+    return Path(directory).as_posix()
+
 
 def local_settings(cache: Path, build: Path) -> Path:
     """The cache's settings.cmake for this machine, written into build: the
-    recorded runtime prefix becomes GUI_FORMS_LLVM_RUNTIME (when set), and the
-    file's own directory stays the cache's (its toolchain file is read from there).
+    recorded runtime prefix becomes GUI_FORMS_LLVM_RUNTIME (when set), the own
+    runtime's locations the ones tools/own_runtime.py set, a recorded clang
+    resource directory that is not here this compiler's, and the file's own
+    directory stays the cache's (its toolchain file is read from there).
 
     The settings pass the C++ flags with the runtime's absolute paths, which
     override what the toolchain file would derive from this machine's runtime."""
@@ -105,6 +130,20 @@ def local_settings(cache: Path, build: Path) -> Path:
         if own and found is not None and found.group(1) and found.group(1) != Path(own).as_posix():
             print(f'ci_tests: the cache names {name} {found.group(1)}; using {Path(own).as_posix()}', flush=True)
             text = text.replace(found.group(1), Path(own).as_posix())
+    # The resource directory, when the recorded one is not on this machine.
+    recorded_resource: set[str] = {directory for directory in RECORDED_RESOURCE_DIR.findall(text)
+                                   if not (Path(directory) / 'include' / 'stddef.h').is_file()}
+    if recorded_resource:
+        resource: str | None = local_resource_dir()
+        directory: str
+        for directory in sorted(recorded_resource):
+            if resource is None:
+                print(f'ci_tests: the cache names the clang resource directory {directory}, which is not here, '
+                      'and the compiler reports none', flush=True)
+            elif directory != resource:
+                print(f'ci_tests: the cache names the clang resource directory {directory}; using {resource}',
+                      flush=True)
+                text = text.replace(directory, resource)
     path: Path = build / 'gui_forms_test_cache_settings.cmake'
     build.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8')
