@@ -77,8 +77,8 @@ void shades_cluster_and_hold() {
     require(varied, "v varies from run to run");
     const ConsoleShade again = console_shade(ConsoleTone::value, 1U, 0U);
     require(near(again.c, first.c) && near(again.v, first.v), "a run's shade is the same at every repaint");
-    const Color one = console_colour(first, console_run_hash(1U, 0U));
-    const Color two = console_colour(first, console_run_hash(1U, 0U));
+    const Color one = console_colour(first, console_glyph_hash(1U, 0U));
+    const Color two = console_colour(first, console_glyph_hash(1U, 0U));
     require(one.red == two.red && one.green == two.green && one.blue == two.blue, "a run's dither is the same at every repaint");
 }
 
@@ -210,9 +210,15 @@ void button_covers_no_content() {
     const Rect fallback = ConsoleOverlay::button_place(chromeless, 0.0, &everything);
     require(fallback.width > 0.0, "with no free spot, it still has a place");
     const Rect console = ConsoleOverlay::console_place(chromeless.content, aside);
-    require(console.y >= aside.y + aside.height, "the console opens below a button in the client area");
-    const Rect console_titled = ConsoleOverlay::console_place(titled.content, in_title);
-    require(console_titled.y >= titled.content.y, "and inside the client area when the button is in the title");
+    require(console.x == chromeless.content.x && console.width == chromeless.content.width &&
+                console.height == chromeless.content.height,
+            "the console's layer covers the whole client area");
+    require(ConsoleOverlay::console_text_top(chromeless.content, aside) >= aside.y + aside.height,
+            "its text begins below a button in the client area");
+    require(ConsoleOverlay::console_text_top(titled.content, in_title) < 20.0,
+            "and at the top when the button is in the title");
+    require(ConsoleOverlay::console_font().family == portsmouth_mono_font_family,
+            "the console asks for Portsmouth Mono by family");
 }
 
 // 1.0.5 review: the questions opened at the screen's upper right. They are
