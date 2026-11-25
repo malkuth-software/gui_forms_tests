@@ -2,11 +2,18 @@
 
 The program (tests/mcp_launch_probe.cpp) must answer initialize with its
 server information and tools/list with the built-in tools (snapshot, act,
-capture among them), then end within the timeout once its standard input
+capture among them) and the probe's own tool probe_ready, registered in its
+window's ready callback, then end within the timeout once its standard input
 closes, the portable shutdown. A build whose MCP has no transport (an STXlib
 package without stxlib::mcp) answers nothing and fails here.
 
-    python3 -B tools/mcp_launch_check.py <program> [timeout seconds]
+Then the start race: the program is launched again `launches` times, and
+each time initialize, initialized and tools/list are written at once, before
+the program has a window. Every first tools/list must carry the whole set
+(1.0.3 bound its tools one by one while already serving, and a tools/list on
+macos-arm64 saw two tools without act and capture).
+
+    python3 -B tools/mcp_launch_check.py <program> [timeout seconds] [launches]
 
 Prints one line per step and exits 0 when every step passed.
 """
@@ -18,7 +25,8 @@ import sys
 import threading
 
 PROTOCOL_VERSION = '2025-06-18'
-REQUIRED_TOOLS = ('snapshot', 'act', 'capture')
+REQUIRED_TOOLS = ('snapshot', 'act', 'capture', 'probe_ready')
+DEFAULT_LAUNCHES = 10
 
 
 def reader(stream, replies):
@@ -43,21 +51,81 @@ def reply_to(replies, identity, timeout):
             return message
 
 
+def initialize_message(identity):
+    return {'jsonrpc': '2.0', 'id': identity, 'method': 'initialize',
+            'params': {'protocolVersion': PROTOCOL_VERSION, 'capabilities': {},
+                       'clientInfo': {'name': 'gui-forms-mcp-launch-check', 'version': '1'}}}
+
+
+def end_program(process, timeout):
+    """Closes the program's input and waits for it; its exit code, or None."""
+    try:
+        process.stdin.close()
+    except OSError:
+        pass
+    try:
+        return process.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+        return None
+
+
+def start_race(program, timeout, launches):
+    """The start race: the requests are written at launch. Failures counted."""
+    failures = 0
+    counts = set()
+    for launch in range(launches):
+        process = subprocess.Popen([program, '--mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.DEVNULL)
+        replies = queue.Queue()
+        threading.Thread(target=reader, args=(process.stdout, replies), daemon=True).start()
+        problem = ''
+        try:
+            burst = [initialize_message(1), {'jsonrpc': '2.0', 'method': 'notifications/initialized'},
+                     {'jsonrpc': '2.0', 'id': 2, 'method': 'tools/list', 'params': {}}]
+            process.stdin.write(''.join(json.dumps(message) + '\n' for message in burst).encode('utf-8'))
+            process.stdin.flush()
+            if 'result' not in reply_to(replies, 1, timeout):
+                problem = 'initialize failed'
+            else:
+                listed = reply_to(replies, 2, timeout)
+                names = [tool.get('name', '') for tool in listed.get('result', {}).get('tools', [])]
+                missing = [name for name in REQUIRED_TOOLS if name not in names]
+                counts.add(len(names))
+                if missing:
+                    problem = '%d tools, missing %s' % (len(names), ', '.join(missing))
+        except queue.Empty:
+            problem = 'no reply within %s seconds' % timeout
+        except (BrokenPipeError, OSError) as error:
+            problem = 'the program closed its input: %s' % error
+        code = end_program(process, timeout)
+        if not problem and code != 0:
+            problem = 'exit %s' % code
+        if problem:
+            print('start race launch', launch + 1, 'FAILED', problem)
+            failures += 1
+    if len(counts) > 1:
+        print('start race FAILED: the first tools/list differed between launches:', sorted(counts))
+        failures += 1
+    print('start race', 'ok' if not failures else 'FAILED', launches, 'launches')
+    return failures
+
+
 def main(argv):
     if len(argv) < 2:
-        print('usage: mcp_launch_check.py <program> [timeout seconds]', file=sys.stderr)
+        print('usage: mcp_launch_check.py <program> [timeout seconds] [launches]', file=sys.stderr)
         return 2
     program = argv[1]
     timeout = float(argv[2]) if len(argv) > 2 else 30.0
+    launches = int(argv[3]) if len(argv) > 3 else DEFAULT_LAUNCHES
     process = subprocess.Popen([program, '--mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     replies = queue.Queue()
     threading.Thread(target=reader, args=(process.stdout, replies), daemon=True).start()
     failures = 0
     try:
-        send(process, {'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
-                       'params': {'protocolVersion': PROTOCOL_VERSION, 'capabilities': {},
-                                  'clientInfo': {'name': 'gui-forms-mcp-launch-check', 'version': '1'}}})
+        send(process, initialize_message(1))
         initialized = reply_to(replies, 1, timeout)
         server = initialized.get('result', {}).get('serverInfo', {})
         ok = 'result' in initialized and bool(server.get('name'))
@@ -92,6 +160,7 @@ def main(argv):
         failures += 1
     if failures:
         sys.stderr.write(process.stderr.read().decode('utf-8', 'replace')[-2000:])
+    failures += start_race(program, timeout, launches)
     return 1 if failures else 0
 
 
