@@ -800,9 +800,11 @@ void control_returns_after_the_grace_period() {
             "30 s without a call returns control and ends AI mode");
     require(contains(success_text(fixture.call("windows", "{}")), "note: control returned to the user after 30 s"),
             "the model's next reply says control returned");
+    // The user allowed this session once (round 4: one question per
+    // session), so the next act takes control again without asking.
     require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
-                fixture.presenter.takes == 2U,
-            "the next act asks again");
+                fixture.presenter.takes == 1U && fixture.control.state() == ControlState::model_control,
+            "the next act takes control again without a second question");
 }
 
 void release_control_gives_control_back() {
