@@ -3670,6 +3670,7 @@ endif()
 # The lab suites that read GUI.Forms' private sources stay with the library
 # (coordinator, 2026-11-25): the models are gui_forms' test-cache targets
 # (demo/labs); the lab programs are gui_forms_devkit's.
+if(TARGET gui_forms_layered_material_lab_model)
     add_executable(gui_forms_layered_material_lab_tests
         tests/layered_material_lab_tests.cpp)
     target_include_directories(gui_forms_layered_material_lab_tests PRIVATE

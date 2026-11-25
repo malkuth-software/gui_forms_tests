@@ -51,18 +51,18 @@ void test_forms_tools() {
     automation::ToolRegistry tools{};
     require(automation::register_model_form_tools(tools) == 4U, "forms tools: four are added");
     require(automation::register_model_form_tools(tools) == 0U, "forms tools: a second call adds none");
-    const char* const names[] = {"forms.export", "forms.validate", "forms.apply", "forms.revert"};
+    const char* const names[] = {"forms_export", "forms_validate", "forms_apply", "forms_revert"};
     for (const char* const name : names) {
         automation::ToolEntry entry{};
         require(tools.find(name, entry), std::string("forms tools: ") + name);
         require(entry.spec.thread == automation::ToolThread::ui, std::string(name) + " runs on the UI thread");
     }
     automation::ToolEntry apply{};
-    require(tools.find("forms.apply", apply), "forms tools: apply");
+    require(tools.find("forms_apply", apply), "forms tools: apply");
     require(apply.spec.destructive && apply.spec.settles && apply.spec.access == automation::ToolAccess::acting,
             "forms tools: apply is destructive, acting and settles");
     automation::ToolEntry exported{};
-    require(tools.find("forms.export", exported), "forms tools: export");
+    require(tools.find("forms_export", exported), "forms tools: export");
     require(exported.spec.access == automation::ToolAccess::read_only && !exported.spec.settles,
             "forms tools: export reads only");
 
