@@ -76,6 +76,11 @@ include("${GUI_FORMS_SOURCE_DIR}/cmake/LocalizablePlugin.cmake")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN "${_gf_tests_plugin}")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN_PATH "${_gf_tests_plugin_path}")
 set(GUI_FORMS_EFFECTS_VERIFIED "${_gf_tests_effects_verified}")
+# LocalizablePlugin.cmake's functions read the plugin and the verification
+# from global properties, which the include above set from its own (empty)
+# plugin: they take the cache's plugin back too.
+set_property(GLOBAL PROPERTY GUI_FORMS_LOCALIZABLE_PLUGIN_PATH "${_gf_tests_plugin_path}")
+set_property(GLOBAL PROPERTY GUI_FORMS_EFFECTS_VERIFIED "${_gf_tests_effects_verified}")
 
 enable_testing()
 
