@@ -9,8 +9,9 @@ typelib (Ubuntu: python3-gi, gir1.2-atspi-2.0):
 
 The first form re-executes itself inside a private session bus
 (``dbus-run-session``), starts the AT-SPI bus launcher there, waits until the
-launcher owns ``org.a11y.Bus``, then starts FIXTURE and drives it as an
-assistive client would: it finds the fixture's application under the AT-SPI
+launcher owns ``org.a11y.Bus``, starts the AT-SPI registry on that bus and
+waits until it owns ``org.a11y.atspi.Registry``, then starts FIXTURE and
+drives it as an assistive client would: it finds the fixture's application under the AT-SPI
 registry's desktop and uses the Action, Value, EditableText and Text
 interfaces (A-L3: caret, selection, strings by granularity, character boxes
 and hit testing, on the A-T1 text core).
@@ -51,7 +52,8 @@ POLL_SECONDS: float = 0.1
 # the client; a named failure after that.
 PUBLISH_SECONDS: float = 10.0
 LAUNCHER_NAME: str = 'at-spi-bus-launcher'
-# Where distributions install the launcher outside PATH: Debian and Ubuntu
+REGISTRY_NAME: str = 'at-spi2-registryd'
+# Where distributions install the launcher and the registry outside PATH: Debian and Ubuntu
 # (/usr/libexec), older Debian (/usr/lib/at-spi2-core) and multiarch layouts.
 LAUNCHER_DIRECTORIES: tuple[str, ...] = (
     '/usr/libexec',
@@ -86,13 +88,14 @@ def unsupported(reason: str) -> int:
     return SKIP_EXIT
 
 
-def find_launcher() -> str | None:
-    found: str | None = shutil.which(LAUNCHER_NAME)
+def find_program(name: str) -> str | None:
+    """The AT-SPI program called name on PATH or where distributions put it."""
+    found: str | None = shutil.which(name)
     if found is not None:
         return found
     directory: str
     for directory in LAUNCHER_DIRECTORIES:
-        candidate: Path = Path(directory) / LAUNCHER_NAME
+        candidate: Path = Path(directory) / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
             return str(candidate)
     return None
@@ -104,8 +107,10 @@ def missing_prerequisite() -> str | None:
         return 'no X display (DISPLAY is unset); run under Xvfb'
     if shutil.which('dbus-run-session') is None:
         return 'dbus-run-session is not installed (Ubuntu: dbus)'
-    if find_launcher() is None:
+    if find_program(LAUNCHER_NAME) is None:
         return 'the AT-SPI bus launcher is not installed (Ubuntu: at-spi2-core)'
+    if find_program(REGISTRY_NAME) is None:
+        return 'the AT-SPI registry daemon is not installed (Ubuntu: at-spi2-core)'
     try:
         import gi
         gi.require_version('Atspi', '2.0')
@@ -135,20 +140,24 @@ def run_in_session(arguments: list[str], script: str | None = None) -> int:
 
 
 class Session:
-    """The AT-SPI bus launcher this script owns inside its session bus.
+    """The AT-SPI bus launcher and registry this script owns inside its
+    session bus.
 
-    start() launches it and waits until it owns org.a11y.Bus; stop()
-    terminates it. The accessibility bus address it reports is exported as
-    AT_SPI_BUS_ADDRESS, so the fixture and this client use that bus.
+    start() launches the launcher and waits until it owns org.a11y.Bus, then
+    starts the registry on the accessibility bus and waits until it owns
+    org.a11y.atspi.Registry; stop() terminates both. The accessibility bus
+    address the launcher reports is exported as AT_SPI_BUS_ADDRESS, so the
+    registry, the fixture and this client use that bus.
     """
 
     def __init__(self) -> None:
         self.launcher: subprocess.Popen[bytes] | None = None
+        self.registry: subprocess.Popen[bytes] | None = None
         self.log: IO[bytes] = tempfile.TemporaryFile()
         self.address: str = ''
 
     def start(self, gio: ModuleType, glib: ModuleType) -> None:
-        launcher: str | None = find_launcher()
+        launcher: str | None = find_program(LAUNCHER_NAME)
         check(launcher is not None, 'AT-SPI bus launcher present')
         self.launcher = subprocess.Popen([str(launcher), '--launch-immediately'],
                                          stdout=self.log, stderr=subprocess.STDOUT)
@@ -176,6 +185,43 @@ class Session:
             'org.a11y.Bus', '/org/a11y/bus', 'org.freedesktop.DBus.Properties', 'Set',
             glib.Variant('(ssv)', ('org.a11y.Status', 'IsEnabled', glib.Variant('b', True))),
             None, gio.DBusCallFlags.NO_AUTO_START, 1000, None)
+        self.start_registry(gio, glib)
+
+    def start_registry(self, gio: ModuleType, glib: ModuleType) -> None:
+        """Starts the AT-SPI registry with AT_SPI_BUS_ADDRESS in its
+        environment and waits until it owns org.a11y.atspi.Registry on this
+        session's accessibility bus, before the fixture or Atspi can ask for
+        it.
+
+        Not left to D-Bus activation: a registry the accessibility bus
+        activates inherits the launcher's environment, which was copied
+        before AT_SPI_BUS_ADDRESS was exported, so it looks for its bus in
+        the X root window's AT_SPI_BUS property next. The CI display is
+        shared by the tests ctest runs in parallel, and each launcher writes
+        its own bus address there, so that registry could join another
+        test's bus and leave this one without a registry.
+        """
+        registry: str | None = find_program(REGISTRY_NAME)
+        check(registry is not None, 'AT-SPI registry daemon present')
+        self.registry = subprocess.Popen([str(registry)], stdout=self.log, stderr=subprocess.STDOUT)
+        flags: int = gio.DBusConnectionFlags.AUTHENTICATION_CLIENT | gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION
+        bus: object = gio.DBusConnection.new_for_address_sync(self.address, flags, None, None)
+        owned: bool = False
+        deadline: float = time.monotonic() + STARTUP_SECONDS
+        while time.monotonic() < deadline:
+            reply: object = bus.call_sync(
+                'org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus', 'NameHasOwner',
+                glib.Variant('(s)', ('org.a11y.atspi.Registry',)), glib.VariantType.new('(b)'),
+                gio.DBusCallFlags.NONE, 1000, None)
+            owned = reply.unpack()[0]
+            # A registry that exits has either lost the name to one already
+            # running on this bus (owned is then true) or failed.
+            if owned or self.registry.poll() is not None:
+                break
+            time.sleep(POLL_SECONDS)
+        bus.close_sync(None)
+        check(owned, 'the AT-SPI registry started on this session\'s accessibility bus owns '
+              'org.a11y.atspi.Registry\n' + self.launcher_output())
 
     def launcher_output(self) -> str:
         self.log.seek(0)
@@ -183,13 +229,15 @@ class Session:
         return text
 
     def stop(self) -> None:
-        if self.launcher is not None and self.launcher.poll() is None:
-            self.launcher.terminate()
-            try:
-                self.launcher.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.launcher.kill()
-                self.launcher.wait(timeout=5)
+        process: subprocess.Popen[bytes] | None
+        for process in (self.registry, self.launcher):
+            if process is not None and process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
         self.log.close()
 
 
