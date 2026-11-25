@@ -139,7 +139,8 @@ void read_icon(HICON icon, MessageBoxProbe& probe) {
     if (info.hbmMask != nullptr) DeleteObject(info.hbmMask);
 }
 
-// The thread timer: finds the box, reads its icon control and presses OK;
+// The thread timer: finds the box, reads its icon control and presses OK
+// (each tick, until the call returns);
 // gives up after maximum_probe_ticks, and then closes any other dialog of
 // this thread, so that the call returns and the run names what it saw
 // instead of reaching the test's timeout.
@@ -164,17 +165,23 @@ void CALLBACK probe_message_box(HWND, UINT, UINT_PTR timer, DWORD) {
         }
         return;
     }
-    KillTimer(nullptr, timer);
-    (*probe).box_found = true;
-    HWND control = nullptr;
-    EnumChildWindows(box, find_message_icon_control, reinterpret_cast<LPARAM>(&control));
-    // An icon control counts when it shows an icon: Wine's box keeps an
-    // empty one when it has no icon.
-    const HICON icon = control != nullptr && IsWindowVisible(control) != FALSE
-        ? reinterpret_cast<HICON>(SendMessageW(control, STM_GETICON, 0, 0)) : nullptr;
-    if (icon != nullptr) {
-        (*probe).icon_control_found = true;
-        read_icon(icon, *probe);
+    // Windows finds the box on the first tick, before it is shown, and
+    // drops an OK posted then (CI: one tick, the box still open 20 s later
+    // on this thread). The probe reads and presses OK once the box is
+    // visible, and presses again on every tick until the call returns.
+    if (IsWindowVisible(box) == FALSE) return;
+    if (!(*probe).box_found) {
+        (*probe).box_found = true;
+        HWND control = nullptr;
+        EnumChildWindows(box, find_message_icon_control, reinterpret_cast<LPARAM>(&control));
+        // An icon control counts when it shows an icon: Wine's box keeps an
+        // empty one when it has no icon.
+        const HICON icon = control != nullptr && IsWindowVisible(control) != FALSE
+            ? reinterpret_cast<HICON>(SendMessageW(control, STM_GETICON, 0, 0)) : nullptr;
+        if (icon != nullptr) {
+            (*probe).icon_control_found = true;
+            read_icon(icon, *probe);
+        }
     }
     PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
 }
