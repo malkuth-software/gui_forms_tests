@@ -1,12 +1,11 @@
 // The attach endpoint and its protocol (MCP 1.0.5, attach_endpoint.hpp; the
 // owner's attach design, revision 3):
 // - a connection's first line: a JSON object is MCP (its method, id,
-//   self-reported client and resume token read), anything else the
-//   console;
+//   self-reported client read), anything else the console;
 // - the console's commands, a call's arguments as one JSON object or as
 //   key=value items;
 // - a refused initialize's JSON-RPC error line, the discovery entry's text,
-//   session tokens;
+//   with the access line;
 // - the peer rule refuses another user (attach_peer_allowed: a test cannot
 //   switch users, so the rule the platform files apply to every peer's
 //   kernel-reported user is checked directly, and the endpoint's own
@@ -17,7 +16,10 @@
 // - the discovery entry appears with the endpoint, follows publish, and
 //   goes with it; an ended process's entry is removed by the next listing;
 // - a timed accept ends, interrupt ends a waiting accept, and a stalled
-//   connection is aborted (abort_attach_connection).
+//   connection is aborted (abort_attach_connection);
+// - the command folder (CommandDoor, MCP round 5): its line framing and
+//   request IDs, and on POSIX a round trip through its FIFOs, their modes,
+//   and the folder's removal.
 
 #include "src/runtime/automation/attach_endpoint.hpp"
 
@@ -30,6 +32,7 @@
 #include <stxlib/view.hpp>
 
 #if !defined(_WIN32)
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -55,6 +58,10 @@ void require(bool condition, const char* message) {
     std::exit(1);
 }
 
+void require(bool condition, const std::string& message) {
+    require(condition, message.c_str());
+}
+
 bool contains(std::string_view text, std::string_view part) {
     return text.find(part) != std::string_view::npos;
 }
@@ -67,15 +74,10 @@ void opening_lines() {
             "an initialize is MCP, with its method and id");
     require(initialize.client_name == "claude-code injected" && initialize.client_version == "2.1",
             "the client is read as it named itself, control bytes as spaces");
-    require(initialize.resume.empty(), "a plain initialize resumes nothing");
     const AttachOpening resumed = read_attach_opening(
         "  {\"jsonrpc\":\"2.0\",\"id\":\"a\",\"method\":\"initialize\",\"params\":{\"resume\":\"0123abcd\"}}\r");
-    require(resumed.json && resumed.id_json == "\"a\"" && resumed.resume == "0123abcd",
-            "params.resume names the session to resume; a string id stays a string");
-    const AttachOpening meta = read_attach_opening(
-        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\","
-        "\"params\":{\"_meta\":{\"gui-forms/resume\":\"ff\"}}}");
-    require(meta.resume == "ff", "_meta's gui-forms/resume names it too");
+    require(resumed.json && resumed.id_json == "\"a\"",
+            "1.0.5's params.resume is harmless (there are no sessions); a string id stays a string");
     require(!read_attach_opening("help").json && !read_attach_opening("").json &&
                 !read_attach_opening("call windows {}").json,
             "a line that is not a JSON object is the console");
@@ -90,9 +92,11 @@ void console_commands() {
     require(parse_console_command("tools").verb == ConsoleVerb::tools, "tools");
     require(parse_console_command("transcript").verb == ConsoleVerb::transcript, "transcript");
     require(parse_console_command("quit").verb == ConsoleVerb::quit, "quit");
-    const ConsoleCommand resume = parse_console_command("resume 0123abcd");
-    require(resume.verb == ConsoleVerb::resume && resume.token == "0123abcd", "resume takes the token");
-    require(parse_console_command("resume").verb == ConsoleVerb::unknown, "resume without a token says so");
+    require(parse_console_command("resume 0123abcd").verb == ConsoleVerb::resume &&
+                parse_console_command("resume").verb == ConsoleVerb::resume,
+            "1.0.5's resume is kept, harmless, its token ignored");
+    const ConsoleCommand dotted = parse_console_command("help plan_paint.draw");
+    require(dotted.verb == ConsoleVerb::help && dotted.topic == "plan_paint.draw", "help takes a dotted path");
     const ConsoleCommand bare = parse_console_command("call windows");
     require(bare.verb == ConsoleVerb::call && bare.tool == "windows" && bare.arguments_json == "{}",
             "a call without arguments has an empty object");
@@ -136,24 +140,17 @@ void info_entries() {
     written.address = "/run/gui-forms/4242.sock";
     written.tools = 23U;
     written.note = "Plan Paint: draws plans.";
+    written.access = "This program takes commands from your own user account only.";
     const std::string text = attach_info_text(written);
     AttachListing read{};
     require(parse_attach_info(text, read), "an entry reads back");
     require(read.identity == written.identity && read.name == "Attach Test" && read.process == 4242 &&
                 read.executable == written.executable && read.address == written.address && read.tools == 23U &&
-                read.note == written.note,
+                read.note == written.note && read.access == written.access,
             "every field survives, a line break in the name as a space");
     AttachListing incomplete{};
     require(!parse_attach_info("name: x\nsocket: /s\n", incomplete), "an entry without a pid is refused");
     require(!parse_attach_info("pid: 12x\nsocket: /s\n", incomplete), "a pid that is not a number is refused");
-}
-
-void session_tokens() {
-    const std::string first = make_session_token();
-    const std::string second = make_session_token();
-    require(first.size() == 32U && first.find_first_not_of("0123456789abcdef") == std::string::npos,
-            "a token is 32 hexadecimal digits");
-    require(first != second, "two tokens differ");
 }
 
 void peer_rule() {
@@ -241,6 +238,10 @@ void same_user_connection() {
         require(connect_attach_endpoint(address, client, error), "a client of the same user connects");
         static_cast<void>(thread.join());
         require(run.waited == AttachWait::connected, "the same user's connection is accepted");
+#if defined(__APPLE__) || defined(__linux__)
+        require(run.streams.peer_process == static_cast<std::int64_t>(stxlib::process_id()),
+                "the kernel names the connecting process, for the console's label");
+#endif
 
         require(write_attach_line(client.output, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\nhelp\n"),
                 "the client writes two lines");
@@ -341,18 +342,103 @@ void stalled_connection_is_aborted() {
 
 } // namespace
 
+void door_lines() {
+    const DoorLine plain = read_door_line("  help plan_paint.draw \r");
+    require(plain.request.empty() && plain.command == "help plan_paint.draw", "a line without an ID is the command");
+    const DoorLine tagged = read_door_line("#a-7 plan_paint.draw shape=line");
+    require(tagged.request == "a-7" && tagged.command == "plan_paint.draw shape=line", "#<id> leads the command");
+    require(read_door_line("#?x help").request.empty(), "an ID of other characters is no ID");
+    require(read_door_line("#12345678901234567 help").request.empty(), "an ID past 16 characters is no ID");
+    require(door_reply_frame("ok: drew\n.hidden", "7", false) == "ok: drew\n..hidden\n. #7 ok\n",
+            "a reply's lines, a dot doubled, then the end line with the ID");
+    require(door_reply_frame("", "", true) == ". error\n", "an empty failure is its end line");
+    require(door_id_valid("3fa9c21b") && !door_id_valid("3FA9C21B") && !door_id_valid("3fa9c21") &&
+                !door_id_valid("../../x1"),
+            "an ID is 8 lowercase hexadecimal digits");
+    AttachListing written{};
+    written.process = 7;
+    written.address = "/s";
+    written.door = "3fa9c21b";
+    AttachListing read{};
+    require(parse_attach_info(attach_info_text(written), read) && read.door == "3fa9c21b",
+            "the discovery entry names the folder");
+    written.door = "../home";
+    require(parse_attach_info(attach_info_text(written), read) && read.door.empty(), "a bad ID is not read");
+}
+
+#if !defined(_WIN32)
+void door_round_trip() {
+    std::string error{};
+    std::string folder{};
+    {
+        const std::unique_ptr<CommandDoor> door = CommandDoor::open(error);
+        require(door != nullptr, "the command folder opens: " + error);
+        folder = (*door).folder();
+        require(folder == "/tmp/" + (*door).id() && door_id_valid((*door).id()), "the folder is /tmp/<id>");
+        struct stat status {};
+        require(lstat(folder.c_str(), &status) == 0 && S_ISDIR(status.st_mode) &&
+                    (status.st_mode & 0777U) == 0700U && status.st_uid == getuid(),
+                "the folder is the user's own, mode 0700");
+        for (const char* const name : {"/in", "/out"}) {
+            struct stat fifo {};
+            require(lstat((folder + name).c_str(), &fifo) == 0 && S_ISFIFO(fifo.st_mode) &&
+                        (fifo.st_mode & 0777U) == 0600U,
+                    "its pipes are FIFOs, mode 0600");
+        }
+        require((*door).send_line("help") == "echo 'help' > " + folder + "/in; cat " + folder + "/out",
+                "the printed command");
+        const int writer = open((folder + "/in").c_str(), O_WRONLY | O_NONBLOCK);
+        require(writer >= 0, "a writer opens `in` at once");
+        const std::string_view lines = "#3 help\nsecond";
+        require(write(writer, lines.data(), lines.size()) == static_cast<ssize_t>(lines.size()), "two lines written");
+        static_cast<void>(close(writer));
+        std::string line{};
+        require((*door).read_command(line, 5000) == DoorWait::line && line == "#3 help", "the first line is read");
+        require((*door).read_command(line, 50) == DoorWait::timed_out, "half a line waits, the writer's close no end");
+        (*door).reply(door_reply_frame("hi\n.dot", "3", false));
+        const int reader = open((folder + "/out").c_str(), O_RDONLY);
+        require(reader >= 0, "a reader opens `out`");
+        std::string got{};
+        char buffer[256] = {};
+        for (;;) {
+            const ssize_t count = read(reader, buffer, sizeof(buffer));
+            if (count <= 0) break;
+            got.append(buffer, static_cast<std::size_t>(count));
+        }
+        static_cast<void>(close(reader));
+        require(got == "hi\n..dot\n. #3 ok\n", "the reply reaches the reader, then its end: " + got);
+        (*door).write_info("name: test\n");
+        std::ifstream info(folder + "/info");
+        std::string first{};
+        std::string second{};
+        std::getline(info, first);
+        std::getline(info, second);
+        require(first == "id: " + (*door).id() && second == "pid: " + std::to_string(getpid()),
+                "info leads with the ID and the pid");
+        (*door).interrupt();
+        require((*door).read_command(line, 5000) == DoorWait::interrupted, "interrupt ends a wait");
+    }
+    struct stat gone {};
+    require(lstat(folder.c_str(), &gone) != 0, "the folder goes with the door");
+    remove_door_folder("../etc", 1);
+}
+#endif
+
 int main() {
     opening_lines();
     console_commands();
     error_lines();
     info_entries();
-    session_tokens();
     peer_rule();
     same_user_connection();
     ended_entries_are_removed();
     timed_accept_ends();
     interrupt_ends_accept();
     stalled_connection_is_aborted();
+    door_lines();
+#if !defined(_WIN32)
+    door_round_trip();
+#endif
     std::cout << "automation attach tests passed\n";
     return 0;
 }

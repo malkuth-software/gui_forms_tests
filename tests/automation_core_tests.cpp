@@ -1876,16 +1876,16 @@ void activation_offers_no_take_back() {
     require(presenter.take_back_offers == 1U, "a key aimed at the content offers it");
 }
 
-// Round 4, item 4: one question per session. The connection question's
-// Allow is the consent to control; an allowed take holds for the session,
-// an idle return included; release_control or a take-back asks again; a
-// new session asks again.
-void one_question_per_session() {
+// Round 4, item 4, under round 5's UCI model: one question for the
+// program. An allowed take holds, an idle return included; release_control
+// or a take-back asks again; a core session starting over (after a
+// disconnect) asks again.
+void one_question_for_the_program() {
     Fixture fixture(false);
     fixture.control.grant_session_consent();
     require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
                 fixture.presenter.takes == 0U && fixture.control.state() == ControlState::model_control,
-            "after the connection question the first act takes control with no countdown");
+            "with consent given the first act takes control with no countdown");
     require(succeeded(fixture.call("release_control", "{}")), "the model releases control");
     require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
                 fixture.presenter.takes == 1U,
@@ -1894,12 +1894,12 @@ void one_question_per_session() {
     require(fixture.control.state() == ControlState::user_control, "control returns after the grace period");
     require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
                 fixture.presenter.takes == 1U && fixture.control.state() == ControlState::model_control,
-            "within the session an idle return asks nothing more");
+            "an idle return asks nothing more");
     fixture.control.user_took_back();
-    require(!fixture.control.session_consent(), "the user's take-back ends the session's consent");
+    require(!fixture.control.session_consent(), "the user's take-back ends the consent");
     fixture.control.grant_session_consent();
     fixture.control.begin_session((*fixture.pump).now());
-    require(!fixture.control.session_consent(), "a new session (a connection without the token) asks again");
+    require(!fixture.control.session_consent(), "starting over after a disconnect asks again");
 }
 
 // Round 4, item 7: while a model holds control no tooltip shows; one that
@@ -1932,16 +1932,18 @@ void tooltips_rest_while_a_model_holds_control() {
     presenter.window_detached(window);
 }
 
-// Round 4, the close bug: a client stopped or killed mid-control leaves the
-// program the user's to close: the model's question scope closes (the save
-// question was answered Cancel for a model that was gone) and control
-// returns at once; stdin's end (the hard disconnect) the same.
-void a_dropped_client_leaves_the_program_closable() {
+// Round 4, the close bug, under round 5's UCI model: when the last
+// connection closes, the model's question scope closes (the save question
+// was answered Cancel for a model that was gone), so the program is the
+// user's to close; control stays the program's, and the next connection's
+// act runs as the last one's would. Stdin's end (the hard disconnect)
+// returns control as well.
+void the_last_connection_closing_leaves_the_program_closable() {
     Fixture fixture(false);
     require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
             "the model takes control");
     gui_forms::detail::begin_model_questions(77U, gui_forms::detail::ModelQuestionAnswer::none);
-    fixture.core.connection_dropped();
+    fixture.core.drop_model_work();
     HostDialogRequest question{};
     question.request_id = 9U;
     HostMessageDialogRequest message{};
@@ -1951,12 +1953,13 @@ void a_dropped_client_leaves_the_program_closable() {
     HostDialogResult answered{};
     require(!gui_forms::detail::model_questions_open() &&
                 !gui_forms::detail::answer_model_question(question, answered),
-            "after the drop the program's save question is the user's");
-    require(fixture.control.state() == ControlState::user_control, "control returns to the user at once");
-    require(!fixture.core.session_ended(), "the session waits for its resume");
-    fixture.core.connection_resumed((*fixture.pump).now());
-    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
-            "the resumed session acts again");
+            "after the last connection closes the program's save question is the user's");
+    require(fixture.control.state() == ControlState::model_control && !fixture.core.session_ended(),
+            "control stays the program's: nothing ended");
+    const std::size_t takes = fixture.presenter.takes;
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
+                fixture.presenter.takes == takes,
+            "the next connection's act runs with no new question");
     gui_forms::detail::begin_model_questions(78U, gui_forms::detail::ModelQuestionAnswer::none);
     fixture.core.hard_disconnect();
     require(!gui_forms::detail::model_questions_open() && fixture.control.state() == ControlState::user_control,
@@ -2013,9 +2016,9 @@ int main() {
     an_idle_wait_returns_while_the_sign_moves();
     a_program_tool_returns_without_waiting();
     activation_offers_no_take_back();
-    one_question_per_session();
+    one_question_for_the_program();
     tooltips_rest_while_a_model_holds_control();
-    a_dropped_client_leaves_the_program_closable();
+    the_last_connection_closing_leaves_the_program_closable();
     std::cout << "automation core tests passed\n";
     return 0;
 }

@@ -508,13 +508,14 @@ bool has(const std::string& text, std::string_view part) {
 void help_comes_from_the_documentation() {
     const std::vector<ToolSpec> tools = help_tools();
     HelpContext context{};
-    context.token = "0123abcd";
+    context.access = std::string(access_summary);
     context.note = "Plan Paint draws pictures.";
     context.console = true;
     const std::string overview = help_text("", tools, context);
-    require(has(overview, "help [topic | tool]") && has(overview, "session token: 0123abcd") &&
+    require(has(overview, "help [path]") && has(overview, "your own user account only") &&
                 has(overview, "`help mcp`") && has(overview, "Plan Paint draws pictures."),
-            "help gives the commands, the token, the topics and the program's note");
+            "help gives the access line, the commands, the topics and the program's note");
+    require(!has(overview, "token") && !has(overview, "resume"), "help names no token and no resume");
     const std::string listing = help_text("tools", tools, context);
     const std::string draw_line = listing.substr(listing.find("plan_paint_draw"), listing.find('\n'));
     require(has(draw_line, "Draws a shape on the picture.") && !has(draw_line, "Units") &&
@@ -530,12 +531,15 @@ void help_comes_from_the_documentation() {
     require(undocumented_tools(tools) == std::vector<std::string>{"plan_paint_mystery"},
             "the check names the undocumented tool");
     const std::string mcp = help_text("mcp", tools, context);
-    require(has(mcp, "Talk to a running program") && has(mcp, "-- Sessions --"),
+    require(has(mcp, "Talk to a running program") && has(mcp, "-- Connections --"),
             "help mcp is the compiled-in page on talking to a program");
-    const std::string sessions = help_text("sessions", tools, context);
-    require(has(sessions, "-- Sessions --") && !has(sessions, "-- The console --"), "a topic is one section");
+    const std::string connections = help_text("mcp.connections", tools, context);
+    require(has(connections, "-- Connections --") && !has(connections, "-- The console --"),
+            "a topic is one section, by dotted path");
+    require(help_text("connections", tools, context) == connections, "the bare section name works too");
+    require(!has(mcp, "session token") && !has(mcp, "resume <token>"), "the page names no token");
     const std::vector<std::string> topics = help_topics();
-    for (const std::string_view topic : {"console", "sessions", "control", "disconnect", "help"}) {
+    for (const std::string_view topic : {"console", "connections", "control", "disconnect", "help"}) {
         bool listed = false;
         for (const std::string& known : topics) listed = listed || known == topic;
         require(listed, "the documentation answers every topic help names");
@@ -547,25 +551,42 @@ void help_comes_from_the_documentation() {
             "an unknown topic suggests the nearest");
 }
 
-// Round 4: the token's line stands on its own line near the top of the
-// instructions, with the help pointer.
-void the_token_line_is_hard_to_miss() {
+// Round 5, the owner's UCI model: help is a dotted tree. The top lists the
+// groups, a group its tools as dotted paths, a path one tool.
+void help_is_a_dotted_tree() {
+    const std::vector<ToolSpec> tools = help_tools();
     HelpContext context{};
-    context.token = "feedface";
+    context.console = true;
+    const std::string overview = help_text("", tools, context);
+    require(has(overview, "Groups:") && has(overview, "plan_paint  (2 tools: `help plan_paint`)"),
+            "the top lists the group and how to open it");
+    const std::string group = help_text("plan_paint", tools, context);
+    require(has(group, "plan_paint.draw") && has(group, "plan_paint.mystery") &&
+                has(group, "Draws a shape on the picture.") && has(group, "`help plan_paint.<name>`"),
+            "a group lists its tools as dotted paths");
+    const std::string leaf = help_text("plan_paint.draw", tools, context);
+    require(leaf.rfind("plan_paint.draw = plan_paint_draw", 0U) == 0U && has(leaf, "Units are picture pixels."),
+            "a dotted path gives one tool, naming its tool");
+    require(has(help_text("PLAN_PAINT.Draw", tools, context), "Units are picture pixels."), "paths ignore case");
+    const std::string near = help_text("plan_paint.drw", tools, context);
+    require(has(near, "`help plan_paint.draw`"), "an unknown path names the nearest");
+}
+
+// Round 5: the instructions say who may connect and how control works, and
+// where help is, with no token and no prompt cost.
+void the_instructions_say_who_may_connect() {
+    HelpContext context{};
+    context.access = std::string(access_summary);
     context.note = "Plan Paint's note.";
     const std::string instructions = session_instructions("A GUI.Forms program.", context);
     require(instructions.substr(0U, instructions.find('\n')) == "A GUI.Forms program.", "what every program says first");
     const std::string second = instructions.substr(instructions.find('\n') + 1U);
-    require(second.substr(0U, 23U) == "session token: feedface", "the token's line is the second line");
-    require(has(second, "Reconnect with `resume feedface`") && has(second, "within 120 s") &&
-                has(second, "may not be there to answer another prompt") && has(second, "launch it with --mcp"),
-            "the line says how to resume, why, and that --mcp never asks");
-    require(!has(second, "without being asked again"), "the old wording is gone");
-    require(has(instructions, std::string(help_pointer)) && has(instructions, "Plan Paint's note."),
-            "the help pointer and the program's note follow");
-    HelpContext stdio{};
-    require(!has(session_instructions("A GUI.Forms program.", stdio), "session token"),
-            "a launch on standard input has no token line");
+    require(second.rfind(std::string(access_summary), 0U) == 0U, "the access line is the second line");
+    require(has(instructions, std::string(mcp_help_pointer)) && has(instructions, "--mcp-help") &&
+                has(instructions, "Plan Paint's note."),
+            "the help pointer, with --mcp-help, and the program's note follow");
+    require(!has(instructions, "token") && !has(instructions, "prompt") && !has(instructions, "resume"),
+            "no token, prompt cost or resume");
 }
 
 } // namespace
@@ -583,7 +604,8 @@ int main() {
     lines_type_in();
     timing_lines_are_quiet();
     help_comes_from_the_documentation();
-    the_token_line_is_hard_to_miss();
+    help_is_a_dotted_tree();
+    the_instructions_say_who_may_connect();
     std::cout << "automation console tests passed\n";
     return 0;
 }
