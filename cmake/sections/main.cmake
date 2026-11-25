@@ -234,8 +234,8 @@ if(TARGET gui_forms_application)
         if(Python3_Interpreter_FOUND)
             add_test(NAME gui_forms_mcp_launch_tests
                 COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/mcp_launch_check.py
-                    $<TARGET_FILE:gui_forms_mcp_launch_probe> 30)
-            set_tests_properties(gui_forms_mcp_launch_tests PROPERTIES TIMEOUT 90)
+                    $<TARGET_FILE:gui_forms_mcp_launch_probe> 30 10)
+            set_tests_properties(gui_forms_mcp_launch_tests PROPERTIES TIMEOUT 300)
         endif()
     endif()
     # One stxlib_state in a program that reaches STXlib through the
