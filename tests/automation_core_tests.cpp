@@ -47,6 +47,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <span>
 #include <string_view>
 #include <vector>
 
@@ -1489,6 +1490,118 @@ void idle_ignores_the_signs_motion() {
     (*fixture.window).set_model_veil(false);
 }
 
+// Paints nothing: the host's paint pass, for the settling tests.
+class QuietPainter final : public Painter {
+public:
+    void save() override {}
+    void restore() override {}
+    void translate(Point) override {}
+    void clip_rect(Rect) override {}
+    void fill_rect(Rect, Color) override {}
+    void stroke_rect(Rect, Color, double) override {}
+    void fill_linear_gradient_spread(Rect, Point, Point, std::span<const GradientStop>, GradientSpreadMode) override {}
+    void draw_line(Point, Point, Color, double) override {}
+    void draw_text_utf8(Point, std::string_view, FontSpec, Color) override {}
+    void draw_image(ImageId, Rect, double) override {}
+};
+
+// Round 3, item 2: a paint completes the settling work it began with while
+// the stripes keep damage coming, so the damage never drains (every generic
+// act waited out its 5 s with "a frame is wanted").
+void settling_survives_moving_stripes() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    (*fixture.window).set_model_veil(true);
+    (*fixture.pump).advance((*fixture.pump).now() + std::chrono::milliseconds(20));
+    (*fixture.press).invalidate(Dirty::paint);
+    require((*fixture.window).needs_settling_frame(), "the program's own paint is settling work");
+    QuietPainter painter{};
+    static_cast<void>((*fixture.window).paint(painter));
+    // The stripes step again before the host takes the damage.
+    static_cast<void>((*fixture.window).poll_frame_schedule((*fixture.pump).now() + std::chrono::milliseconds(200)));
+    require(!(*fixture.window).needs_settling_frame(),
+            "the painted work is settled although the stripes' damage is still waiting");
+    (*fixture.press).invalidate(Dirty::paint);
+    require((*fixture.window).needs_settling_frame(), "new work after the paint wants a frame again");
+    (*fixture.window).set_model_veil(false);
+}
+
+// Round 3, item 1: a tooltip's window holding the activation is never the
+// default window; the program window reads as active.
+void the_default_window_is_a_program_window() {
+    Fixture fixture(false);
+    const std::shared_ptr<Panel> tip_root = make_control<Panel>(StableId("auto.tip.root"));
+    Window tip(tip_root, Size{1.0, 1.0});
+    tip.perform_layout();
+    host::HeadlessHost tip_host(tip);
+    require(tip_host.dispatch(HostAttachEvent{{1.0, 1.0}, 1.0}, 500U).accepted(), "the tooltip window attaches");
+    require(tip_host.dispatch(HostActivationEvent{true}, 600U).accepted() && tip.active(),
+            "the tooltip window holds the activation");
+    require(fixture.core.attach_window(tip, "auto.window/tool-tip.1", true), "the tooltip window joins");
+    const std::string outline = success_text(fixture.call("snapshot", "{}"));
+    require(contains(outline, "[auto.window] active") && !contains(outline, "tool-tip"),
+            "snapshot {} reads the program window, active, and never the tooltip");
+    const std::string windows = success_text(fixture.call("windows", "{}"));
+    require(contains(windows, "[auto.window] active"), "windows names the program window active");
+    require(succeeded(fixture.call("capture", "{\"target\":\"auto.press\"}")),
+            "a target in the program window is found without naming the window");
+    fixture.core.detach_window(tip);
+}
+
+// Round 3, item 3: a dialog's default and cancel buttons are marked.
+void dialog_buttons_are_marked() {
+    Fixture fixture(false);
+    const std::shared_ptr<Button> ok = make_control<Button>(StableId("auto.ok"), "OK");
+    const std::shared_ptr<Button> cancel = make_control<Button>(StableId("auto.cancel"), "Cancel");
+    (*ok).set_requested_bounds(Rect{10.0, 170.0, 80.0, 24.0});
+    (*cancel).set_requested_bounds(Rect{100.0, 170.0, 80.0, 24.0});
+    (*ok).default_button = true;
+    (*fixture.root).add_child(ok);
+    (*fixture.root).add_child(cancel);
+    (*fixture.window).set_cancel_button(cancel);
+    (*fixture.window).perform_layout();
+    const std::string outline = success_text(fixture.call("snapshot", "{}"));
+    require(contains(outline, "[auto.ok]") && contains(outline, " default"), "the default button is marked default");
+    require(contains(outline, "[auto.cancel]") && contains(outline, " cancel"), "the cancel button is marked cancel");
+    require(!contains(outline, "[auto.press] default"), "an ordinary button is not");
+}
+
+// Round 3, item 4: an act that changes nothing says so.
+void an_act_without_effect_says_so() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    const std::string escaped = success_text(fixture.call("keyboard", "{\"target\":\"auto.press\",\"keys\":\"Escape\"}"));
+    require(contains(escaped, "effect: none") || contains(escaped, "changed:") || contains(escaped, "focus:"),
+            "a key's reply names its effect or that it had none");
+    require(!contains(escaped, "still busy"), "the key settles at once");
+}
+
+// Round 3, item 5: a batch takes more than 64 steps.
+void large_batches_run() {
+    Fixture fixture(false);
+    std::string steps{};
+    for (int index = 0; index < 100; ++index) {
+        if (!steps.empty()) steps += ',';
+        steps += "{\"tool\":\"find\",\"name\":\"Apply\"}";
+    }
+    const ToolReply batch = fixture.call("batch", "{\"steps\":[" + steps + "]}");
+    require(succeeded(batch) && contains(success_text(batch), "100 steps"), "a 100-step batch runs");
+}
+
+// Round 3, item 6: capture points answers colours instead of an image.
+void capture_samples_points() {
+    Fixture fixture(false);
+    const ToolReply sampled = fixture.call("capture", "{\"points\":[[1,1],[5000,5000]]}");
+    require(succeeded(sampled), "a capture with points succeeds");
+    const ToolSuccess* const success = sampled.success_value();
+    require(success != nullptr && (*success).images.empty(), "no image comes with the colours");
+    require(contains((*success).text, "1,1 #") && contains((*success).text, "5000,5000 outside"),
+            "each point has its colour, or outside");
+    require(!succeeded(fixture.call("capture", "{\"points\":[[1]]}")), "a malformed point is refused");
+}
+
 // Round 2, item 3: the served tool list is the same all launch long, so a
 // client is sent no list_changed for state the program goes through.
 void the_tool_list_is_stable_for_the_launch() {
@@ -1575,6 +1688,12 @@ int main() {
     disconnect_soft_balks_and_hard_ends();
     the_users_pointer_never_feeds_a_model_gesture();
     idle_ignores_the_signs_motion();
+    settling_survives_moving_stripes();
+    the_default_window_is_a_program_window();
+    dialog_buttons_are_marked();
+    an_act_without_effect_says_so();
+    large_batches_run();
+    capture_samples_points();
     the_tool_list_is_stable_for_the_launch();
     taken_arguments_still_launch();
     std::cout << "automation core tests passed\n";
