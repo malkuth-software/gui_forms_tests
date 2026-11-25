@@ -292,8 +292,9 @@ void tokens_take_their_tone() {
         }
     }
     require(label_dim, "a session label is c 0 and dimmer");
-    require(instruction == "callplan_paint_draw", "the verb and the tool's name are the instruction");
-    require(value == "{\"shape\":\"oval\"}", "the arguments are values");
+    require(instruction == "callplan_paint_draw{\"\"\"\"}",
+            "the verb, the tool's name and the arguments' braces and quotes are the instruction");
+    require(value == "shape:oval", "the arguments between them are values");
     std::vector<ConsoleGlyphRow> reply{};
     console_wrap(lines[1], 200U, reply);
     std::string lead{};
@@ -301,12 +302,29 @@ void tokens_take_their_tone() {
         if (glyph.tone == ConsoleTone::instruction) lead += glyph.text;
     }
     require(lead == "\xe2\x80\xb9drew", "a reply's mark and leading word are the instruction");
+    // Brackets, braces, parentheses and quotes are the instruction wherever
+    // they stand (owner): in a reply's text too.
+    ConsoleLog marks{};
+    marks.record_reply(ToolReply::success("ok: [status] name \"Untitled\" (it's {new})"));
+    std::vector<ConsoleLine> mark_lines{};
+    marks.copy_since(0U, mark_lines);
+    std::vector<ConsoleGlyphRow> mark_rows{};
+    console_wrap(mark_lines[0], 200U, mark_rows);
+    for (const ConsoleGlyph& glyph : mark_rows[0].glyphs) {
+        const bool structural = std::string_view("[](){}'\"").find(glyph.text) != std::string_view::npos;
+        if (structural) {
+            require(glyph.tone == ConsoleTone::instruction && near(glyph.shade.c, 0.0),
+                    "a bracket, brace, parenthesis or quote is c 0");
+        }
+    }
     std::vector<ConsoleGlyphRow> narrow{};
     console_wrap(lines[0], 20U, narrow);
     require(narrow.size() > 1U, "a narrow screen wraps the call");
     for (std::size_t index = 1U; index < narrow.size(); ++index) {
         for (const ConsoleGlyph& glyph : narrow[index].glyphs) {
-            require(glyph.tone == ConsoleTone::value, "a wrapped row is all values");
+            const bool structural = std::string_view("[](){}'\"").find(glyph.text) != std::string_view::npos;
+            require(glyph.tone == (structural ? ConsoleTone::instruction : ConsoleTone::value),
+                    "a wrapped row is values, its marks aside");
         }
     }
     std::vector<ConsoleGlyphRow> again{};
@@ -332,12 +350,13 @@ void lines_type_in() {
     require(!screen.busy() && !screen.advance(0.016), "an empty screen is idle and changes nothing");
     screen.queue_line(rows);
     require(screen.busy(), "a queued line wants frames");
-    const std::size_t total = rows[0].glyphs.size();
+    const std::vector<ConsoleGlyph>& glyphs = rows[0].glyphs;
+    const std::size_t total = glyphs.size();
     std::size_t instruction = 0U;
-    for (const ConsoleGlyph& glyph : rows[0].glyphs) {
+    for (const ConsoleGlyph& glyph : glyphs) {
         if (glyph.tone == ConsoleTone::instruction) ++instruction;
     }
-    require(instruction == 7U, "call act is seven typed glyphs");
+    require(instruction == 11U, "call act and the braces and quotes are eleven typed glyphs");
     std::size_t shown = 0U;
     std::size_t frames = 0U;
     bool block = false;
@@ -345,12 +364,22 @@ void lines_type_in() {
         static_cast<void>(screen.advance(0.004));
         ++frames;
         const std::size_t now = screen.rows().empty() ? 0U : screen.rows().back().shown;
-        if (now <= instruction) {
-            require(now - shown <= 1U, "the instruction types one glyph at a time");
-        } else {
-            require(shown == instruction && now == total, "the values appear at once, as a block");
-            block = true;
+        // Each step shows one instruction glyph, or a whole run of values.
+        std::size_t units = 0U;
+        std::size_t at = shown;
+        while (at < now) {
+            ++units;
+            if (glyphs[at].tone == ConsoleTone::instruction) {
+                ++at;
+                continue;
+            }
+            std::size_t end = at;
+            while (end < total && glyphs[end].tone == ConsoleTone::value) ++end;
+            require(now >= end, "a value's run appears at once, as a block");
+            if (end - at > 1U) block = true;
+            at = end;
         }
+        require(units <= 1U, "the instruction types a glyph a step");
         shown = now;
     }
     require(block && shown == total, "the whole line shows");
