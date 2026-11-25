@@ -85,12 +85,14 @@ protected:
         if (!armed_ || window_ == nullptr) return;
         armed_ = false;
         const FrameTime due = FrameClock::now() + restarted_interval;
-        static_cast<void>((*window_).schedule_paint(shared_from_this(), due));
+        // The token keeps the deadline: a discarded token revokes it.
+        deadline_ = (*window_).schedule_paint(shared_from_this(), due);
     }
 
 private:
     Window* window_{};
     bool armed_{};
+    FrameRequestToken deadline_{};
 };
 
 struct ScheduleWakeHostFixture final {
@@ -133,10 +135,12 @@ struct ScheduleWakeHostFixture final {
     }
 
     // The fixture's windows are hidden, so the system sends them no
-    // WM_PAINT; a pending update region is painted as it would be for a
-    // visible window.
-    static void paint_pending(HWND window) {
-        if (GetUpdateRect(window, nullptr, FALSE) != FALSE) SendMessageW(window, WM_PAINT, 0, 0);
+    // WM_PAINT, and keeps no update region for them either (InvalidateRect
+    // on a hidden window leaves GetUpdateRect empty): the damage the host
+    // collected is painted as it would be for a visible window.
+    static void paint_pending(HostedWindow& hosted) {
+        const bool region = GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE;
+        if (region || !(*hosted.state).pending_damage_.empty()) SendMessageW(hosted.window, WM_PAINT, 0, 0);
     }
 
     // True while a schedule wake is queued for `window`.
@@ -163,7 +167,7 @@ struct ScheduleWakeHostFixture final {
             require(wait != WAIT_FAILED, "the window's loop waits");
             if (clock_count == 1U && wait == WAIT_OBJECT_0) (*hosted.state).scheduler_clock_signalled();
             drain(hosted.window);
-            paint_pending(hosted.window);
+            paint_pending(hosted);
         }
     }
 
@@ -230,8 +234,8 @@ struct ScheduleWakeHostFixture final {
             DispatchMessageW(&render);
             ++renders;
         }
-        const bool region_pending = GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE;
-        paint_pending(hosted.window);
+        const bool damage_pending = !(*hosted.state).pending_damage_.empty();
+        paint_pending(hosted);
         // The state the paint depends on, so that a failure names the link
         // that broke: the model's wake, the host's posted wake, the render
         // dispatch, the update region.
@@ -243,7 +247,7 @@ struct ScheduleWakeHostFixture final {
                     ((*hosted.model).occluded() ? "yes" : "no") + ", host dispatch pending " +
                     (dispatch_pending ? "yes" : "no") + ", presentation pending " +
                     (presentation_pending ? "yes" : "no") + ", render messages " + std::to_string(renders) +
-                    ", update region " + (region_pending ? "pending" : "empty") + ")");
+                    ", host damage " + (damage_pending ? "pending" : "empty") + ")");
         require(schedule_wake_queued(hosted.window), "a deadline set while painting posts a schedule wake");
         run_until(hosted, (*root).paints, first_paints + 2U);
         require((*root).paints >= first_paints + 2U, "the paint deadline repaints with no other input");
