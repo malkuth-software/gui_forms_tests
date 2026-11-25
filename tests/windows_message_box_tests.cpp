@@ -44,6 +44,8 @@ struct MessageBoxProbe final {
     int icon_width{};
     int icon_height{};
     unsigned ticks{};
+    // How many times the probe pressed OK before the call returned.
+    unsigned presses{};
     // When the probe gives up: the title of a dialog of this thread that
     // was not the probe's box, if any (closed so that the run ends).
     std::wstring other_dialog;
@@ -183,7 +185,16 @@ void CALLBACK probe_message_box(HWND, UINT, UINT_PTR timer, DWORD) {
             read_icon(icon, *probe);
         }
     }
-    PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
+    // Press OK the way a click does: BN_CLICKED from the OK button itself,
+    // and BM_CLICK to the button (CI: an OK posted without the button's
+    // handle was ignored for 320 ticks on windows-x64). An OK-only box
+    // answers Cancel (Esc) with its OK, so after 40 presses the probe adds
+    // Cancel too.
+    ++(*probe).presses;
+    const HWND button = GetDlgItem(box, IDOK);
+    PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), reinterpret_cast<LPARAM>(button));
+    if (button != nullptr) PostMessageW(button, BM_CLICK, 0, 0);
+    if ((*probe).presses > 40U) PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDCANCEL, BN_CLICKED), 0);
 }
 
 struct MessageBoxFixture final {
@@ -224,6 +235,7 @@ struct MessageBoxFixture final {
         watchdog.join();
         KillTimer(nullptr, timer);
         active_probe = nullptr;
+        std::cerr << "windows message box: " << probe.presses << " presses over " << probe.ticks << " ticks\n";
         require(probe.box_found, "the probe found the box (" + std::to_string(probe.ticks) + " ticks; " +
                                      (probe.other_dialog.empty() ? std::string("no other dialog of this thread")
                                                                  : "another dialog of this thread, titled \"" +
