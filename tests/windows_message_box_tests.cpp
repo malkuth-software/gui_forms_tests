@@ -12,12 +12,16 @@
 // desktop on a development machine.
 #include "src/surface/windows/application/windows_host.cpp"
 
+#include <array>
+#include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace gui_forms::host {
@@ -47,6 +51,37 @@ struct MessageBoxProbe final {
 
 // The probe the timer fills; the timer procedure has no context argument.
 MessageBoxProbe* active_probe = nullptr;
+// The timer's ticks and whether the call returned, for the watchdog thread.
+std::atomic<unsigned> probe_ticks{0U};
+std::atomic<bool> probe_done{false};
+// How long the watchdog waits before it reports and closes the box: past
+// the timer's own give-up, below the test's timeout.
+constexpr auto watchdog_wait = std::chrono::seconds(20);
+
+// The watchdog thread: when the call has not returned after watchdog_wait
+// (the timer never found the box, or never ran), it reports the ticks and
+// where the probe's box is, on any thread, and presses OK and Cancel on it,
+// so that the run names what happened instead of reaching the timeout.
+void watch_message_box(DWORD dialog_thread) {
+    const auto deadline = std::chrono::steady_clock::now() + watchdog_wait;
+    while (!probe_done.load()) {
+        if (std::chrono::steady_clock::now() >= deadline) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    if (probe_done.load()) return;
+    const HWND box = FindWindowW(nullptr, probe_title);
+    const DWORD box_thread = box != nullptr ? GetWindowThreadProcessId(box, nullptr) : 0U;
+    std::cerr << "windows message box watchdog: " << probe_ticks.load() << " timer ticks; the probe's box "
+              << (box == nullptr ? std::string("is not open")
+                                 : box_thread == dialog_thread ? std::string("is open on the calling thread")
+                                                               : "is open on another thread (" +
+                                                                     std::to_string(box_thread) + ")")
+              << '\n';
+    if (box != nullptr) {
+        PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDOK, BN_CLICKED), 0);
+        PostMessageW(box, WM_COMMAND, MAKEWPARAM(IDCANCEL, BN_CLICKED), 0);
+    }
+}
 
 // EnumThreadWindows target: stops at the probe's box and stores it.
 BOOL CALLBACK find_probe_box(HWND window, LPARAM found) {
@@ -112,6 +147,7 @@ void CALLBACK probe_message_box(HWND, UINT, UINT_PTR timer, DWORD) {
     MessageBoxProbe* const probe = active_probe;
     if (probe == nullptr) return;
     ++(*probe).ticks;
+    probe_ticks.store((*probe).ticks);
     HWND box = nullptr;
     EnumThreadWindows(GetCurrentThreadId(), find_probe_box, reinterpret_cast<LPARAM>(&box));
     if (box == nullptr) {
@@ -171,9 +207,14 @@ struct MessageBoxFixture final {
         request.message = "The probe presses OK.";
         MessageBoxProbe probe{};
         active_probe = &probe;
+        probe_ticks.store(0U);
+        probe_done.store(false);
         const UINT_PTR timer = SetTimer(nullptr, 0U, probe_period_milliseconds, probe_message_box);
         require(timer != 0U, "the probe timer starts");
+        std::thread watchdog(watch_message_box, GetCurrentThreadId());
         const HostDialogResult result = native_message_dialog(nullptr, 7U, request);
+        probe_done.store(true);
+        watchdog.join();
         KillTimer(nullptr, timer);
         active_probe = nullptr;
         require(probe.box_found, "the probe found the box (" + std::to_string(probe.ticks) + " ticks; " +
