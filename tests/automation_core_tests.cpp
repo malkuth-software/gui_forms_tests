@@ -1713,7 +1713,7 @@ void the_stripes_ask_for_no_frames() {
         static_cast<void>((*fixture.window).poll_frame_schedule(later));
         require(!(*fixture.window).needs_frame(), "no stripe frame wants a paint");
     }
-    require((*fixture.window).next_wake().value() == nullptr, "the still stripes ask for no wake");
+    require((*fixture.window).next_wake().absent(), "the still stripes ask for no wake");
     require((*fixture.window).metrics_snapshot().paint_passes == passes && (*fixture.window).model_veil_frames() == 0U,
             "two seconds of stripes paint the program window no more");
     (*fixture.window).set_model_veil(false);
