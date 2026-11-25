@@ -1092,6 +1092,133 @@ void a_models_close_answers_the_programs_question() {
             "a close the user starts shows the program's question");
 }
 
+// A program window whose closing handler asks "Save changes?" through the
+// window's host services while its work is unsaved, as Plan Paint's does:
+// Yes saves, No discards, anything else keeps the window open.
+struct ClosingQuestionState final {
+    host::HeadlessApplication* application{};
+    bool dirty{true};
+    std::size_t asked{};
+    bool shown{};
+};
+
+class AskOnClosing final {
+public:
+    explicit AskOnClosing(ClosingQuestionState& state) noexcept : state_(&state) {}
+    void operator()(HostCloseRequest& request) const {
+        ClosingQuestionState& run = *state_;
+        if (!run.dirty) return;
+        host::HeadlessHost* const window_host = (*run.application).host((*run.application).id("main"));
+        HostMessageDialogRequest question{};
+        question.title = "Save changes?";
+        question.message = "Save changes to Untitled?";
+        question.buttons = HostMessageButtons::yes_no_cancel;
+        question.default_choice = HostDialogChoice::cancel;
+        HostDialogRequest asked{};
+        asked.request_id = ++run.asked;
+        asked.payload = question;
+        const HostDialogResult result = (*window_host).headless_services().show_dialog(asked);
+        const HostMessageDialogResult* const answer = std::get_if<HostMessageDialogResult>(&result.payload);
+        run.shown = !(*window_host).headless_services().dialog_trace().empty();
+        const HostDialogChoice choice = answer == nullptr ? HostDialogChoice::none : (*answer).choice;
+        if (choice == HostDialogChoice::yes) run.dirty = false;
+        request.cancel = choice != HostDialogChoice::yes && choice != HostDialogChoice::no;
+    }
+
+private:
+    ClosingQuestionState* state_;
+};
+
+// One program window with unsaved work, served AI-led.
+class DisconnectRig final {
+public:
+    DisconnectRig() {
+        std::vector<ApplicationWindow> windows{};
+        windows.push_back(modal_entry("main", ""));
+        windows.back().options.closing = AskOnClosing(state);
+        application = std::make_unique<host::HeadlessApplication>(std::move(windows));
+        state.application = application.get();
+        settings.ai_led = true;
+        control = std::make_unique<AutomationControl>(settings, &presenter);
+        core = std::make_unique<AutomationCore>(*control);
+        Window& window = *(*application).model((*application).id("main"));
+        require((*core).attach_window(window, "main", false, (*application).handle("main")), "the window joins");
+        pump = std::make_unique<WindowPump>(window, *control, presenter);
+        (*control).begin_ai_led((*pump).now());
+    }
+    [[nodiscard]] bool open() const { return (*application).id("main").valid(); }
+    [[nodiscard]] ToolReply run(const char* arguments) { return (*core).run("disconnect", arguments, *pump); }
+    void user_cancels() {
+        HostDialogResult users{};
+        users.request_id = state.asked + 1U;
+        HostMessageDialogResult cancelled{};
+        cancelled.outcome = HostDialogOutcome::cancelled;
+        cancelled.choice = HostDialogChoice::cancel;
+        users.payload = cancelled;
+        (*(*application).host((*application).id("main"))).headless_services().queue_dialog_result(users);
+    }
+
+    ClosingQuestionState state{};
+    std::unique_ptr<host::HeadlessApplication> application{};
+    TestPresenter presenter{};
+    ControlSettings settings{};
+    std::unique_ptr<AutomationControl> control{};
+    std::unique_ptr<AutomationCore> core{};
+    std::unique_ptr<WindowPump> pump{};
+};
+
+// Owner, round 3: disconnect. Soft (the default) never closes over unsaved
+// work and shows nothing: it balks and names the question; save, then soft
+// again goes through. Hard ends the session: the program's question goes to
+// the user, or discard_unsaved discards with no question. A transport drop
+// with no disconnect is a hard disconnect with the default.
+void disconnect_soft_balks_and_hard_ends() {
+    {
+        DisconnectRig rig{};
+        const std::string balked = success_text(rig.run("{}"));
+        require(contains(balked, "not disconnected: the program has unsaved work") &&
+                    contains(balked, "\"Save changes?: Save changes to Untitled?\"") &&
+                    contains(balked, "then disconnect again"),
+                "a soft disconnect over unsaved work balks and names the question");
+        require(rig.state.asked == 1U && !rig.state.shown && rig.open() && !gui_forms::detail::model_questions_open(),
+                "nothing closed, nothing was shown, nothing is left waiting");
+        require(!(*rig.core).session_ended() && succeeded((*rig.core).run("snapshot", "{}", *rig.pump)),
+                "the session goes on");
+        require(failed_with(rig.run("{\"discard_unsaved\":true}"), ToolError::invalid_arguments),
+                "discard_unsaved goes with mode hard");
+        rig.state.dirty = false;
+        const std::string done = success_text(rig.run("{\"mode\":\"soft\"}"));
+        require(contains(done, "ok: disconnected") && !rig.open() && (*rig.core).session_ended(),
+                "save, then a soft disconnect, closes the program");
+        require(failed_with((*rig.core).run("windows", "{}", *rig.pump), ToolError::needs_user),
+                "a call after the disconnect is refused");
+    }
+    {
+        DisconnectRig rig{};
+        rig.user_cancels();
+        const std::string hard = success_text(rig.run("{\"mode\":\"hard\"}"));
+        require(contains(hard, "ok: disconnected (hard)") && rig.state.asked == 1U && rig.state.shown,
+                "a hard disconnect shows the program's question to the user");
+        require((*rig.control).state() == ControlState::user_control && rig.open() && (*rig.core).session_ended(),
+                "the user holds the program and may keep it open");
+    }
+    {
+        DisconnectRig rig{};
+        const std::string discarded = success_text(rig.run("{\"mode\":\"hard\",\"discard_unsaved\":true}"));
+        require(contains(discarded, "ok: disconnected (hard); unsaved changes discarded") && rig.state.asked == 1U &&
+                    !rig.state.shown && !rig.open(),
+                "hard with discard_unsaved discards and asks no one");
+    }
+    {
+        DisconnectRig rig{};
+        rig.user_cancels();
+        // AutomationRun::close_all, as the transport ends.
+        (*rig.core).hard_disconnect();
+        require(rig.state.asked == 1U && rig.state.shown && rig.open(),
+                "a transport drop shows the program's question to the user");
+    }
+}
+
 void popup_windows_carry_no_sign() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.popup.root"));
     Window window(root, Size{300.0, 200.0});
@@ -1418,6 +1545,7 @@ int main() {
     a_model_opened_modal_window_closes_by_its_id();
     take_back_answers_over_model_modals();
     a_models_close_answers_the_programs_question();
+    disconnect_soft_balks_and_hard_ends();
     the_users_pointer_never_feeds_a_model_gesture();
     idle_ignores_the_signs_motion();
     the_tool_list_is_stable_for_the_launch();

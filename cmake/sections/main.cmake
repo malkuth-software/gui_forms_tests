@@ -3426,6 +3426,21 @@ add_executable(gui_forms_macos_host_close_tests tests/macos_host_close_tests.mm)
     # test's window activating at the same time takes away.
     set_tests_properties(gui_forms_macos_message_dialog_key_tests PROPERTIES TIMEOUT 60 RUN_SERIAL TRUE)
 
+    # Round 3: the take-back dialog over a native alert the program runs
+    # while a model holds control.
+    add_executable(gui_forms_macos_take_back_alert_tests MACOSX_BUNDLE
+        tests/macos_take_back_alert_tests.mm)
+    target_compile_options(gui_forms_macos_take_back_alert_tests PRIVATE -fobjc-arc)
+    target_link_libraries(gui_forms_macos_take_back_alert_tests PRIVATE
+        gui_forms_host_macos)
+    add_test(NAME gui_forms_macos_take_back_alert_tests
+             COMMAND ${CMAKE_COMMAND}
+                 -DBUNDLE=$<TARGET_BUNDLE_DIR:gui_forms_macos_take_back_alert_tests>
+                 -DOUTPUT_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}
+                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/run_macos_activated_test.cmake)
+    set_tests_properties(gui_forms_macos_take_back_alert_tests PROPERTIES
+        TIMEOUT 60 RUN_SERIAL TRUE)
+
     # Stage A: the NSAccessibility tree of every stock control, read in
     # process (no Accessibility permission needed).
     add_executable(gui_forms_macos_accessibility_tests MACOSX_BUNDLE
