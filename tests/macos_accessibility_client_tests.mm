@@ -845,8 +845,19 @@ Dump check_stale_element(const std::string& path, AXUIElementRef application, Du
         return dump;
     }
     const AXError pressed = AXUIElementPerformAction(dispose.get(), kAXPressAction);
-    Dump after = wait_for_new_dump(path, dump, 1500);
-    if (pressed != kAXErrorSuccess || find_semantic_node(after.snapshot.roots, "ax.disposable") != nullptr) {
+    if (pressed != kAXErrorSuccess) {
+        report.failures.push_back("stale element: pressing the dispose button failed (AX error " +
+                                  std::to_string(static_cast<int>(pressed)) + ")");
+        return dump;
+    }
+    // Not the first new dump: a dump written between the settled one and
+    // the press (an effect or generation that moved on its own) is new but
+    // predates the press, and failed this check once in two runs (PR #6).
+    // A request written after the press is answered only by a writer tick
+    // that ran after it on the main thread, so its dump holds the disposal.
+    Dump after = settled_dump(path, report, "stale element dispose");
+    if (report.settle_failed) return after;
+    if (find_semantic_node(after.snapshot.roots, "ax.disposable") != nullptr) {
         report.failures.push_back("stale element: the sample was not disposed");
         return after;
     }
@@ -956,7 +967,9 @@ Dump check_text_ranges(const std::string& path, AXUIElementRef application, Dump
     CFRange wanted = CFRangeMake(1, 1);
     CfValue wanted_range(AXValueCreate(kAXValueTypeCFRange, &wanted));
     const AXError set = AXUIElementSetAttributeValue(field.get(), kAXSelectedTextRangeAttribute, wanted_range.get());
-    Dump after = wait_for_new_dump(path, dump, 1500);
+    // As for the stale element: the dump answering a request written after
+    // the set reflects it; the first new dump may predate it.
+    Dump after = settled_dump(path, report, "text ranges selection");
     const SemanticNode* changed = find_semantic_node(after.snapshot.roots, "text-box");
     const bool selected = set == kAXErrorSuccess && changed != nullptr && (*changed).text_selection.present() &&
                           (*(*changed).text_selection.value()).anchor.value() == 1U &&
