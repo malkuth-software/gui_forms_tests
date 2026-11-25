@@ -3848,4 +3848,15 @@ if(GUI_FORMS_MCP)
         target_compile_definitions(gui_forms_automation_core_tests PRIVATE GUI_FORMS_TEST_AUTOMATION_RUN=1)
     endif()
     add_test(NAME gui_forms_automation_core_tests COMMAND gui_forms_automation_core_tests)
+    # The MCP console's record and the owner's colour formula (MCP 1.0.5).
+    add_executable(gui_forms_automation_console_tests tests/automation_console_tests.cpp)
+    target_link_libraries(gui_forms_automation_console_tests PRIVATE gui_forms_controls)
+    add_test(NAME gui_forms_automation_console_tests COMMAND gui_forms_automation_console_tests)
+    # The attach endpoint and protocol (MCP 1.0.5): a same-user connection,
+    # the peer rule, the endpoint's permissions, interrupt and abort.
+    if(TARGET gui_forms_automation)
+        add_executable(gui_forms_automation_attach_tests tests/automation_attach_tests.cpp)
+        target_link_libraries(gui_forms_automation_attach_tests PRIVATE gui_forms_automation stxlib::state)
+        add_test(NAME gui_forms_automation_attach_tests COMMAND gui_forms_automation_attach_tests)
+    endif()
 endif()
