@@ -492,12 +492,37 @@ void scrolled_pointer_motion_costs_nothing() {
     require(followed.size() == 1U && followed[0] == "type/Item100", "the pointer hits the link at its place in the book");
 }
 
+// A page shown at an anchor before the book has a size (an application
+// that opens a page while it builds its window) is scrolled there by the
+// first arrange that gives the book one.
+void anchor_before_size() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("app"));
+    std::shared_ptr<HelpBook> book = make_control<HelpBook>(StableId("app.page"));
+    HelpPageModel page{};
+    page.title = "Anchors";
+    for (std::size_t index = 0U; index < 120U; ++index) {
+        const std::size_t first = page.runs.size();
+        add_run(page, "Paragraph " + std::to_string(index) + " of a page long enough to scroll.", false, {});
+        add_block(page, HelpPageBlockKind::paragraph, first);
+    }
+    page.blocks[90U].anchor = "late";
+    (*book).show_page(std::move(page), "late");
+    (*book).set_requested_bounds({0.0, 0.0, 500.0, 300.0});
+    (*root).add_child(book);
+    Window window(root, Size{540.0, 340.0});
+    window.perform_layout();
+    const stxlib::Optional<double> top = (*book).block_top(90U);
+    require(top.present() && (*book).scroll_position().y > (*top.value()) - 40.0,
+            "the first arrange with a size scrolls to the anchor asked for before");
+}
+
 } // namespace
 
 int main() {
     shared_baseline_and_chip();
     hover_costs_no_layout();
     scrolled_pointer_motion_costs_nothing();
+    anchor_before_size();
     definition_lists();
     tables();
     coloured_code_and_scrolling();
