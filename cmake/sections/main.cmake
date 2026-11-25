@@ -649,6 +649,16 @@ if(GUI_FORMS_ENABLE_WINDOWS_HOST)
     set_tests_properties(gui_forms_windows_message_box_tests PROPERTIES TIMEOUT 60)
     # Real message boxes, which activate: on a private desktop.
     gui_forms_foreground_test(gui_forms_windows_message_box_tests)
+    add_executable(gui_forms_windows_take_back_message_box_tests tests/windows_take_back_message_box_tests.cpp)
+    target_compile_definitions(gui_forms_windows_take_back_message_box_tests PRIVATE
+        ${GUI_FORMS_WINDOWS_DEFINITIONS})
+    target_link_libraries(gui_forms_windows_take_back_message_box_tests PRIVATE
+        gui_forms_controls gui_forms_host_windows)
+    add_test(NAME gui_forms_windows_take_back_message_box_tests
+             COMMAND gui_forms_windows_take_back_message_box_tests)
+    set_tests_properties(gui_forms_windows_take_back_message_box_tests PROPERTIES TIMEOUT 60)
+    # Real message boxes, which activate: on a private desktop.
+    gui_forms_foreground_test(gui_forms_windows_take_back_message_box_tests)
     add_executable(gui_forms_windows_text_tests tests/windows_text_tests.cpp)
     target_compile_definitions(gui_forms_windows_text_tests PRIVATE
         ${GUI_FORMS_WINDOWS_DEFINITIONS})
