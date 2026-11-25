@@ -11,6 +11,9 @@
 // user's clicks and keys to it, as the message queue would deliver them.
 // A foreground test (gui_forms_foreground_test): it runs on a private
 // desktop on a development machine.
+// windows_host.cpp uses the native input gate, whose header 1.0.5 includes
+// only in an MCP build.
+#include "src/core/host/session/session_directory.hpp"
 #include "src/surface/windows/application/windows_host.cpp"
 
 #include <array>

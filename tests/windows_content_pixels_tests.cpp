@@ -8,6 +8,9 @@
 // icon (chrome) change.
 #include "gui_forms/control.hpp"
 #include "gui_forms/theme.hpp"
+// windows_host.cpp uses the native input gate, whose header 1.0.5 includes
+// only in an MCP build.
+#include "src/core/host/session/session_directory.hpp"
 #include "src/surface/windows/application/windows_host.cpp"
 
 #include <array>
