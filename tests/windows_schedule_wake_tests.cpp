@@ -10,8 +10,8 @@
 // Before the seam, the Windows host re-armed only at the end of its own
 // damage collections, so the restarted Timer waited for the previous,
 // distant deadline.
-// The windows are hidden popups driven message by message; nothing takes
-// the foreground.
+// The windows are popups shown off screen without activation and driven
+// message by message; nothing takes the foreground.
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/timer/timer/timer.hpp"
 #include "gui_forms/window.hpp"
@@ -29,6 +29,9 @@ namespace gui_forms::host {
 namespace {
 
 constexpr Size scene_size{160.0, 100.0};
+// The fixture windows' position, device pixels: far off every monitor, so a
+// shown fixture never appears on a desktop someone is using.
+constexpr int off_screen = -32000;
 // The restarted Timer's interval, and the distant one it replaces: without
 // the seam the window would wake only at the distant deadline.
 constexpr std::chrono::milliseconds restarted_interval{40};
@@ -100,7 +103,7 @@ struct ScheduleWakeHostFixture final {
         if (!condition) throw std::runtime_error(message);
     }
 
-    // One hidden host window over its own model.
+    // One host window over its own model, shown off screen (open).
     struct HostedWindow final {
         std::unique_ptr<WindowsHostState> state;
         Window* model{};
@@ -118,11 +121,14 @@ struct ScheduleWakeHostFixture final {
         hosted.state = std::make_unique<WindowsHostState>(std::move(owned), std::move(options));
         hosted.window = CreateWindowExW(WS_EX_NOACTIVATE,
                                         reinterpret_cast<LPCWSTR>(static_cast<ULONG_PTR>(native_class)),
-                                        L"Schedule wake fixture", WS_POPUP, 0, 0,
+                                        L"Schedule wake fixture", WS_POPUP, off_screen, off_screen,
                                         static_cast<int>(scene_size.width), static_cast<int>(scene_size.height),
                                         nullptr, nullptr, GetModuleHandleW(nullptr), hosted.state.get());
         require(hosted.window != nullptr, "fixture native creation");
         require((*hosted.state).initialize(hosted.window), "fixture host initialization");
+        // Shown without activation: Windows keeps no update region for a
+        // hidden window, so the host's damage would never become a paint.
+        ShowWindow(hosted.window, SW_SHOWNOACTIVATE);
         return hosted;
     }
 
@@ -134,13 +140,10 @@ struct ScheduleWakeHostFixture final {
         }
     }
 
-    // The fixture's windows are hidden, so the system sends them no
-    // WM_PAINT, and keeps no update region for them either (InvalidateRect
-    // on a hidden window leaves GetUpdateRect empty): the damage the host
-    // collected is painted as it would be for a visible window.
+    // The fixture drives the window message by message, so a pending
+    // update region is painted here, as the system's WM_PAINT would.
     static void paint_pending(HostedWindow& hosted) {
-        const bool region = GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE;
-        if (region || !(*hosted.state).pending_damage_.empty()) SendMessageW(hosted.window, WM_PAINT, 0, 0);
+        if (GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE) SendMessageW(hosted.window, WM_PAINT, 0, 0);
     }
 
     // True while a schedule wake is queued for `window`.
