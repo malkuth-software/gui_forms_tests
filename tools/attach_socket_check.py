@@ -15,6 +15,8 @@ checks:
 - console mode: help, tools, call with key=value, an unknown tool, the
   transcript (with the session labels), quit; and `resume <token>` after a
   dropped console connection;
+- a second client while a session is connected is told "waiting for the
+  current session to end" (MCP as a JSON-RPC error, a console as a line);
 - the socket and the entry go when the program ends.
 Another user's peer cannot be made here; the rule is checked in
 gui_forms_automation_attach_tests.
@@ -142,7 +144,7 @@ def json_mode(path):
     answer = first.message(1)
     require("result" in answer, "initialize answers: " + json.dumps(answer))
     instructions = answer["result"].get("instructions", "")
-    token = re.search(r"Session token: ([0-9a-f]{32})", instructions)
+    token = re.search(r"session token: ([0-9a-f]{32})", instructions, re.IGNORECASE)
     require(token is not None, "the instructions carry a session token")
     token = token.group(1)
     tools = [tool["name"] for tool in first.message(2)["result"]["tools"]]
@@ -150,6 +152,14 @@ def json_mode(path):
     first.send(request(3, "tools/call", {"name": "probe_ready", "arguments": {}}))
     called = first.message(3)
     require(called["result"]["content"][0]["text"] == "ready", "tools/call runs the tool: " + json.dumps(called))
+    # While this session is connected another client is told why it waits,
+    # never left in silence: MCP as an error on its initialize's id.
+    waiting = Connection(path)
+    waiting.send(initialize("w"))
+    answer = waiting.message("w")
+    require("waiting for the current session to end" in answer.get("error", {}).get("message", ""),
+            "a second MCP client is told it waits: " + json.dumps(answer))
+    waiting.close()
     first.close()
 
     second = Connection(path)
@@ -173,13 +183,17 @@ def console_mode(path):
     console.send("help\n")
     help_text = console.until_prompt()
     require("Commands:" in help_text and "call <tool>" in help_text, "help lists the commands")
-    token = re.search(r"Session token: ([0-9a-f]{32})", help_text)
+    token = re.search(r"session token: ([0-9a-f]{32})", help_text, re.IGNORECASE)
     require(token is not None, "help says the session token")
     token = token.group(1)
     console.send("help\n")
     console.until_prompt()
     console.send("tools\n")
     require("probe_ready" in console.until_prompt(), "tools lists the probe's tool")
+    waiting = Connection(path)
+    waiting.send("help\n")
+    require(waiting.line() == "waiting for the current session to end", "a second console is told it waits")
+    waiting.close()
     console.send("call probe_ready\n")
     require(console.until_prompt().strip() == "ready", "call answers the tool's text")
     console.send("call find name=Probe role=button\n")
