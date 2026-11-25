@@ -160,6 +160,28 @@ void shared_baseline_and_chip() {
         }
     }
     require(chip, "inline code sits on a padded chip shorter than the line");
+    // Punctuation after code hugs it: the semicolon after
+    // "std::invalid_argument" starts at the chip's hairline edge, with no
+    // padding between.
+    const TextDraw* semicolon = nullptr;
+    for (const TextDraw& draw : painter.texts) {
+        if (!draw.text.empty() && draw.text[0] == ';') semicolon = &draw;
+    }
+    double chip_right = 0.0;
+    for (const Rect& fill : painter.fills) {
+        if (fill.x < (*code).origin.x && fill.right() > (*code).origin.x && fill.y < (*code).origin.y &&
+            fill.bottom() > (*code).origin.y) {
+            chip_right = fill.right();
+        }
+    }
+    require(semicolon != nullptr && chip_right > 0.0 && (*semicolon).origin.x >= chip_right - 1.5 &&
+                (*semicolon).origin.x <= chip_right + 0.5,
+            "punctuation after inline code hugs the chip");
+    // The title reads as the page's first heading: larger than a level-one
+    // heading of the body, and semibold.
+    const TextDraw* const title = painter.find("Typography");
+    require(title != nullptr && (*title).font.size >= (*body).font.size * 1.5 && (*title).font.weight >= 600,
+            "the page title is larger than the body's headings and semibold");
     // Two lines of one paragraph are a line height apart.
     std::vector<double> baselines;
     for (const TextDraw& draw : painter.texts) {
