@@ -7,6 +7,8 @@
 #include "demo/correspondence/correspondence_controls.hpp"
 #include "demo/correspondence/correspondence_model.hpp"
 #include "gui_forms_lab/correspondence_view.hpp"
+#include "gui_forms/controls/v_scroll_bar.hpp"
+#include "gui_forms/controls/menu_strip.hpp"
 
 #include <cstdint>
 #include <cstdlib>
@@ -208,6 +210,18 @@ int main()
     expect((*folders).items()[4].text == "Junk  (3)", "Junk shows its unread count");
     expect((*folders).items()[2].text == "Sent", "folders without unread mail show no count");
     expect((*messages).items().size() == 16U, "Inbox lists sixteen messages");
+    // Windows field report D4: sixteen messages overflow the list, and its
+    // scroll bar shows it and scrolls it both ways.
+    view.perform_layout();
+    const std::shared_ptr<gui_forms::VScrollBar> message_bar = std::dynamic_pointer_cast<gui_forms::VScrollBar>(
+        view.find(std::string(ids::messages) + ".vertical-scroll-bar"));
+    expect(message_bar != nullptr && (*message_bar).effectively_visible() &&
+               (*message_bar).committed_arranged_bounds().height > 0.0 && (*message_bar).maximum.read() > 0.0,
+           "the overflowing message list shows its scroll bar");
+    (*messages).scroll_offset = 90.0;
+    expect((*message_bar).value.read() == (*messages).scroll_offset.read(), "the scroll bar follows the list");
+    (*message_bar).value = 0.0;
+    expect((*messages).scroll_offset.read() == 0.0, "the scroll bar scrolls the list");
     expect((*messages).selected_id.read().empty(), "no message is selected at start");
     expect((*subject).text.read() == "No message selected", "reading pane starts empty");
     expect((*status).text.read().rfind("Inbox · 16 messages · 6 unread", 0) == 0,
