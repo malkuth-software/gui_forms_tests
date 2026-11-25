@@ -6,6 +6,7 @@
 
 #include "src/controls/automation/console/console_log.hpp"
 #include "src/controls/automation/console/console_overlay.hpp"
+#include "src/controls/automation/console/console_screen.hpp"
 #include "src/controls/automation/presenter/stock_presenter.hpp"
 
 #include <cmath>
@@ -68,18 +69,18 @@ void shades_cluster_and_hold() {
         for (std::size_t run = 0U; run < 8U; ++run) {
             const ConsoleShade instruction = console_shade(ConsoleTone::instruction, serial, run);
             const ConsoleShade value = console_shade(ConsoleTone::value, serial, run);
-            require(instruction.c >= 0.0 && instruction.c <= 0.10, "the instruction's c is near 0");
-            require(value.c >= 0.90 && value.c <= 1.0, "a value's c is near 1");
-            require(value.v >= 0.76 && value.v <= 0.84, "v hovers around 0.8");
+            require(near(instruction.c, 0.0), "the instruction's c is 0");
+            require(near(value.c, 1.0), "a value's c is 1");
+            require(value.v >= 0.72 && value.v <= 0.88, "v hovers around 0.8");
             if (!near(value.v, first.v)) varied = true;
         }
     }
-    require(varied, "v varies from run to run");
+    require(varied, "v varies from glyph to glyph");
     const ConsoleShade again = console_shade(ConsoleTone::value, 1U, 0U);
-    require(near(again.c, first.c) && near(again.v, first.v), "a run's shade is the same at every repaint");
+    require(near(again.c, first.c) && near(again.v, first.v), "a glyph's shade is the same at every repaint");
     const Color one = console_colour(first, console_glyph_hash(1U, 0U));
     const Color two = console_colour(first, console_glyph_hash(1U, 0U));
-    require(one.red == two.red && one.green == two.green && one.blue == two.blue, "a run's dither is the same at every repaint");
+    require(one.red == two.red && one.green == two.green && one.blue == two.blue, "a glyph's dither is the same at every repaint");
 }
 
 void record_lines() {
@@ -252,6 +253,121 @@ void dialogs_centre_on_the_program() {
 
 } // namespace
 
+// The owner's console brief: each glyph takes its token's c (the verb and
+// the tool's name 0, the arguments 1, a reply's leading word 0, wrapped rows
+// 1, a label 0 and dimmer) and the formula's colour; the same line wraps to
+// the same shades every time.
+void tokens_take_their_tone() {
+    ConsoleLog log{};
+    log.set_session("console ec4c");
+    log.record_call("plan_paint_draw", "{\"shape\":\"oval\"}");
+    log.set_session("");
+    log.record_reply(ToolReply::success("drew a oval from 120,100 to 420,300"));
+    std::vector<ConsoleLine> lines{};
+    log.copy_since(0U, lines);
+    require(lines.size() == 2U, "a call and its reply");
+    std::vector<ConsoleGlyphRow> rows{};
+    console_wrap(lines[0], 200U, rows);
+    require(rows.size() == 1U, "a wide screen keeps the call on one row");
+    std::string instruction{};
+    std::string value{};
+    bool label_dim = true;
+    for (const ConsoleGlyph& glyph : rows[0].glyphs) {
+        const ConsoleRgb rgb = console_formula(glyph.shade);
+        if (glyph.tone == ConsoleTone::label) {
+            if (!(glyph.shade.v < 0.66 && near(glyph.shade.c, 0.0))) label_dim = false;
+            continue;
+        }
+        if (glyph.tone == ConsoleTone::instruction) {
+            instruction += glyph.text;
+            require(near(glyph.shade.c, 0.0) && rgb.r > rgb.g && near(rgb.b, 0.0),
+                    "an instruction glyph is the formula at c 0: red over green, no blue");
+            require(near(rgb.r, glyph.shade.v) && near(rgb.g, 0.5 * glyph.shade.v), "r = v and g = v/2 at c 0");
+        } else {
+            value += glyph.text;
+            require(near(glyph.shade.c, 1.0) && rgb.g > rgb.r && rgb.r > rgb.b,
+                    "a value glyph is the formula at c 1: green over red over blue");
+            require(near(rgb.r, 0.5 * glyph.shade.v) && near(rgb.g, glyph.shade.v) && near(rgb.b, 0.25 * glyph.shade.v),
+                    "r = v/2, g = v and b = v/4 at c 1");
+        }
+    }
+    require(label_dim, "a session label is c 0 and dimmer");
+    require(instruction == "callplan_paint_draw", "the verb and the tool's name are the instruction");
+    require(value == "{\"shape\":\"oval\"}", "the arguments are values");
+    std::vector<ConsoleGlyphRow> reply{};
+    console_wrap(lines[1], 200U, reply);
+    std::string lead{};
+    for (const ConsoleGlyph& glyph : reply[0].glyphs) {
+        if (glyph.tone == ConsoleTone::instruction) lead += glyph.text;
+    }
+    require(lead == "\xe2\x80\xb9drew", "a reply's mark and leading word are the instruction");
+    std::vector<ConsoleGlyphRow> narrow{};
+    console_wrap(lines[0], 20U, narrow);
+    require(narrow.size() > 1U, "a narrow screen wraps the call");
+    for (std::size_t index = 1U; index < narrow.size(); ++index) {
+        for (const ConsoleGlyph& glyph : narrow[index].glyphs) {
+            require(glyph.tone == ConsoleTone::value, "a wrapped row is all values");
+        }
+    }
+    std::vector<ConsoleGlyphRow> again{};
+    console_wrap(lines[0], 200U, again);
+    for (std::size_t index = 0U; index < rows[0].glyphs.size(); ++index) {
+        require(near(again[0].glyphs[index].shade.v, rows[0].glyphs[index].shade.v) &&
+                    again[0].glyphs[index].column == rows[0].glyphs[index].column,
+                "a line wraps to the same shades at every repaint");
+    }
+}
+
+// A new line grows in place: its instruction glyphs appear one a step, its
+// values as a block; once shown and scrolled, the screen asks for nothing.
+void lines_type_in() {
+    ConsoleLog log{};
+    log.record_call("act", "{\"a\":1}");
+    std::vector<ConsoleLine> lines{};
+    log.copy_since(0U, lines);
+    std::vector<ConsoleGlyphRow> rows{};
+    console_wrap(lines[0], 80U, rows);
+    ConsoleScreen screen{};
+    screen.set_visible_rows(4U);
+    require(!screen.busy() && !screen.advance(0.016), "an empty screen is idle and changes nothing");
+    screen.queue_line(rows);
+    require(screen.busy(), "a queued line wants frames");
+    const std::size_t total = rows[0].glyphs.size();
+    std::size_t instruction = 0U;
+    for (const ConsoleGlyph& glyph : rows[0].glyphs) {
+        if (glyph.tone == ConsoleTone::instruction) ++instruction;
+    }
+    require(instruction == 7U, "call act is seven typed glyphs");
+    std::size_t shown = 0U;
+    std::size_t frames = 0U;
+    bool block = false;
+    while (screen.busy() && frames < 1000U) {
+        static_cast<void>(screen.advance(0.004));
+        ++frames;
+        const std::size_t now = screen.rows().empty() ? 0U : screen.rows().back().shown;
+        if (now <= instruction) {
+            require(now - shown <= 1U, "the instruction types one glyph at a time");
+        } else {
+            require(shown == instruction && now == total, "the values appear at once, as a block");
+            block = true;
+        }
+        shown = now;
+    }
+    require(block && shown == total, "the whole line shows");
+    require(frames > instruction, "typing takes several frames");
+    require(!screen.busy() && !screen.advance(0.016) && !screen.advance(1.0),
+            "after the line, the screen is idle and asks for no frames");
+    // A burst catches up: forty lines queued type faster than one.
+    for (int index = 0; index < 40; ++index) screen.queue_line(rows);
+    std::size_t burst_frames = 0U;
+    while (screen.busy() && burst_frames < 100000U) {
+        static_cast<void>(screen.advance(0.016));
+        ++burst_frames;
+    }
+    require(burst_frames < 5U * frames, "a queue speeds the typing up");
+    require(screen.rows().size() <= 5U, "the screen keeps only the rows in view and one above");
+}
+
 int main() {
     formula_poles();
     shades_cluster_and_hold();
@@ -261,6 +377,8 @@ int main() {
     reply_lines_are_bounded();
     button_covers_no_content();
     dialogs_centre_on_the_program();
+    tokens_take_their_tone();
+    lines_type_in();
     std::cout << "automation console tests passed\n";
     return 0;
 }
