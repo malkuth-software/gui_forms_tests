@@ -7,6 +7,7 @@
 #include "src/controls/automation/console/console_log.hpp"
 #include "src/controls/automation/console/console_overlay.hpp"
 #include "src/controls/automation/console/console_screen.hpp"
+#include "src/controls/automation/help/automation_help.hpp"
 #include "src/controls/automation/presenter/stock_presenter.hpp"
 
 #include <cmath>
@@ -452,6 +453,123 @@ void lines_type_in() {
     require(screen.rows().size() <= 5U, "the screen keeps only the rows in view and one above");
 }
 
+namespace {
+
+// Round 4, item 6: the console shows the window's timing only when it is
+// news, and a counters line shows its start.
+void timing_lines_are_quiet() {
+    ConsoleLog log{};
+    log.record_reply(ToolReply::success("drew an oval\nok: plan_paint_draw\nframes: 2 presented; idle after 56 ms"));
+    log.record_reply(ToolReply::success("ok: test_draw\nframes: 0 presented; replied after 101 ms"));
+    log.record_reply(ToolReply::success("ok: act\nframes: 9 presented; still busy after 5001 ms: a frame is wanted"));
+    std::string counters = "{";
+    for (int index = 0; index < 40; ++index) counters += "\"counter_" + std::to_string(index) + "\":1,";
+    counters += "\"end\":0}";
+    log.record_reply(ToolReply::success(counters));
+    std::vector<ConsoleLine> lines{};
+    log.copy_since(0U, lines);
+    std::string all{};
+    for (const ConsoleLine& line : lines) all += joined(line) + "\n";
+    require(all.find("idle after") == std::string::npos && all.find("replied after") == std::string::npos,
+            "settled timing is left out");
+    require(all.find("still busy after 5001 ms") != std::string::npos, "real busy time is shown");
+    require(all.find("counter_39") == std::string::npos && all.find("counter_0") != std::string::npos,
+            "a counters line shows its start only");
+}
+
+// The tools a test program serves: one documented with arguments, one not.
+std::vector<ToolSpec> help_tools() {
+    std::vector<ToolSpec> tools{};
+    ToolSpec draw{};
+    draw.name = "plan_paint_draw";
+    draw.title = "Draw";
+    draw.description = "Draws a shape on the picture. Units are picture pixels.";
+    draw.input_schema =
+        "{\"type\":\"object\",\"properties\":{\"shape\":{\"type\":\"string\",\"enum\":[\"line\",\"oval\"],"
+        "\"description\":\"The shape.\"},\"from\":{\"type\":\"object\",\"description\":\"A corner, in picture "
+        "pixels.\",\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"}}},\"size\":{\"type\":"
+        "\"integer\",\"minimum\":1,\"maximum\":100,\"description\":\"The outline's width in pixels.\"}},"
+        "\"required\":[\"shape\",\"from\"]}";
+    draw.access = ToolAccess::acting;
+    tools.push_back(draw);
+    ToolSpec bare{};
+    bare.name = "plan_paint_mystery";
+    tools.push_back(bare);
+    return tools;
+}
+
+bool has(const std::string& text, std::string_view part) {
+    const bool found = text.find(part) != std::string::npos;
+    return found;
+}
+
+// Round 4: help from one source: the tools' own documentation and
+// GUI.Forms' compiled-in pages.
+void help_comes_from_the_documentation() {
+    const std::vector<ToolSpec> tools = help_tools();
+    HelpContext context{};
+    context.token = "0123abcd";
+    context.note = "Plan Paint draws pictures.";
+    context.console = true;
+    const std::string overview = help_text("", tools, context);
+    require(has(overview, "help [topic | tool]") && has(overview, "session token: 0123abcd") &&
+                has(overview, "`help mcp`") && has(overview, "Plan Paint draws pictures."),
+            "help gives the commands, the token, the topics and the program's note");
+    const std::string listing = help_text("tools", tools, context);
+    const std::string draw_line = listing.substr(listing.find("plan_paint_draw"), listing.find('\n'));
+    require(has(draw_line, "Draws a shape on the picture.") && !has(draw_line, "Units") &&
+                has(listing, "plan_paint_mystery") && has(listing, "(not documented)"),
+            "help tools lists each tool on one line and says which has no documentation");
+    const std::string draw = help_text("plan_paint_draw", tools, context);
+    require(has(draw, "Units are picture pixels.") && has(draw, "shape  one of line, oval, required") &&
+                has(draw, "size  integer, 1 to 100, optional: The outline's width in pixels.") &&
+                has(draw, "call plan_paint_draw {\"shape\":\"line\",\"from\":{\"x\":10,\"y\":10}}"),
+            "help <tool> gives the description, typed arguments with their ranges and units, and an example");
+    require(has(help_text("plan_paint_mystery", tools, context), "not documented"),
+            "an undocumented tool says so");
+    require(undocumented_tools(tools) == std::vector<std::string>{"plan_paint_mystery"},
+            "the check names the undocumented tool");
+    const std::string mcp = help_text("mcp", tools, context);
+    require(has(mcp, "Talk to a running program") && has(mcp, "-- Sessions --"),
+            "help mcp is the compiled-in page on talking to a program");
+    const std::string sessions = help_text("sessions", tools, context);
+    require(has(sessions, "-- Sessions --") && !has(sessions, "-- The console --"), "a topic is one section");
+    const std::vector<std::string> topics = help_topics();
+    for (const std::string_view topic : {"console", "sessions", "control", "disconnect", "help"}) {
+        bool listed = false;
+        for (const std::string& known : topics) listed = listed || known == topic;
+        require(listed, "the documentation answers every topic help names");
+    }
+    require(has(help_text("gui.forms", tools, context), "https://gui-forms.readthedocs.io/en/latest/user/"),
+            "help gui.forms reaches the published guide");
+    const std::string unknown = help_text("plan_paint_drw", tools, context);
+    require(has(unknown, "no help on \"plan_paint_drw\"") && has(unknown, "`help plan_paint_draw`"),
+            "an unknown topic suggests the nearest");
+}
+
+// Round 4: the token's line stands on its own line near the top of the
+// instructions, with the help pointer.
+void the_token_line_is_hard_to_miss() {
+    HelpContext context{};
+    context.token = "feedface";
+    context.note = "Plan Paint's note.";
+    const std::string instructions = session_instructions("A GUI.Forms program.", context);
+    require(instructions.substr(0U, instructions.find('\n')) == "A GUI.Forms program.", "what every program says first");
+    const std::string second = instructions.substr(instructions.find('\n') + 1U);
+    require(second.substr(0U, 23U) == "session token: feedface", "the token's line is the second line");
+    require(has(second, "Reconnect with `resume feedface`") && has(second, "within 120 s") &&
+                has(second, "may not be there to answer another prompt") && has(second, "launch it with --mcp"),
+            "the line says how to resume, why, and that --mcp never asks");
+    require(!has(second, "without being asked again"), "the old wording is gone");
+    require(has(instructions, std::string(help_pointer)) && has(instructions, "Plan Paint's note."),
+            "the help pointer and the program's note follow");
+    HelpContext stdio{};
+    require(!has(session_instructions("A GUI.Forms program.", stdio), "session token"),
+            "a launch on standard input has no token line");
+}
+
+} // namespace
+
 int main() {
     formula_poles();
     shades_cluster_and_hold();
@@ -463,6 +581,9 @@ int main() {
     dialogs_centre_on_the_program();
     tokens_take_their_tone();
     lines_type_in();
+    timing_lines_are_quiet();
+    help_comes_from_the_documentation();
+    the_token_line_is_hard_to_miss();
     std::cout << "automation console tests passed\n";
     return 0;
 }

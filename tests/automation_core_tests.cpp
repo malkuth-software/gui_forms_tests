@@ -13,7 +13,12 @@
 // AI-led launch, AI mode's veil and X cursor, popups without a sign,
 // structured batch failures, expectations and waits that name nothing,
 // typed pointer arguments, pending state, the program's note, tool names
-// without '.', and modal windows read as dialogs.
+// without '.', and modal windows read as dialogs; and MCP round 4: still
+// stripes that ask for no frames, the band's strips never painted as the
+// whole window, idle while the sign moves, program tools that return at
+// once, activation that offers no take-back, one question per session,
+// tooltips held under control, and a dropped connection that leaves the
+// program the user's to close.
 
 #include "gui_forms/automation/marks/automation_marks.hpp"
 #include "gui_forms/automation/tools/model_tools.hpp"
@@ -30,6 +35,7 @@
 #include "src/controls/automation/core/automation_core.hpp"
 #include "src/controls/automation/presenter/stock_presenter.hpp"
 #include "src/controls/automation/tools/automation_tools.hpp"
+#include "src/core/surface_root/access/surface_request_access.hpp"
 #include "src/core/host/session/session_directory.hpp"
 #if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
 #include "src/runtime/automation/automation_run.hpp"
@@ -1692,6 +1698,269 @@ void taken_arguments_still_launch() {
 #endif
 }
 
+// Round 4, item 1: the stripes stand still, so showing them costs one
+// paint and then no frame at all.
+void the_stripes_ask_for_no_frames() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    (*fixture.window).set_model_veil(true);
+    QuietPainter painter{};
+    static_cast<void>((*fixture.window).paint(painter));
+    const std::uint64_t passes = (*fixture.window).metrics_snapshot().paint_passes;
+    for (int step = 1; step <= 60; ++step) {
+        const FrameTime later = (*fixture.pump).now() + std::chrono::milliseconds(33 * step);
+        static_cast<void>((*fixture.window).poll_frame_schedule(later));
+        require(!(*fixture.window).needs_frame(), "no stripe frame wants a paint");
+    }
+    require((*fixture.window).next_wake().value() == nullptr, "the still stripes ask for no wake");
+    require((*fixture.window).metrics_snapshot().paint_passes == passes && (*fixture.window).model_veil_frames() == 0U,
+            "two seconds of stripes paint the program window no more");
+    (*fixture.window).set_model_veil(false);
+}
+
+// Round 4, item 1: the band's four strips meet at the corners; their glint
+// paints the strips, never the whole window (it was a full-window paint at
+// 30 frames a second).
+void the_bands_strips_paint_apart() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.strips.root"));
+    Window window(root, Size{400.0, 300.0});
+    WindowBandOptions options{};
+    options.width = 5.0;
+    window.declare_band(options);
+    window.perform_layout();
+    QuietPainter painter{};
+    static_cast<void>(window.paint(painter));
+    WindowBandAppearance appearance{};
+    appearance.state = WindowBandState::sweeping;
+    appearance.rest_colour = stxlib::Optional<Color>::of(Color{38U, 114U, 185U, 255U});
+    appearance.lit_colour = stxlib::Optional<Color>::of(Color{255U, 255U, 255U, 255U});
+    appearance.frequency = 0.6;
+    window.set_band_appearance(appearance);
+    const MetricsSnapshot before = window.metrics_snapshot();
+    FrameTime now = FrameClock::now();
+    for (int step = 0; step < 10; ++step) {
+        now += std::chrono::milliseconds(34);
+        static_cast<void>(window.poll_frame_schedule(now));
+        // The hosts' paint: the pending damage, rectangle by rectangle.
+        static_cast<void>(window.paint(painter, std::span<const Rect>{}));
+    }
+    const MetricsSnapshot after = window.metrics_snapshot();
+    require(after.paint_passes > before.paint_passes, "the glint repaints the band");
+    require(after.full_window_paints == before.full_window_paints, "no glint frame paints the whole window");
+}
+
+// Round 4, item 2: an idle wait returns while the sign moves (the band's
+// glint, the stripes).
+void an_idle_wait_returns_while_the_sign_moves() {
+    Fixture fixture(false);
+    WindowBandOptions options{};
+    options.width = 5.0;
+    (*fixture.window).declare_band(options);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    WindowBandAppearance appearance{};
+    appearance.state = WindowBandState::sweeping;
+    appearance.frequency = 0.6;
+    (*fixture.window).set_band_appearance(appearance);
+    (*fixture.window).set_model_veil(true);
+    const FrameTime started = (*fixture.pump).now();
+    const ToolReply waited = fixture.call("wait", "{\"until\":\"idle\",\"timeout_ms\":2000}");
+    require(succeeded(waited) && (*fixture.pump).now() - started < std::chrono::milliseconds(500),
+            "the wait for idle returns at once although the band sweeps");
+    (*fixture.window).set_model_veil(false);
+}
+
+// A timer that ticks for as long as it is scheduled.
+struct Ticks final {
+    std::uint64_t* count{};
+    void operator()(FrameTime) const { ++*count; }
+};
+
+// The context of busy_draw_tool: the window's timer it leaves running.
+struct BusyDraw final {
+    FrameRequestToken timer{};
+    std::uint64_t ticks{};
+};
+
+// A drawing tool that leaves its window busy: a timer every 20 ms.
+void busy_draw_tool(void* context, const ModelToolCall& call, ModelToolReply& reply) {
+    BusyDraw& busy = *static_cast<BusyDraw*>(context);
+    if (call.window != nullptr && (*call.window).root()) {
+        busy.timer = (*call.window).schedule_ui_timer(*(*call.window).root(), std::chrono::milliseconds(20),
+                                                       FrameClock::now() + std::chrono::milliseconds(20),
+                                                       Ticks{&busy.ticks});
+    }
+    static_cast<void>(reply.text("drew", 4U));
+}
+
+// Round 4, item 3: a program tool whose reply is complete returns at once,
+// whatever the window goes on doing (plan_paint_draw timed out).
+void a_program_tool_returns_without_waiting() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    BusyDraw busy{};
+    ModelToolSpec draw{};
+    draw.name = "test_busy_draw";
+    draw.description = "Draws and leaves a timer running.";
+    draw.access = ModelToolAccess::acting;
+    draw.settles = true;
+    require(register_model_tool(draw, &busy_draw_tool, &busy) == ModelToolRegistration::added, "a settling tool");
+    const FrameTime started = (*fixture.pump).now();
+    const ToolReply drawn = fixture.call("test_busy_draw", "{}");
+    const std::string text = success_text(drawn);
+    require(succeeded(drawn) && contains(text, "drew") && !contains(text, "still busy"),
+            "the drawing replies with its text and never as still busy");
+    require((*fixture.pump).now() - started <= std::chrono::milliseconds(150),
+            "the drawing returns within the program tool's short settle");
+    busy.timer.disconnect();
+    require(unregister_model_tool("test_busy_draw"), "the tool is withdrawn");
+}
+
+// Round 4, item 5: activating the window offers no take-back (Alt-Tab and
+// Cmd-Tab did); a click or key aimed at the content does.
+void activation_offers_no_take_back() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.activate.root"));
+    const std::shared_ptr<Button> button = make_control<Button>(StableId("auto.activate.button"), "Go");
+    (*button).set_requested_bounds(Rect{20.0, 20.0, 100.0, 28.0});
+    (*root).add_child(button);
+    Window window(root, Size{300.0, 200.0});
+    WindowBandOptions options{};
+    options.width = 5.0;
+    window.declare_band(options);
+    window.perform_layout();
+    host::HeadlessHost window_host(window);
+    require(window_host.dispatch(HostAttachEvent{{300.0, 200.0}, 1.0}, 500U).accepted(), "the host attaches");
+    TestPresenter presenter{};
+    AutomationControl control(ControlSettings{}, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(window, "auto.activate.window"), "the window joins the automation");
+    WindowPump pump(window, control, presenter);
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.activate.button\"}", pump)),
+            "the model takes control");
+    std::uint64_t at = 1000U;
+    KeyEvent meta{};
+    meta.action = KeyAction::down;
+    meta.physical_key = PhysicalKey::left_meta;
+    static_cast<void>(window_host.dispatch(meta, at++));
+    KeyEvent alt{};
+    alt.action = KeyAction::down;
+    alt.physical_key = PhysicalKey::left_alt;
+    static_cast<void>(window_host.dispatch(alt, at++));
+    KeyEvent switcher{};
+    switcher.action = KeyAction::down;
+    switcher.physical_key = PhysicalKey::tab;
+    switcher.modifiers = Modifier::alt;
+    static_cast<void>(window_host.dispatch(switcher, at++));
+    PointerEvent on_band{};
+    on_band.action = PointerAction::down;
+    on_band.button = PointerButton::primary;
+    on_band.position = Point{150.0, 1.0};
+    on_band.click_count = 1U;
+    static_cast<void>(window_host.dispatch(on_band, at++));
+    PointerEvent released = on_band;
+    released.action = PointerAction::up;
+    static_cast<void>(window_host.dispatch(released, at++));
+    static_cast<void>(window.drain_posted_work());
+    require(presenter.take_back_offers == 0U,
+            "a modifier alone, a switcher's chord and a press on the band offer no take-back");
+    require(control.state() == ControlState::model_control, "the model still holds control");
+    KeyEvent letter{};
+    letter.action = KeyAction::down;
+    letter.physical_key = PhysicalKey::a;
+    static_cast<void>(window_host.dispatch(letter, at++));
+    static_cast<void>(window.drain_posted_work());
+    require(presenter.take_back_offers == 1U, "a key aimed at the content offers it");
+}
+
+// Round 4, item 4: one question per session. The connection question's
+// Allow is the consent to control; an allowed take holds for the session,
+// an idle return included; release_control or a take-back asks again; a
+// new session asks again.
+void one_question_per_session() {
+    Fixture fixture(false);
+    fixture.control.grant_session_consent();
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
+                fixture.presenter.takes == 0U && fixture.control.state() == ControlState::model_control,
+            "after the connection question the first act takes control with no countdown");
+    require(succeeded(fixture.call("release_control", "{}")), "the model releases control");
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
+                fixture.presenter.takes == 1U,
+            "after release_control a new act asks (the countdown)");
+    fixture.control.tick((*fixture.pump).now() + std::chrono::seconds(31));
+    require(fixture.control.state() == ControlState::user_control, "control returns after the grace period");
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")) &&
+                fixture.presenter.takes == 1U && fixture.control.state() == ControlState::model_control,
+            "within the session an idle return asks nothing more");
+    fixture.control.user_took_back();
+    require(!fixture.control.session_consent(), "the user's take-back ends the session's consent");
+    fixture.control.grant_session_consent();
+    fixture.control.begin_session((*fixture.pump).now());
+    require(!fixture.control.session_consent(), "a new session (a connection without the token) asks again");
+}
+
+// Round 4, item 7: while a model holds control no tooltip shows; one that
+// shows closes at once; they come back on release.
+void tooltips_rest_while_a_model_holds_control() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.tips.root"));
+    const std::shared_ptr<Button> button = make_control<Button>(StableId("auto.tips.button"), "Go");
+    (*button).set_requested_bounds(Rect{20.0, 20.0, 100.0, 28.0});
+    (*button).tool_tip_text = "Goes";
+    (*root).add_child(button);
+    Window window(root, Size{300.0, 200.0});
+    window.perform_layout();
+    window.show_tool_tip(button);
+    const bool shown_before = window.tool_tip_visible();
+    StockPresenter presenter{};
+    presenter.window_attached(window);
+    ClientIdentity client{};
+    client.client_name = "Claude Code";
+    presenter.client_changed(client);
+    require(!window.tool_tip_visible() || shown_before, "connecting shows no tag line");
+    presenter.control_changed(ControlState::model_control, client);
+    require(!window.tool_tip_visible() && !window.tool_tips_shown(),
+            "taking control closes the tooltip and holds them all");
+    window.show_tool_tip(button);
+    require(!window.tool_tip_visible(), "not even the program's own shows under control");
+    require(window.tool_tip_target() == nullptr, "no tooltip waits");
+    presenter.control_changed(ControlState::user_control, client);
+    require(window.tool_tips_shown(), "the tooltips resume on release");
+    presenter.disconnected();
+    presenter.window_detached(window);
+}
+
+// Round 4, the close bug: a client stopped or killed mid-control leaves the
+// program the user's to close: the model's question scope closes (the save
+// question was answered Cancel for a model that was gone) and control
+// returns at once; stdin's end (the hard disconnect) the same.
+void a_dropped_client_leaves_the_program_closable() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    gui_forms::detail::begin_model_questions(77U, gui_forms::detail::ModelQuestionAnswer::none);
+    fixture.core.connection_dropped();
+    HostDialogRequest question{};
+    question.request_id = 9U;
+    HostMessageDialogRequest message{};
+    message.title = "Save changes?";
+    message.buttons = HostMessageButtons::yes_no_cancel;
+    question.payload = message;
+    HostDialogResult answered{};
+    require(!gui_forms::detail::model_questions_open() &&
+                !gui_forms::detail::answer_model_question(question, answered),
+            "after the drop the program's save question is the user's");
+    require(fixture.control.state() == ControlState::user_control, "control returns to the user at once");
+    require(!fixture.core.session_ended(), "the session waits for its resume");
+    fixture.core.connection_resumed((*fixture.pump).now());
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the resumed session acts again");
+    gui_forms::detail::begin_model_questions(78U, gui_forms::detail::ModelQuestionAnswer::none);
+    fixture.core.hard_disconnect();
+    require(!gui_forms::detail::model_questions_open() && fixture.control.state() == ControlState::user_control,
+            "stdin's end leaves the questions the user's and control with the user");
+}
+
 } // namespace
 
 int main() {
@@ -1737,6 +2006,14 @@ int main() {
     a_program_tool_reply_is_an_effect();
     the_tool_list_is_stable_for_the_launch();
     taken_arguments_still_launch();
+    the_stripes_ask_for_no_frames();
+    the_bands_strips_paint_apart();
+    an_idle_wait_returns_while_the_sign_moves();
+    a_program_tool_returns_without_waiting();
+    activation_offers_no_take_back();
+    one_question_per_session();
+    tooltips_rest_while_a_model_holds_control();
+    a_dropped_client_leaves_the_program_closable();
     std::cout << "automation core tests passed\n";
     return 0;
 }
