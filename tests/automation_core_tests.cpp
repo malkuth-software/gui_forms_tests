@@ -19,6 +19,7 @@
 #include "gui_forms/automation/tools/model_tools.hpp"
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/commands/command/command.hpp"
+#include "gui_forms/controls/card.hpp"
 #include "gui_forms/controls/list_box.hpp"
 #include "gui_forms/controls/modal_layer.hpp"
 #include "gui_forms/controls/panel.hpp"
@@ -1247,6 +1248,25 @@ void popup_windows_carry_no_sign() {
     presenter.bind_control(nullptr);
 }
 
+// Windows field test: select on an item that also presses moves the
+// selection and opens nothing, so the reply says so.
+void select_on_a_pressable_item_says_it_only_selects() {
+    Fixture fixture(true);
+    const std::shared_ptr<Card> card = make_control<Card>(StableId("auto.card"));
+    (*card).interactive = true;
+    (*card).accessible_name = "Recent file";
+    (*card).set_requested_bounds(Rect{200.0, 10.0, 100.0, 40.0});
+    (*fixture.root).add_child(card);
+    (*fixture.window).perform_layout();
+    const std::string selected =
+        success_text(fixture.call("act", "{\"action\":\"select\",\"target\":\"auto.card\"}"));
+    require(contains(selected, "select only selects; press opens it"),
+            "select on an item that also presses says select only selects");
+    const std::string pressed =
+        success_text(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.card\"}"));
+    require(!contains(pressed, "select only selects"), "press carries no select hint");
+}
+
 void round_two_replies_are_structured_and_strict() {
     Fixture fixture(false);
     const ToolReply stopped = fixture.call(
@@ -1263,6 +1283,12 @@ void round_two_replies_are_structured_and_strict() {
     require(failed_with(fixture.call("batch", "{\"steps\":[{\"expect\":\"node\",\"target\":\"auto.press\"}]}"),
                         ToolError::invalid_arguments),
             "expect node with nothing to check is refused");
+    // Windows field test M5: a value that does not match is a mismatch, not
+    // a timeout.
+    require(failed_with(fixture.call("batch", "{\"steps\":[{\"expect\":\"node\",\"target\":\"auto.press\","
+                                              "\"exists\":false}]}"),
+                        ToolError::expectation_failed),
+            "an unmet expectation fails as expectation_failed");
     require(failed_with(fixture.call("wait", "{\"until\":\"user_step\",\"step\":\"auto.never\"}"),
                         ToolError::not_found),
             "waiting on a user step the program never asked for is refused");
@@ -1541,6 +1567,7 @@ int main() {
     an_ai_led_launch_holds_control_without_asking();
     popup_windows_carry_no_sign();
     round_two_replies_are_structured_and_strict();
+    select_on_a_pressable_item_says_it_only_selects();
     a_modal_window_is_a_dialog();
     a_model_opened_modal_window_closes_by_its_id();
     take_back_answers_over_model_modals();
