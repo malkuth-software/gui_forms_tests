@@ -103,6 +103,22 @@ private:
     std::string& trace_;
 };
 
+// Writes each open_changed report of a strip: the open item's index, or
+// "closed".
+class RecordStripOpenChange final {
+public:
+    explicit RecordStripOpenChange(std::vector<std::string>& log) : log_(log) {}
+
+    void operator()(stxlib::Optional<std::size_t> index) const {
+        const std::size_t* const open = index.value();
+        const std::string entry = open == nullptr ? std::string("closed") : std::to_string(*open);
+        log_.push_back(entry);
+    }
+
+private:
+    std::vector<std::string>& log_;
+};
+
 void test_context_menu_command_snapshot_keyboard_nesting_and_restore() {
     std::shared_ptr<gui_forms::TableLayoutPanelCompat> root = make_control<TableLayoutPanelCompat>(StableId("root"));
     (*root).column_count = 1U;
@@ -1287,6 +1303,41 @@ void test_menu_strip_disposed_with_its_menu_open() {
             "disposing the strip with its menu open closes the menu and its focus scope");
 }
 
+// is_open follows the strip's drop-down: closed before any press, open
+// once a press on an item shows its menu, closed again after close(), which
+// also ends the menu's focus scope and reports the close once. close() on a
+// closed strip changes and raises nothing.
+void test_menu_strip_is_open_follows_close() {
+    std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("closing.root"));
+    std::shared_ptr<gui_forms::MenuStrip> strip = make_control<MenuStrip>(StableId("closing.strip"));
+    (*strip).set_requested_bounds({0.0, 0.0, 320.0, 24.0});
+    (*root).add_child(strip);
+    std::shared_ptr<gui_forms::Command> open = std::make_shared<Command>("file.open", "Open");
+    (*strip).set_items({{"closing.file", "File", {{"file.open", MenuItemKind::command, open}}}});
+    Window window(root, {320.0, 190.0});
+    window.perform_layout();
+    std::vector<std::string> changes{};
+    const SubscriptionToken reported = (*strip).open_changed().subscribe(RecordStripOpenChange(changes));
+    require(!(*strip).is_open() && window.focus_scope_depth() == 0U, "a strip starts closed");
+
+    const std::vector<MenuStrip::Item> items = (*strip).realized_items();
+    require(items.size() == 1U, "the strip realizes its one item");
+    const Rect file = items[0].parts.menu_item.bounds;
+    const Point file_centre{file.x + file.width / 2.0, file.y + file.height / 2.0};
+    require(window.dispatch_pointer({PointerAction::down, PointerButton::primary, file_centre}),
+            "the press on the item is handled");
+    require((*strip).is_open() && active_is(*strip, 0U) && window.focus_scope_depth() == 1U,
+            "a press on the item opens its menu in a focus scope");
+    require(changes == std::vector<std::string>{"0"}, "the opening is reported once, with the item");
+
+    (*strip).close();
+    require(!(*strip).is_open() && (*strip).active_index().absent() && window.focus_scope_depth() == 0U,
+            "close() closes the menu and ends its focus scope");
+    require(changes == std::vector<std::string>{"0", "closed"}, "the close is reported once");
+    (*strip).close();
+    require(!(*strip).is_open() && changes.size() == 2U, "closing a closed strip changes and raises nothing");
+}
+
 int main() {
     try {
         test_menu_strip_disposed_with_its_menu_open();
@@ -1306,6 +1357,7 @@ int main() {
         test_menu_strip_declares_the_drop_down_gutter();
         test_menu_row_insets_follow_the_text_scale();
         test_menu_with_every_command_hidden_stays_closed();
+        test_menu_strip_is_open_follows_close();
         std::cout << "gui_forms_menu_controls_tests: all tests passed\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {

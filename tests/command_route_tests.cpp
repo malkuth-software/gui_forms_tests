@@ -1,8 +1,9 @@
 // The command routing chain (owner decision DK-29): focused route, active
 // panel, active document, main window; revocation when a target or the
 // control carrying it is destroyed; bounded nesting; Ctrl+S from a focused
-// tool control reaching the active document's command; and commands with
-// nothing registered behaving exactly as before.
+// tool control reaching the active document's command; commands with
+// nothing registered behaving exactly as before; and a command's stable ID
+// as the identity every path reports and routes by.
 
 #include "gui_forms/commands/command/command.hpp"
 #include "gui_forms/commands/command_route/command_route.hpp"
@@ -22,6 +23,7 @@
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/window/window.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -60,6 +62,12 @@ private:
 struct CountInvocations final {
     int* count{};
     void operator()(const CommandInvocation&) const { ++*count; }
+};
+
+// Keeps the last invocation a command raised.
+struct KeepInvocation final {
+    CommandInvocation* last{};
+    void operator()(const CommandInvocation& invocation) const { *last = invocation; }
 };
 
 Delegate<const CommandInvocation&> bind_handler(JournalHandler& handler) {
@@ -304,11 +312,62 @@ void shortcut_from_a_tool_reaches_the_document() {
 
 } // namespace
 
+// A command's stable ID is the identity it was made with: kept through
+// changes to its text and state, carried by each invocation, and the key
+// the routing chain finds a handler by. An empty identity is refused; a
+// command made without one has none.
+void stable_id_names_the_command_on_every_path() {
+    const std::shared_ptr<Command> unnamed = std::make_shared<Command>();
+    require((*unnamed).stable_id().empty(), "a command made without an identity has none");
+    bool refused = false;
+    try {
+        static_cast<void>(std::make_shared<Command>("", "Empty"));
+    } catch (const std::invalid_argument&) {
+        refused = true;
+    }
+    require(refused, "an empty identity is refused");
+
+    const std::shared_ptr<Command> save = std::make_shared<Command>("document.save", "Save");
+    const std::shared_ptr<Command> open = std::make_shared<Command>("document.open", "Open");
+    require((*save).stable_id() == "document.save" && (*open).stable_id() == "document.open",
+            "each command keeps the identity it was made with");
+    (*save).set_text("Save All");
+    (*save).set_enabled(false);
+    (*save).set_enabled(true);
+    require((*save).stable_id() == "document.save" && (*save).state().text == "Save All",
+            "changing the text and state keeps the identity");
+
+    CommandInvocation last{};
+    const SubscriptionToken kept = (*save).invoked().subscribe(KeepInvocation{&last});
+    require((*save).execute("toolbar") && last.command_id == (*save).stable_id() && last.source_id == "toolbar",
+            "an invocation carries the command's identity and its source");
+
+    Workspace workspace = make_workspace();
+    Window window(workspace.root, {600.0, 300.0});
+    window.perform_layout();
+    Journal journal;
+    JournalHandler main_handler(journal, "main");
+    const std::shared_ptr<CommandTarget> main_target = std::make_shared<CommandTarget>("main");
+    (*main_target).set_handler((*open).stable_id(), bind_handler(main_handler));
+    window.set_command_target(CommandRouteStage::main_window, main_target);
+    require(window.resolve_command((*open).stable_id()).outcome == CommandRouteOutcome::handled &&
+                window.resolve_command((*save).stable_id()).outcome == CommandRouteOutcome::unhandled,
+            "the chain finds a handler by the command's identity");
+    const std::vector<std::string> routed{"main:document.open:menu"};
+    require((*open).execute_routed(window, "menu") && journal.entries == routed,
+            "the handler registered for the identity runs the command");
+    const std::uint64_t sequence_before = last.sequence;
+    require((*save).execute_routed(window, "menu") && journal.entries.size() == 1U &&
+                last.command_id == "document.save" && last.sequence > sequence_before,
+            "a command with no handler for its identity raises invoked, as execute does");
+}
+
 int main() {
     nothing_registered_behaves_as_before();
     chain_order_and_revocation();
     reentrancy();
     shortcut_from_a_tool_reaches_the_document();
-    std::cout << "Command routing chain: order, revocation, nesting and Ctrl+S to the active document passed\n";
+    stable_id_names_the_command_on_every_path();
+    std::cout << "Command routing chain: order, revocation, nesting, Ctrl+S to the active document and identity passed\n";
     return 0;
 }
