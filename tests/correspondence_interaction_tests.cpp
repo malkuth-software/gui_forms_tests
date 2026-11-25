@@ -187,6 +187,15 @@ int main()
     for (const std::string_view id : required) {
         expect(view.find(id) != nullptr, "every named region resolves by stable ID");
     }
+    // The panes and menu titles a screen reader and the keyboard meet
+    // (Windows field report D6 and D13): named panes, and an access key on
+    // every menu title.
+    for (const std::string_view id : {ids::split, ids::content_split}) {
+        expect(!(*view.find(id)).semantic_descriptor().name.empty(), "every split pane has a name");
+    }
+    for (const gui_forms::SemanticNode& title : (*std::dynamic_pointer_cast<gui_forms::MenuStrip>(view.find(ids::menu))).semantic_virtual_children()) {
+        expect(!title.access_key.empty(), "every menu title has an access key");
+    }
     for (int command = correspondence::command_new_message;
          command <= correspondence::command_flag; ++command) {
         expect(view.find(correspondence::command_button_id(command)) != nullptr,

@@ -230,6 +230,24 @@ int main() {
     require((*product).find("fm.tree.view") != nullptr, "tree projection is absent");
     require((*product).find("fm.selection.pane") != nullptr,
             "selection projection is absent");
+    // Windows field report D6 and D13: the editor, panes and glyph buttons
+    // carry spoken names, the ribbon caption no access key, and every menu
+    // title one.
+    const char* named_ids[] = {
+        "fm.search.editor", "fm.workspace", "fm.workspace.content-selection", "fm.nav.back",
+        "fm.nav.forward", "fm.nav.up", "fm.ribbon.view-mode", "fm.ribbon.sort"};
+    for (const char* id : named_ids) {
+        const gui_forms::SemanticDescriptor named = (*(*product).find(id)).semantic_descriptor();
+        require(!named.name.empty() && named.name.find_first_of("\xe2") == std::string::npos,
+                std::string(id) + " must carry a spoken name");
+    }
+    const gui_forms::SemanticDescriptor caption = (*(*product).find("fm.ribbon.group.arrange")).semantic_descriptor();
+    require(caption.access_key.empty() && caption.name == "ARRANGE & INSPECT",
+            "the ribbon caption must show its ampersand and expose no access key");
+    for (const gui_forms::SemanticNode& title :
+         (*std::dynamic_pointer_cast<gui_forms::MenuStrip>((*product).find("fm.ribbon.tabs"))).semantic_virtual_children()) {
+        require(!title.access_key.empty(), "every Explore menu title must have an access key");
+    }
     const gui_forms::SemanticSnapshot semantic = (*product).semantic_snapshot();
     require(semantic.node_count != 0 && !semantic.roots.empty(),
             "semantic snapshot is empty");

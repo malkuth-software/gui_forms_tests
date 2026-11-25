@@ -768,6 +768,87 @@ void test_white_space_is_no_mnemonic() {
     require(mnemonic_access_key("Save & &Close") == "C", "a later ampersand still marks its mnemonic");
 }
 
+// The menu bar from the keyboard (Windows field report D13): Alt pressed
+// and released alone, or F10, focuses the window's menu bar and gives the
+// focus back the second time; Escape with no menu open leaves the bar; a
+// chord with Alt (Alt+F) is a mnemonic, not a tap; a letter on the focused
+// bar opens its menu; a command chosen from the keyboard gives the focus
+// back to the control that had it.
+void tap(Window& window, std::uint32_t physical_key, Modifier held) {
+    KeyEvent down{KeyAction::down, physical_key};
+    down.modifiers = held;
+    static_cast<void>(window.dispatch_key(down));
+    KeyEvent up{KeyAction::up, physical_key};
+    static_cast<void>(window.dispatch_key(up));
+}
+
+void test_menu_bar_keyboard_entry() {
+    std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("bar.root"));
+    std::shared_ptr<gui_forms::MenuStrip> strip = make_control<MenuStrip>(StableId("bar.strip"));
+    (*strip).set_requested_bounds({0.0, 0.0, 360.0, 24.0});
+    std::shared_ptr<gui_forms::Button> owner = make_control<Button>(StableId("bar.owner"), "Owner");
+    (*owner).set_requested_bounds({20.0, 50.0, 90.0, 28.0});
+    (*root).add_child(strip);
+    (*root).add_child(owner);
+    std::shared_ptr<gui_forms::Command> open = std::make_shared<Command>("open", "Open");
+    std::uint64_t open_count{};
+    SubscriptionToken open_invoked = (*open).invoked().subscribe(
+        test_support::IncrementCounter<std::uint64_t, const CommandInvocation&>(open_count));
+    std::shared_ptr<gui_forms::Command> icons = std::make_shared<Command>("icons", "Icons");
+    (*strip).set_items({
+        {"bar.file", "&File", {{"open", MenuItemKind::command, open}}},
+        {"bar.view", "&View", {{"icons", MenuItemKind::command, icons}}},
+    });
+    Window window(root, {360.0, 220.0});
+    window.perform_layout();
+    require(window.request_focus(owner), "the fixture's button must take the focus");
+
+    tap(window, PhysicalKey::left_alt, Modifier::alt);
+    require(window.focused_control() == strip && !(*strip).is_open(),
+            "an Alt tap must focus the menu bar without opening a menu");
+    tap(window, PhysicalKey::left_alt, Modifier::alt);
+    require(window.focused_control() == owner, "a second Alt tap must give the focus back");
+
+    tap(window, PhysicalKey::f10, Modifier::none);
+    require(window.focused_control() == strip, "F10 must focus the menu bar");
+    tap(window, PhysicalKey::escape, Modifier::none);
+    require(window.focused_control() == owner, "Escape on the bar with no menu open must give the focus back");
+
+    KeyEvent alt_down{KeyAction::down, PhysicalKey::left_alt};
+    alt_down.modifiers = Modifier::alt;
+    static_cast<void>(window.dispatch_key(alt_down));
+    tap(window, PhysicalKey::f, Modifier::alt);
+    static_cast<void>(window.dispatch_key({KeyAction::up, PhysicalKey::left_alt}));
+    require((*strip).is_open() && active_is(*strip, 0U),
+            "Alt+F must open File, and the Alt released after it is no tap");
+    tap(window, PhysicalKey::escape, Modifier::none);
+    require(!(*strip).is_open() && window.focused_control() == strip,
+            "Escape must close the open menu and keep the bar focused");
+    tap(window, PhysicalKey::escape, Modifier::none);
+    require(window.focused_control() == owner, "a second Escape must leave the bar");
+
+    KeyEvent shift_alt{KeyAction::down, PhysicalKey::left_alt};
+    shift_alt.modifiers = Modifier::alt | Modifier::shift;
+    static_cast<void>(window.dispatch_key(shift_alt));
+    static_cast<void>(window.dispatch_key({KeyAction::up, PhysicalKey::left_alt}));
+    require(window.focused_control() == owner, "Alt pressed with Shift held is a chord, not a tap");
+
+    tap(window, PhysicalKey::f10, Modifier::none);
+    TextInputEvent letter{};
+    letter.text_utf8 = "v";
+    static_cast<void>(window.dispatch_text(letter));
+    require((*strip).is_open() && active_is(*strip, 1U), "a letter on the focused bar must open its menu");
+    tap(window, PhysicalKey::escape, Modifier::none);
+    require(!(*strip).is_open() && window.focused_control() == strip, "Escape must close the menu the letter opened");
+
+    tap(window, PhysicalKey::left, Modifier::none);
+    tap(window, PhysicalKey::down, Modifier::none);
+    require((*strip).is_open() && active_is(*strip, 0U), "Down on the focused bar must open its menu");
+    tap(window, PhysicalKey::enter, Modifier::none);
+    require(open_count == 1U && !(*strip).is_open() && window.focused_control() == owner,
+            "a command chosen from the keyboard must give the focus back");
+}
+
 void test_menu_mnemonics_strip_markers_and_overlay_activation() {
     std::shared_ptr<gui_forms::Panel> root = make_control<Panel>(StableId("mnemonic.root"));
     std::shared_ptr<gui_forms::MenuStrip> strip = make_control<MenuStrip>(StableId("mnemonic.strip"));
@@ -1218,6 +1299,7 @@ int main() {
         test_menu_strip_retained_switching_commands_and_semantics();
         test_menu_mnemonics_strip_markers_and_overlay_activation();
         test_white_space_is_no_mnemonic();
+        test_menu_bar_keyboard_entry();
         test_menu_plain_letter_mnemonics();
         test_menu_first_letter_jumps();
         test_menu_font_controls_geometry_paint_and_hit_testing();
