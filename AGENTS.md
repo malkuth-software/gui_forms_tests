@@ -89,8 +89,8 @@ gui_forms' tools from the cache's source tree (`<cache>` is the directory
 `<cache>/template_harness`, at `<cache>/source/harness.lock`'s commit):
 
 ```text
-python3 -B <cache>/source/tools/check_house_style.py tests file_manager_demoboard/tests tools
-python3 -B <cache>/source/tools/check_lifetime_rules.py tests file_manager_demoboard/tests tools
+python3 -B <cache>/source/tools/check_house_style.py tests tools
+python3 -B <cache>/source/tools/check_lifetime_rules.py tests tools
 python3 -I <cache>/source/tools/check_std_rules.py --config tools/std_rules.toml
 python3 -B tools/check_test_registration.py --root .
 python3 -B tools/check_test_asserts.py --root .

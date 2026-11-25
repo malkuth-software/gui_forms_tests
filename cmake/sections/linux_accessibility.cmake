@@ -47,7 +47,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
     # A-L2: the whole Gallery through AT-SPI (every stock control's node and
     # default action). The Gallery model exists only with
-    # GUI_FORMS_BUILD_GALLERY, which the programs workflow sets; without it
+    # GUI_FORMS_BUILD_GALLERY_MODEL, which the test cache sets; without it
     # there is no Gallery to publish and the test is not configured. It walks
     # every page over D-Bus, so it gets a longer timeout than the suite's.
     if(gui_forms_linux_accessibility_test_ready AND GUI_FORMS_SYSTEM_PYTHON3 AND TARGET gui_forms_gallery_model)

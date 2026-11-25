@@ -59,8 +59,8 @@ jobs:
         env:
           GF: ${{ steps.cache.outputs.directory }}/source
         run: |
-          python3 -B "$GF/tools/check_house_style.py" tests file_manager_demoboard/tests tools
-          python3 -B "$GF/tools/check_lifetime_rules.py" tests file_manager_demoboard/tests tools
+          python3 -B "$GF/tools/check_house_style.py" tests tools
+          python3 -B "$GF/tools/check_lifetime_rules.py" tests tools
           python3 -I "$GF/tools/check_std_rules.py" --config tools/std_rules.toml
           python3 -B tools/check_test_registration.py --root .
           python3 -B tools/check_test_asserts.py --root .

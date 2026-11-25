@@ -3,7 +3,7 @@ if(NOT TARGET GUIForms::Application)
     project(ApplicationTextConsumer LANGUAGES C CXX)
     enable_testing()
     set(GUI_FORMS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(GUI_FORMS_BUILD_GALLERY OFF CACHE BOOL "" FORCE)
+    set(GUI_FORMS_BUILD_GALLERY_MODEL OFF CACHE BOOL "" FORCE)
     add_subdirectory("${GUI_FORMS_SOURCE_DIR}" provider EXCLUDE_FROM_ALL)
 endif()
 

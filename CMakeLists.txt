@@ -96,10 +96,7 @@ if(GUI_FORMS_HIGH_INTEGRITY)
 endif()
 include(cmake/sections/font_pack.cmake)                # cmake/FontPack.cmake
 include(cmake/sections/module.cmake)                   # cmake/Module.cmake
-include(cmake/sections/file_manager_demoboard.cmake)
 include(cmake/sections/windows_drawing_probe.cmake)
-include(cmake/sections/macos_live_resize_probe.cmake)
-include(cmake/sections/correspondence.cmake)          # demo/correspondence/correspondence.cmake
 include(cmake/sections/font_metrics_differential.cmake)
 include(cmake/sections/main.cmake)
 include(cmake/sections/audio.cmake)                    # cmake/Audio.cmake
