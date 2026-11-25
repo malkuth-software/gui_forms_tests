@@ -5,6 +5,9 @@
 
 #include "gui_forms/window.hpp"
 #include "gui_forms/basic_controls.hpp"
+// windows_host.cpp uses the native input gate, whose header 1.0.5 includes
+// only in an MCP build.
+#include "src/core/host/session/session_directory.hpp"
 #include "src/surface/windows/application/windows_host.cpp"
 
 #include <cstdlib>

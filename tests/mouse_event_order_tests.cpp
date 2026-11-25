@@ -3,13 +3,16 @@
 // and not on the press, a second press released elsewhere, a press counted
 // beyond two, MouseEnter before MouseMove and MouseLeave before the next
 // control's MouseEnter, a button's activation between MouseClick and
-// MouseUp, and the events the click styles leave alone.
+// MouseUp, the events the click styles leave alone, and Click on the
+// controls that handle their own press (a scroll bar, a text box).
 
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/button_base.hpp"
 #include "gui_forms/controls/panel.hpp"
+#include "gui_forms/controls/scroll_bar.hpp"
+#include "gui_forms/controls/text_box.hpp"
 #include "gui_forms/event/subscription_token/subscription_token.hpp"
 #include "gui_forms/events/input_events/input_events.hpp"
 #include "gui_forms/events/mouse_events/mouse_events.hpp"
@@ -188,6 +191,56 @@ void test_styles_leave_the_other_events() {
             "without the click styles MouseEnter, MouseMove, MouseDown, MouseUp and the capture's end remain");
 }
 
+// A press a control handles itself still ends in Click: a scroll bar steps
+// on the press of its arrow and a text box takes the focus, and each raises
+// Click once on a release over it, after its MouseUp. A press released
+// away from the control raises none (WinForms: ScrollBar.Click and
+// TextBoxBase.Click).
+void test_self_handling_controls_raise_click() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("handled.root"));
+    std::shared_ptr<ScrollBar> bar = make_control<ScrollBar>(StableId("handled.bar"), Orientation::horizontal);
+    std::shared_ptr<TextBox> box = make_control<TextBox>(StableId("handled.box"), "text");
+    (*bar).set_requested_bounds({10.0, 10.0, 200.0, 17.0});
+    (*bar).set_range(0.0, 100.0);
+    (*bar).small_change = 1.0;
+    (*box).set_requested_bounds({10.0, 40.0, 200.0, 24.0});
+    (*root).add_child(bar);
+    (*root).add_child(box);
+    Window window(root, {300.0, 100.0});
+    window.perform_layout();
+    const Point increment_arrow{205.0, 18.0};
+    const Point inside_box{60.0, 52.0};
+    const Point away{260.0, 90.0};
+    Log log;
+    const SubscriptionToken bar_up = (*bar).mouse_up().subscribe(NoteArgs{&log, "bar_up"});
+    const SubscriptionToken bar_click = (*bar).click().subscribe(Note{&log, "bar_click"});
+    const SubscriptionToken box_up = (*box).mouse_up().subscribe(NoteArgs{&log, "box_up"});
+    const SubscriptionToken box_click = (*box).click().subscribe(Note{&log, "box_click"});
+
+    const PointerEvent bar_down{PointerAction::down, PointerButton::primary, increment_arrow};
+    const PointerEvent bar_release{PointerAction::up, PointerButton::primary, increment_arrow};
+    static_cast<void>(window.dispatch_pointer(bar_down));
+    require((*bar).value.read() == 1.0, "the press on the increment arrow steps the bar");
+    static_cast<void>(window.dispatch_pointer(bar_release));
+    require(log == Log{"bar_up:1", "bar_click"}, "the scroll bar raises Click once, after its MouseUp");
+
+    log.clear();
+    const PointerEvent box_down{PointerAction::down, PointerButton::primary, inside_box};
+    const PointerEvent box_release{PointerAction::up, PointerButton::primary, inside_box};
+    static_cast<void>(window.dispatch_pointer(box_down));
+    require(window.focused_control() == box, "the press focuses the text box");
+    static_cast<void>(window.dispatch_pointer(box_release));
+    require(log == Log{"box_up:1", "box_click"}, "the text box raises Click once, after its MouseUp");
+
+    log.clear();
+    const PointerEvent released_away{PointerAction::up, PointerButton::primary, away};
+    static_cast<void>(window.dispatch_pointer(bar_down));
+    static_cast<void>(window.dispatch_pointer(released_away));
+    static_cast<void>(window.dispatch_pointer(box_down));
+    static_cast<void>(window.dispatch_pointer(released_away));
+    require(log == Log{"bar_up:1", "box_up:1"}, "a press released away from the control raises no Click");
+}
+
 } // namespace
 
 int main() {
@@ -198,6 +251,7 @@ int main() {
         test_enter_move_and_leave_order();
         test_button_activation_between_mouse_click_and_up();
         test_styles_leave_the_other_events();
+        test_self_handling_controls_raise_click();
     } catch (const std::exception& failure) {
         std::cerr << "mouse event order tests failed: " << failure.what() << '\n';
         return EXIT_FAILURE;

@@ -21,6 +21,7 @@
 #include "text_shape_engine.hpp"
 #include "skia_raster.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <array>
 #include <cstddef>

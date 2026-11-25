@@ -18,6 +18,7 @@
 #include "gui_forms/window.hpp"
 #include "support/frame_wake.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <array>
 #include <chrono>

@@ -4,10 +4,42 @@
 #include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/radio_button.hpp"
 
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 namespace gallery_pages_tests {
+
+namespace {
+
+// Whether two visible controls under `page` publish the same access key
+// (Windows field report D5: Alt+C reached "Command" and never "Classic
+// checkbox"). The walk keeps an explicit stack, as house style asks for a
+// runtime-shaped tree; the first repeated key is reported.
+std::string repeated_access_key(const Control::Ptr& page) {
+    std::unordered_set<std::string> seen{};
+    std::vector<Control::Ptr> pending{page};
+    while (!pending.empty()) {
+        const Control::Ptr control = pending.back();
+        pending.pop_back();
+        if (!control || !(*control).effectively_visible()) continue;
+        std::string key = (*control).semantic_descriptor().access_key;
+        for (char& character : key) {
+            if (character >= 'a' && character <= 'z') character = static_cast<char>(character - 'a' + 'A');
+        }
+        if (!key.empty() && !seen.insert(key).second) return key + " on " + std::string((*control).stable_id().value());
+        const Control::ChildView children = (*control).children();
+        for (std::size_t index = 0U; index < children.size(); ++index) pending.push_back(children[index]);
+    }
+    return {};
+}
+
+}  // namespace
 
 void test_control_spectrum(gui_forms::Window& window) {
     select_page(window, "control-spectrum");
+    const std::string repeated = repeated_access_key(window.find("gallery.controls.document"));
+    require(repeated.empty(), ("each access key on the control spectrum must reach one control: " + repeated).c_str());
     const std::shared_ptr<Label> status =
         std::dynamic_pointer_cast<Label>(window.find("gallery.status.text"));
     const std::shared_ptr<CheckBox> classic =

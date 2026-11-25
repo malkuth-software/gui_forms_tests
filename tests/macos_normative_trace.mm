@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <memory>
 #include <string>
@@ -17,7 +18,7 @@
 // Accessibility grant), and the trace written to the path given with
 // --output, or, by default (LaunchServices passes no arguments, see
 // cmake/run_macos_activated_test.cmake), to normative/macos.trace beside
-// the bundle. tools/normative_trace.py compare checks it against the
+// the bundle (staged through GUI_FORMS_PROBE_FILES under the runner). tools/normative_trace.py compare checks it against the
 // headless reference at the window's backing scale. The last output line is
 // "failures=0" when the trace was written.
 //
@@ -205,7 +206,13 @@ int main(int argc, char** argv) {
         if (std::string_view(argv[index]) == "--output") state.output = argv[index + 1];
     }
     if (state.output.empty()) {
-        NSString* const beside = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
+        // Under the runner, into GUI_FORMS_PROBE_FILES, which it copies beside
+        // the bundle after: a launched application may not write to a build
+        // tree on a removable volume (the open blocks on the privacy approval).
+        const char* const staged = std::getenv("GUI_FORMS_PROBE_FILES");
+        NSString* beside = nil;
+        if (staged != nullptr && staged[0] != '\0') beside = [NSString stringWithUTF8String:staged];
+        if (beside == nil) beside = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
         NSString* const directory = [beside stringByAppendingPathComponent:@"normative"];
         [[NSFileManager defaultManager] createDirectoryAtPath:directory
                                   withIntermediateDirectories:YES

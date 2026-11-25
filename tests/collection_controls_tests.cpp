@@ -963,7 +963,10 @@ void test_correspondence_virtualization_and_anchor_stability() {
     (*records).accessible_name = "Evidence correspondence";
     Window window(records, {820.0, 230.0});
     window.perform_layout();
-    require((*records).children().empty(),
+    // Its one retained child is the vertical scroll bar (the view scrolls
+    // its 10000 cards); the cards themselves are painted, not controls.
+    require((*records).children().size() == 1U &&
+                (*(*records).children()[0]).stable_id().value() == "correspondence.records.vertical-scroll-bar",
             "CorrespondenceView must not allocate one retained control per logical item");
     require((*records).realized_count() <= 8U &&
                 (*records).semantic_virtual_children().size() <= 8U,

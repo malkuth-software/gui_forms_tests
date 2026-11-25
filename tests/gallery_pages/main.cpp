@@ -148,6 +148,8 @@ int main(int argc, char** argv) {
         test_gallery_semantic_surface();
         test_shell_keyboard_order();
         test_basics_card_dark_contrast();
+        test_navigator_wheel_scrolls_rows();
+        test_basics_backplane_follows_the_scheme();
         test_ranges_containers_and_animation();
         test_text_collections_and_overlay_lifecycle();
         test_timing_and_tooltip_runtime();

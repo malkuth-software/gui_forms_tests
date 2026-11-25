@@ -1,6 +1,7 @@
 #include "text_shape_engine.hpp"
 #include "bounded_shape_workspace.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <algorithm>
 #include <array>

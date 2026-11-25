@@ -193,6 +193,7 @@ bool report_pass(ProbeState& state, const Pass& pass, NSView* const view, const 
     std::size_t live_resize_draws{};
     std::size_t stale{};
     std::size_t stalls{};
+    double last_change{};
     std::vector<double> intervals{};
     std::vector<double> durations{};
     intervals.reserve(records.size());
@@ -208,7 +209,13 @@ bool report_pass(ProbeState& state, const Pass& pass, NSView* const view, const 
         const bool resized = record.width != previous.width || record.height != previous.height;
         if (!resized) continue;
         ++size_changes;
-        if (interval > stall_limit_ms) ++stalls;
+        // The first draw after the turn follows the probe's own hold (hold_ms,
+        // longer under a drag, where AppKit waits for the pointer to move
+        // again): that gap is the script's, not a stall.
+        const double change = (record.width - previous.width) + (record.height - previous.height);
+        const bool turned = last_change > 0.0 && change < 0.0;
+        if (change != 0.0) last_change = change;
+        if (interval > stall_limit_ms && !turned) ++stalls;
         // The view is flipped: growth exposes a strip on the right and one
         // at the bottom.
         if (record.width > previous.width &&
@@ -382,9 +389,14 @@ int main(int argc, char** argv) {
         if (argument == "--capture") state.capture_directory = argv[index + 1];
     }
     // LaunchServices passes no arguments (cmake/run_macos_activated_test.cmake):
-    // the CSVs then go to live-resize/ beside the bundle.
+    // the CSVs then go to live-resize/ beside the bundle, staged through
+    // GUI_FORMS_PROBE_FILES under the runner, which copies them there after: a
+    // launched application may not write to a build tree on a removable volume.
     if (state.out_directory.empty()) {
-        NSString* const beside = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
+        const char* const staged = std::getenv("GUI_FORMS_PROBE_FILES");
+        NSString* beside = nil;
+        if (staged != nullptr && staged[0] != '\0') beside = [NSString stringWithUTF8String:staged];
+        if (beside == nil) beside = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
         NSString* const directory = [beside stringByAppendingPathComponent:@"live-resize"];
         [[NSFileManager defaultManager] createDirectoryAtPath:directory
                                   withIntermediateDirectories:YES

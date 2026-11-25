@@ -33,7 +33,7 @@ set(_gf_high_integrity_refusals
     "hardening_off|-DGUI_FORMS_HIGH_INTEGRITY=ON,-DGUI_FORMS_HARDENING=OFF|GUI_FORMS_HARDENING=OFF: needs ON"
     "mcp_on|-DGUI_FORMS_HIGH_INTEGRITY=ON,-DGUI_FORMS_MCP=ON|GUI_FORMS_MCP=ON: needs OFF"
     "math_dispatch_on|-DGUI_FORMS_HIGH_INTEGRITY=ON,-DSTXLIB_MATH_DISPATCH=ON|STXLIB_MATH_DISPATCH=ON: needs OFF"
-    "gallery_on|-DGUI_FORMS_HIGH_INTEGRITY=ON,-DGUI_FORMS_BUILD_GALLERY=ON|GUI_FORMS_BUILD_GALLERY=ON: needs OFF"
+    "gallery_on|-DGUI_FORMS_HIGH_INTEGRITY=ON,-DGUI_FORMS_BUILD_GALLERY_MODEL=ON|GUI_FORMS_BUILD_GALLERY_MODEL=ON: needs OFF"
     "allowance_alone|-DGUI_FORMS_HIGH_INTEGRITY=OFF,-DGUI_FORMS_HIGH_INTEGRITY_ALLOW_CLIPBOARD_TEXT=ON|needs GUI_FORMS_HIGH_INTEGRITY=ON")
 foreach(_gf_high_integrity_refusal IN LISTS _gf_high_integrity_refusals)
     string(REPLACE "|" ";" _gf_high_integrity_fields "${_gf_high_integrity_refusal}")

@@ -1,6 +1,7 @@
 #include "src/render/text/prepared_window_session.hpp"
 #include "prepared_text_test_support.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <cstdlib>
 #include <iostream>

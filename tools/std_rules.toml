@@ -8,7 +8,7 @@
 format = 1
 root = ".."
 profile = "consumer"
-paths = ["tests", "file_manager_demoboard/tests", "benchmarks", "fuzz"]
+paths = ["tests", "benchmarks", "fuzz"]
 # Native code, where the host-only rules (pthread, wchar_t and the rest)
 # do not apply: the tests and probes that drive a native host or its system
 # interfaces directly.

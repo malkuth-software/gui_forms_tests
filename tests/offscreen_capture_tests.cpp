@@ -51,6 +51,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -743,6 +744,68 @@ void backplane_colour_is_public() {
             "the margin shows the backplane colour the window reports");
 }
 
+bool origin_fits(Rect content, double text_width) noexcept { return text_width < content.width; }
+
+// A selection across CJK, punctuation and an emoji (Windows field report
+// D11: in "Graphemes: á · Ω · 日本語 · 🚀", End then Shift+Left three times
+// selected " · 🚀"... but the band covered the rocket alone). The band runs
+// between the glyphs' own positions: those of one shaping of the whole
+// text, which the painted text uses, measured with the bundled faces.
+void selection_band_follows_the_painted_glyphs() {
+    const std::unique_ptr<OffscreenRaster> raster = made_raster();
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("graphemes"));
+    const std::shared_ptr<TextBox> field = make_control<TextBox>(StableId("graphemes.field"));
+    const std::string text = "Graphemes: \u00e1 \u00b7 \u03a9 \u00b7 \u65e5\u672c\u8a9e \u00b7 \U0001F680";
+    (*field).text = text;
+    (*field).set_requested_bounds({10.0, 10.0, 420.0, 28.0});
+    (*root).add_child(field);
+    const Size size{440.0, 48.0};
+    Window window(root, size);
+    OffscreenAttachment attached(*raster, window);
+    window.perform_layout();
+    require(window.request_focus(field), "the field takes the focus");
+    static_cast<void>(window.dispatch_key({KeyAction::down, PhysicalKey::end}));
+    for (int press = 0; press < 3; ++press) {
+        KeyEvent left{KeyAction::down, PhysicalKey::left};
+        left.modifiers = Modifier::shift;
+        static_cast<void>(window.dispatch_key(left));
+    }
+    const TextSelection selection = (*field).selection();
+    WindowCaptureOptions own{};
+    own.scale = window.scale();
+    require(window.capture_window(own).has_value(), "the field paints");
+
+    TextMetricsProvider* const metrics = window.text_metrics_provider();
+    require(metrics != nullptr, "the attachment measures with the raster");
+    const FontSpec face = (*field).text_font((*field).font.read());
+    std::vector<double> advances(text.size(), 0.0);
+    require((*metrics).fill_cluster_advances_utf8(text, face, advances) != TextResolutionStatus::invalid_request,
+            "the bundled engine shapes the text");
+    double start = 0.0;
+    double end = 0.0;
+    for (std::size_t offset = 0U; offset < text.size(); ++offset) {
+        if (offset < selection.start().value()) start += advances[offset];
+        if (offset < selection.end().value()) end += advances[offset];
+    }
+
+    const ControlAnatomy& anatomy = (*field).anatomy();
+    std::vector<PartGeometry> geometry(anatomy.parts.size());
+    (*field).fill_part_geometry(geometry);
+    const stxlib::Optional<PartIndex> content_part = find_part(anatomy, "content");
+    const stxlib::Optional<PartIndex> selection_part = find_part(anatomy, "selection");
+    require(content_part.present() && selection_part.present(), "a text box publishes its content and selection");
+    const Rect content = geometry[(*content_part.value()).value].bounds;
+    const Rect band = geometry[(*selection_part.value()).value].bounds;
+    // The text is narrower than the field, so it starts at the content's
+    // left edge, unscrolled.
+    require(origin_fits(content, end), "the text fits the field unscrolled");
+    const double origin = content.x;
+    const std::string measured = "band " + std::to_string(band.x) + ".." + std::to_string(band.x + band.width) +
+                                 ", glyphs " + std::to_string(origin + start) + ".." + std::to_string(origin + end);
+    require(std::abs(band.x - (origin + start)) < 0.75 && std::abs(band.x + band.width - (origin + end)) < 0.75,
+            "the selection band must cover the selected glyphs as painted: " + measured);
+}
+
 int main() {
     raster_refusals();
     attachment_and_control_capture();
@@ -756,6 +819,7 @@ int main() {
     capture_records_at_its_scale();
     subtree_captures_draw_owned_overlays();
     backplane_colour_is_public();
+    selection_band_follows_the_painted_glyphs();
     std::cout << "Offscreen capture: raster refusals, the attachment, control captures, specimen states, the "
                  "stock catalogue and atlas deferred-fill frames and captures passed\n";
     return EXIT_SUCCESS;

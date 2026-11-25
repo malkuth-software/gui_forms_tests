@@ -1,6 +1,7 @@
 #include "src/render/text/prepared_window_shape.hpp"
 #include "prepared_text_test_support.hpp"
 #include "gui_forms/allocation/library_memory/library_memory.hpp"
+#include "gui_forms/allocation/library_memory/library_memory_diagnostics.hpp"
 
 #include <stxlib/font_file.hpp>
 

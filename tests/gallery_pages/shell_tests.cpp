@@ -296,4 +296,64 @@ void test_basics_card_dark_contrast() {
             "the card status reads on the dark plate at 4.5:1");
 }
 
+// The basics page's backplane under the dark scheme (Windows field report
+// D2): its wash stayed light (222,235,247) under the group's light ink, at
+// 1.05:1. It follows the scheme both ways, and the group caption and
+// check-box label read on it.
+void test_basics_backplane_follows_the_scheme() {
+    std::unique_ptr<Window> owned = gallery::make_gallery();
+    Window& window = *owned;
+    select_page(window, "basics");
+    const Control::Ptr backplane = window.find("gallery.backplane");
+    require(backplane != nullptr, "the basics page holds its backplane");
+    const ColourScheme schemes[] = {ColourScheme::dark, ColourScheme::light, ColourScheme::dark};
+    for (const ColourScheme scheme : schemes) {
+        PresentationSettings settings = window.presentation_settings();
+        settings.colour_scheme = scheme;
+        window.set_presentation_settings(settings);
+        window.perform_layout();
+        reveal_in_page_viewport(window, backplane);
+        const Rect bounds = (*backplane).committed_arranged_bounds();
+        PlateAndInkPainter painter(bounds.width * 0.5);
+        (*backplane).on_paint(painter, Rect{0.0, 0.0, bounds.width, bounds.height});
+        require(painter.plated, "the basics backplane paints its wash");
+        const bool dark = scheme == ColourScheme::dark;
+        require((detail::relative_luminance(painter.plate) < 0.2) == dark,
+                "the basics backplane's wash follows the colour scheme");
+        const Color caption = label_ink(window, "gallery.intro");
+        require(detail::contrast_ratio(caption, painter.plate) >= 4.5,
+                "the basics page's text reads on its backplane at 4.5:1");
+    }
+}
+
+// The page navigator under the wheel (Windows field report D10: thirty
+// notches moved it about seventy pixels on Windows, three over the page
+// about 140). One notch, as every host sends it (wheel_delta.y of one line
+// per notch, positive up), scrolls the list three rows, notch after notch.
+void test_navigator_wheel_scrolls_rows() {
+    std::unique_ptr<Window> owned = gallery::make_gallery();
+    Window& window = *owned;
+    window.perform_layout();
+    const std::shared_ptr<ListView> pages = std::dynamic_pointer_cast<ListView>(window.find("gallery.sidebar.pages"));
+    require(pages != nullptr, "the Gallery's navigator is a ListView");
+    const Rect bounds = (*pages).absolute_bounds();
+    const Point over{bounds.x + bounds.width * 0.5, bounds.y + bounds.height * 0.5};
+    const std::size_t first = (*pages).top_index();
+    std::size_t previous = first;
+    for (int notch = 0; notch < 4; ++notch) {
+        PointerEvent move{PointerAction::move, PointerButton::none, over};
+        static_cast<void>(window.dispatch_pointer(move));
+        PointerEvent wheel{PointerAction::wheel, PointerButton::none, over};
+        wheel.wheel_delta = {0.0, -1.0};
+        static_cast<void>(window.dispatch_pointer(wheel));
+        window.perform_layout();
+        const std::size_t top = (*pages).top_index();
+        require(top > previous, ("each wheel notch over the navigator scrolls it: top " + std::to_string(previous) +
+                                 " then " + std::to_string(top)).c_str());
+        previous = top;
+    }
+    // Three rows a notch, a group header among them now and then.
+    require(previous >= first + 8U, "four notches scroll the navigator about twelve rows");
+}
+
 } // namespace gallery_pages_tests

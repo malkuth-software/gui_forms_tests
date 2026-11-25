@@ -3,7 +3,8 @@
 // against every state, the window's request, grant and backdrop_changed
 // order, the host's compositor reports through the session, and byte-stable
 // headless traces of a declared and an undeclared window through a
-// compositor stopping and starting and high contrast on and off.
+// compositor stopping and starting and high contrast on and off, and how a
+// window carries its backdrop chain under each grant.
 #include "gui_forms/application/application.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
@@ -15,6 +16,7 @@
 #include "gui_forms/host/windowing/host_windowing.hpp"
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
+#include "gui_forms/window/backdrop/backdrop_chain.hpp"
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 #include "headless_host.hpp"
@@ -24,6 +26,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <stxlib/optional.hpp>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -420,6 +423,69 @@ ApplicationWindow make_entry(const char* id, const char* owner, bool non_opaque,
     return entry;
 }
 
+// A frosted chain: a blur, a saturation and a translucent white tint.
+constexpr Color frosted_tint = Color::rgba(255, 255, 255, 64);
+
+BackdropChain frosted_chain() {
+    BackdropChain chain{};
+    static_cast<void>(chain.append(BackdropOperation::blur(8.0)));
+    static_cast<void>(chain.append(BackdropOperation::saturate(1.5)));
+    static_cast<void>(chain.append(BackdropOperation::tint(frosted_tint)));
+    return chain;
+}
+
+// The window's chain resolution follows the grant the host's reports
+// leave: under a material the blur is the system's, the saturation is
+// dropped and the tint is ours; under plain transparency the blur is
+// dropped; without a compositor the tint is painted opaque; under the
+// host's high contrast the chain is withdrawn. A window without a chain
+// has no resolution.
+void test_chain_resolution_follows_the_grant() {
+    const std::unique_ptr<HostedFixture> held = std::make_unique<HostedFixture>(true);
+    HostedFixture& fixture = *held;
+    Window& window = fixture.window;
+    require(fixture.host.dispatch(HostCompositorEvent{full_state(1U)}, 2).accepted(), "report 1 refused");
+    static_cast<void>(window.request_backdrop(
+        WindowBackdropRequest::with_fallback(WindowBackdrop::window_material, WindowBackdrop::transparent)));
+    window.set_backdrop_chain(stxlib::Optional<BackdropChain>::of(frosted_chain()));
+    require(window.backdrop_grant().granted == WindowBackdrop::window_material, "the material is granted");
+    const stxlib::Optional<BackdropChainResolution> material = window.backdrop_chain_resolution();
+    require(material.present() && (*material.value()).blur_by_material && !(*material.value()).blur_dropped &&
+                (*material.value()).saturate_dropped && (*material.value()).tint == frosted_tint &&
+                !(*material.value()).solid && !(*material.value()).withdrawn,
+            "under a material the blur is the system's, saturate is dropped and the tint is ours");
+
+    require(fixture.host.dispatch(HostCompositorEvent{x11_state(2U, true)}, 3).accepted(), "report 2 refused");
+    require(window.backdrop_grant().granted == WindowBackdrop::transparent, "the chain falls to transparent");
+    const stxlib::Optional<BackdropChainResolution> clear = window.backdrop_chain_resolution();
+    require(clear.present() && (*clear.value()).blur_dropped && !(*clear.value()).blur_by_material &&
+                !(*clear.value()).solid && (*clear.value()).tint == frosted_tint,
+            "without a material the blur is dropped and the tint stays translucent");
+
+    require(fixture.host.dispatch(HostCompositorEvent{x11_state(3U, false)}, 4).accepted(), "report 3 refused");
+    require(window.backdrop_grant().granted == WindowBackdrop::opaque, "without a compositor the window is opaque");
+    const stxlib::Optional<BackdropChainResolution> opaque = window.backdrop_chain_resolution();
+    require(opaque.present() && (*opaque.value()).solid && (*opaque.value()).blur_dropped &&
+                !(*opaque.value()).withdrawn,
+            "without a compositor the tint is painted opaque");
+
+    CompositorState contrast = full_state(4U);
+    contrast.high_contrast = true;
+    require(fixture.host.dispatch(HostCompositorEvent{contrast}, 5).accepted(), "report 4 refused");
+    const stxlib::Optional<BackdropChainResolution> withdrawn = window.backdrop_chain_resolution();
+    require(withdrawn.present() && (*withdrawn.value()).withdrawn && !(*withdrawn.value()).blur_by_material,
+            "under the host's high contrast the chain is withdrawn");
+
+    require(fixture.host.dispatch(HostCompositorEvent{full_state(5U)}, 6).accepted(), "report 5 refused");
+    const stxlib::Optional<BackdropChainResolution> restored = window.backdrop_chain_resolution();
+    require(restored.present() && (*restored.value()).blur_by_material && !(*restored.value()).withdrawn,
+            "with high contrast off the material carries the blur again");
+
+    window.set_backdrop_chain(stxlib::Optional<BackdropChain>::none());
+    require(window.backdrop_chain().absent() && window.backdrop_chain_resolution().absent(),
+            "a window without a chain has no resolution");
+}
+
 void test_headless_application() {
     std::vector<std::string> opened{};
     std::vector<ApplicationWindow> entries{};
@@ -466,6 +532,7 @@ int main() {
         test_reentrant_request();
         test_session_reports_and_refusals();
         test_canonical_traces();
+        test_chain_resolution_follows_the_grant();
         test_headless_application();
         std::cout << "gui_forms_compositor_backdrop_tests: all tests passed\n";
         return EXIT_SUCCESS;

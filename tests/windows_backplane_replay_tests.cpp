@@ -12,6 +12,9 @@
 // The scene (and with it every GUI.Forms header) comes before windows.h,
 // whose `near` and `far` macros would otherwise rewrite enumerators.
 #include "backplane_replay_scene.hpp"
+// windows_host.cpp uses the native input gate, whose header 1.0.5 includes
+// only in an MCP build.
+#include "src/core/host/session/session_directory.hpp"
 #include "src/surface/windows/application/windows_host.cpp"
 
 #include <chrono>

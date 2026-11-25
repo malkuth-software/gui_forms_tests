@@ -96,10 +96,8 @@ if(GUI_FORMS_HIGH_INTEGRITY)
 endif()
 include(cmake/sections/font_pack.cmake)                # cmake/FontPack.cmake
 include(cmake/sections/module.cmake)                   # cmake/Module.cmake
-include(cmake/sections/file_manager_demoboard.cmake)
 include(cmake/sections/windows_drawing_probe.cmake)
 include(cmake/sections/macos_live_resize_probe.cmake)
-include(cmake/sections/correspondence.cmake)          # demo/correspondence/correspondence.cmake
 include(cmake/sections/font_metrics_differential.cmake)
 include(cmake/sections/main.cmake)
 include(cmake/sections/audio.cmake)                    # cmake/Audio.cmake
@@ -162,7 +160,12 @@ foreach(_gf_tests_one IN LISTS _gf_tests_all)
             "PATH=path_list_prepend:${_gf_tests_directory}")
     endforeach()
     set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT
-        "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "GUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}")
+        "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "GUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}"
+        # No attach endpoint per test process (MCP 1.0.5): every GUI.Forms
+        # program listens for attach by default, and a suite run would make
+        # a socket or pipe for each. The attach tests open their endpoints
+        # directly and do not read this.
+        "GUI_FORMS_MCP_ATTACH=0")
     if(APPLE)
         get_test_property(${_gf_tests_one} LABELS _gf_tests_labels)
         if(_gf_tests_labels AND "area_host" IN_LIST _gf_tests_labels)

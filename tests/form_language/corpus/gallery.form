@@ -11,7 +11,7 @@
       layout="flex-row">
     <button id="gallery.command.reset" text="Reset"/>
     <button id="gallery.command.diagnostics" text="Diagnostics" toggle="true"/>
-    <label id="gallery.command.status" text="Portable core · Host 0.4 · drop-ready" flex="1"/>
+    <label id="gallery.command.status" text="Portable core · drop-ready" flex="1"/>
   </command-strip>
 
   <backplane id="gallery.backplane"

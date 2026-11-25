@@ -1,4 +1,4 @@
-if(GUI_FORMS_BUILD_GALLERY)
+if(TARGET gui_forms_gallery_model)
     if(GUI_FORMS_ENABLE_MACOS_HOST)
         # Live resize on the Gallery (cp33; tests/macos_live_resize_probe.mm):
         # a scripted corner drag and a stepped resize, recording each draw's
@@ -7,8 +7,6 @@ if(GUI_FORMS_BUILD_GALLERY)
         # with --capture <dir> to save frames for the owner's verdict.
         add_executable(gui_forms_macos_live_resize_probe MACOSX_BUNDLE
             tests/macos_live_resize_probe.mm
-            ${GUI_FORMS_GALLERY_FONTS}
-            ${GUI_FORMS_GALLERY_FONT_NOTICES}
         )
         target_compile_options(gui_forms_macos_live_resize_probe PRIVATE -fobjc-arc)
         target_link_libraries(gui_forms_macos_live_resize_probe PRIVATE
