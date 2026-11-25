@@ -296,4 +296,34 @@ void test_basics_card_dark_contrast() {
             "the card status reads on the dark plate at 4.5:1");
 }
 
+// The basics page's backplane under the dark scheme (Windows field report
+// D2): its wash stayed light (222,235,247) under the group's light ink, at
+// 1.05:1. It follows the scheme both ways, and the group caption and
+// check-box label read on it.
+void test_basics_backplane_follows_the_scheme() {
+    std::unique_ptr<Window> owned = gallery::make_gallery();
+    Window& window = *owned;
+    select_page(window, "basics");
+    const Control::Ptr backplane = window.find("gallery.backplane");
+    require(backplane != nullptr, "the basics page holds its backplane");
+    const ColourScheme schemes[] = {ColourScheme::dark, ColourScheme::light, ColourScheme::dark};
+    for (const ColourScheme scheme : schemes) {
+        PresentationSettings settings = window.presentation_settings();
+        settings.colour_scheme = scheme;
+        window.set_presentation_settings(settings);
+        window.perform_layout();
+        reveal_in_page_viewport(window, backplane);
+        const Rect bounds = (*backplane).committed_arranged_bounds();
+        PlateAndInkPainter painter(bounds.width * 0.5);
+        (*backplane).on_paint(painter, Rect{0.0, 0.0, bounds.width, bounds.height});
+        require(painter.plated, "the basics backplane paints its wash");
+        const bool dark = scheme == ColourScheme::dark;
+        require((detail::relative_luminance(painter.plate) < 0.2) == dark,
+                "the basics backplane's wash follows the colour scheme");
+        const Color caption = label_ink(window, "gallery.intro");
+        require(detail::contrast_ratio(caption, painter.plate) >= 4.5,
+                "the basics page's text reads on its backplane at 4.5:1");
+    }
+}
+
 } // namespace gallery_pages_tests
