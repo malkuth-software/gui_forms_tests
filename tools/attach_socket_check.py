@@ -226,7 +226,7 @@ def console_mode(path):
 
 def door_mode(path, entry):
     """The command folder through plain shells: no client but sh."""
-    found = [re.match(r"GUI\.Forms: \S+ ([0-9a-f]{8})\. Send a command: (.*)$", line) for line in DOOR_LINES]
+    found = [re.match(r"GUI\.Forms: \S+ ([0-9a-f]{8})\. Send commands \(chain them with && or ;\): (.*)$", line) for line in DOOR_LINES]
     found = [match for match in found if match]
     require(found, "the program prints the command folder's line: " + " | ".join(DOOR_LINES))
     door = found[-1].group(1)
@@ -258,6 +258,17 @@ def door_mode(path, entry):
             "two acts chained across shells keep control, the request ID echoed: %.1f s: %s" % (took, second[-200:]))
     reply, _ = send("#e1 no_such_tool")
     require(reply.rstrip().endswith(". #e1 error"), "an error's end line says so: " + reply[-200:])
+    # Chains (owner): && stops at a failure, ; goes on, and separators in
+    # quoted values or JSON are not separators.
+    reply, _ = send("#c1 probe_ready && no_such_tool && probe_ready")
+    require(reply.startswith("[1] ready\n[2] error:") and "[3] not run" in reply and
+            reply.rstrip().endswith(". #c1 error at 2"), "a && chain stops at its failure: " + repr(reply))
+    reply, _ = send("no_such_tool ; probe_ready")
+    require("[2] ready" in reply and reply.rstrip().endswith(". error at 1"), "a ; chain goes on: " + repr(reply))
+    reply, _ = send('find name="a && b; c" ; probe_ready')
+    require("[2] ready" in reply and "[3]" not in reply, "separators inside quotes are not separators: " + reply)
+    reply, _ = send("probe_ready && probe_ready")
+    require(reply == "[1] ready\n[2] ready\n. ok\n", "a chain that succeeds ends ok: " + repr(reply))
     subprocess.run(["sh", "-c", "echo 'help mcp.control' > %s/in" % folder], timeout=TIMEOUT)
     later = subprocess.run(["sh", "-c", "cat %s/out" % folder], capture_output=True, timeout=TIMEOUT)
     require("-- Control --" in later.stdout.decode("utf-8"), "a reply waits for a reader in a later shell")

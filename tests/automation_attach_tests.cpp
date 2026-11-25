@@ -352,6 +352,19 @@ void door_lines() {
     require(door_reply_frame("ok: drew\n.hidden", "7", false) == "ok: drew\n..hidden\n. #7 ok\n",
             "a reply's lines, a dot doubled, then the end line with the ID");
     require(door_reply_frame("", "", true) == ". error\n", "an empty failure is its end line");
+    require(door_reply_frame("[1] ok", "9", true, 2U) == "[1] ok\n. #9 error at 2\n", "a chain names its failure");
+    const std::vector<ChainPart> chain = split_console_chain("help && call windows ; tools");
+    require(chain.size() == 3U && chain[0].command == "help" && chain[0].join == ChainJoin::on_success &&
+                chain[1].command == "call windows" && chain[1].join == ChainJoin::always &&
+                chain[2].command == "tools" && chain[2].join == ChainJoin::end,
+            "&& and ; split a line, each part trimmed");
+    const std::vector<ChainPart> quoted =
+        split_console_chain("call find name=\"a && b; c\" text='x;y' ; call act {\"keys\":\"a;b\",\"l\":[\"&&\"]}");
+    require(quoted.size() == 2U && quoted[0].command == "call find name=\"a && b; c\" text='x;y'" &&
+                quoted[1].command == "call act {\"keys\":\"a;b\",\"l\":[\"&&\"]}",
+            "separators inside quotes and JSON are not separators");
+    require(split_console_chain("call find name=\"a\\\"&&\"").size() == 1U, "an escaped quote stays in its string");
+    require(split_console_chain("help").size() == 1U, "an unchained line is one part");
     require(door_id_valid("3fa9c21b") && !door_id_valid("3FA9C21B") && !door_id_valid("3fa9c21") &&
                 !door_id_valid("../../x1"),
             "an ID is 8 lowercase hexadecimal digits");

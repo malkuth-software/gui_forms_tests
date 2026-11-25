@@ -516,6 +516,7 @@ void help_comes_from_the_documentation() {
                 has(overview, "`help mcp`") && has(overview, "Plan Paint draws pictures."),
             "help gives the access line, the commands, the topics and the program's note");
     require(!has(overview, "token") && !has(overview, "resume"), "help names no token and no resume");
+    require(has(overview, "Chain commands with && (stop on error) or ; (continue)"), "help says how to chain");
     const std::string listing = help_text("tools", tools, context);
     const std::string draw_line = listing.substr(listing.find("plan_paint_draw"), listing.find('\n'));
     require(has(draw_line, "Draws a shape on the picture.") && !has(draw_line, "Units") &&
