@@ -1544,7 +1544,9 @@ void the_default_window_is_a_program_window() {
             "snapshot {} reads the program window, active, and never the tooltip");
     const std::string windows = success_text(fixture.call("windows", "{}"));
     require(contains(windows, "[auto.window] active"), "windows names the program window active");
-    require(succeeded(fixture.call("capture", "{\"target\":\"auto.press\"}")),
+    // A read by target (text; this fixture's control captures are not drawn
+    // headless, so capture would test the painter, not the lookup).
+    require(contains(success_text(fixture.call("text", "{\"target\":\"auto.press\"}")), "Apply"),
             "a target in the program window is found without naming the window");
     fixture.core.detach_window(tip);
 }

@@ -382,9 +382,14 @@ int main(int argc, char** argv) {
         if (argument == "--capture") state.capture_directory = argv[index + 1];
     }
     // LaunchServices passes no arguments (cmake/run_macos_activated_test.cmake):
-    // the CSVs then go to live-resize/ beside the bundle.
+    // the CSVs then go to live-resize/ beside the bundle, staged through
+    // GUI_FORMS_PROBE_FILES under the runner, which copies them there after: a
+    // launched application may not write to a build tree on a removable volume.
     if (state.out_directory.empty()) {
-        NSString* const beside = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
+        const char* const staged = std::getenv("GUI_FORMS_PROBE_FILES");
+        NSString* beside = nil;
+        if (staged != nullptr && staged[0] != '\0') beside = [NSString stringWithUTF8String:staged];
+        if (beside == nil) beside = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
         NSString* const directory = [beside stringByAppendingPathComponent:@"live-resize"];
         [[NSFileManager defaultManager] createDirectoryAtPath:directory
                                   withIntermediateDirectories:YES
