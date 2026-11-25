@@ -326,4 +326,34 @@ void test_basics_backplane_follows_the_scheme() {
     }
 }
 
+// The page navigator under the wheel (Windows field report D10: thirty
+// notches moved it about seventy pixels on Windows, three over the page
+// about 140). One notch, as every host sends it (wheel_delta.y of one line
+// per notch, positive up), scrolls the list three rows, notch after notch.
+void test_navigator_wheel_scrolls_rows() {
+    std::unique_ptr<Window> owned = gallery::make_gallery();
+    Window& window = *owned;
+    window.perform_layout();
+    const std::shared_ptr<ListView> pages = std::dynamic_pointer_cast<ListView>(window.find("gallery.sidebar.pages"));
+    require(pages != nullptr, "the Gallery's navigator is a ListView");
+    const Rect bounds = (*pages).absolute_bounds();
+    const Point over{bounds.x + bounds.width * 0.5, bounds.y + bounds.height * 0.5};
+    const std::size_t first = (*pages).top_index();
+    std::size_t previous = first;
+    for (int notch = 0; notch < 4; ++notch) {
+        PointerEvent move{PointerAction::move, PointerButton::none, over};
+        static_cast<void>(window.dispatch_pointer(move));
+        PointerEvent wheel{PointerAction::wheel, PointerButton::none, over};
+        wheel.wheel_delta = {0.0, -1.0};
+        static_cast<void>(window.dispatch_pointer(wheel));
+        window.perform_layout();
+        const std::size_t top = (*pages).top_index();
+        require(top > previous, ("each wheel notch over the navigator scrolls it: top " + std::to_string(previous) +
+                                 " then " + std::to_string(top)).c_str());
+        previous = top;
+    }
+    // Three rows a notch, a group header among them now and then.
+    require(previous >= first + 8U, "four notches scroll the navigator about twelve rows");
+}
+
 } // namespace gallery_pages_tests

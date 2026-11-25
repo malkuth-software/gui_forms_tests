@@ -12,6 +12,7 @@ void test_page_contract_and_rendering();
 void test_gallery_semantic_surface();
 void test_shell_keyboard_order();
 void test_basics_card_dark_contrast();
+void test_navigator_wheel_scrolls_rows();
 void test_basics_backplane_follows_the_scheme();
 void test_anatomy_coverage();
 void test_schema_export();
