@@ -220,16 +220,30 @@ struct ScheduleWakeHostFixture final {
         // schedule wake is still queued after the paint.
         (*root).arm(*hosted.model);
         (*root).invalidate(Dirty::paint);
+        const PaintLeaseSnapshot after_arm = (*hosted.model).paint_lease_snapshot();
+        const bool dispatch_pending = (*hosted.state).render_dispatch_pending_;
+        const bool presentation_pending = (*hosted.state).presentation_pending_;
+        std::uint64_t renders = 0U;
         MSG render{};
         while (PeekMessageW(&render, hosted.window, render_dispatch_message, render_dispatch_message, PM_REMOVE) !=
                FALSE) {
             DispatchMessageW(&render);
+            ++renders;
         }
+        const bool region_pending = GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE;
         paint_pending(hosted.window);
+        // The state the paint depends on, so that a failure names the link
+        // that broke: the model's wake, the host's posted wake, the render
+        // dispatch, the update region.
         require((*root).paints == first_paints + 1U,
                 "the armed paint ran once (paints " + std::to_string((*root).paints - first_paints) +
-                    " after the arm, update region " +
-                    (GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE ? "pending" : "empty") + ")");
+                    " after the arm; wakes queued " + std::to_string(after_arm.render_wakes_queued) +
+                    ", coalesced " + std::to_string(after_arm.render_wakes_coalesced) + ", wake owed " +
+                    (after_arm.render_wake_queued ? "yes" : "no") + ", occluded " +
+                    ((*hosted.model).occluded() ? "yes" : "no") + ", host dispatch pending " +
+                    (dispatch_pending ? "yes" : "no") + ", presentation pending " +
+                    (presentation_pending ? "yes" : "no") + ", render messages " + std::to_string(renders) +
+                    ", update region " + (region_pending ? "pending" : "empty") + ")");
         require(schedule_wake_queued(hosted.window), "a deadline set while painting posts a schedule wake");
         run_until(hosted, (*root).paints, first_paints + 2U);
         require((*root).paints >= first_paints + 2U, "the paint deadline repaints with no other input");
