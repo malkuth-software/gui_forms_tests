@@ -301,7 +301,7 @@ void tokens_take_their_tone() {
     for (const ConsoleGlyph& glyph : reply[0].glyphs) {
         if (glyph.tone == ConsoleTone::instruction) lead += glyph.text;
     }
-    require(lead == "\xe2\x80\xb9drew", "a reply's mark and leading word are the instruction");
+    require(lead == "\xe2\x80\xb9" "drew", "a reply's mark and leading word are the instruction");
     // Brackets, braces, parentheses and quotes are the instruction wherever
     // they stand (owner): in a reply's text too.
     ConsoleLog marks{};
