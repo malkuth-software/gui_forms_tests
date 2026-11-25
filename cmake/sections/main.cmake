@@ -2884,6 +2884,16 @@ target_include_directories(gui_forms_relative_pointer_example_tests PRIVATE
     ${GUI_FORMS_SOURCE_DIR}/examples/relative_pointer)
 target_link_libraries(gui_forms_relative_pointer_example_tests PRIVATE gui_forms_host_headless)
 add_test(NAME gui_forms_relative_pointer_example_tests COMMAND gui_forms_relative_pointer_example_tests)
+# The custom-control example (examples/link_page, docs/user/custom-controls.md),
+# driven headless: pointer motion, hover, click, scroll and resize over a long
+# page lay out and flow no more than they must.
+add_executable(gui_forms_link_page_example_tests tests/link_page_example_tests.cpp
+    ${GUI_FORMS_SOURCE_DIR}/examples/link_page/link_page.cpp
+    ${GUI_FORMS_SOURCE_DIR}/examples/link_page/sample_document.cpp)
+target_include_directories(gui_forms_link_page_example_tests PRIVATE
+    ${GUI_FORMS_SOURCE_DIR}/examples/link_page)
+target_link_libraries(gui_forms_link_page_example_tests PRIVATE gui_forms_controls)
+add_test(NAME gui_forms_link_page_example_tests COMMAND gui_forms_link_page_example_tests)
 add_executable(gui_forms_floating_windows_tests tests/floating_windows_tests.cpp)
 target_link_libraries(gui_forms_floating_windows_tests PRIVATE gui_forms_host_headless)
 add_test(NAME gui_forms_floating_windows_tests COMMAND gui_forms_floating_windows_tests)
