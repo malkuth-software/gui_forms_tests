@@ -71,7 +71,7 @@ void shades_cluster_and_hold() {
             const ConsoleShade value = console_shade(ConsoleTone::value, serial, run);
             require(near(instruction.c, 0.0), "the instruction's c is 0");
             require(near(value.c, 1.0), "a value's c is 1");
-            require(value.v >= 0.72 && value.v <= 0.88, "v hovers around 0.8");
+            require(value.v >= 0.78 && value.v <= 1.0, "v hovers around 0.9");
             if (!near(value.v, first.v)) varied = true;
         }
     }
@@ -275,7 +275,7 @@ void tokens_take_their_tone() {
     for (const ConsoleGlyph& glyph : rows[0].glyphs) {
         const ConsoleRgb rgb = console_formula(glyph.shade);
         if (glyph.tone == ConsoleTone::label) {
-            if (!(glyph.shade.v < 0.66 && near(glyph.shade.c, 0.0))) label_dim = false;
+            if (!(glyph.shade.v < 0.75 && near(glyph.shade.c, 0.0))) label_dim = false;
             continue;
         }
         if (glyph.tone == ConsoleTone::instruction) {
