@@ -777,7 +777,7 @@ void selection_band_follows_the_painted_glyphs() {
 
     TextMetricsProvider* const metrics = window.text_metrics_provider();
     require(metrics != nullptr, "the attachment measures with the raster");
-    const FontSpec face = text_font((*field).font.read());
+    const FontSpec face = (*field).text_font((*field).font.read());
     std::vector<double> advances(text.size(), 0.0);
     require((*metrics).fill_cluster_advances_utf8(text, face, advances) != TextResolutionStatus::invalid_request,
             "the bundled engine shapes the text");
