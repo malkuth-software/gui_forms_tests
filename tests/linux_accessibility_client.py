@@ -133,10 +133,44 @@ def run_in_session(arguments: list[str], script: str | None = None) -> int:
     # The fixture and the client must find the bus this script starts, not
     # an address inherited from a desktop session or a previous launcher.
     environment.pop('AT_SPI_BUS_ADDRESS', None)
+    # A runtime directory of this session's own (mkdtemp makes it 0700).
+    # The launcher puts the accessibility bus socket at
+    # $XDG_RUNTIME_DIR/at-spi/bus_<DISPLAY>, and ctest runs this test and
+    # the Gallery's in parallel as one user on one display. With a shared
+    # runtime directory, the second bus daemon unlinked the first one's
+    # socket and bound its own at the same path, so the first session's
+    # later connections reached the other session's bus, or none once that
+    # bus exited.
+    runtime: str = tempfile.mkdtemp(prefix='gf-atspi-')
+    environment['XDG_RUNTIME_DIR'] = runtime
     command: list[str] = ['dbus-run-session', '--', sys.executable, script]
     command.extend(arguments)
-    completed: subprocess.CompletedProcess[bytes] = subprocess.run(command, env=environment, check=False)
+    try:
+        completed: subprocess.CompletedProcess[bytes] = subprocess.run(command, env=environment, check=False)
+    finally:
+        shutil.rmtree(runtime, ignore_errors=True)
     return completed.returncode
+
+
+def connect_accessibility_bus(gio: ModuleType, glib: ModuleType, address: str, deadline: float) -> object:
+    """A message bus connection to the accessibility bus at address, made
+    by the deadline (time.monotonic()); the last failure is a Mismatch.
+
+    Hello must be answered as well: a bus daemon still starting refuses the
+    connection or leaves it without a reply, and that is tried again.
+    """
+    flags: int = gio.DBusConnectionFlags.AUTHENTICATION_CLIENT | gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION
+    failure: str = 'no attempt'
+    while True:
+        try:
+            bus: object = gio.DBusConnection.new_for_address_sync(address, flags, None, None)
+            return bus
+        except glib.Error as error:
+            failure = str(error)
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(POLL_SECONDS)
+    raise Mismatch('the accessibility bus at ' + address + ' accepts a connection: ' + failure)
 
 
 class Session:
@@ -203,11 +237,11 @@ class Session:
         """
         registry: str | None = find_program(REGISTRY_NAME)
         check(registry is not None, 'AT-SPI registry daemon present')
-        self.registry = subprocess.Popen([str(registry)], stdout=self.log, stderr=subprocess.STDOUT)
-        flags: int = gio.DBusConnectionFlags.AUTHENTICATION_CLIENT | gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION
-        bus: object = gio.DBusConnection.new_for_address_sync(self.address, flags, None, None)
-        owned: bool = False
+        # The bus answers before the registry, the fixture or Atspi use it.
         deadline: float = time.monotonic() + STARTUP_SECONDS
+        bus: object = connect_accessibility_bus(gio, glib, self.address, deadline)
+        self.registry = subprocess.Popen([str(registry)], stdout=self.log, stderr=subprocess.STDOUT)
+        owned: bool = False
         while time.monotonic() < deadline:
             reply: object = bus.call_sync(
                 'org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus', 'NameHasOwner',
