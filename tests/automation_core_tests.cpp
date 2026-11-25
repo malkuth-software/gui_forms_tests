@@ -1244,8 +1244,8 @@ void popup_windows_carry_no_sign() {
     WindowPump pump(window, control, reads);
     const std::string windows = success_text(core.run("windows", "{}", pump));
     require(contains(windows, "auto.popup.window") && !contains(windows, "tool-tip.1") &&
-                contains(windows, "1 tooltip or popup window"),
-            "windows lists the real windows and counts the popups");
+                !contains(windows, "popup"),
+            "windows lists the real windows and neither lists nor counts the popups");
     presenter.disconnected();
     presenter.bind_control(nullptr);
 }
@@ -1617,6 +1617,29 @@ void capture_samples_points() {
     require(contains((*success).text, "1,1 #") && contains((*success).text, "5000,5000 outside"),
             "each point has its colour, or outside");
     require(!succeeded(fixture.call("capture", "{\"points\":[[1]]}")), "a malformed point is refused");
+    // 1.0.5 review: {x, y} is the canonical point, and pairs still work.
+    const ToolReply objects = fixture.call("capture", "{\"points\":[{\"x\":1,\"y\":1},[2,2]]}");
+    require(succeeded(objects) && contains(success_text(objects), "1,1 #") && contains(success_text(objects), "2,2 #"),
+            "capture takes points as {x, y} and as [x, y]");
+}
+
+// 1.0.5 review: a program tool's own reply says what it did; a drawing
+// changes pixels, not nodes, and must not reply "effect: none".
+void a_program_tool_reply_is_an_effect() {
+    Fixture fixture(false);
+    require(succeeded(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}")),
+            "the model takes control");
+    ModelToolSpec draw{};
+    draw.name = "test_draw";
+    draw.description = "Draws without changing a node.";
+    draw.access = ModelToolAccess::acting;
+    require(register_model_tool(draw, &echo_tool, nullptr) == ModelToolRegistration::added, "an acting tool");
+    static_cast<void>(fixture.call("test_draw", "{}"));
+    const ToolReply again = fixture.call("test_draw", "{}");
+    require(succeeded(again) && contains(success_text(again), "echoed {}") &&
+                !contains(success_text(again), "effect: none"),
+            "a second drawing replies with the tool's text and no effect: none");
+    require(unregister_model_tool("test_draw"), "the tool is withdrawn");
 }
 
 // Round 2, item 3: the served tool list is the same all launch long, so a
@@ -1711,6 +1734,7 @@ int main() {
     an_act_without_effect_says_so();
     large_batches_run();
     capture_samples_points();
+    a_program_tool_reply_is_an_effect();
     the_tool_list_is_stable_for_the_launch();
     taken_arguments_still_launch();
     std::cout << "automation core tests passed\n";

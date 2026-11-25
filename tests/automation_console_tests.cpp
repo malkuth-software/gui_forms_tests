@@ -5,6 +5,8 @@
 // the owner (they never appear in the automation's own captures).
 
 #include "src/controls/automation/console/console_log.hpp"
+#include "src/controls/automation/console/console_overlay.hpp"
+#include "src/controls/automation/presenter/stock_presenter.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -163,6 +165,85 @@ void reply_lines_are_bounded() {
     require(joined(lines.back()).find("27 more lines") != std::string::npos, "the count names the lines left out");
 }
 
+// A probe whose one covered rectangle is `covered` (window-local).
+class CoveredProbe final : public ConsoleButtonProbe {
+public:
+    explicit CoveredProbe(Rect covered) noexcept : covered_(covered) {}
+    [[nodiscard]] bool covers(Rect local) const override {
+        const bool apart = local.x + local.width <= covered_.x || covered_.x + covered_.width <= local.x ||
+                           local.y + local.height <= covered_.y || covered_.y + covered_.height <= local.y;
+        return !apart;
+    }
+
+private:
+    Rect covered_{};
+};
+
+// 1.0.5 review: the thinking button covered the ribbon's help button. It
+// sits in the title area when there is one, else where it covers no control.
+void button_covers_no_content() {
+    HostWindowFrame titled{};
+    titled.content = Rect{100.0, 128.0, 800.0, 600.0};
+    titled.outer = Rect{100.0, 100.0, 800.0, 628.0};
+    titled.outer_measured = true;
+    const Rect in_title = ConsoleOverlay::button_place(titled, 0.0, nullptr);
+    require(in_title.y >= titled.outer.y && in_title.y + in_title.height <= titled.content.y,
+            "with a title bar, the button sits in it");
+    require(in_title.x + in_title.width <= titled.outer.x + titled.outer.width,
+            "and inside the window's width");
+    const Rect reserved = ConsoleOverlay::button_place(titled, 146.0, nullptr);
+    require(reserved.x + reserved.width <= titled.outer.x + titled.outer.width - 146.0,
+            "short of the host's caption buttons");
+
+    HostWindowFrame chromeless{};
+    chromeless.content = Rect{0.0, 0.0, 800.0, 600.0};
+    chromeless.outer = chromeless.content;
+    const Rect corner = ConsoleOverlay::button_place(chromeless, 0.0, nullptr);
+    require(corner.y < 40.0 && corner.x + corner.width > 700.0, "with nothing to avoid, the upper right");
+    // A help button at the upper right, where the button would go.
+    const Rect help{760.0, 8.0, 32.0, 32.0};
+    const CoveredProbe probe(help);
+    const Rect aside = ConsoleOverlay::button_place(chromeless, 0.0, &probe);
+    require(!probe.covers(Rect{aside.x, aside.y, aside.width, aside.height}), "the button moves off the control");
+    require(aside.y < 40.0, "along the same row");
+    const CoveredProbe everything(Rect{0.0, 0.0, 800.0, 600.0});
+    const Rect fallback = ConsoleOverlay::button_place(chromeless, 0.0, &everything);
+    require(fallback.width > 0.0, "with no free spot, it still has a place");
+    const Rect console = ConsoleOverlay::console_place(chromeless.content, aside);
+    require(console.y >= aside.y + aside.height, "the console opens below a button in the client area");
+    const Rect console_titled = ConsoleOverlay::console_place(titled.content, in_title);
+    require(console_titled.y >= titled.content.y, "and inside the client area when the button is in the title");
+}
+
+// 1.0.5 review: the questions opened at the screen's upper right. They are
+// centred on the program window and kept in its screen's work area.
+void dialogs_centre_on_the_program() {
+    HostWindowFrame owner{};
+    owner.content = Rect{400.0, 228.0, 800.0, 600.0};
+    owner.outer = Rect{400.0, 200.0, 800.0, 628.0};
+    owner.outer_measured = true;
+    HostWindowFrame dialog{};
+    dialog.content = Rect{1600.0, 28.0, 480.0, 200.0};
+    dialog.outer = Rect{1600.0, 0.0, 480.0, 228.0};
+    dialog.outer_measured = true;
+    HostMonitor screen{};
+    screen.frame = Rect{0.0, 0.0, 1920.0, 1080.0};
+    screen.work_area = Rect{0.0, 25.0, 1920.0, 1055.0};
+    screen.primary = true;
+    const std::vector<HostMonitor> screens{screen};
+    const Rect placed = presenter_dialog_place(owner, dialog, screens);
+    const double centre_x = placed.x + placed.width / 2.0;
+    const double outer_centre_y = (placed.y - 28.0) + 228.0 / 2.0;
+    require(std::abs(centre_x - 800.0) < 1.0 && std::abs(outer_centre_y - 514.0) < 1.0,
+            "a dialog is centred on the program window");
+    require(placed.width == 480.0 && placed.height == 200.0, "and keeps its size");
+    HostWindowFrame edge = owner;
+    edge.outer = Rect{1700.0, 0.0, 300.0, 200.0};
+    edge.content = Rect{1700.0, 28.0, 300.0, 172.0};
+    const Rect kept = presenter_dialog_place(edge, dialog, screens);
+    require(kept.x + kept.width <= 1920.0 && kept.y - 28.0 >= 25.0, "a dialog stays in the work area");
+}
+
 } // namespace
 
 int main() {
@@ -172,6 +253,8 @@ int main() {
     record_sessions();
     record_is_bounded();
     reply_lines_are_bounded();
+    button_covers_no_content();
+    dialogs_centre_on_the_program();
     std::cout << "automation console tests passed\n";
     return 0;
 }
