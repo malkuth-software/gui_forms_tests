@@ -111,6 +111,32 @@ void record_lines() {
     require(later.size() == 2U && later.front().serial == lines[5].serial, "copy_since takes only the newer lines");
 }
 
+// One record serves the socket and the overlay (attach revision 3): a
+// labelled session's calls carry its label, a console's typed line stays as
+// typed, and the transcript heads each session's lines with its label.
+void record_sessions() {
+    ConsoleLog log{};
+    log.set_session("claude-code 3f2a");
+    log.record_call("windows", "{}");
+    log.record_reply(ToolReply::success("ok: 1 window"));
+    log.set_session("console 9b0c");
+    log.record_typed("call act action=press target=auto.ok");
+    std::vector<ConsoleLine> lines{};
+    log.copy_since(0U, lines);
+    require(lines.size() == 3U && lines[0].session == "claude-code 3f2a" && lines[2].session == "console 9b0c",
+            "each line keeps its session");
+    require(lines[0].spans.front().text == "[claude-code 3f2a] " &&
+                joined(lines[0]).find("call windows") != std::string::npos,
+            "a JSON session's call reads as the console would type it, after its label");
+    require(joined(lines[2]).find("call act action=press target=auto.ok") != std::string::npos,
+            "a console's line stays as typed");
+    const std::string transcript = log.transcript_text();
+    require(transcript.find("== session claude-code 3f2a\n") != std::string::npos &&
+                transcript.find("== session console 9b0c\n") != std::string::npos &&
+                transcript.find("ok: 1 window") != std::string::npos,
+            "the transcript heads each session's lines with its label");
+}
+
 void record_is_bounded() {
     ConsoleLog log{};
     for (std::size_t index = 0U; index < ConsoleLog::maximum_lines + 50U; ++index) log.record_note("line");
@@ -143,6 +169,7 @@ int main() {
     formula_poles();
     shades_cluster_and_hold();
     record_lines();
+    record_sessions();
     record_is_bounded();
     reply_lines_are_bounded();
     std::cout << "automation console tests passed\n";

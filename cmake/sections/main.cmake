@@ -236,6 +236,14 @@ if(TARGET gui_forms_application)
                 COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/mcp_launch_check.py
                     $<TARGET_FILE:gui_forms_mcp_launch_probe> 30 10)
             set_tests_properties(gui_forms_mcp_launch_tests PROPERTIES TIMEOUT 300)
+            # The attach socket end to end (MCP 1.0.5, attach revision 3):
+            # JSON mode, console mode, resumed sessions, discovery entries
+            # and --mcp-socket against the probe (tools/attach_socket_check.py;
+            # skipped, 77, where Python has no AF_UNIX).
+            add_test(NAME gui_forms_attach_socket_tests
+                COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tools/attach_socket_check.py
+                    $<TARGET_FILE:gui_forms_mcp_launch_probe>)
+            set_tests_properties(gui_forms_attach_socket_tests PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 77)
         endif()
     endif()
     # One stxlib_state in a program that reaches STXlib through the
@@ -3648,8 +3656,10 @@ if(GUI_FORMS_MCP)
     add_executable(gui_forms_automation_console_tests tests/automation_console_tests.cpp)
     target_link_libraries(gui_forms_automation_console_tests PRIVATE gui_forms_controls)
     add_test(NAME gui_forms_automation_console_tests COMMAND gui_forms_automation_console_tests)
-    # The attach endpoint and protocol (MCP 1.0.5): a same-user connection,
-    # the peer rule, the endpoint's permissions, interrupt and abort.
+    # The attach endpoint and protocol (MCP 1.0.5, attach revision 3): the
+    # first line (MCP or console), console commands, discovery entries, a
+    # same-user connection with a peeked line, the peer rule, the
+    # endpoint's permissions, timed accept, interrupt and abort.
     if(TARGET gui_forms_automation)
         add_executable(gui_forms_automation_attach_tests tests/automation_attach_tests.cpp)
         target_link_libraries(gui_forms_automation_attach_tests PRIVATE gui_forms_automation stxlib::state)
