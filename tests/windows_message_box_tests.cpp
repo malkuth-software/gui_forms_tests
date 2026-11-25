@@ -56,14 +56,14 @@ std::atomic<unsigned> probe_ticks{0U};
 std::atomic<bool> probe_done{false};
 // How long the watchdog waits before it reports and closes the box: past
 // the timer's own give-up, below the test's timeout.
-constexpr auto watchdog_wait = std::chrono::seconds(20);
+constexpr std::chrono::seconds watchdog_wait{20};
 
 // The watchdog thread: when the call has not returned after watchdog_wait
 // (the timer never found the box, or never ran), it reports the ticks and
 // where the probe's box is, on any thread, and presses OK and Cancel on it,
 // so that the run names what happened instead of reaching the timeout.
 void watch_message_box(DWORD dialog_thread) {
-    const auto deadline = std::chrono::steady_clock::now() + watchdog_wait;
+    const std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::now() + watchdog_wait;
     while (!probe_done.load()) {
         if (std::chrono::steady_clock::now() >= deadline) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
