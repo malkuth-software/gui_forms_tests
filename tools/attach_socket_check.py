@@ -23,6 +23,9 @@ control and its record):
   printed command, modes 0700 and 0600, an echo/cat round trip through
   sh -c, two acts chained across separate shells keep control, the
   request-id echo, the discovery entry's door line;
+- --mcp-folder: started in the background with its input at /dev/null, it
+  stays up, its start-up line names the flag, and a chained act runs at
+  once (AI-led, no countdown); a hard disconnect ends it and its folder;
 - the program ends when its input closes, and the socket, the entry and the
   command folder go with it.
 Another user's peer cannot be made here; the rule is checked in
@@ -224,15 +227,31 @@ def console_mode(path):
     console.close()
 
 
-def door_mode(path, entry):
+def door_mode(path, entry, process):
     """The command folder through plain shells: no client but sh."""
-    found = [re.match(r"GUI\.Forms: \S+ ([0-9a-f]{8})\. Send commands \(chain them with && or ;\): (.*)$", line) for line in DOOR_LINES]
-    found = [match for match in found if match]
-    require(found, "the program prints the command folder's line: " + " | ".join(DOOR_LINES))
-    door = found[-1].group(1)
+    # The start-up text comes at the first window's next turn, after the
+    # socket's line.
+    deadline = time.monotonic() + TIMEOUT
+    while time.monotonic() < deadline and not any(line.startswith("GUI.Forms:   help:") for line in DOOR_LINES):
+        ready, _, _ = select.select([process.stderr], [], [], 0.5)
+        if ready:
+            line = process.stderr.readline().decode("utf-8", "replace")
+            if not line:
+                break
+            DOOR_LINES.append(line.rstrip())
+    text = "\n".join(DOOR_LINES)
+    named = re.search(r"GUI\.Forms: \S+ is a GUI\.Forms program .*command folder is /tmp/([0-9a-f]{8})$", text, re.M)
+    sent = re.search(r"^GUI\.Forms:   send: (.*)$", text, re.M)
+    require(named is not None and sent is not None, "the program prints the command folder's lines: " + text)
+    door = named.group(1)
     folder = "/tmp/" + door
-    require(found[-1].group(2) == "echo '<command>' > %s/in; cat %s/out" % (folder, folder),
-            "the line is the exact command: " + found[-1].group(2))
+    require(sent.group(1) == "echo '<command>' > %s/in; cat %s/out" % (folder, folder),
+            "the send line is the exact command: " + sent.group(1))
+    require(re.search(r"^GUI\.Forms:   mode: --mcp-shared: ", text, re.M) and
+            re.search(r"^GUI\.Forms:   chain: .*&&.*;", text, re.M) and
+            re.search(r"^GUI\.Forms:   help: send help, then help \S+ .*--mcp-help.*release_control.*disconnect",
+                      text, re.M),
+            "the start-up text names the mode, chaining, help and how to end: " + text)
     require(entry.get("door") == door, "the discovery entry names the folder: " + repr(entry))
     status = os.lstat(folder)
     require(stat.S_ISDIR(status.st_mode) and (status.st_mode & 0o777) == 0o700 and status.st_uid == os.getuid(),
@@ -277,6 +296,48 @@ def door_mode(path, entry):
     return folder
 
 
+def folder_launch(probe, environment, private):
+    """--mcp-folder: started in the background with its input at /dev/null,
+    the program stays up, prints the folder's line naming the flag, and a
+    chained command acts at once (AI-led: no countdown)."""
+    errors_path = os.path.join(private, "folder-launch.err")
+    with open(errors_path, "wb") as errors, open(os.devnull, "rb") as nothing:
+        process = subprocess.Popen([probe, "--mcp-folder"], stdin=nothing, stdout=subprocess.DEVNULL,
+                                   stderr=errors, env=environment, start_new_session=True)
+    folder = ""
+    try:
+        deadline = time.monotonic() + TIMEOUT
+        found = None
+        while time.monotonic() < deadline and found is None and process.poll() is None:
+            time.sleep(0.2)
+            with open(errors_path, encoding="utf-8", errors="replace") as read:
+                text = read.read()
+                found = re.search(r"command folder is /tmp/([0-9a-f]{8})$", text, re.M)
+                if found and not re.search(r"^GUI\.Forms:   mode: --mcp-folder: AI-led", text, re.M):
+                    found = None
+        require(found is not None, "--mcp-folder prints the folder's line naming the flag")
+        folder = "/tmp/" + found.group(1)
+        time.sleep(1.0)
+        require(process.poll() is None, "--mcp-folder stays up with its input at /dev/null")
+        started = time.monotonic()
+        done = subprocess.run(["sh", "-c", "echo 'act action=press target=probe.button && probe_ready' > %s/in; "
+                               "cat %s/out" % (folder, folder)], capture_output=True, timeout=TIMEOUT)
+        took = time.monotonic() - started
+        reply = done.stdout.decode("utf-8")
+        require(reply.startswith("[1] ok") and "[2] ready" in reply and reply.rstrip().endswith(". ok") and took < 5.0,
+                "a chained act runs at once, no countdown: %.1f s: %s" % (took, reply[-300:]))
+        subprocess.run(["sh", "-c", "echo 'disconnect mode=hard discard_unsaved=true' > %s/in; cat %s/out"
+                        % (folder, folder)], capture_output=True, timeout=TIMEOUT)
+        process.wait(timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        fail("the --mcp-folder program did not end after a hard disconnect")
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+    require(not os.path.exists(folder), "the --mcp-folder program's folder goes with it")
+
+
 def help_without_socket(probe, environment):
     printed = subprocess.run([probe, "--mcp-help"], capture_output=True, env=environment, timeout=TIMEOUT)
     text = printed.stdout.decode("utf-8")
@@ -307,6 +368,7 @@ def main():
         environment["HOME"] = private
         environment["XDG_RUNTIME_DIR"] = private
         help_without_socket(probe, environment)
+        folder_launch(probe, environment, private)
         process = subprocess.Popen([probe, "--mcp-shared"], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.PIPE, env=environment)
         folder = ""
@@ -332,7 +394,7 @@ def main():
             json_mode(path)
             one_shot_connections(path)
             console_mode(path)
-            folder = door_mode(path, entry)
+            folder = door_mode(path, entry, process)
         finally:
             # The portable shutdown: the launching client's input closes.
             process.stdin.close()
