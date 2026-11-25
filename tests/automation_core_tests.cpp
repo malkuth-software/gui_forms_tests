@@ -1244,7 +1244,7 @@ void popup_windows_carry_no_sign() {
     WindowPump pump(window, control, reads);
     const std::string windows = success_text(core.run("windows", "{}", pump));
     require(contains(windows, "auto.popup.window") && !contains(windows, "tool-tip.1") &&
-                !contains(windows, "popup"),
+                !contains(windows, "popup window"),
             "windows lists the real windows and neither lists nor counts the popups");
     presenter.disconnected();
     presenter.bind_control(nullptr);
