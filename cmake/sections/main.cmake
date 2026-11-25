@@ -2579,6 +2579,13 @@ target_link_libraries(gui_forms_invalidation_damage_tests PRIVATE gui_forms_core
 add_test(NAME gui_forms_invalidation_damage_tests
          COMMAND gui_forms_invalidation_damage_tests)
 
+add_executable(gui_forms_layout_liveness_tests
+    tests/layout_liveness_tests.cpp
+)
+target_link_libraries(gui_forms_layout_liveness_tests PRIVATE gui_forms_controls gui_forms_core)
+add_test(NAME gui_forms_layout_liveness_tests
+         COMMAND gui_forms_layout_liveness_tests)
+
 add_executable(gui_forms_display_chunk_tests
     tests/display_chunk_tests.cpp
 )

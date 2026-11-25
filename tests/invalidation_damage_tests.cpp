@@ -5,6 +5,7 @@
 #include "gui_forms/dirty.hpp"
 #include "gui_forms/dispatcher/types/dispatcher_types.hpp"
 #include "gui_forms/events/input_events/input_events.hpp"
+#include "gui_forms/layout/diagnostics/layout_diagnostics.hpp"
 #include "gui_forms/metrics/types/metrics_types.hpp"
 #include "gui_forms/rules/rule/rule.hpp"
 #include "gui_forms/scheduler/types/scheduler_types.hpp"
@@ -26,6 +27,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -660,12 +662,23 @@ void test_reentrant_layout_is_bounded() {
     Window& window = *held_window;
     window.reset_activity_metrics();
 
+    // The root invalidates its own layout from every arrange, in the same
+    // slot each time: the second such arrange is a layout loop, which the
+    // flush ends there (layout liveness, docs/user/layout.md), before the
+    // four-pass guard.
     window.perform_layout();
     const MetricsSnapshot metrics = window.metrics_snapshot();
-    require(metrics.measure_passes == 4 && metrics.arrange_passes == 4,
-            "reentrant layout must stop at the declared four-pass guard");
-    require(metrics.bounded_pass_limit_hits == 1,
-            "an unquiescent layout must report one structured pass-limit hit");
+    require(metrics.measure_passes == 2 && metrics.arrange_passes == 2,
+            "reentrant layout must stop at its second arrange in the same slot");
+    require(metrics.bounded_pass_limit_hits == 0, "the loop ends before the pass limit");
+    std::size_t loops = 0U;
+    const std::span<const LayoutDiagnostic> diagnostics = window.layout_diagnostics();
+    for (const LayoutDiagnostic& diagnostic : diagnostics) {
+        if (diagnostic.code == LayoutDiagnosticCode::layout_loop && diagnostic.child == "typed.reentrant") ++loops;
+    }
+    require(loops == 1U, "the loop is recorded once against the control");
+    window.perform_layout();
+    require(window.metrics_snapshot().arrange_passes == 2, "and the window lays out nothing more");
 }
 
 void test_paint_metrics_report_chunk_work() {
