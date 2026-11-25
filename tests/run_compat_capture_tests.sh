@@ -3,11 +3,15 @@ set -eu
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 project_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
+# Capture-0 stays in gui_forms (its SDRSharp reflection runner shares it):
+# the gui_forms tree is GUI_FORMS_SOURCE_DIR (a test cache's source tree or
+# a checkout), else a gui_forms checkout beside this one.
+gui_forms_dir=${GUI_FORMS_SOURCE_DIR:-$project_dir/../gui_forms}
 fixture="$script_dir/fixtures/compat_capture/Consumer/Consumer.csproj"
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/gui-forms-capture.XXXXXX")
 trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
 
-dotnet build "$project_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
+dotnet build "$gui_forms_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
   -c Release --nologo --verbosity quiet
 dotnet build "$fixture" -c Release --nologo --verbosity quiet -o "$work_dir/fixture"
 
@@ -16,14 +20,14 @@ expected_hash=$(shasum -a 256 "$consumer" | awk '{print $1}')
 sentinel="$work_dir/target-executed"
 export GUI_FORMS_CAPTURE_SENTINEL="$sentinel"
 
-dotnet run --project "$project_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
+dotnet run --project "$gui_forms_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
   -c Release --no-build -- \
   --input "$consumer" \
   --output "$work_dir/manifest-a.json" \
   --label synthetic-capture-fixture \
   --expected-sha256 "$expected_hash"
 
-dotnet run --project "$project_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
+dotnet run --project "$gui_forms_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
   -c Release --no-build -- \
   --input "$consumer" \
   --output "$work_dir/manifest-b.json" \
@@ -57,7 +61,7 @@ assert manifest["nativeImports"][0]["module"] == "user32.dll"
 assert manifest["nativeImports"][0]["entryPoint"] == "SendMessageW"
 PY
 
-if dotnet run --project "$project_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
+if dotnet run --project "$gui_forms_dir/tools/compat_capture/GuiForms.CompatCapture.csproj" \
   -c Release --no-build -- \
   --input "$consumer" --output "$work_dir/rejected.json" --label rejected \
   --expected-sha256 0000000000000000000000000000000000000000000000000000000000000000 \

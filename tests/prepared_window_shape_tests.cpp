@@ -1,5 +1,6 @@
 #include "src/render/text/prepared_window_shape.hpp"
 #include "prepared_text_test_support.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <stxlib/font_file.hpp>
 
@@ -56,6 +57,27 @@ void operator delete(void* memory) noexcept { std::free(memory); }
 void operator delete[](void* memory) noexcept { std::free(memory); }
 void operator delete(void* memory, std::size_t) noexcept { std::free(memory); }
 void operator delete[](void* memory, std::size_t) noexcept { std::free(memory); }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 namespace {
 struct PublishedTraits final {
@@ -199,7 +221,7 @@ text::PrimaryLineMetrics reference_primary_metrics(const detail::PreparedFontFac
 }
 
 void compare_rows(Fixture& fixture) {
-    text::HarfBuzzFontEngine reference{};
+    text::TextShapeEngine reference{};
     const detail::PreparedFontBank& bank = *fixture.fonts;
     for (std::size_t index = 0U; index < bank.face_count; ++index) {
         const detail::PreparedFontFace& face = bank.faces[index];
@@ -285,7 +307,7 @@ void test_placement_sizes(const std::span<const std::byte> font) {
 }
 
 void test_exact_primary_metrics(const std::span<const std::byte> font) {
-    text::HarfBuzzFontEngine engine{};
+    text::TextShapeEngine engine{};
     const std::optional<gf::FontFaceId> fallback = engine.register_fallback_typeface(400U, false, font);
     require(fallback.has_value(), "fallback-only metrics fixture");
     gf::FontSpec specification{gf::FontRole::content, 20.0, 400U, false};
@@ -353,7 +375,7 @@ void test_line_gap_rule(const std::span<const std::byte> font) {
     gf::FontSpec device_font = fixture.key.text.font;
     device_font.size = static_cast<double>(metrics.device_size_26_6) / 64.0;
     device_font.letter_spacing *= fixture.key.text.scale;
-    text::HarfBuzzFontEngine engine{};
+    text::TextShapeEngine engine{};
     const std::optional<gf::FontFaceId> face =
         engine.register_typeface(device_font.role, device_font.weight, device_font.italic, gapped);
     require(face.has_value(), "the gapped face registers as the primary");
@@ -414,7 +436,7 @@ void test_failures(const std::span<const std::byte> font) {
 }
 
 void test_zero_limits(const std::span<const std::byte> font) {
-    text::HarfBuzzFontEngine engine{};
+    text::TextShapeEngine engine{};
     const std::size_t charged = engine.configure_bounded_registration(1U, gf::PreparedTextLimits::workspace_bytes);
     require(charged != 0U, "bounded registration accounting");
     const std::optional<gf::FontFaceId> id = engine.register_typeface(gf::FontRole::content, 400U, false, font);

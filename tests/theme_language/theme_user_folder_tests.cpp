@@ -121,7 +121,7 @@ void test_folder_path() {
 }
 
 void test_command_line() {
-    const std::array<std::string_view, 4> named{"--size", "--theme", "dusk", "--automation"};
+    const std::array<std::string_view, 4> named{"--size", "--theme", "dusk", "--mcp"};
     const ThemeCommandLine dusk = read_theme_command_line(named);
     require(dusk.error.empty() && dusk.theme.kind == ThemeChoiceKind::named && dusk.theme.name == "dusk",
             "--theme <name>");

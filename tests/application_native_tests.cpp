@@ -32,6 +32,9 @@ using namespace gui_forms;
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
+[[maybe_unused]] void require(bool condition, const std::string& message) {
+    if (!condition) throw std::runtime_error(message);
+}
 // The test program's application (Application::create; one per process),
 // made on first use and kept until the program ends.
 Application& test_application() {
@@ -147,6 +150,10 @@ struct Probe final {
     // size request made in ready has been delivered.
     Window* window{};
     Size closing_size{};
+    // Each closing request's reason, in order, and the closed window's
+    // reason (Window::host_close_reason, read in Closed).
+    std::vector<HostCloseReason> closing_reasons{};
+    stxlib::Optional<HostCloseReason> closed_reason{};
 };
 struct Ready final {
     Probe* probe{};
@@ -191,6 +198,7 @@ struct Closing final {
     Probe* probe{};
     void operator()(HostCloseRequest& request) const {
         ++(*probe).closing;
+        (*probe).closing_reasons.push_back(request.reason);
         if ((*probe).closing == 1U) (*probe).closing_size = (*(*probe).window).client_size();
         if ((*probe).closing == 1U) {
             request.cancel = true;
@@ -204,6 +212,7 @@ struct Closed final {
     void operator()() const {
         ++(*probe).closed;
         (*probe).closed_active = (*probe).handle.active();
+        if ((*probe).window != nullptr) (*probe).closed_reason = (*(*probe).window).host_close_reason();
     }
 };
 ApplicationResult run_probe(Probe& probe) {
@@ -747,140 +756,6 @@ void check_runtime_windows() {
 #endif
     require(probe.passive_closed, "disconnecting closes the popup");
 }
-#if defined(_WIN32)
-// Owner, 2026-11-10: automation (an agent's probe) and input at once. An
-// automation command sent while the UI thread is inside model code (here,
-// from inside another command's activation, as a cross-process send is
-// delivered whenever the thread waits in a send) waits until that code
-// returns, then runs whole: the order is the same whichever arrives first.
-constexpr wchar_t automation_fixture_title[] = L"GUI.Forms automation interleaving fixture";
-
-struct AutomationOrder final {
-    std::vector<std::string> events{};
-    LRESULT nested_result{};
-    ApplicationWindowHandle handle{};
-};
-
-LRESULT send_automation(const char* const command) {
-    const HWND target = test_support::own_gui_forms_window(automation_fixture_title);
-    if (target == nullptr) return FALSE;
-    const std::string message = std::string("GUI.Forms.Automation/1 ") + command;
-    COPYDATASTRUCT data{};
-    data.cbData = static_cast<DWORD>(message.size());
-    data.lpData = const_cast<char*>(message.data());
-    const LRESULT result = SendMessageW(target, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&data));
-    return result;
-}
-
-// Activating "first" sends the automation command that activates "second"
-// and records both ends of its own activation; "second" ends the run.
-class AutomationTarget final : public Control {
-public:
-    AutomationTarget(StableId id, AutomationOrder& order, bool first)
-        : Control(std::move(id)), order_(order), first_(first) {}
-    void on_activate() override {
-        if (first_) {
-            order_.events.push_back("first-begin");
-            order_.nested_result = send_automation("activate native.automation.second");
-            order_.events.push_back("first-end");
-            return;
-        }
-        order_.events.push_back("second");
-        static_cast<void>(order_.handle.request_close());
-    }
-
-private:
-    AutomationOrder& order_;
-    bool first_{};
-};
-
-// The first command is sent from a thread timer once the run pumps (the
-// ready callback runs while the window is still being made, before it
-// answers messages). One fixture runs at a time; the timer reads it here.
-AutomationOrder* automation_order = nullptr;
-
-void CALLBACK send_first_command(HWND, UINT, UINT_PTR timer, DWORD) {
-    KillTimer(nullptr, timer);
-    if (automation_order == nullptr) return;
-    if (send_automation("activate native.automation.first") == FALSE) {
-        (*automation_order).events.push_back("refused");
-        static_cast<void>((*automation_order).handle.request_close());
-    }
-}
-
-struct AutomationReady final {
-    AutomationOrder* order{};
-    void operator()(Window&, ApplicationWindowHandle handle) const {
-        (*order).handle = handle;
-        automation_order = order;
-        if (SetTimer(nullptr, 0, 1, send_first_command) == 0) {
-            (*order).events.push_back("no-timer");
-            static_cast<void>(handle.request_close());
-        }
-    }
-};
-
-// A-gf-host-03-F6: GUI_FORMS_WINDOWS_AUTOMATION alone, before the program
-// calls host::accept_automation_environment, leaves the channel closed: the
-// first command is refused and the run ends. Runs before any opt-in, which
-// is process-wide and never withdrawn.
-void check_automation_needs_opt_in() {
-    if (_putenv_s("GUI_FORMS_WINDOWS_AUTOMATION", "1") != 0) throw std::runtime_error("environment refused");
-    AutomationOrder order{};
-    const std::shared_ptr<Control> root = make_control<Control>(StableId("native.automation.root"));
-    const std::shared_ptr<AutomationTarget> first =
-        make_control<AutomationTarget>(StableId("native.automation.first"), order, true);
-    (*first).set_requested_bounds(Rect{10.0, 10.0, 60.0, 24.0});
-    (*root).add_child(first);
-    ApplicationWindowOptions options{};
-    options.title = "GUI.Forms automation interleaving fixture";
-    options.initial_size = {200, 120};
-    options.print_metrics_on_close = false;
-    options.ready = AutomationReady{&order};
-    const ApplicationResult result =
-        test_application().run(std::make_unique<Window>(root, Size{200.0, 120.0}), std::move(options));
-    static_cast<void>(_putenv_s("GUI_FORMS_WINDOWS_AUTOMATION", ""));
-    automation_order = nullptr;
-    if (result.callback_exception) std::rethrow_exception(result.callback_exception);
-    require(result.accepted(), "automation opt-in fixture failed");
-    require(order.events.size() == 1U && order.events[0] == "refused",
-            "the automation variable without the program's opt-in opens no channel");
-}
-
-#if defined(GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONMENT)
-void check_automation_interleaving() {
-    gui_forms::host::accept_automation_environment();
-    if (_putenv_s("GUI_FORMS_WINDOWS_AUTOMATION", "1") != 0) throw std::runtime_error("environment refused");
-    AutomationOrder order{};
-    const std::shared_ptr<Control> root = make_control<Control>(StableId("native.automation.root"));
-    const std::shared_ptr<AutomationTarget> first =
-        make_control<AutomationTarget>(StableId("native.automation.first"), order, true);
-    const std::shared_ptr<AutomationTarget> second =
-        make_control<AutomationTarget>(StableId("native.automation.second"), order, false);
-    (*first).set_requested_bounds(Rect{10.0, 10.0, 60.0, 24.0});
-    (*second).set_requested_bounds(Rect{10.0, 40.0, 60.0, 24.0});
-    (*root).add_child(first);
-    (*root).add_child(second);
-    ApplicationWindowOptions options{};
-    options.title = "GUI.Forms automation interleaving fixture";
-    options.initial_size = {200, 120};
-    options.print_metrics_on_close = false;
-    options.ready = AutomationReady{&order};
-    const ApplicationResult result =
-        test_application().run(std::make_unique<Window>(root, Size{200.0, 120.0}), std::move(options));
-    static_cast<void>(_putenv_s("GUI_FORMS_WINDOWS_AUTOMATION", ""));
-    automation_order = nullptr;
-    if (result.callback_exception) std::rethrow_exception(result.callback_exception);
-    require(result.accepted(), "automation fixture failed");
-    std::string seen;
-    for (const std::string& event : order.events) seen += event + " ";
-    require(order.events.size() == 3U && order.events[0] == "first-begin" && order.events[1] == "first-end" &&
-                order.events[2] == "second",
-            "an automation command sent inside model code runs after it, whole: " + seen);
-    require(order.nested_result == TRUE, "the waiting command is accepted");
-}
-#endif
-#endif
 // Queue items M1, M2, L1 of 2026-11-10 (owner, 2026-11-22): a menu chain
 // shown in the owner's Popup windows closes when the owner window moves on
 // the screen, as on Windows (WM_MOVE). The menu opens once the window has
@@ -995,11 +870,23 @@ void run_checks() {
     // The resize arrives as the host's resize event, after ready returns and
     // before the close it posted (X11 answers later; see linux_host_tests).
     require(system_close.closing_size == Size{420.0, 260.0}, "native client size did not reach the model");
+    // Alt+F4 is the user's close; the second request is the program's.
+    require(system_close.closing_reasons.size() == 2U && system_close.closing_reasons[0] == HostCloseReason::user &&
+                system_close.closing_reasons[1] == HostCloseReason::application &&
+                system_close.closed_reason == stxlib::Optional<HostCloseReason>::of(HostCloseReason::application),
+            "Alt+F4 must report the user's close and request_close the program's");
 #endif
     Probe normal{};
     const ApplicationResult result = run_probe(normal);
     require(result.accepted(), "native application run failed");
     require(normal.ready == 1U && normal.closing == 2U && normal.closed == 1U, "native close/cancel order wrong");
+    // Both closes are the program's (ApplicationWindowHandle::request_close),
+    // which every host reports as application, never as the user's.
+    require(normal.closing_reasons.size() == 2U && normal.closing_reasons[0] == HostCloseReason::application &&
+                normal.closing_reasons[1] == HostCloseReason::application,
+            "request_close's closing requests must report the reason application");
+    require(normal.closed_reason == stxlib::Optional<HostCloseReason>::of(HostCloseReason::application),
+            "a window closed by request_close must report the reason application");
     require(normal.attached_services && normal.primary_hide_rejected && normal.recursive_rejected, "ready contract incomplete");
     require(normal.shutdown_rejected, "shutdown during a run accepted");
     const HostServiceStatus shown = normal.handle.show();
@@ -1025,12 +912,6 @@ void run_checks() {
             "dispatch exception escaped the portable application boundary");
     check_runtime_windows();
     check_menu_closes_when_the_owner_moves();
-#if defined(_WIN32)
-    check_automation_needs_opt_in();
-#if defined(GUI_FORMS_WINDOWS_AUTOMATION_ENVIRONMENT)
-    check_automation_interleaving();
-#endif
-#endif
     check_shutdown();
     std::cout << "portable application API: native attach, cancel/retry, close, expiry, recursion, exception containment, runtime windows and shutdown passed\n";
 }

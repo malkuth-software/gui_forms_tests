@@ -48,7 +48,7 @@ static void test_negotiation(void) {
     require(table.version(&info) == GF_STATUS_OK, "version succeeds");
     require(info.struct_size == sizeof(info), "version keeps the caller's struct_size");
     require(info.abi_major == GF_ABI_MAJOR && info.abi_minor == GF_ABI_MINOR, "version reports the ABI version");
-    require(info.library_major == 0U, "the library is GUI.Forms 0.x");
+    require(info.library_major == 1U, "the library is GUI.Forms 1.x");
 
     /* A caller compiled before the version slot existed asks for less. */
     unsigned char partial[sizeof(gf_runtime_table)];

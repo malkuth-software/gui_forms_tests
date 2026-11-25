@@ -73,6 +73,10 @@ def changed_files(base: str) -> list[str] | None:
 RECORDED_RUNTIME: re.Pattern[str] = re.compile(r'[^"\s]*/llvm-\d+\.\d+\.\d+-[A-Za-z0-9_.-]+(?=/(?:include|lib)/)')
 
 
+OWN_RUNTIME_SETTINGS: tuple[str, ...] = ('GUI_FORMS_OWN_RUNTIME_SOURCE', 'GUI_FORMS_OWN_RUNTIME_PREFIX',
+                                         'GUI_FORMS_LIBCXX_PREFIX')
+
+
 def local_settings(cache: Path, build: Path) -> Path:
     """The cache's settings.cmake for this machine, written into build: the
     recorded runtime prefix becomes GUI_FORMS_LLVM_RUNTIME (when set), and the
@@ -91,6 +95,16 @@ def local_settings(cache: Path, build: Path) -> Path:
             if prefix != local:
                 print(f'ci_tests: the cache names the runtime {prefix}; using {local}', flush=True)
                 text = text.replace(prefix, local)
+    # Windows: the own runtime's three locations (gui_forms
+    # tools/own_runtime.py build, which sets them here too), wherever the
+    # settings name the ones GUI.Forms' CI built with.
+    name: str
+    for name in OWN_RUNTIME_SETTINGS:
+        own: str | None = os.environ.get(name)
+        found: re.Match[str] | None = re.search(r'^set\(' + name + r' "([^"]*)"', text, re.MULTILINE)
+        if own and found is not None and found.group(1) and found.group(1) != Path(own).as_posix():
+            print(f'ci_tests: the cache names {name} {found.group(1)}; using {Path(own).as_posix()}', flush=True)
+            text = text.replace(found.group(1), Path(own).as_posix())
     path: Path = build / 'gui_forms_test_cache_settings.cmake'
     build.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8')

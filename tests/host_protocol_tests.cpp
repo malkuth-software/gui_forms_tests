@@ -548,6 +548,7 @@ void test_capabilities_and_normalized_dispatch() {
                                       HostCapability::cursor |
                                       HostCapability::clipboard |
                                       HostCapability::typed_drag_destination |
+                                      HostCapability::typed_drag_source |
                                       HostCapability::dialogs |
                                       HostCapability::sound_cues),
             "headless host must report every implemented normalized input capability");
@@ -736,6 +737,126 @@ DragEvent drag_event(DragAction action, std::uint64_t session_id, Point position
         DragBinaryData{"application/x-gui-forms-probe", {0x00, 0x7f, 0xff}},
     };
     return event;
+}
+
+// Keeps each drag-source end the services raise, in order.
+class RecordDragSourceEnds final {
+public:
+    explicit RecordDragSourceEnds(std::vector<HostDragSourceEnd>& ends) : ends_(ends) {}
+
+    void operator()(const HostDragSourceEnd& end) const { ends_.push_back(end); }
+
+private:
+    std::vector<HostDragSourceEnd>& ends_;
+};
+
+HostDragSourceRequest drag_source_request() {
+    HostDragSourceRequest request;
+    request.items = {
+        DragFileListData{{"/captures/a.iq"}},
+        DragTextData{"sent Ω"},
+        DragBinaryData{"image/png", {0x89, 0x50, 0x4e, 0x47}},
+    };
+    request.allowed_effects = DragEffect::copy | DragEffect::move;
+    return request;
+}
+
+// A drag to other programs (HostServices::start_drag) through the reference
+// host: the base class's validation, one drag at a time, the end reported
+// once and clamped to the allowed effects, and a self-drag round trip whose
+// items reach the window's drop target as the platform would deliver them.
+void test_typed_drag_source_start_end_and_round_trip() {
+    const std::unique_ptr<Fixture> held_fixture = std::make_unique<Fixture>();
+    Fixture& fixture = *held_fixture;
+    host::HeadlessHostServices& services = static_cast<host::HeadlessHostServices&>(
+        fixture.host.services());
+    require(host::headless_capabilities().supports(HostCapability::typed_drag_source),
+            "the reference host must report typed_drag_source");
+    require(fixture.host.dispatch(HostAttachEvent{{100.0, 80.0}, 1.0}, 0).accepted(),
+            "drag source fixture must attach before host input");
+    std::vector<HostDragSourceEnd> ends;
+    SubscriptionToken observation =
+        services.drag_source_ended().subscribe(RecordDragSourceEnds(ends));
+
+    HostDragSourceRequest invalid = drag_source_request();
+    invalid.items.clear();
+    require(services.start_drag(invalid).status.error == HostServiceError::invalid_argument,
+            "a drag with no items must be refused");
+    invalid = drag_source_request();
+    invalid.allowed_effects = DragEffect::none;
+    require(services.start_drag(invalid).status.error == HostServiceError::invalid_argument,
+            "a drag allowing no effect must be refused");
+    invalid.allowed_effects = static_cast<DragEffect>(0x08U);
+    require(services.start_drag(invalid).status.error == HostServiceError::invalid_argument,
+            "a drag allowing an unknown effect must be refused");
+    invalid = drag_source_request();
+    std::get<DragTextData>(invalid.items[1]).text_utf8 = std::string{"\xF0\x28\x8C\x28", 4};
+    require(services.start_drag(invalid).status.error == HostServiceError::invalid_argument,
+            "a drag of malformed UTF-8 must be refused");
+    invalid = drag_source_request();
+    std::get<DragFileListData>(invalid.items[0]).paths_utf8.clear();
+    require(services.start_drag(invalid).status.error == HostServiceError::invalid_argument,
+            "a drag of an empty file list must be refused");
+    services.fail_next_drag_source();
+    require(services.start_drag(drag_source_request()).status.error ==
+                    HostServiceError::backend_failure &&
+                !services.drag_source_active() && ends.empty(),
+            "a platform refusal must start nothing and report no end");
+
+    const HostDragSourceResult started = services.start_drag(drag_source_request());
+    require(started.status.accepted() && started.session_id != 0U &&
+                services.drag_source_active() && services.drag_source_request().has_value() &&
+                (*services.drag_source_request()).items.size() == 3U,
+            "a valid drag must start with an identity and hand the platform its items");
+    require(services.start_drag(drag_source_request()).status.error == HostServiceError::modal_limit,
+            "a second drag must be refused while one runs");
+
+    // The self-drag: the platform carries the items over the program's own
+    // window, which accepts a copy and takes the drop.
+    const std::vector<DragDataItem> carried = (*services.drag_source_request()).items;
+    DragEvent over = drag_event(DragAction::enter, 300, {10.0, 10.0});
+    over.items = carried;
+    over.allowed_effects = DragEffect::copy | DragEffect::move;
+    require(fixture.host.dispatch(over, 1).drag_effect == DragEffect::copy,
+            "the window must accept its own drag's items");
+    DragEvent drop = over;
+    drop.action = DragAction::drop;
+    const HostDispatchResult dropped = fixture.host.dispatch(std::move(drop), 2);
+    require(dropped.handled && dropped.drag_effect == DragEffect::copy &&
+                (*fixture.probe).last_drag_items.size() == 3U &&
+                std::get<DragFileListData>((*fixture.probe).last_drag_items[0]).paths_utf8[0] ==
+                    "/captures/a.iq" &&
+                std::get<DragTextData>((*fixture.probe).last_drag_items[1]).text_utf8 == "sent Ω" &&
+                std::get<DragBinaryData>((*fixture.probe).last_drag_items[2]).media_type == "image/png",
+            "a self-drop must deliver the dragged items in order");
+    services.finish_drag_source(dropped.drag_effect);
+    require(ends.size() == 1U && ends[0].session_id == started.session_id &&
+                ends[0].performed_effect == DragEffect::copy && !services.drag_source_active(),
+            "the drag must end once with the effect the destination took");
+    services.finish_drag_source(DragEffect::copy);
+    require(ends.size() == 1U, "an end for a drag that is not running must be dropped");
+
+    const HostDragSourceResult copy_only = services.start_drag(
+        HostDragSourceRequest{{DragTextData{"copy only"}}, DragEffect::copy});
+    require(copy_only.status.accepted() && copy_only.session_id > started.session_id,
+            "drag identities must increase");
+    services.finish_drag_source(DragEffect::move);
+    require(ends.size() == 2U && ends[1].session_id == copy_only.session_id &&
+                ends[1].performed_effect == DragEffect::none,
+            "an effect outside the allowed set must be reported as none");
+    const HostDragSourceResult cancelled = services.start_drag(drag_source_request());
+    services.finish_drag_source(DragEffect::none);
+    require(cancelled.status.accepted() && ends.size() == 3U &&
+                ends[2].performed_effect == DragEffect::none,
+            "a cancelled drag must end with no effect");
+
+    static_cast<void>(services.start_drag(drag_source_request()));
+    services.shutdown();
+    services.finish_drag_source(DragEffect::copy);
+    require(ends.size() == 3U && !services.drag_source_active() &&
+                services.start_drag(drag_source_request()).status.error ==
+                    HostServiceError::after_shutdown,
+            "shutdown must end a running drag without a report and refuse new ones");
 }
 
 void test_typed_drag_destination_routing_and_bounds() {
@@ -1129,13 +1250,14 @@ struct PresentationChangeCounter final {
 };
 
 void test_input_settings_report_and_validation() {
-    require(host_protocol_revisions.size() == 8U && host_protocol_revisions[1].version == 9U &&
+    require(host_protocol_revisions.size() == 9U && host_protocol_revisions[1].version == 9U &&
                 host_protocol_revisions[2].version == 10U && host_protocol_revisions[3].version == 11U &&
                 host_protocol_revisions[4].version == 12U && host_protocol_revisions[5].version == 13U &&
                 host_protocol_revisions[6].version == 14U && host_protocol_revisions[7].version == 15U &&
-                HostCapabilities::current_protocol_version == 15U,
+                host_protocol_revisions[8].version == 16U && HostCapabilities::current_protocol_version == 16U,
             "the compositor report is version 9, the input settings 10, the mouse conventions 11, the "
-            "window state 12, the caret blink 13, the locale 14 and the relative pointer 15");
+            "window state 12, the caret blink 13, the locale 14, the relative pointer 15 and the safe "
+            "insets 16");
     const std::unique_ptr<Fixture> held_fixture = std::make_unique<Fixture>();
     Fixture& fixture = *held_fixture;
     const PresentationSettings initial = fixture.window.presentation_settings();
@@ -1350,6 +1472,40 @@ void test_lifecycle_transition_guards() {
             "shutdown must be the terminal lifecycle phase");
 }
 
+// IC3: Window::host_lifecycle_phase is the window's public state query and
+// reports its session's phase at every step (HostSession::set_phase writes
+// both); a refused event moves neither.
+void test_window_reports_its_session_phase() {
+    const std::unique_ptr<Fixture> held_fixture = std::make_unique<Fixture>();
+    Fixture& fixture = *held_fixture;
+    require(fixture.window.host_lifecycle_phase() == HostLifecyclePhase::constructed,
+            "a window no host has attached reports constructed");
+    require(fixture.host.dispatch(HostActivationEvent{true}, 1).error == HostDispatchError::invalid_lifecycle &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::constructed,
+            "a refused event moves neither the session nor the window");
+    require(fixture.host.dispatch(HostAttachEvent{{320.0, 180.0}, 1.0}, 2).accepted() &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::attached,
+            "the window reports attached with its session");
+    require(fixture.host.dispatch(HostAttachEvent{{0.0, 180.0}, 1.0}, 3).error ==
+                HostDispatchError::invalid_lifecycle,
+            "a second attach is refused by the lifecycle clause before the geometry clause");
+    require(fixture.host.dispatch(HostResizeEvent{{0.0, 180.0}}, 4).error == HostDispatchError::invalid_geometry &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::attached,
+            "a resize to a zero width is refused by the size clause and moves nothing");
+    require(fixture.host.dispatch(HostScaleEvent{0.0}, 5).error == HostDispatchError::invalid_geometry,
+            "a zero scale is refused by the scale clause");
+    require(fixture.host.dispatch(HostCloseRequest{HostCloseReason::user, false}, 6).close_allowed &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::close_authorized,
+            "the window reports close_authorized with its session");
+    require(fixture.host.dispatch(HostClosedEvent{HostCloseReason::user}, 7).accepted() &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::closed,
+            "the window reports closed with its session");
+    require(fixture.host.dispatch(HostShutdownEvent{}, 8).accepted() &&
+                fixture.window.host_lifecycle_phase() == HostLifecyclePhase::shutdown &&
+                fixture.window.host_lifecycle_phase() == fixture.host.session().snapshot().phase,
+            "the window and its session end in shutdown together");
+}
+
 void test_close_cancellation_and_closed_cleanup() {
     const std::unique_ptr<Fixture> held_fixture = std::make_unique<Fixture>();
     Fixture& fixture = *held_fixture;
@@ -1550,6 +1706,7 @@ int main() {
         test_semantic_sound_cues_are_bounded_and_deterministic();
         test_typed_dialog_requests_and_results();
         test_typed_drag_destination_routing_and_bounds();
+        test_typed_drag_source_start_end_and_round_trip();
         test_nested_modal_order_owner_suppression_and_limit();
         test_modal_observer_failure_and_shutdown_unwind();
         test_display_capture_and_occlusion_synchronization();
@@ -1558,6 +1715,7 @@ int main() {
         test_session_outlives_its_window();
         test_input_settings_report_and_validation();
         test_lifecycle_transition_guards();
+        test_window_reports_its_session_phase();
         test_close_cancellation_and_closed_cleanup();
         test_session_end_close_stays_attached_until_closed();
         test_close_query_authorizes_nothing();

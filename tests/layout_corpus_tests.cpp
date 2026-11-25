@@ -28,7 +28,7 @@
 //
 // Text fixtures (phase L8b, PLAN section 12.4) hold text leaves:
 // `<div data-gf-kind="text-block" data-gf-text="...">`, built as TextBlock.
-// They are laid out through the bundled text engine (HarfBuzzFontEngine over
+// They are laid out through the bundled text engine (TextShapeEngine over
 // the faces in --fonts, the faces the Chromium page declares), at every
 // profile including the text-scale ones, where the window's text scale is
 // the profile's. Each text leaf's first baseline is compared too. A build
@@ -45,7 +45,7 @@
 #include "gui_forms/xml.hpp"
 
 #if defined(GUI_FORMS_LAYOUT_CORPUS_TEXT_ENGINE)
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 #endif
 
 #include <algorithm>
@@ -1400,7 +1400,7 @@ public:
     TextResolutionStatus fill_line_break_opportunities_utf8(
         std::string_view utf8, std::span<LineBreakOpportunity> opportunities) override {
         const TextResolutionStatus status =
-            render::text::HarfBuzzFontEngine::fill_line_break_opportunities_utf8(utf8, opportunities);
+            render::text::TextShapeEngine::fill_line_break_opportunities_utf8(utf8, opportunities);
         return status;
     }
 
@@ -1417,7 +1417,7 @@ private:
 
     // Before engine_, so the bytes outlive the engine's use of them.
     std::vector<std::vector<std::byte>> faces_;
-    render::text::HarfBuzzFontEngine engine_;
+    render::text::TextShapeEngine engine_;
 };
 #endif
 

@@ -1,0 +1,6 @@
+# Every text file is checked out with LF endings, whatever core.autocrlf says:
+# the theme sha checks hash the files as committed (Shadow, 2026-11-23, question 2).
+* text=auto eol=lf
+# Binary seed corpora: kept byte for byte.
+fuzz/corpus/** -text
+tools/font_metrics_differential/corpus/** -text

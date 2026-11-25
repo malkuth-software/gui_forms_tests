@@ -50,7 +50,9 @@ public:
 
 class ClippingPanel final : public Panel {
 public:
-    explicit ClippingPanel(StableId id) : Panel(std::move(id)) {}
+    // The ancestor clip under inspection: it clips (VA owner decision 4
+    // makes a plain Panel contain its overflow instead).
+    explicit ClippingPanel(StableId id) : Panel(std::move(id)) { viewport_fit = ViewportFit{OverflowAnswer::clip}; }
 
 protected:
     [[nodiscard]] Rect child_viewport_rectangle() const noexcept override {

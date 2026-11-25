@@ -13,7 +13,10 @@
 // coverage, and changes colour with lamp_color), and the theme's lens where
 // the bake is missing, no directory is set, or high contrast is forced;
 // the pinpoint as the shipped jewel's light in its dot, with no bake named
-// and no directory.
+// and no directory; the sparkle (lamp_sparkle): its glints seeded, slow,
+// in the crown's facets and well under three flashes a second, drawn only
+// on a lit jewel, its frames running only while a sparkling lamp is lit
+// and steady, and never under reduced motion.
 // With GUI_FORMS_PREVIEW_DIR set, the test also writes preview shots of
 // each state in each theme.
 
@@ -34,6 +37,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -242,6 +246,144 @@ void test_fault_flickers() {
             "under reduced motion a failing lamp is steadily lit, with no frames");
 }
 
+// The sparkle's glints (owner, 2026-11-22): seeded and deterministic,
+// slow and small, well under three flashes a second, in the crown's
+// facets, and none before it begins.
+void test_sparkle_glints() {
+    const engine_light::LampGlints none = engine_light::lamp_sparkle_glints(7U, 0.0);
+    const engine_light::LampGlints unknown = engine_light::lamp_sparkle_glints(7U, std::nan(""));
+    require(engine_light::same_lamp_glints(none, engine_light::LampGlints{}) &&
+                engine_light::same_lamp_glints(unknown, engine_light::LampGlints{}),
+            "no glints before the sparkle begins, or at no time");
+    // Ten minutes at 25 frames a second.
+    constexpr int frames = 15000;
+    std::array<bool, engine_light::lamp_sparkle_streams> was_lit{};
+    int flashes = 0;
+    int lit_frames = 0;
+    double strongest = 0.0;
+    double farthest = 0.0;
+    bool repeats = true;
+    bool seeds_differ = false;
+    for (int frame = 1; frame <= frames; ++frame) {
+        const double seconds = static_cast<double>(frame) * 0.04;
+        const engine_light::LampGlints glints = engine_light::lamp_sparkle_glints(7U, seconds);
+        if (!engine_light::same_lamp_glints(glints, engine_light::lamp_sparkle_glints(7U, seconds))) repeats = false;
+        if (!engine_light::same_lamp_glints(glints, engine_light::lamp_sparkle_glints(8U, seconds))) seeds_differ = true;
+        bool any = false;
+        for (std::size_t stream = 0U; stream < glints.size(); ++stream) {
+            const engine_light::LampGlint& glint = glints[stream];
+            const bool lit_now = glint.strength > 0.0;
+            if (lit_now && !was_lit[stream]) ++flashes;
+            was_lit[stream] = lit_now;
+            if (!lit_now) continue;
+            any = true;
+            strongest = std::max(strongest, glint.strength);
+            farthest = std::max(farthest, std::sqrt(glint.x * glint.x + glint.y * glint.y));
+        }
+        if (any) ++lit_frames;
+    }
+    const double per_second = static_cast<double>(flashes) / (static_cast<double>(frames) * 0.04);
+    require(repeats && seeds_differ, "the same seed and time give the same glints, another seed others");
+    require(per_second > 0.3 && per_second < 2.0,
+            "glints come now and then, well under three flashes a second: " + std::to_string(per_second));
+    require(strongest > 0.6 && strongest <= 1.0, "a glint swells to at most full strength");
+    require(farthest >= 0.3 - 1e-9 && farthest <= 0.7 + 1e-9, "each glint lies in the crown's facets");
+    require(lit_frames < frames / 2, "most of the time the jewel is simply lit");
+
+    // A glint brightens the jewel where it lies, at the drive's power; an
+    // unlit jewel shows none.
+    std::shared_ptr<engine_light::LightPlanes> planes = std::make_shared<engine_light::LightPlanes>();
+    (*planes).width = 4U;
+    (*planes).height = 4U;
+    (*planes).lamp_count = 1U;
+    (*planes).aperture = 1.0;
+    (*planes).room.assign(48U, 0.05F);
+    (*planes).lamps.assign(48U, 0.2F);
+    (*planes).coverage.assign(16U, 1.0F);
+    engine_light::LightComposite settings{};
+    settings.shape = engine_light::LightShape::jewel;
+    engine_light::LightComposite glinting = settings;
+    glinting.glints[0] = engine_light::LampGlint{0.0, 0.0, 1.0};
+    const std::array<engine_light::LampDrive, 1> lit{{engine_light::LampDrive{engine_light::lamp_amber, 1.0}}};
+    const std::array<engine_light::LampDrive, 1> dark{{engine_light::LampDrive{engine_light::lamp_amber, 0.0}}};
+    const engine_light::LightPlaneRect rect{0, 0, 24, 24};
+    const std::size_t row_bytes = 24U * part_raster_bytes_per_pixel;
+    std::vector<std::uint8_t> plain(row_bytes * 24U);
+    std::vector<std::uint8_t> sparkled(row_bytes * 24U);
+    std::vector<std::uint8_t> dark_plain(row_bytes * 24U);
+    std::vector<std::uint8_t> dark_sparkled(row_bytes * 24U);
+    const DeviceExtent extent{24U, 24U};
+    static_cast<void>(engine_light::composite_light_planes(*planes, *planes, lit, settings, rect,
+                                                           PartRasterView{plain, extent, row_bytes}));
+    static_cast<void>(engine_light::composite_light_planes(*planes, *planes, lit, glinting, rect,
+                                                           PartRasterView{sparkled, extent, row_bytes}));
+    static_cast<void>(engine_light::composite_light_planes(*planes, *planes, dark, settings, rect,
+                                                           PartRasterView{dark_plain, extent, row_bytes}));
+    static_cast<void>(engine_light::composite_light_planes(*planes, *planes, dark, glinting, rect,
+                                                           PartRasterView{dark_sparkled, extent, row_bytes}));
+    // The centre pixel (12, 12) and a corner of the dot's square (2, 2),
+    // outside the jewel; green, the byte at offset 1.
+    const std::size_t centre = 12U * row_bytes + 12U * part_raster_bytes_per_pixel + 1U;
+    const std::size_t outside = 2U * row_bytes + 2U * part_raster_bytes_per_pixel + 1U;
+    require(sparkled[centre] > plain[centre] + 20U, "a lit jewel's glint brightens it where it lies");
+    require(sparkled[outside] == plain[outside], "the glint stays inside the jewel");
+    require(dark_sparkled == dark_plain, "an unlit jewel shows no glint");
+}
+
+// A sparkling lamp's frames: run while it is lit in a window, glint now
+// and then and repeat run to run; stop when it goes off or fails, under
+// reduced motion and when the sparkle is turned off.
+void test_sparkle_frames() {
+    LampWindow made = lamp_window(Size{24.0, 24.0}, {});
+    LampWindow twin = lamp_window(Size{24.0, 24.0}, {});
+    require(!(*made.lamp).lamp_sparkle.read(), "a lamp does not sparkle unless asked");
+    (*made.lamp).state = IndicatorLampState::on;
+    require(!(*made.lamp).sparkling(), "a lit lamp alone has no sparkle frames");
+    (*made.lamp).lamp_sparkle = true;
+    (*twin.lamp).lamp_sparkle = true;
+    (*twin.lamp).state = IndicatorLampState::on;
+    require((*made.lamp).sparkling() && (*twin.lamp).sparkling(), "a lit sparkling lamp runs its frames");
+    // Five seconds of frames: glints come, alike on both lamps (the same
+    // stable id), and within them each frame changes by little.
+    SilentPainter painter;
+    bool glinted = false;
+    bool alike = true;
+    FrameTime now = FrameClock::now();
+    for (int frame = 0; frame < 125; ++frame) {
+        now += std::chrono::milliseconds(40);
+        static_cast<void>((*made.window).poll_frame_schedule(now));
+        static_cast<void>((*twin.window).poll_frame_schedule(now));
+        (*made.lamp).on_paint(painter, Rect{0.0, 0.0, 24.0, 24.0});
+        (*twin.lamp).on_paint(painter, Rect{0.0, 0.0, 24.0, 24.0});
+        const engine_light::LampGlints glints = (*made.lamp).glints();
+        for (const engine_light::LampGlint& glint : glints) {
+            if (glint.strength > 0.0) glinted = true;
+        }
+        if (!engine_light::same_lamp_glints(glints, (*twin.lamp).glints())) alike = false;
+    }
+    require(glinted, "within five seconds the lamp glints");
+    require(alike, "two lamps of the same stable id glint alike: captures repeat");
+
+    (*made.lamp).state = IndicatorLampState::fault;
+    require(!(*made.lamp).sparkling() &&
+                engine_light::same_lamp_glints((*made.lamp).glints(), engine_light::LampGlints{}),
+            "a failing lamp flickers instead of sparkling");
+    (*made.lamp).state = IndicatorLampState::on;
+    require((*made.lamp).sparkling(), "lit again, it sparkles again");
+    (*made.lamp).state = IndicatorLampState::off;
+    require(!(*made.lamp).sparkling(), "switched off, it stops");
+    (*made.lamp).state = IndicatorLampState::error;
+    require((*made.lamp).sparkling(), "showing an error, a sparkling lamp sparkles in red");
+    (*made.lamp).lamp_sparkle = false;
+    require(!(*made.lamp).sparkling(), "turned off, the sparkle stops");
+    (*made.lamp).lamp_sparkle = true;
+    set_reduced_motion(*made.window, true);
+    (*made.lamp).state = IndicatorLampState::on;
+    require(!(*made.lamp).sparkling() &&
+                engine_light::same_lamp_glints((*made.lamp).glints(), engine_light::LampGlints{}),
+            "under reduced motion a lit lamp is steady, with no glints and no frames");
+}
+
 void test_parts() {
     LampWindow made = lamp_window(Size{120.0, 24.0}, "Coolant");
     const IndicatorLamp::Parts parts = (*made.lamp).parts();
@@ -442,6 +584,23 @@ void test_lamp_colour_and_kept_composite() {
     const std::shared_ptr<const PartRaster> scaled = kept.composite(bake, dimmer, settings, DeviceExtent{8U, 8U},
                                                                     DeviceScale{2.0});
     require(scaled != nullptr && kept.composites() == 3U, "a new extent and scale composite again");
+
+    // A key's pressed bake: a null one is the up bake, so nothing new; a
+    // distinct one composites again, and is kept like the rest.
+    const std::shared_ptr<const PartRaster> no_down =
+        kept.composite(bake, nullptr, dimmer, settings, DeviceExtent{8U, 8U}, DeviceScale{2.0});
+    require(no_down == scaled && kept.composites() == 3U, "a null pressed bake is the up bake");
+    std::shared_ptr<engine_light::LightPlanes> pressed = std::make_shared<engine_light::LightPlanes>(*planes);
+    (*pressed).room.assign(12U, 0.4F);
+    const std::shared_ptr<const engine_light::LightPlanes> down = pressed;
+    engine_light::LightComposite held = settings;
+    held.press_mix = 1.0;
+    const std::shared_ptr<const PartRaster> down_first =
+        kept.composite(bake, down, dimmer, held, DeviceExtent{8U, 8U}, DeviceScale{2.0});
+    const std::shared_ptr<const PartRaster> down_again =
+        kept.composite(bake, down, dimmer, held, DeviceExtent{8U, 8U}, DeviceScale{2.0});
+    require(down_first != nullptr && down_first == down_again && kept.composites() == 4U,
+            "a distinct pressed bake composites once and is kept");
     require(kept.composite(bake, dimmer, settings, DeviceExtent{0U, 4U}, DeviceScale{1.0}) == nullptr,
             "an empty extent composites nothing");
     require(kept.composite(nullptr, dimmer, settings, extent, DeviceScale{1.0}) == nullptr, "no bake composites nothing");
@@ -671,6 +830,8 @@ int main() {
     test_detached_changes_at_once();
     test_warm_up_and_cool_down();
     test_fault_flickers();
+    test_sparkle_glints();
+    test_sparkle_frames();
     test_parts();
     test_pinpoint();
     test_lights_only_the_lens();

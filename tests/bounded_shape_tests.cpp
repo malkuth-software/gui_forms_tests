@@ -1,4 +1,4 @@
-#include "harfbuzz_font_engine.hpp"
+#include "text_shape_engine.hpp"
 
 #include <array>
 #include <cmath>
@@ -18,7 +18,7 @@ void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
 
-void load_fonts(HarfBuzzFontEngine& engine, const std::filesystem::path& directory) {
+void load_fonts(TextShapeEngine& engine, const std::filesystem::path& directory) {
     const std::array<const char*, 4> names{"Carlito-Regular.ttf", "NotoSansArabic-Minimal.ttf",
         "NotoSansHebrew-Regular.ttf", "NotoEmoji-Regular.ttf"};
     for (std::size_t index = 0; index < names.size(); ++index) {
@@ -62,7 +62,7 @@ void compare_geometry(const ShapedText& expected, const BoundedShapedText& actua
     require(glyph_count == actual.glyph_count, "flat glyph count differs");
 }
 
-void test_geometry(HarfBuzzFontEngine& engine) {
+void test_geometry(TextShapeEngine& engine) {
     const std::array<std::string_view, 9> texts{"", "   ", "office AV 123", "a\xcc\x81",
         "שלום ABC 123", "اللون 123 (RGB)", "Hello 😀!", "a\r\nb\tc",
         "Latin العربية שלום á 😀"};
@@ -90,7 +90,7 @@ void test_geometry(HarfBuzzFontEngine& engine) {
     }
 }
 
-void expect_budget_refusal(HarfBuzzFontEngine& engine, std::unique_ptr<BoundedShapedText>& old,
+void expect_budget_refusal(TextShapeEngine& engine, std::unique_ptr<BoundedShapedText>& old,
                            std::string_view text, ShapeStorageLimits limits) {
     const BoundedShapedText* previous = old.get();
     bool refused = false;
@@ -102,7 +102,7 @@ void expect_budget_refusal(HarfBuzzFontEngine& engine, std::unique_ptr<BoundedSh
     require(refused && old.get() == previous, "budget refusal must preserve caller's old owner");
 }
 
-void test_budgets(HarfBuzzFontEngine& engine) {
+void test_budgets(TextShapeEngine& engine) {
     const std::string_view text = "hello שלום";
     std::unique_ptr<BoundedShapedText> old = engine.shape_bounded(text, {FontRole::content, 16, 400, false}, {});
     ShapeStorageLimits limits{};
@@ -142,7 +142,7 @@ void test_budgets(HarfBuzzFontEngine& engine) {
 int main(int argc, char** argv) {
     try {
         require(argc == 2, "expected pinned font directory");
-        HarfBuzzFontEngine engine{};
+        TextShapeEngine engine{};
         const std::filesystem::path directory(argv[1]);
         load_fonts(engine, directory);
         test_geometry(engine);

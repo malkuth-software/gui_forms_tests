@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
-#include <stop_token>
+#include <stxlib/stop_token.hpp>
 #include <thread>
 
 namespace {
@@ -64,16 +64,23 @@ private:
 };
 
 // Requests a stop after `delay`.
+// A new stop source; failing to make one is a test failure.
+stxlib::StopSource made_stop_source() {
+    stxlib::OperationResult<stxlib::StopSource> made = stxlib::StopSource::create();
+    require(made.succeeded(), "a stop source is made");
+    return static_cast<stxlib::OperationResult<stxlib::StopSource>&&>(made).take_value();
+}
+
 class LateStop final {
 public:
-    LateStop(std::stop_source& source, std::chrono::milliseconds delay) : source_(&source), delay_(delay) {}
+    LateStop(stxlib::StopSource& source, std::chrono::milliseconds delay) : source_(&source), delay_(delay) {}
     void operator()() const {
         std::this_thread::sleep_for(delay_);
         static_cast<void>((*source_).request_stop());
     }
 
 private:
-    std::stop_source* source_;
+    stxlib::StopSource* source_;
     std::chrono::milliseconds delay_{};
 };
 
@@ -133,11 +140,11 @@ void plan_follows_reports_and_deadlines() {
 void waits_wake_on_reports_and_stops() {
     std::shared_ptr<LiveSurface> surface = LiveSurface::create({8U, 4U});
     LiveSurfacePacer pacer(surface);
-    std::stop_source source;
-    require(pacer.wait_for_frame(source.get_token()).outcome == LivePacingOutcome::frame, "first frame at once");
+    stxlib::StopSource source = made_stop_source();
+    require(pacer.wait_for_frame(source.token()).outcome == LivePacingOutcome::frame, "first frame at once");
     const std::uint64_t generation = publish_one(*surface);
     std::thread presenter(LatePresenter(surface, generation, std::chrono::milliseconds(5)));
-    const LivePacingResult shown = pacer.wait_for_frame(source.get_token());
+    const LivePacingResult shown = pacer.wait_for_frame(source.token());
     presenter.join();
     require(shown.outcome == LivePacingOutcome::frame || shown.outcome == LivePacingOutcome::deadline,
             "a report or the deadline ends the wait");
@@ -147,10 +154,10 @@ void waits_wake_on_reports_and_stops() {
 
     pacer.idle();
     std::thread stopper(LateStop(source, std::chrono::milliseconds(20)));
-    const LivePacingResult stopped = pacer.wait_for_frame(source.get_token());
+    const LivePacingResult stopped = pacer.wait_for_frame(source.token());
     stopper.join();
     require(stopped.outcome == LivePacingOutcome::stopped, "the stop token ends an idle wait");
-    require(pacer.wait_for_frame(source.get_token()).outcome == LivePacingOutcome::stopped,
+    require(pacer.wait_for_frame(source.token()).outcome == LivePacingOutcome::stopped,
             "a stopped token answers at once");
 }
 
@@ -168,11 +175,46 @@ void presented_wakes_connect_and_disconnect() {
     require(wakes.load() == 1, "a disconnected wake is not called");
 }
 
+// The live timing a host reports for its window's display timing: the
+// display's own as display_phased, any other paced rate as phased_timer,
+// with the latest presentation at or before now as the vertical blank;
+// nothing for assumed timing, so the pacer keeps its fallback.
+void live_timing_follows_the_window() {
+    const FrameTime now{std::chrono::milliseconds(1000)};
+    const FrameInterval period = std::chrono::milliseconds(8);
+    const LiveDisplayTiming display = live_display_timing(
+        DisplayTiming::reported(DisplayTimingSource::display, period, FrameTime{std::chrono::milliseconds(3)}), now);
+    require(display.source == LiveTimingSource::display_phased && display.refresh_period == period &&
+                display.last_vblank == FrameTime{std::chrono::milliseconds(995)},
+            "display timing is display_phased at the latest refresh at or before now");
+    const LiveDisplayTiming on_grid =
+        live_display_timing(DisplayTiming::fixed_rate(period, FrameTime{std::chrono::milliseconds(0)}), now);
+    require(on_grid.source == LiveTimingSource::phased_timer && on_grid.last_vblank == now,
+            "a fixed rate is a phased timer, and a refresh at now is the latest");
+    const LiveDisplayTiming ahead = live_display_timing(
+        DisplayTiming::reported(DisplayTimingSource::measured, period, FrameTime{std::chrono::milliseconds(1100)}), now);
+    require(ahead.source == LiveTimingSource::phased_timer && ahead.last_vblank == FrameTime{std::chrono::milliseconds(996)},
+            "a phase ahead of now is carried back onto the grid before now");
+    const LiveDisplayTiming assumed = live_display_timing(DisplayTiming::assumed(), now);
+    require(assumed.source == LiveTimingSource::none && assumed.refresh_period == FrameInterval::zero(),
+            "assumed timing reports nothing");
+
+    // The pacer reads the reported timing: its frame time is the next
+    // refresh on the window's grid.
+    std::shared_ptr<LiveSurface> surface = LiveSurface::create({8U, 4U});
+    LiveSurfacePacer pacer(surface);
+    const std::uint64_t generation = publish_one(*surface);
+    (*surface).notify_presented(generation, display);
+    require(pacer.display_time(now) == FrameTime{std::chrono::milliseconds(1003)},
+            "the pacer's frame time is the window's next refresh");
+}
+
 } // namespace
 
 int main() {
     plan_follows_reports_and_deadlines();
     waits_wake_on_reports_and_stops();
     presented_wakes_connect_and_disconnect();
+    live_timing_follows_the_window();
     return 0;
 }

@@ -519,7 +519,7 @@ struct BitHash final {
 // expected value was produced on macOS arm64 when the motion clock began
 // keeping its phase (2026-11-01; Windows x64 produced the one before) and
 // is checked by every CI platform.
-constexpr std::uint64_t expected_motion_hash = 0x2f342903f8ff3083ULL;
+constexpr std::uint64_t expected_motion_hash = 0xf785b57ff24f4caeULL;
 
 void identical_samples() {
     BitHash hash{};
@@ -554,6 +554,74 @@ void identical_samples() {
 
 } // namespace
 
+// -- display-paced frames (design note frame-source) ---------------------------
+
+// The armed wake, which must be present.
+FrameTime wake_of(const Window& window) {
+    const stxlib::Optional<FrameTime> wake = window.next_wake();
+    require(wake.present(), "a wake is armed");
+    const FrameTime result = *wake.value();
+    return result;
+}
+
+// Polls the window at `at` on the test's time.
+FramePollResult frame_at(Fixture& fixture, FrameTime at) {
+    fixture.time.time = at;
+    const FramePollResult result = (*fixture.window).poll_frame_schedule(at);
+    return result;
+}
+
+void display_paced_frames() {
+    std::unique_ptr<Fixture> fixture = make_fixture(1U);
+    Window& window = *(*fixture).window;
+    Mover& mover = *(*fixture).movers[0];
+    const FrameTime start = (*fixture).time.time;
+    const FrameTime phase = start + milliseconds(3);
+    require(window.set_display_timing(DisplayTiming::fixed_rate(milliseconds(8), phase)) &&
+                !window.wants_display_frames(),
+            "a fixed 125 Hz rate is accepted; a window at rest wants no display frames");
+    require(mover.first.animate_to(1.0) == MotionStart::started && window.wants_display_frames() &&
+                wake_of(window) == start + milliseconds(11),
+            "a move asks for display frames, first due at the refresh after the clock's now");
+
+    const FramePollResult first = frame_at(*fixture, start + milliseconds(11));
+    require(first.motion_clock_ticks == 1U && first.presentation_time == start + milliseconds(19) &&
+                std::fabs(mover.first.current() - smoothstep(19.0 / 180.0)) < 1e-12 &&
+                wake_of(window) == start + milliseconds(19),
+            "a frame is evaluated at the refresh it is shown at, and the next is due one refresh later");
+    const FramePollResult late = frame_at(*fixture, start + milliseconds(21));
+    require(late.motion_clock_ticks == 1U && late.presentation_time == start + milliseconds(27) &&
+                std::fabs(mover.first.current() - smoothstep(27.0 / 180.0)) < 1e-12 &&
+                wake_of(window) == start + milliseconds(27),
+            "a late frame is one frame, shown at the refresh after the poll");
+
+    // The display drops to 62.5 Hz mid-flight: the request takes the new
+    // period and the nearest point of the new grid.
+    require(window.set_display_timing(DisplayTiming::fixed_rate(milliseconds(16), start)) &&
+                wake_of(window) == start + milliseconds(32),
+            "a rate change moves the motion frame onto the new grid");
+    const FramePollResult slowed = frame_at(*fixture, start + milliseconds(32));
+    require(slowed.presentation_time == start + milliseconds(48) &&
+                std::fabs(mover.first.current() - smoothstep(48.0 / 180.0)) < 1e-12 &&
+                wake_of(window) == start + milliseconds(48),
+            "frames follow the new rate");
+
+    for (int k = 0; k < 40 && window.motion_clock().armed(); ++k) static_cast<void>(frame_at(*fixture, wake_of(window)));
+    require(mover.first.settled() && mover.first.current() == 1.0 && !window.motion_clock().armed() &&
+                !window.wants_display_frames() && window.next_wake().absent(),
+            "once settled the window wants no display frames and holds no wake");
+
+    // Back to assumed timing: frames at the poll's time, every 16 ms.
+    require(window.set_display_timing(DisplayTiming::assumed()), "assumed timing is accepted");
+    const FrameTime again = (*fixture).time.time;
+    require(mover.first.animate_to(0.0) == MotionStart::started && wake_of(window) == again + milliseconds(16),
+            "with assumed timing the first frame is one motion interval after the move");
+    const FramePollResult plain = frame_at(*fixture, again + milliseconds(16));
+    require(plain.presentation_time == again + milliseconds(16) &&
+                std::fabs(mover.first.current() - (1.0 - smoothstep(16.0 / 180.0))) < 1e-12,
+            "with assumed timing a frame is evaluated at the poll's time");
+}
+
 int main() {
     zero_frames_after_settling();
     one_request_for_many_values();
@@ -566,8 +634,9 @@ int main() {
     owners_and_stale_records();
     window_closing();
     identical_samples();
+    display_paced_frames();
     std::cout << "motion clock: zero frames after settling, one request, continuity, reduced motion, occlusion, "
-                 "the ceiling, easings and overshoot, settled conditions, owners and lifetimes, identical samples "
-                 "passed\n";
+                 "the ceiling, easings and overshoot, settled conditions, owners and lifetimes, identical samples, "
+                 "display-paced frames passed\n";
     return 0;
 }

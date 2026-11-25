@@ -24,6 +24,7 @@
 #include "gui_forms/semantics/types/semantic_types.hpp"
 #include "gui_forms/text/markdown/markdown.hpp"
 #include "gui_forms/types/geometry/geometry.hpp"
+#include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 
 #include <cstdlib>
@@ -447,7 +448,62 @@ void focus_handler_replaces_the_items() {
     }
 }
 
+void hosted_item_width_follows_the_application() {
+    std::shared_ptr<ToolStrip> strip = make_control<ToolStrip>(StableId("strip.width"));
+    (*strip).set_items(hosted_items());
+    Window window(strip, {900.0, 60.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    const std::shared_ptr<TextBox> find = (*strip).text_box("find");
+    require(find && (*find).committed_arranged_bounds().width == 160.0,
+            "at text scale two the strip doubles the width the item names");
+    (*strip).set_item_width("find", 120.0);
+    window.perform_layout();
+    require((*find).committed_arranged_bounds().width == 240.0 && (*strip).text_box("find") == find,
+            "a new width replaces the old one, scaled the same way, and keeps the hosted control");
+    bool refused_negative = false;
+    try {
+        (*strip).set_item_width("find", -1.0);
+    } catch (const std::invalid_argument&) {
+        refused_negative = true;
+    }
+    bool refused_unknown = false;
+    try {
+        (*strip).set_item_width("missing", 10.0);
+    } catch (const std::out_of_range&) {
+        refused_unknown = true;
+    }
+    window.perform_layout();
+    require(refused_negative && refused_unknown && (*find).committed_arranged_bounds().width == 240.0,
+            "a negative width or an unknown item is refused and changes nothing");
+}
+
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+static void disposed_with_its_menu_open() {
+    const std::shared_ptr<Command> save = std::make_shared<Command>("save", "Save");
+    const std::shared_ptr<Command> choice = std::make_shared<Command>("choice", "Choice");
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("disposed.root"));
+    std::shared_ptr<ToolStrip> strip = make_control<ToolStrip>(StableId("disposed.strip"));
+    (*strip).set_items(sample_items(save, choice));
+    (*strip).set_requested_bounds({0.0, 0.0, 640.0, 25.0});
+    (*root).add_child(strip);
+    Window window(root, {640.0, 300.0});
+    window.perform_layout();
+    require((*strip).show_drop_down("export") && (*strip).drop_down_open(), "the drop-down opens");
+    (*strip).dispose();
+    static_cast<void>((*root).remove_child((*strip).runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the strip with its menu open closes the menu and its focus scope");
+}
+
 int main() {
+    disposed_with_its_menu_open();
     layout_and_parts();
     clicks_and_commands();
     overflow_and_keyboard();
@@ -456,6 +512,7 @@ int main() {
     cached_layout_follows_inputs();
     kept_layout_follows_changes();
     focus_handler_replaces_the_items();
+    hosted_item_width_follows_the_application();
     std::cout << "ToolStrip and StatusStrip: parts, clicks, commands, split and drop-down, overflow, keys, semantics and status layout passed\n";
     return 0;
 }

@@ -28,6 +28,7 @@
 #include "application/headless_application.hpp"
 #include "application/headless_splashscreen.hpp"
 #include "src/core/image/png_writer.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <chrono>
 #include <cstddef>
@@ -70,6 +71,27 @@ void operator delete(void* pointer) noexcept { std::free(pointer); }
 void operator delete[](void* pointer) noexcept { std::free(pointer); }
 void operator delete(void* pointer, std::size_t) noexcept { std::free(pointer); }
 void operator delete[](void* pointer, std::size_t) noexcept { std::free(pointer); }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 namespace {
 using namespace gui_forms;

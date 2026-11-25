@@ -20,6 +20,7 @@
 #include "gui_forms/window.hpp"
 
 #include "src/controls/text_block/line_wrapping.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <array>
 #include <cmath>
@@ -72,6 +73,27 @@ void operator delete(void* allocation, std::size_t) noexcept {
 void operator delete[](void* allocation, std::size_t) noexcept {
     std::free(allocation);
 }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 namespace {
 
@@ -919,7 +941,7 @@ void test_paint_visible_lines() {
 // new and new[] in this process while armed, which covers the paragraph
 // layout's own code and these test classes. The fixed provider allocates
 // nothing, so the bundled engine's shaping is not exercised here; with it,
-// HarfBuzzFontEngine::shape and the SkiaRaster kept-layout cache allocate
+// TextShapeEngine::shape and the SkiaRaster kept-layout cache allocate
 // per call (and the shaper and the bidi analysis call STXlib's
 // allocator directly, which this counter does not see). Zero allocation through the engine is a follow-up.
 void test_no_allocations() {

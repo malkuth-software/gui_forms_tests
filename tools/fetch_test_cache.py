@@ -174,7 +174,7 @@ def fetch(lock: Lock, label: str, kind: str, cache_root: Path, archive: Path | N
 def main(argv: list[str] | None = None) -> int:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--platform', default=host_label(), help='macos-arm64, linux-x64, windows-x64, ...')
-    parser.add_argument('--kind', choices=('normal', 'sanitize', 'tsan'), default='normal')
+    parser.add_argument('--kind', choices=('normal', 'sanitize', 'tsan', 'profile'), default='normal')
     parser.add_argument('--cache-root', type=Path, default=ROOT / '.cache' / 'test-cache')
     parser.add_argument('--archive', type=Path, help='a packed cache on disk instead of the published one')
     parser.add_argument('--unpinned', action='store_true', help='accept an --archive the lock does not name')

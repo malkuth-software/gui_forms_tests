@@ -263,6 +263,33 @@ void arrow_strips(const Control& control) {
     }
 }
 
+// Hunt S1: a part laid out huge or not a number paints a bounded number of
+// strips and dots (the arrow loop and the grip's double loops ran without
+// end, or for billions of steps, on such a box).
+void huge_and_nan_marks(const Control& control) {
+    const double not_a_number = std::nan("");
+    const Rect huge{0.0, 0.0, 1.0e12, 1.0e12};
+    const Rect broken{not_a_number, 0.0, not_a_number, 40.0};
+    const PartMark marks[] = {PartMark::arrow_up, PartMark::arrow_right, PartMark::grip_dots};
+    for (const PartMark mark : marks) {
+        PartPaint large;
+        large.role = PartRole::glyph;
+        large.bounds = huge;
+        large.mark = mark;
+        RecordingPainter large_painter;
+        paint_part(large_painter, control, large);
+        require(large_painter.operations.size() <= 256U * 256U + 8U, "a huge mark paints a bounded count");
+        PartPaint invalid;
+        invalid.role = PartRole::glyph;
+        invalid.bounds = broken;
+        invalid.mark = mark;
+        RecordingPainter invalid_painter;
+        paint_part(invalid_painter, control, invalid);
+        require(invalid_painter.count("fill") == 0U && invalid_painter.count("fill_rounded") == 0U,
+                "a mark whose box is not a number paints nothing");
+    }
+}
+
 void state_context(const Control& control) {
     require(part_visual_context(control, states_of(AnatomyState::hot)).surface ==
                 ControlSurfaceState::hot,
@@ -841,6 +868,7 @@ int main() {
     surfaces_and_cues(*control);
     marks_and_text(*control);
     arrow_strips(*control);
+    huge_and_nan_marks(*control);
     state_context(*control);
     overlay_shadow(*control);
     theme_without_overlay_shadow();

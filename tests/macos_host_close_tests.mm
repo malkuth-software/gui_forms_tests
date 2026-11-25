@@ -605,6 +605,7 @@ int main() {
             gui_forms::HostCapability::cursor |
             gui_forms::HostCapability::clipboard |
             gui_forms::HostCapability::typed_drag_destination |
+            gui_forms::HostCapability::typed_drag_source |
             gui_forms::HostCapability::dialogs)) {
         return 4;
     }

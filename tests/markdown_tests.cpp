@@ -15,7 +15,7 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
-#include <stop_token>
+#include <stxlib/stop_token.hpp>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -298,8 +298,13 @@ void commonmark_readings() {
 
 // A stop source that is already stopped.
 struct StoppedSource final {
-    std::stop_source source{};
-    StoppedSource() { static_cast<void>(source.request_stop()); }
+    stxlib::StopSource source{};
+    StoppedSource() {
+        stxlib::OperationResult<stxlib::StopSource> made = stxlib::StopSource::create();
+        require(made.succeeded(), "a stop source is made");
+        source = static_cast<stxlib::OperationResult<stxlib::StopSource>&&>(made).take_value();
+        static_cast<void>(source.request_stop());
+    }
 };
 
 void failures() {
@@ -322,7 +327,7 @@ void failures() {
     result = parse_markdown("12345", document, limits);
     require(result.error() == stxlib::Optional<gui_forms::MarkdownParseError>::of(MarkdownParseError::limit_exceeded), "the text limit");
     const StoppedSource stopped;
-    result = parse_markdown("text", document, MarkdownLimits{}, stopped.source.get_token());
+    result = parse_markdown("text", document, MarkdownLimits{}, stopped.source.token());
     require(result.error() == stxlib::Optional<gui_forms::MarkdownParseError>::of(MarkdownParseError::cancelled), "cancellation");
     result = parse_markdown("", document);
     require(result.succeeded() && document.blocks.empty(), "an empty source");

@@ -5,7 +5,7 @@
 # prefix, on macOS, Linux and Windows.
 cmake_minimum_required(VERSION 3.25)
 project(GUIFormsHostedClientConsumer LANGUAGES CXX)
-find_package(GUIForms 0.6 CONFIG REQUIRED COMPONENTS Controls HostedClient)
+find_package(GUIForms 1.0 CONFIG REQUIRED COMPONENTS Controls HostedClient)
 add_executable(hosted_client_child child.cpp)
 target_compile_features(hosted_client_child PRIVATE cxx_std_20)
 target_link_libraries(hosted_client_child PRIVATE GUIForms::HostedClient)

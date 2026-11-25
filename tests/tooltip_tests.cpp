@@ -2,6 +2,8 @@
 #include "gui_forms/binding/property_type/property_type.hpp"
 #include "gui_forms/components/tool_tip/tool_tip.hpp"
 #include "gui_forms/control/control/control.hpp"
+#include "gui_forms/engine/part_raster/part_raster.hpp"
+#include "gui_forms/engine/types/engine_types.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/combo_box.hpp"
@@ -24,12 +26,15 @@
 #include "gui_forms/visual_inspection/types/visual_inspection_types.hpp"
 #include "gui_forms/window/tool_tips/tool_tips.hpp"
 #include "gui_forms/window/window.hpp"
+#include "src/core/window/tool_tips/tool_tip_bubble.hpp"
 #include "src/core/window/tool_tips/tool_tip_width.hpp"
+#include "support/professional_theme.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <memory>
@@ -964,6 +969,54 @@ void test_tooltip_ink_is_black_and_ignores_inherited_colours() {
     require(!colours.forbidden_fill, "the tooltip plate is not the window's authored BackColor");
 }
 
+// Gap P7: a Splash bubble baked under one theme is never blitted under
+// another. The bake key names the window's theme (as the window's part
+// rasters are keyed to it), so a theme change between the prebake and the
+// show paints the bubble live with the new theme; with no change the bake
+// is blitted and the bubble draws no text of its own.
+void test_stale_prebake_is_not_shown_after_a_theme_change() {
+    const Control::Ptr root = make_control<Control>(StableId("tooltip.bake.root"));
+    (*root).set_requested_bounds({0.0, 0.0, 200.0, 100.0});
+    detail::ToolTipLines lines{};
+    lines.lines = {"Tip"};
+    lines.text_width = 20.0;
+    lines.line_height = 14.0;
+    const Size face = detail::tool_tip_face_size(lines);
+    const std::shared_ptr<detail::ToolTipBubble> bubble =
+        make_control<detail::ToolTipBubble>(StableId("tooltip.bake.bubble"), "Tip", lines);
+    (*bubble).set_requested_bounds({20.0, 20.0, face.width, face.height});
+    (*root).add_child(bubble);
+    const std::unique_ptr<Window> held_window = std::make_unique<Window>(root, Size{200.0, 100.0});
+    Window& window = *held_window;
+    window.perform_layout();
+    require(painted_text(window, "tooltip.bake.bubble", "Tip"), "an unbaked bubble paints its text");
+
+    const double scale = window.scale();
+    const DeviceExtent extent{static_cast<std::uint32_t>(face.width * scale) + 32U,
+                              static_cast<std::uint32_t>(face.height * scale) + 32U};
+    const std::shared_ptr<PartRaster> raster = PartRaster::create(extent, DeviceScale{scale});
+    require(raster != nullptr, "the stand-in bake is made");
+    detail::ToolTipBakeKey key{};
+    key.text = "Tip";
+    key.face = (*bubble).face_size();
+    key.font = lines.font;
+    key.shadow = true;
+    key.scale = scale;
+    key.theme = window.theme_ptr();
+    key.text_scale = (*bubble).effective_text_scale();
+
+    (*bubble).set_baked(raster, key);
+    require(!painted_text(window, "tooltip.bake.bubble", "Tip"),
+            "a bake from the theme shown is blitted in place of the live paint");
+
+    (*bubble).set_baked(raster, key);
+    window.set_theme(test_support::professional_theme());
+    require(window.theme_ptr() != key.theme, "the window shows another theme");
+    require(painted_text(window, "tooltip.bake.bubble", "Tip"),
+            "a bake from the theme before the change is not shown: the bubble paints with the new theme");
+    require(!(*bubble).baked(), "the stale offer is used up");
+}
+
 } // namespace
 
 int main() {
@@ -986,6 +1039,7 @@ int main() {
         test_tab_header_tooltips();
         test_typed_text_fields_show_hints();
         test_tooltip_ink_is_black_and_ignores_inherited_colours();
+        test_stale_prebake_is_not_shown_after_a_theme_change();
         std::cout << "tooltip tests passed\n";
         return 0;
     } catch (const std::exception& error) {

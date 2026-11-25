@@ -83,6 +83,31 @@ internal static unsafe class Program
         expect(after == Constants.GF_STATUS_STALE_HANDLE, "a released handle is stale");
     }
 
+    // Memory across the ABI is freed by the side that allocated it (owner,
+    // 2026-11-22): the library makes and frees its objects behind the handles
+    // the wrappers hold, and the text the debugger view reads comes back in
+    // buffers the binding allocates and frees itself. Many rounds, each
+    // handle stale once released, the managed side never freeing native
+    // library memory.
+    private static void allocation_boundary()
+    {
+        int stale = 0;
+        for (int round = 0; round < 256; ++round)
+        {
+            ObjectHandle label = ObjectHandle.create("label"u8, "csharp.allocation"u8);
+            ObjectHandleView view = new ObjectHandleView(label);
+            expect(view.type_id == "label", "the type id comes back in the binding's own buffer");
+            gf_object raw = label.value;
+            label.Dispose();
+            gf_object_state state = 99u;
+            if (Abi.objects.state(raw, &state) == Constants.GF_STATUS_STALE_HANDLE)
+            {
+                ++stale;
+            }
+        }
+        expect(stale == 256, "every handle the library released is stale (" + stale + " of 256)");
+    }
+
     private static void refusal()
     {
         try
@@ -1286,6 +1311,45 @@ internal static unsafe class Program
         DockFrames.set_icons_at_bottom(workspace, false);
         DockFrames.set_panel_menu_strip(workspace, "csharp.document", strip);
         DockFrames.set_panel_menu_strip(workspace, "csharp.document", null);
+        expect(DockFrames.merged_document(workspace) == null, "no main menu strip, so no menu strip is merged");
+
+        using ObjectHandle tools = ObjectHandle.create("tool_strip"u8, "csharp.mdi.tools"u8);
+        using ObjectHandle document_tools = ObjectHandle.create("tool_strip"u8, "csharp.document.tools"u8);
+        DockFrames.set_merge_tool_strip(workspace, tools);
+        using (ObjectHandle? held = DockFrames.merge_tool_strip(workspace))
+        {
+            expect(held != null, "the workspace gives its merge tool strip back");
+        }
+        DockFrames.set_panel_tool_strip(workspace, "csharp.document", document_tools);
+        string? merged_tools = DockFrames.merged_tool_strip_document(workspace);
+        expect(merged_tools == null || merged_tools == "csharp.document", "a merged tool strip is the active document's");
+        DockFrames.set_panel_tool_strip(workspace, "csharp.document", null);
+        expect(DockFrames.merged_tool_strip_document(workspace) == null, "nothing is merged once the panel has no tool strip");
+        DockFrames.set_merge_tool_strip(workspace, null);
+        expect(DockFrames.merge_tool_strip(workspace) == null, "the merge tool strip is cleared");
+
+        using ObjectHandle ribbon = ObjectHandle.create("ribbon"u8, "csharp.mdi.ribbon"u8);
+        using ObjectHandle document_ribbon = ObjectHandle.create("ribbon"u8, "csharp.document.ribbon"u8);
+        refused = false;
+        try
+        {
+            DockFrames.set_merge_ribbon(workspace, tools);
+        }
+        catch (GuiFormsException error)
+        {
+            refused = error.status == Constants.GF_STATUS_WRONG_HANDLE_KIND;
+        }
+        expect(refused, "a tool strip is not a ribbon");
+        DockFrames.set_merge_ribbon(workspace, ribbon);
+        using (ObjectHandle? held = DockFrames.merge_ribbon(workspace))
+        {
+            expect(held != null, "the workspace gives its merge ribbon back");
+        }
+        DockFrames.set_panel_ribbon(workspace, "csharp.document", document_ribbon);
+        expect(DockFrames.merged_ribbon_document(workspace) == null, "a ribbon without tabs merges nothing");
+        DockFrames.set_panel_ribbon(workspace, "csharp.document", null);
+        DockFrames.set_merge_ribbon(workspace, null);
+        expect(DockFrames.merge_ribbon(workspace) == null, "the merge ribbon is cleared");
     }
 
     private static int Main()
@@ -1296,6 +1360,7 @@ internal static unsafe class Program
         negotiation();
         application();
         ownership();
+        allocation_boundary();
         refusal();
         event_thunk();
         window_help();

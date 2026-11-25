@@ -100,6 +100,21 @@ void test_registry_pages_gallery() {
     test_control_spectrum(window);
 }
 
+// The DevExpress "demo only" composition pages and the Source button, in a
+// window of their own: their popups, tour and timers stay out of the
+// registry pages' window.
+void test_devexpress_demo_pages() {
+    std::unique_ptr<Window> owned = gallery::make_gallery();
+    Window& window = *owned;
+    test_lookups_and_pickers(window);
+    test_media_and_motion(window);
+    test_navigation_patterns(window);
+    test_dashboard_pieces(window);
+    test_workspaces_and_themes(window);
+    test_ui_templates(window);
+    test_page_source_button(window);
+}
+
 // The input-and-rules and theme-settings pages change the window (its
 // rules, its theme and presentation overrides), so they run in a window
 // of their own.
@@ -142,6 +157,7 @@ int main(int argc, char** argv) {
         test_dispatcher_gallery();
         test_dock_anchor_gallery_interaction();
         test_registry_pages_gallery();
+        test_devexpress_demo_pages();
         test_input_and_theme_gallery();
         test_anatomy_coverage();
         test_schema_export();

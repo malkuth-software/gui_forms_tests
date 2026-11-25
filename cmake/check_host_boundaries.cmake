@@ -38,6 +38,13 @@ if(NOT headless_nm_result EQUAL 0)
     message(FATAL_ERROR "nm failed for headless host: ${headless_nm_error}")
 endif()
 
+# The Microsoft ABI names a string literal after its first characters
+# (??_C@...), so a theme sheet that mentions AppKit in a comment shows up as
+# a symbol on Windows. Those are data, not a reference to AppKit: dropped.
+foreach(symbols IN ITEMS core_symbols headless_symbols)
+    string(REGEX REPLACE "[^\n]*[?][?]_C@[^\n]*" "" ${symbols} "${${symbols}}")
+endforeach()
+
 foreach(pattern IN ITEMS "AppKit" "NSWindow" "NSEvent" "NSView"
                          "NSApplication" "objc_msgSend")
     if(core_symbols MATCHES "${pattern}" OR headless_symbols MATCHES "${pattern}")

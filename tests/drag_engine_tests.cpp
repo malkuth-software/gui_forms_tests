@@ -30,6 +30,7 @@
 #include "gui_forms/window/presentation/presentation_types.hpp"
 #include "gui_forms/window/window.hpp"
 #include "src/core/drag_engine/drag_engine.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <array>
 #include <cmath>
@@ -173,6 +174,27 @@ void operator delete(void* const memory, const std::align_val_t, const std::noth
 void operator delete[](void* const memory, const std::align_val_t, const std::nothrow_t&) noexcept {
     drag_allocation_probe::release_aligned(memory);
 }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 
 namespace {
@@ -333,7 +355,17 @@ public:
         return accepted;
     }
 
-    void preview_drag(const DragFrame& frame) override { previews.push_back(frame.selection.token.value); }
+    void preview_drag(const DragFrame& frame) override {
+        previews.push_back(frame.selection.token.value);
+        if (replan_from_preview != nullptr) {
+            nested_replan_refused = !(*replan_from_preview).replan(*this, Point{0.0, 1.0});
+            replan_from_preview = nullptr;
+        }
+    }
+
+    // Set to ask for a replan from inside the next preview (hunt r31 C31).
+    DragEngine* replan_from_preview{};
+    bool nested_replan_refused{};
 
     void announce_drag(const DragFrame& frame, DragAnnouncement& announcement) override {
         std::array<char, 64> text{};
@@ -439,6 +471,29 @@ DragLanding tile(double x, double y, std::uint32_t token, std::uint16_t group) {
 }
 
 // -- reorder ----------------------------------------------------------------------------
+
+// Hunt r31 C31: a replan asked from inside one of the client's own calls
+// (here its preview) is refused and changes nothing; the same replan after
+// the call returns is taken.
+void replan_inside_a_client_call_is_refused() {
+    TestClient client;
+    client.reset_list(5U, 1U);
+    Fixture fixture = make_fixture(client.slots[1]);
+    client.container = fixture.container.get();
+    DragEngine& engine = (*fixture.window).drag_engine();
+    const Point grab = centre(client.slots[1]);
+    require(press(fixture, client, grab, 4.0), "a press arms a drag");
+    move_to(fixture, {grab.x, 81.0});
+    require(engine.phase() == DragPhase::dragging, "the drag is under way");
+    const std::uint64_t replans = engine.statistics().replans;
+    client.replan_from_preview = &engine;
+    move_to(fixture, {grab.x, 20.0});
+    require(client.nested_replan_refused && engine.statistics().replans == replans,
+            "a replan from inside preview_drag is refused and plans nothing");
+    require(engine.replan(client, Point{0.0, 1.0}) && engine.statistics().replans == replans + 1U,
+            "the same replan outside the client's calls is taken");
+    release_at(fixture, {grab.x, 20.0});
+}
 
 void list_reorder_forward_and_back() {
     TestClient client;
@@ -1219,6 +1274,7 @@ void no_allocation_while_dragging() {
 
 int main() {
     list_reorder_forward_and_back();
+    replan_inside_a_client_call_is_refused();
     non_finite_moves_are_refused();
     cancels_leave_the_model_untouched();
     release_outside_and_suppression();

@@ -5,6 +5,7 @@
 // auto-complete stands aside while a filter is set. Also the typed prefix a
 // TextBox's suggestion list highlights.
 
+#include <stdexcept>
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/control/control/control.hpp"
 #include "gui_forms/control/stable_id/stable_id.hpp"
@@ -263,13 +264,124 @@ void suggestions_highlight_the_typed_prefix() {
 
 } // namespace
 
+// Folds the list when the combo box loses focus: the focus move that
+// opening a drop_down_list list makes runs this while the open is in
+// progress.
+struct FoldOnBlur final {
+    ComboBox* combo{};
+    void operator()(bool focused) const {
+        if (!focused) (*combo).dropped_down = false;
+    }
+};
+
+// Drops the list again from its fold report, once.
+struct DropOnFold final {
+    ComboBox* combo{};
+    bool* dropped{};
+    void operator()(bool open) const {
+        if (open || *dropped) return;
+        *dropped = true;
+        (*combo).dropped_down = true;
+    }
+};
+
+// The list as one presentation state: a fold while a drop_down_list list
+// opens is served and ends the scope that open began, with no report; a
+// drop from the fold report shows one list, in both styles.
+void close_and_reopen_from_handlers() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("handlers.root"));
+    std::shared_ptr<ComboBox> listed = make_control<ComboBox>(StableId("handlers.listed"));
+    (*listed).set_requested_bounds({10.0, 10.0, 220.0, 30.0});
+    (*listed).items = {"Calgary", "California", "Cambridge"};
+    (*listed).drop_down_style = ComboBoxStyle::drop_down_list;
+    (*root).add_child(listed);
+    Window window(root, Size{320.0, 320.0});
+    window.perform_layout();
+    require(window.request_focus(listed), "the list-style combo box takes the focus");
+    std::vector<std::string> trace;
+    SubscriptionToken reports = (*listed).drop_down_changed().subscribe(TraceDropDown{&trace});
+    SubscriptionToken blurred = (*listed).focus_observed().subscribe(FoldOnBlur{listed.get()});
+    (*listed).dropped_down = true;
+    blurred.disconnect();
+    require(!(*listed).dropped_down.read() && window.focus_scope_depth() == 0U && trace.empty() &&
+                !window.find("handlers.listed.overlay.list"),
+            "a fold while the list opens leaves no scope, no list and no report");
+
+    require(window.request_focus(listed), "the combo box takes the focus again");
+    bool dropped = false;
+    SubscriptionToken dropping = (*listed).drop_down_changed().subscribe(DropOnFold{listed.get(), &dropped});
+    (*listed).dropped_down = true;
+    (*listed).dropped_down = false;
+    dropping.disconnect();
+    require(dropped && (*listed).dropped_down.read() && window.focus_scope_depth() == 1U &&
+                trace == std::vector<std::string>({"drop", "fold", "drop"}) &&
+                window.find("handlers.listed.overlay.list") != nullptr,
+            "a drop from the fold report shows the list again");
+    (*listed).dropped_down = false;
+    require(!(*listed).dropped_down.read() && window.focus_scope_depth() == 0U, "and it folds cleanly");
+
+    Fixture fixture = make_fixture("handlers.field", ComboBoxFilter::prefix);
+    ComboBox& combo = *fixture.combo;
+    std::vector<std::string> field_trace;
+    SubscriptionToken field_reports = combo.drop_down_changed().subscribe(TraceDropDown{&field_trace});
+    bool field_dropped = false;
+    SubscriptionToken field_dropping = combo.drop_down_changed().subscribe(DropOnFold{&combo, &field_dropped});
+    combo.dropped_down = true;
+    combo.dropped_down = false;
+    field_dropping.disconnect();
+    require(field_dropped && combo.dropped_down.read() &&
+                field_trace == std::vector<std::string>({"drop", "fold", "drop"}) &&
+                (*fixture.window).find("handlers.field.overlay.list") != nullptr,
+            "the drop_down style's field list drops again from its fold report too");
+    combo.dropped_down = false;
+    require(!combo.dropped_down.read() && !(*fixture.window).find("handlers.field.overlay.list"), "and folds");
+    static_cast<void>(reports);
+    static_cast<void>(field_reports);
+}
+
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void list_refused_by_a_containing_scope() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("fenced.root"));
+    std::shared_ptr<ComboBox> listed = make_control<ComboBox>(StableId("fenced.listed"));
+    (*listed).set_requested_bounds({10.0, 10.0, 220.0, 30.0});
+    (*listed).items = {"Calgary", "California", "Cambridge"};
+    (*listed).drop_down_style = ComboBoxStyle::drop_down_list;
+    std::shared_ptr<ComboBox> fence = make_control<ComboBox>(StableId("fenced.fence"));
+    (*fence).set_requested_bounds({10.0, 280.0, 220.0, 30.0});
+    (*root).add_child(listed);
+    (*root).add_child(fence);
+    Window window(root, Size{320.0, 320.0});
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        (*listed).dropped_down = true;
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !(*listed).dropped_down.read() && (*listed).agrees_with_itself() &&
+                !window.find("fenced.listed.overlay.layer") && window.focus_scope_depth() == 1U,
+            "a list the window refuses a scope is not left down");
+    require(window.end_focus_scope(fenced), "the containing scope ends");
+    (*listed).dropped_down = true;
+    require((*listed).dropped_down.read() && (*listed).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "then the list drops down");
+    (*listed).dropped_down = false;
+    require(!(*listed).dropped_down.read() && (*listed).agrees_with_itself() && window.focus_scope_depth() == 0U,
+            "and folds cleanly");
+}
+
 int main() {
+    list_refused_by_a_containing_scope();
     prefix_filter_narrows_and_widens();
     substring_filter();
     keyboard_and_identity();
     pointer_and_semantic_rows();
     filter_replaces_auto_complete();
     suggestions_highlight_the_typed_prefix();
+    close_and_reopen_from_handlers();
     std::cout << "combo box filter tests passed\n";
     return 0;
 }

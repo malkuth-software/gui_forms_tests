@@ -114,6 +114,33 @@ void test_dialogs_and_host_services(gui_forms::Window& window,
     static_cast<void>(window.dispatch_key({KeyAction::down, PhysicalKey::escape}));
     require(!(*exception_dialog).shown() && (*status).text.read().find("closed with Continue") != std::string::npos,
             "Escape continues past the exception");
+
+    // The desktop notification goes through the headless host's service.
+    const std::shared_ptr<gui_forms::Button> toast_button = std::dynamic_pointer_cast<Button>(
+        window.find("gallery.host.toast.show"));
+    require(toast_button && (*toast_button).command_connected() && (*toast_button).perform_click() &&
+                (*status).text.read().find("Desktop notification: accepted") != std::string::npos &&
+                services.snapshot().desktop_notifications == 1U &&
+                services.desktop_notification_trace().find("title=GUI.Forms Gallery") != std::string::npos,
+            "the desktop notification button shows a ToastNotification");
+    services.simulate_desktop_notification_event(
+        {gui_forms::HostDesktopNotificationId{1U}, gui_forms::HostDesktopNotificationAction::activated});
+    require((*status).text.read().find("Desktop notification activated") != std::string::npos,
+            "activating the notification reports it on the page");
+
+    // The input box asks for a folder name; OK keeps the typed name.
+    const std::shared_ptr<gui_forms::Button> input_button = std::dynamic_pointer_cast<Button>(
+        window.find("gallery.host.input-box.show"));
+    require(input_button && (*input_button).perform_click(), "the input box button is clicked");
+    const std::shared_ptr<gui_forms::TaskDialog> input_box = std::dynamic_pointer_cast<TaskDialog>(
+        window.find("gallery.host.input-box.dialog"));
+    require(input_box && (*input_box).shown() && (*input_box).input_box() &&
+                (*(*input_box).input_box()).text.read() == "New folder",
+            "the input box shows the last folder name");
+    (*(*input_box).input_box()).text = "Evidence";
+    require((*input_box).click("ok") && !(*input_box).shown() &&
+                (*status).text.read().find("the new folder is Evidence") != std::string::npos,
+            "OK reports the typed folder name");
 }
 
 } // namespace gallery_pages_tests

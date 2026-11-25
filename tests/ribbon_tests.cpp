@@ -933,7 +933,117 @@ void help_button() {
 
 } // namespace
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_a_menu_open() {
+    const Commands commands;
+    std::shared_ptr<Ribbon> ribbon = sample_ribbon(commands);
+    Window window(ribbon, {900.0, 400.0}, commands.resources);
+    window.perform_layout();
+    require((*ribbon).show_drop_down("paste") && (*ribbon).menu_open(), "the split's menu opens");
+    require((*ribbon).agrees_with_itself(), "the ribbon agrees with itself with a menu open");
+    (*ribbon).dispose();
+    require(!(*ribbon).is_alive() && window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the ribbon with a menu open closes the menu and its focus scope");
+}
+
+// C40 (state hunt, 2026-11-23): set_tabs drafts the new records before it
+// changes the ribbon, so a definition whose new control the window refuses
+// (its identity is taken) leaves the old ribbon whole: its tabs, selection,
+// hosted controls and Command watches.
+void refused_set_tabs_keeps_the_old_ribbon() {
+    const Commands commands;
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("root"));
+    std::shared_ptr<Ribbon> ribbon = sample_ribbon(commands);
+    (*ribbon).set_requested_bounds({0.0, 0.0, 900.0, 160.0});
+    // Holds the identity the ribbon would give a "clash" combo box.
+    std::shared_ptr<Panel> taken = make_control<Panel>(StableId("ribbon.clash"));
+    (*taken).set_requested_bounds({0.0, 200.0, 40.0, 40.0});
+    (*root).add_child(ribbon);
+    (*root).add_child(taken);
+    Window window(root, {900.0, 400.0}, commands.resources);
+    window.perform_layout();
+    (*ribbon).selected_tab = stxlib::Optional<std::size_t>::of(1U);
+    window.perform_layout();
+    const std::size_t tab_count = (*ribbon).tabs().size();
+    const std::shared_ptr<ComboBox> font = (*ribbon).combo_box("font-name");
+    std::vector<RibbonTabSpec> clashing = sample_tabs(commands);
+    clashing[0].groups[1].commands.push_back(
+        {.stable_id = "clash", .kind = RibbonCommandKind::combo_box, .text = "Clash", .choices = {"One"}});
+    clashing.erase(clashing.begin() + 1);
+    bool threw = false;
+    try {
+        (*ribbon).set_tabs(std::move(clashing));
+    } catch (const std::exception&) {
+        threw = true;
+    }
+    window.perform_layout();
+    require(threw && (*ribbon).tabs().size() == tab_count &&
+                (*ribbon).selected_tab.read() == stxlib::Optional<std::size_t>::of(1U) &&
+                (*ribbon).combo_box("font-name") == font && (*font).parent() == ribbon &&
+                (*taken).parent() == root && (*ribbon).agrees_with_itself(),
+            "a refused set_tabs keeps the old tabs, selection and hosted controls");
+    bool clash_found = true;
+    try {
+        static_cast<void>((*ribbon).combo_box("clash"));
+    } catch (const std::out_of_range&) {
+        clash_found = false;
+    }
+    require(!clash_found, "the refused definition's commands are not there");
+    (*commands.cut).set_text("Snip");
+    window.perform_layout();
+    require((*ribbon).agrees_with_itself(), "the old records' Command watches still serve");
+    (*ribbon).set_tabs(sample_tabs(commands));
+    window.perform_layout();
+    require((*ribbon).combo_box("font-name") == font && (*ribbon).agrees_with_itself(),
+            "a good set_tabs afterwards keeps the reused control");
+}
+
+// C40/C41 (state hunt, 2026-11-23): a smaller tab list brings the selection
+// and every remembered index into range, and a toolbar the window refuses
+// (its identity is taken) leaves the ribbon without one; the ribbon agrees
+// with itself throughout.
+void agrees_after_set_tabs_and_refused_toolbar() {
+    const Commands commands;
+    std::shared_ptr<Ribbon> ribbon = sample_ribbon(commands);
+    Window window(ribbon, {900.0, 400.0}, commands.resources);
+    window.perform_layout();
+    const std::size_t last = (*ribbon).realized_tabs().size() - 1U;
+    (*ribbon).selected_tab = stxlib::Optional<std::size_t>::of(last);
+    window.perform_layout();
+    require((*ribbon).agrees_with_itself(), "the ribbon agrees with itself on its last tab");
+    std::vector<RibbonTabSpec> single;
+    single.push_back(RibbonTabSpec{.stable_id = "only", .text = "Only"});
+    RibbonGroupSpec group{.stable_id = "group", .caption = "Group"};
+    group.commands.push_back({.stable_id = "cut", .command = commands.cut});
+    single[0].groups.push_back(std::move(group));
+    (*ribbon).set_tabs(std::move(single));
+    window.perform_layout();
+    const stxlib::Optional<std::size_t> selected = (*ribbon).selected_tab.read();
+    const bool in_range =
+        selected == stxlib::Optional<std::size_t>{} || selected == stxlib::Optional<std::size_t>::of(0U);
+    require((*ribbon).agrees_with_itself() && in_range,
+            "one tab leaves the selection in range");
+    // The window's root already holds the identity "ribbon".
+    std::shared_ptr<QuickAccessToolbar> toolbar = make_control<QuickAccessToolbar>(StableId("ribbon"));
+    bool threw = false;
+    try {
+        (*ribbon).set_quick_access_toolbar(toolbar);
+    } catch (const std::exception&) {
+        threw = true;
+    }
+    window.perform_layout();
+    require(threw && (*ribbon).quick_access_toolbar() == nullptr && (*toolbar).parent() == nullptr &&
+                (*ribbon).agrees_with_itself(),
+            "a refused toolbar leaves the ribbon without one");
+}
+
 int main() {
+    disposed_with_a_menu_open();
+    agrees_after_set_tabs_and_refused_toolbar();
+    refused_set_tabs_keeps_the_old_ribbon();
     geometry();
     one_command_path();
     tab_navigation();

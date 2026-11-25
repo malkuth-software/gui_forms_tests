@@ -209,7 +209,8 @@ void layout_and_columns() {
             "an in-ribbon gallery asks for its columns and rows plus the scroll column");
     Window window(gallery, wanted);
     window.perform_layout();
-    require((*gallery).realized_items().size() == 12U && (*gallery).line_count() == 5U,
+    require((*gallery).realized_items().size() == 12U && (*gallery).line_count() == 5U &&
+                (*gallery).agrees_with_itself(),
             "two rows of six are realized out of five rows");
     const RibbonGallery::Parts parts = (*gallery).parts();
     require(parts.scroll_up.present && parts.scroll_down.present && parts.more_button.present &&
@@ -218,7 +219,8 @@ void layout_and_columns() {
             "scroll up is disabled at the top; scroll down and more are present");
     (*gallery).columns = 5U;
     window.perform_layout();
-    require((*gallery).realized_items().size() == 10U && (*gallery).line_count() == 6U,
+    require((*gallery).realized_items().size() == 10U && (*gallery).line_count() == 6U &&
+                (*gallery).agrees_with_itself(),
             "giving up one column reflows the rows");
     bool refused = false;
     try {
@@ -248,7 +250,8 @@ void virtualization() {
     std::shared_ptr<RibbonGallery> gallery = in_ribbon_gallery("gallery.large", 10000U);
     Window window(gallery, (*gallery).measure({1000.0, 1000.0}));
     window.perform_layout();
-    require((*gallery).realized_item_count() == 12U && (*gallery).line_count() == 1667U,
+    require((*gallery).realized_item_count() == 12U && (*gallery).line_count() == 1667U &&
+                (*gallery).agrees_with_itself(),
             "a 10,000-item gallery realizes only the rows in view");
     (*gallery).scroll_to_line(5000U);
     window.perform_layout();
@@ -268,7 +271,8 @@ void virtualization() {
     require(!captions.empty() && captions.front().stable_id == "warm" && captions.front().parts.category_caption.present &&
                 captions.front().parts.category_divider.present,
             "the drop-down form shows a caption before each category");
-    require((*full).realized_items().size() <= 12U && (*full).line_count() == 1U + 2U + 1U + 125U,
+    require((*full).realized_items().size() <= 12U && (*full).line_count() == 1U + 2U + 1U + 125U &&
+                (*full).agrees_with_itself(),
             "the drop-down form realizes only rows in view; categories start new rows");
 }
 
@@ -488,7 +492,62 @@ void semantics() {
 
 } // namespace
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_full_gallery_open() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("disposed.root"));
+    std::shared_ptr<RibbonGallery> gallery = in_ribbon_gallery("disposed.gallery", 30U);
+    (*gallery).set_drop_down_size(6U, 4U);
+    (*root).add_child(gallery);
+    (*gallery).set_requested_bounds({10.0, 10.0, 260.0, 84.0});
+    Window window(root, {600.0, 500.0});
+    window.perform_layout();
+    require((*gallery).show_more() && (*gallery).more_gallery() && (*(*gallery).more_gallery()).overlay_open(),
+            "the full gallery opens");
+    (*gallery).dispose();
+    static_cast<void>((*root).remove_child((*gallery).runtime_id()));
+    window.perform_layout();
+    require(window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the gallery with its full gallery open closes it and its focus scope");
+}
+
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void full_gallery_refused_by_a_containing_scope() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("fenced.root"));
+    std::shared_ptr<RibbonGallery> gallery = in_ribbon_gallery("fenced.gallery", 30U);
+    (*gallery).set_drop_down_size(6U, 4U);
+    (*gallery).set_requested_bounds({10.0, 10.0, 260.0, 84.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("fenced.fence"), "Fence");
+    (*fence).set_requested_bounds({10.0, 450.0, 80.0, 28.0});
+    (*root).add_child(gallery);
+    (*root).add_child(fence);
+    Window window(root, {600.0, 500.0});
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool refused = false;
+    try {
+        static_cast<void>((*gallery).show_more());
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    const std::shared_ptr<RibbonGallery> full = (*gallery).more_gallery();
+    require(refused && full && !(*full).overlay_open() && (*full).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "a full gallery the window refuses a scope is not left open");
+    require(window.end_focus_scope(fenced) && (*gallery).show_more() && (*full).overlay_open() &&
+                (*full).agrees_with_itself(),
+            "once the containing scope ends, the full gallery opens");
+    (*full).close_overlay();
+    require(!(*full).overlay_open() && (*full).agrees_with_itself() && window.focus_scope_depth() == 0U,
+            "and closes cleanly");
+}
+
 int main() {
+    full_gallery_refused_by_a_containing_scope();
+    disposed_with_its_full_gallery_open();
     value_command();
     commit_survives_a_handler_dropping_the_gallery();
     layout_and_columns();

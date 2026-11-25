@@ -459,6 +459,55 @@ void test_wizard() {
             "a target removed by page_changing is refused");
 }
 
+// The wizard's buttons at text scale 2: the row grows to the labels'
+// measured height (it was a fixed 28 units and clipped them), and at scale
+// 1 it keeps its 28-unit row.
+void test_wizard_buttons_at_text_scale_two() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.wizard2.root"));
+    std::shared_ptr<Wizard> wizard = make_control<Wizard>(StableId("final.wizard2"));
+    (*wizard).set_requested_bounds(Rect{0.0, 0.0, 1040.0, 760.0});
+    (*wizard).add_child(make_page("final.wizard2.first", "Account"));
+    (*wizard).add_child(make_page("final.wizard2.second", "Details"));
+    (*root).add_child(wizard);
+    Window window(root, Size{1200.0, 800.0});
+    window.perform_layout();
+    require((*(*wizard).cancel_button()).committed_arranged_bounds().height == 28.0,
+            "at text scale 1 the button row keeps its 28 units");
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    (*wizard).invalidate(Dirty::measure | Dirty::arrange);
+    window.perform_layout();
+    const std::shared_ptr<Button> buttons[] = {(*wizard).back_button(), (*wizard).next_button(),
+                                               (*wizard).cancel_button()};
+    for (const std::shared_ptr<Button>& button : buttons) {
+        const Size wanted = (*button).measure(Size{1.0e6, 1.0e6});
+        const Rect placed = (*button).committed_arranged_bounds();
+        require(wanted.height > 28.0, "a label at text scale 2 needs more than the old row");
+        require(wanted.width <= placed.width && wanted.height <= placed.height,
+                "every wizard button fits its label at text scale 2");
+        require(placed.y + placed.height <= 760.0, "the row stays inside the wizard");
+    }
+}
+
+// A step's natural width follows its name: a long name at text scale 2 no
+// longer squeezes into the old 120 units a step.
+void test_step_names_at_text_scale_two() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.steps2.root"));
+    std::shared_ptr<StepIndicator> steps = make_control<StepIndicator>(StableId("final.steps2"));
+    (*steps).set_steps({"Account settings and preferences", "Done"});
+    (*root).add_child(steps);
+    Window window(root, Size{2000.0, 200.0});
+    PresentationSettings settings = window.presentation_settings();
+    settings.text_scale = 2.0;
+    window.set_presentation_settings(settings);
+    window.perform_layout();
+    const Size natural = (*steps).measure(Size{1.0e6, 1.0e6});
+    require(natural.width > 240.0, "two steps are wider than 120 units each when a name needs it");
+    const Size half = (*steps).measure(Size{natural.width * 0.5, 1.0e6});
+    require(half.width <= natural.width * 0.5, "the offered width still bounds the indicator (names then shorten)");
+}
+
 // -- overlays ----------------------------------------------------------------------
 
 void test_callout() {
@@ -615,6 +664,99 @@ void test_modal_layer() {
     require((*layer).show(behind, content) && (*layer).scrim_opacity() == 1.0,
             "under reduced motion the scrim does not fade");
     require((*layer).close(DialogResult::ok), "the calm layer closes");
+}
+
+// Closes the layer from the control that loses focus as the layer opens:
+// the close is served while the layer is opening.
+struct CloseLayerOnBlur final {
+    ModalLayer* layer{};
+    void operator()(bool focused) const {
+        if (!focused) static_cast<void>((*layer).close(DialogResult::abort));
+    }
+};
+
+// Shows the layer again from its closed event, once.
+struct ReshowOnClosed final {
+    ModalLayer* layer{};
+    Control::Ptr owner{};
+    Control::Ptr content{};
+    bool* reshown{};
+    void operator()(DialogResult) const {
+        if (*reshown) return;
+        *reshown = true;
+        static_cast<void>((*layer).show(owner, content));
+    }
+};
+
+// A ModalLayer closed by a focus handler while it opens ends the scope it
+// began; one shown again from its closed handler is whole.
+void test_modal_layer_from_handlers() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.modal2.root"));
+    std::shared_ptr<Button> behind = make_control<Button>(StableId("final.modal2.behind"), "Behind");
+    (*behind).set_requested_bounds(Rect{10.0, 10.0, 80.0, 28.0});
+    (*root).add_child(behind);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    std::shared_ptr<ModalLayer> layer = make_control<ModalLayer>(StableId("final.modal2"));
+    std::shared_ptr<Button> content = make_control<Button>(StableId("final.modal2.content"), "OK");
+    (*content).set_requested_bounds(Rect{0.0, 0.0, 120.0, 28.0});
+    Recorder recorder;
+    recorder.tokens.push_back(
+        (*layer).closed().subscribe(Delegate<DialogResult>::bind<Recorder, &Recorder::modal_closed>(recorder)));
+
+    require(window.request_focus(behind), "the button behind takes focus");
+    SubscriptionToken blurred = (*behind).focus_observed().subscribe(CloseLayerOnBlur{layer.get()});
+    static_cast<void>((*layer).show(behind, content));
+    blurred.disconnect();
+    require(!(*layer).is_shown() && !(*content).parent() && window.focus_scope_depth() == 0U &&
+                recorder.seen.size() == 1U && recorder.seen.back() == "modal:3",
+            "a close from a focus handler while the layer opens is served, and no scope is left");
+
+    bool reshown = false;
+    SubscriptionToken reshowing = (*layer).closed().subscribe(ReshowOnClosed{layer.get(), behind, content, &reshown});
+    require((*layer).show(behind, content) && (*layer).is_shown(), "the layer shows again");
+    require((*layer).close(DialogResult::ok), "the layer closes");
+    reshowing.disconnect();
+    require(reshown && (*layer).is_shown() && (*layer).content() == content && window.focus_scope_depth() == 1U,
+            "a show from the closed handler presents the layer whole");
+    require((*layer).close(DialogResult::cancel) && !(*layer).is_shown() && window.focus_scope_depth() == 0U,
+            "it closes again, leaving no scope");
+}
+
+// Opens the list again from its closed report, once.
+struct ReopenLookupOnClose final {
+    LookupComboBox* lookup{};
+    bool* reopened{};
+    void operator()(bool open) const {
+        if (open || *reopened) return;
+        *reopened = true;
+        (*lookup).open_drop_down();
+    }
+};
+
+// A LookupComboBox opened again from its closed report shows one list.
+void test_lookup_reopens_from_its_close_report() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.lookup3.root"));
+    std::shared_ptr<LookupComboBox> lookup = make_control<LookupComboBox>(StableId("final.lookup3"));
+    (*lookup).set_requested_bounds(Rect{20.0, 20.0, 220.0, 24.0});
+    (*root).add_child(lookup);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    (*lookup).set_columns({{"Code", 60.0}, {"Country", 140.0}});
+    (*lookup).set_rows({{"de", {"DE", "Germany"}}, {"fr", {"FR", "France"}}});
+    Recorder recorder;
+    recorder.tokens.push_back((*lookup).drop_down_changed().subscribe(Delegate<bool>::bind<Recorder, &Recorder::dropped>(recorder)));
+    bool reopened = false;
+    SubscriptionToken reopening = (*lookup).drop_down_changed().subscribe(ReopenLookupOnClose{lookup.get(), &reopened});
+    (*lookup).open_drop_down();
+    (*lookup).close_drop_down();
+    reopening.disconnect();
+    require(reopened && (*lookup).is_dropped_down() &&
+                recorder.seen == std::vector<std::string>({"open", "closed", "open"}),
+            "the list opens again from its close report");
+    require(window.find("final.lookup3.overlay.list") != nullptr, "one list shows");
+    (*lookup).close_drop_down();
+    require(!(*lookup).is_dropped_down() && !window.find("final.lookup3.overlay.list"), "and closes");
 }
 
 void test_lookup_combo_box() {
@@ -951,18 +1093,117 @@ void test_expandable_sections_replaced_during_a_reveal() {
             "the handler's items replaced the sections during the reveal");
 }
 
+// N3 and C6/C20 (state hunt, 2026-11-23): a callout or modal layer the window
+// refuses a scope (outside an active containing scope) is not left shown,
+// its target and content are let go, and each agrees with itself.
+void test_overlays_refused_by_a_containing_scope() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.fenced.root"));
+    std::shared_ptr<Button> target = make_control<Button>(StableId("final.fenced.target"), "New");
+    (*target).set_requested_bounds(Rect{20.0, 20.0, 80.0, 28.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("final.fenced.fence"), "Fence");
+    (*fence).set_requested_bounds(Rect{300.0, 300.0, 80.0, 28.0});
+    (*root).add_child(target);
+    (*root).add_child(fence);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    std::shared_ptr<Callout> callout = make_control<Callout>(StableId("final.fenced.callout"));
+    (*callout).title = std::string{"Try the new view"};
+    (*callout).action_text = std::string{"Got it"};
+    std::shared_ptr<ModalLayer> layer = make_control<ModalLayer>(StableId("final.fenced.modal"));
+    std::shared_ptr<Button> content = make_control<Button>(StableId("final.fenced.content"), "OK");
+    (*content).set_requested_bounds(Rect{0.0, 0.0, 120.0, 28.0});
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool callout_refused = false;
+    try {
+        static_cast<void>((*callout).show(target));
+    } catch (const std::logic_error&) {
+        callout_refused = true;
+    }
+    require(callout_refused && !(*callout).is_shown() && !(*callout).target() && !(*callout).parent() &&
+                (*callout).agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "a refused callout is not shown and keeps no target");
+    bool layer_refused = false;
+    try {
+        static_cast<void>((*layer).show(target, content));
+    } catch (const std::logic_error&) {
+        layer_refused = true;
+    }
+    require(layer_refused && !(*layer).is_shown() && !(*content).parent() && (*layer).agrees_with_itself() &&
+                window.focus_scope_depth() == 1U,
+            "a refused modal layer is not shown and gives its content back");
+    require(window.end_focus_scope(fenced), "the containing scope ends");
+    require((*callout).show(target) && (*callout).is_shown() && (*callout).agrees_with_itself(),
+            "the callout shows afterwards");
+    require((*callout).close() && (*callout).agrees_with_itself(), "and closes");
+    require((*layer).show(target, content) && (*layer).is_shown() && (*layer).agrees_with_itself(),
+            "the modal layer shows afterwards");
+    require((*layer).close(DialogResult::cancel) && !(*layer).is_shown() && (*layer).agrees_with_itself() &&
+                window.focus_scope_depth() == 0U,
+            "and closes cleanly");
+}
+
+// Bit-flip examination (2026-11-23): a callout whose target goes while it
+// is shown closes with owner_unavailable and keeps no target; shown, it
+// agrees with itself only with a target.
+void test_callout_closes_when_its_target_goes() {
+    const std::shared_ptr<Panel> root = make_control<Panel>(StableId("final.lost.root"));
+    std::shared_ptr<Button> target = make_control<Button>(StableId("final.lost.target"), "New");
+    (*target).set_requested_bounds(Rect{20.0, 20.0, 80.0, 28.0});
+    (*root).add_child(target);
+    Window window(root, Size{500.0, 400.0});
+    window.perform_layout();
+    std::shared_ptr<Callout> callout = make_control<Callout>(StableId("final.lost.callout"));
+    (*callout).title = std::string{"Try the new view"};
+    Recorder recorder;
+    recorder.tokens.push_back(
+        (*callout).closed().subscribe(Delegate<CalloutCloseReason>::bind<Recorder, &Recorder::callout_closed>(recorder)));
+    require((*callout).show(target) && (*callout).agrees_with_itself(), "the callout shows with its target");
+    const RuntimeId target_id = (*target).runtime_id();
+    target.reset();
+    static_cast<void>((*root).remove_child(target_id));
+    window.perform_layout();
+    const std::string expected =
+        "callout:" + std::to_string(static_cast<int>(CalloutCloseReason::owner_unavailable));
+    require(!(*callout).is_shown() && !(*callout).target() && (*callout).agrees_with_itself() &&
+                recorder.seen.size() == 1U && recorder.seen.back() == expected && window.focus_scope_depth() == 0U,
+            "a callout whose target goes closes with owner_unavailable");
+}
+
+// C43 (state hunt, 2026-11-23): fewer steps bring the current step down
+// with them, and the indicator agrees with itself throughout.
+void test_step_indicator_agrees_with_itself() {
+    std::shared_ptr<StepIndicator> steps = make_control<StepIndicator>(StableId("final.steps.agree"));
+    (*steps).set_steps({"One", "Two", "Three", "Four"});
+    (*steps).current_step = 3U;
+    require((*steps).agrees_with_itself(), "four steps with the last current agree");
+    (*steps).set_steps({"One", "Two"});
+    require((*steps).current_step.read() == 1U && (*steps).agrees_with_itself() &&
+                (*steps).semantic_descriptor().value == "Step 2 of 2: Two",
+            "two steps bring the current step to the last");
+    (*steps).set_steps({});
+    require((*steps).current_step.read() == 0U && (*steps).agrees_with_itself(), "no steps leave step 0");
+}
+
+
 int main() {
+    test_step_indicator_agrees_with_itself();
+    test_callout_closes_when_its_target_goes();
+    test_overlays_refused_by_a_containing_scope();
     test_seven_segment_patterns();
     test_seven_segment_in_window();
     test_gauge_values_and_alarms();
     test_gauges_in_window();
     test_dial();
     test_step_indicator();
+    test_step_names_at_text_scale_two();
     test_wizard();
+    test_wizard_buttons_at_text_scale_two();
     test_callout();
     test_released_callout_closes_whole();
     test_modal_layer();
+    test_modal_layer_from_handlers();
     test_lookup_combo_box();
+    test_lookup_reopens_from_its_close_report();
     test_lookup_released_by_its_choice();
     test_about_dialog();
     test_dial_parts_in_the_stock_themes();

@@ -962,6 +962,115 @@ void test_order_tree_depth_follows_the_count() {
     }
 }
 
+// A provider of named rows that can refuse its removals and fail its
+// attach (hunt r01 C2, C5).
+class RemovableProvider final : public BindingProvider {
+public:
+    BindingSchema schema() const override {
+        BindingSchema made(std::vector<BindingColumn>{BindingColumn{"name", BindingValueKind::text, false}});
+        return made;
+    }
+    BindingProviderCapabilities capabilities() const override {
+        BindingProviderCapabilities made{};
+        made.removes = true;
+        return made;
+    }
+    std::size_t row_count() override { return names.size(); }
+    bool read_cell(std::size_t row, std::size_t column, BindingValue& value) override {
+        static_cast<void>(column);
+        value = names[row];
+        return true;
+    }
+    bool read_stable_id(std::size_t row, std::string& stable_id) override {
+        stable_id = "row." + std::to_string(identities[row]);
+        return true;
+    }
+    BindingWriteResult write_cell(std::size_t row, std::size_t column, const BindingValue& value) override {
+        static_cast<void>(column);
+        const std::string* text = std::get_if<std::string>(&value);
+        if (text == nullptr) return BindingWriteResult{BindingWriteStatus::refused, "names only"};
+        names[row] = *text;
+        return BindingWriteResult{BindingWriteStatus::accepted, {}};
+    }
+    BindingWriteResult remove_rows(std::size_t row, std::size_t count) override {
+        if (refuse_removals) return BindingWriteResult{BindingWriteStatus::refused, "kept"};
+        names.erase(names.begin() + static_cast<std::ptrdiff_t>(row),
+                    names.begin() + static_cast<std::ptrdiff_t>(row + count));
+        identities.erase(identities.begin() + static_cast<std::ptrdiff_t>(row),
+                         identities.begin() + static_cast<std::ptrdiff_t>(row + count));
+        return BindingWriteResult{BindingWriteStatus::accepted, {}};
+    }
+    void attach(const BindingProviderLink& provider_link) override {
+        if (fail_attach) throw std::runtime_error("attach failed");
+        link = provider_link;
+    }
+    void detach() noexcept override { ++detached; }
+
+    std::vector<std::string> names{"a", "b", "c"};
+    std::vector<int> identities{0, 1, 2};
+    bool refuse_removals{};
+    bool fail_attach{};
+    BindingProviderLink link;
+    std::size_t detached{};
+};
+
+// C2: a provider whose attach throws is not kept half bound; the source
+// binds an empty table, stays usable, and the failure reaches the caller.
+void test_failed_attach_leaves_an_empty_table() {
+    Host host;
+    std::shared_ptr<BindingSource> source = std::make_shared<BindingSource>(host.window);
+    std::shared_ptr<RemovableProvider> provider = std::make_shared<RemovableProvider>();
+    (*provider).fail_attach = true;
+    bool thrown = false;
+    try {
+        (*source).set_provider(provider);
+    } catch (const std::runtime_error&) {
+        thrown = true;
+    }
+    require(thrown, "a provider's failed attach reaches the caller");
+    require((*source).provider() != provider && (*source).table() && (*source).count() == 0U &&
+                (*source).position() == -1,
+            "after a failed attach the source holds an empty table, not the provider");
+    std::shared_ptr<RemovableProvider> working = std::make_shared<RemovableProvider>();
+    (*source).set_provider(working);
+    require((*source).count() == 3U && !(*working).link.revoked(), "the source binds again after a failed attach");
+}
+
+// C5: a removal the provider refuses keeps the row's edit, so cancel_edit
+// still puts the edited values back.
+void test_refused_removal_keeps_the_edit() {
+    Host host;
+    std::shared_ptr<BindingSource> source = std::make_shared<BindingSource>(host.window);
+    std::shared_ptr<RemovableProvider> provider = std::make_shared<RemovableProvider>();
+    (*source).set_provider(provider);
+    (*source).set_allow_remove(true);
+    require((*source).set_position(1) && (*source).begin_edit(), "the second row's edit begins");
+    require((*source).set_current_field("name", std::string("edited")), "the edited value is written");
+    (*provider).refuse_removals = true;
+    require(!(*source).remove_at(1U) && (*source).count() == 3U, "a refused removal keeps the row");
+    (*source).cancel_edit();
+    require((*provider).names[1] == "b" &&
+                (*source).current_field("name") == std::optional<BindingValue>{std::string("b")},
+            "cancelling after a refused removal restores the edited row");
+}
+
+// C1, C3: a disposed source answers in provider order with no sort, filter
+// or edit left from before.
+void test_disposed_source_keeps_no_view_or_edit() {
+    Host host;
+    std::shared_ptr<BindingSource> source = std::make_shared<BindingSource>(host.window);
+    std::shared_ptr<RemovableProvider> provider = std::make_shared<RemovableProvider>();
+    (*source).set_provider(provider);
+    (*source).set_sort({BindingSortKey{"name", BindingSortDirection::descending}});
+    require((*source).view_mode() != BindingViewMode::provider_order && (*source).set_position(0) &&
+                (*source).begin_edit(),
+            "a sorted source with an edit");
+    (*source).dispose();
+    require((*source).view_mode() == BindingViewMode::provider_order && (*source).sort().empty() &&
+                (*source).count() == 0U && (*provider).detached == 1U,
+            "a disposed source keeps no view, sort or provider");
+}
+
 } // namespace
 
 int main() {
@@ -980,6 +1089,9 @@ int main() {
         test_text_compares_ignoring_case_by_code_point();
         test_order_tree_matches_a_vector();
         test_order_tree_depth_follows_the_count();
+        test_failed_attach_leaves_an_empty_table();
+        test_refused_removal_keeps_the_edit();
+        test_disposed_source_keeps_no_view_or_edit();
         std::cout << "gui_forms_binding_provider_tests: all tests passed\n";
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {

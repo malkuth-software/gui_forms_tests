@@ -1,5 +1,6 @@
 #include "unicode_grapheme.hpp"
 #include "gui_forms/text.hpp"
+#include "gui_forms/allocation/library_memory/library_memory.hpp"
 
 #include <algorithm>
 #include <array>
@@ -40,6 +41,27 @@ void operator delete(void* address) noexcept { std::free(address); }
 void operator delete[](void* address) noexcept { std::free(address); }
 void operator delete(void* address, std::size_t) noexcept { std::free(address); }
 void operator delete[](void* address, std::size_t) noexcept { std::free(address); }
+
+// GUI.Forms' own allocations do not reach the program's operator new
+// (gui_forms/allocation/library_memory); this observer passes each one
+// through the operator new above first, so its counts and injected failures
+// cover the library's allocations in the same order as before.
+namespace library_allocation_probe {
+bool observe(const std::size_t size) noexcept {
+    try {
+        void* const probe = ::operator new(size);
+        ::operator delete(probe);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+bool install() noexcept {
+    gui_forms::detail::set_library_allocation_observer(&observe);
+    return true;
+}
+[[maybe_unused]] const bool installed = install();
+} // namespace library_allocation_probe
 
 namespace {
 using gui_forms::detail::GraphemeBoundaryBuffer;

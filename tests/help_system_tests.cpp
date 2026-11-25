@@ -521,10 +521,85 @@ void language_files() {
 
 } // namespace
 
+// Cancels What's This from the control that loses focus as it is entered.
+struct CancelHelpModeOnBlur final {
+    HelpBookSystem* help{};
+    void operator()(bool focused) const {
+        if (!focused) (*help).cancel_help_mode();
+    }
+};
+
+// What's This as one presentation state: cancelled by a focus handler while
+// it is entered, it reports false and leaves no scope; it enters cleanly
+// afterwards. A popup replaced by another leaves one popup.
+void help_mode_cancelled_while_entering() {
+    Program program = make_program();
+    HelpBookSystem help{};
+    static_cast<void>(help.load_built_in(program_locale));
+    help.attach(*program.window);
+    (*program.window).perform_layout();
+    require((*program.window).request_focus(program.pen), "the pen takes focus");
+    SubscriptionToken blurred = (*program.pen).focus_observed().subscribe(CancelHelpModeOnBlur{&help});
+    const bool entered = help.enter_help_mode(*program.window);
+    blurred.disconnect();
+    require(!entered && !help.help_mode_active() && (*program.window).focus_scope_depth() == 0U,
+            "a cancel while What's This is entered is served and leaves no scope");
+    require(help.enter_help_mode(*program.window) && help.help_mode_active(), "What's This enters afterwards");
+    help.cancel_help_mode();
+    require(!help.help_mode_active() && (*program.window).focus_scope_depth() == 0U, "and leaves cleanly");
+
+    require(help.show_popup("app.tools", program.tools) && help.popup_open(), "a page popup opens");
+    const std::shared_ptr<HelpBook> first = help.popup_book();
+    require(help.show_card(program.pen) && help.popup_open() && help.popup_book() != nullptr &&
+                help.popup_book() != first,
+            "a card replaces it");
+    help.close_popup();
+    require(!help.popup_open() && help.popup_book() == nullptr, "and closes");
+    help.detach(*program.window);
+}
+
+// N3 (state hunt, 2026-11-23): the window refuses a scope outside an active
+// containing scope; the open must leave nothing shown, as the breaker found
+// it did not (shown, with no scope).
+void help_mode_refused_and_revoked() {
+    Program program = make_program();
+    HelpBookSystem help{};
+    static_cast<void>(help.load_built_in(program_locale));
+    help.attach(*program.window);
+    Window& window = *program.window;
+    window.perform_layout();
+    const FocusScopeId fenced = window.begin_focus_scope(program.tools);
+    bool refused = false;
+    try {
+        static_cast<void>(help.enter_help_mode(window));
+    } catch (const std::logic_error&) {
+        refused = true;
+    }
+    require(refused && !help.help_mode_active() && help.agrees_with_itself() && window.focus_scope_depth() == 1U,
+            "What's This refused a scope is not left active");
+    require(window.end_focus_scope(fenced) && help.enter_help_mode(window) && help.help_mode_active(),
+            "once the containing scope ends, What's This enters");
+    // S6: the window takes the pick layer back itself (its root hidden);
+    // help mode ends without touching the window again.
+    (*program.root).visible = false;
+    window.perform_layout();
+    require(!help.help_mode_active() && help.agrees_with_itself(), "a revoked pick layer ends What's This");
+    (*program.root).visible = true;
+    window.perform_layout();
+    help.cancel_help_mode();
+    require(help.enter_help_mode(window) && help.help_mode_active() && help.agrees_with_itself(),
+            "What's This enters again afterwards");
+    help.cancel_help_mode();
+    require(!help.help_mode_active() && window.focus_scope_depth() == 0U, "and leaves cleanly");
+    help.detach(window);
+}
+
 int main() {
+    help_mode_refused_and_revoked();
     paper_pane();
     viewer();
     system_routes();
+    help_mode_cancelled_while_entering();
     ribbon_help_card();
     printing();
     language_files();

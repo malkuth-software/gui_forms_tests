@@ -51,6 +51,7 @@ from dataclasses import dataclass, field
 import faulthandler
 import json
 import os
+import re
 from pathlib import Path
 import select
 import subprocess
@@ -91,7 +92,7 @@ VIRTUAL_RUNTIME_BIT: int = 1 << 63
 NONVISUAL: tuple[str, ...] = (
     'command', 'gallery_command', 'font_command', 'color_command', 'context_menu', 'tool_tip',
     'ribbon_tool_tip', 'timer', 'background_worker', 'notify_icon', 'thread_exception_dialog',
-    'image_list', 'error_provider',
+    'image_list', 'error_provider', 'toast_notification',
     'help_provider', 'semantic_feedback', 'binding', 'binding_source', 'binding_context', 'live_surface',
     'dock_workspace', 'plot_link_group', 'open_file_dialog', 'save_file_dialog', 'folder_browser_dialog',
     'color_dialog',
@@ -145,6 +146,10 @@ ACCEPTED_WITHOUT_CHANGE: dict[str, str] = {
 # The Gallery's own frame (navigation, header, command row), which every
 # page repeats; a type's action target is chosen outside it.
 SHELL_PREFIXES: tuple[str, ...] = ('gallery.command.', 'gallery.page.', 'gallery.nav', 'gallery.header', 'gallery.sidebar.')
+# Each page's Source button and the source viewer it shows in place of the
+# page body (gui_forms src/controls/gallery_pages.cpp, PageSourceToggle):
+# part of the page shell, and pressing the button hides the page's controls.
+PAGE_SOURCE: re.Pattern[str] = re.compile(r'gallery\.surface\.[\w-]+\.source(?:-view(?:\..*)?)?')
 
 # SemanticState bits (include/gui_forms/semantics/types/semantic_types.hpp).
 ENABLED: int = 1 << 0
@@ -388,7 +393,7 @@ def in_shell(stable_id: str) -> bool:
     for prefix in SHELL_PREFIXES:
         if stable_id.startswith(prefix):
             return True
-    return False
+    return PAGE_SOURCE.fullmatch(stable_id) is not None
 
 
 # --- the fixture process --------------------------------------------------------

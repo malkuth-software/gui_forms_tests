@@ -60,12 +60,13 @@ option(GUI_FORMS_TESTS_WARNINGS_AS_ERRORS "Compile the tests with -Werror" ON)
 option(GUI_FORMS_BUILD_GENERATED_FORM_TESTS "Build the tests that generate a form header at build time" ON)
 
 # The functions the tests call that gui_forms defines (from the cache's
-# source tree): forms and controls, themes, fuzz tests, PE tables and the
-# localizable-literal plugin. The plugin is the one gui_forms built (its path
+# source tree): forms and controls, themes, PE tables and the
+# localizable-literal plugin; the fuzz-test functions are this tree's
+# (cmake/FuzzTargets.cmake). The plugin is the one gui_forms built (its path
 # is the cache's); this configure does not build it again.
 include("${GUI_FORMS_SOURCE_DIR}/cmake/GUIFormsForms.cmake")
 include("${GUI_FORMS_SOURCE_DIR}/cmake/GUIFormsThemes.cmake")
-include("${GUI_FORMS_SOURCE_DIR}/cmake/FuzzTargets.cmake")
+include(cmake/FuzzTargets.cmake)
 include("${GUI_FORMS_SOURCE_DIR}/cmake/PeTables.cmake")
 set(_gf_tests_plugin_path "${GUI_FORMS_LOCALIZABLE_PLUGIN_PATH}")
 set(_gf_tests_plugin "${GUI_FORMS_LOCALIZABLE_PLUGIN}")
@@ -75,6 +76,11 @@ include("${GUI_FORMS_SOURCE_DIR}/cmake/LocalizablePlugin.cmake")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN "${_gf_tests_plugin}")
 set(GUI_FORMS_LOCALIZABLE_PLUGIN_PATH "${_gf_tests_plugin_path}")
 set(GUI_FORMS_EFFECTS_VERIFIED "${_gf_tests_effects_verified}")
+# LocalizablePlugin.cmake's functions read the plugin and the verification
+# from global properties, which the include above set from its own (empty)
+# plugin: they take the cache's plugin back too.
+set_property(GLOBAL PROPERTY GUI_FORMS_LOCALIZABLE_PLUGIN_PATH "${_gf_tests_plugin_path}")
+set_property(GLOBAL PROPERTY GUI_FORMS_EFFECTS_VERIFIED "${_gf_tests_effects_verified}")
 
 enable_testing()
 
@@ -94,6 +100,7 @@ include(cmake/sections/file_manager_demoboard.cmake)
 include(cmake/sections/windows_drawing_probe.cmake)
 include(cmake/sections/macos_live_resize_probe.cmake)
 include(cmake/sections/correspondence.cmake)          # demo/correspondence/correspondence.cmake
+include(cmake/sections/font_metrics_differential.cmake)
 include(cmake/sections/main.cmake)
 include(cmake/sections/audio.cmake)                    # cmake/Audio.cmake
 include(cmake/sections/audio_fuzz.cmake)
@@ -112,6 +119,8 @@ include(cmake/sections/reference_arithmetic_warning.cmake)
 include(cmake/sections/precompiled_header.cmake)
 include(cmake/sections/reference_labels.cmake)
 include(cmake/sections/desktop_tests.cmake)
+include(cmake/sections/benchmarks.cmake)
+include(cmake/sections/fuzzers.cmake)
 
 # The gui_forms tools a test runs from the cache's source tree find this
 # checkout (its consumer projects, probes and generated sources) through
@@ -124,8 +133,34 @@ include(cmake/sections/desktop_tests.cmake)
 # macos_damage_rectangles failed that way, and pass one at a time). They take
 # the desktop_foreground lock the desktop launchers take; X11 tests each have
 # their own Xvfb display.
+#
+# On Windows a test finds the cache's DLLs (gui_forms_abi1.dll and any other
+# shared library the cache imports) through PATH, since nothing stages them
+# beside the test programs: CTest prepends each one's directory, the cache's
+# bin directory (Shadow, 2026-11-23, question 3).
+set(_gf_tests_dll_directories "")
+if(WIN32)
+    get_property(_gf_tests_imported DIRECTORY PROPERTY IMPORTED_TARGETS)
+    foreach(_gf_tests_target IN LISTS _gf_tests_imported)
+        get_target_property(_gf_tests_type ${_gf_tests_target} TYPE)
+        if(_gf_tests_type STREQUAL "SHARED_LIBRARY")
+            foreach(_gf_tests_property IN ITEMS IMPORTED_LOCATION IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION_NOCONFIG)
+                get_target_property(_gf_tests_location ${_gf_tests_target} ${_gf_tests_property})
+                if(_gf_tests_location)
+                    get_filename_component(_gf_tests_directory "${_gf_tests_location}" DIRECTORY)
+                    list(APPEND _gf_tests_dll_directories "${_gf_tests_directory}")
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES _gf_tests_dll_directories)
+endif()
 get_property(_gf_tests_all DIRECTORY PROPERTY TESTS)
 foreach(_gf_tests_one IN LISTS _gf_tests_all)
+    foreach(_gf_tests_directory IN LISTS _gf_tests_dll_directories)
+        set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT_MODIFICATION
+            "PATH=path_list_prepend:${_gf_tests_directory}")
+    endforeach()
     set_property(TEST ${_gf_tests_one} APPEND PROPERTY ENVIRONMENT
         "GUI_FORMS_TESTS_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "GUI_FORMS_SOURCE_DIR=${GUI_FORMS_SOURCE_DIR}")
     if(APPLE)

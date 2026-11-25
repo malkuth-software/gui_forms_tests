@@ -120,10 +120,59 @@ void check_write_lease_recovery() {
     (*endpoint).release();
 }
 
+// The size the endpoint's DIB records agrees with its live surface's size
+// (the "agrees with itself" predicate of the two copies of one size).
+bool endpoint_sizes_agree(const gui_forms::host::WindowsCompatibilityPaintEndpoint& endpoint,
+                          std::uint32_t width, std::uint32_t height) {
+    const std::string expected = "|size:" + std::to_string(width) + "x" + std::to_string(height) + "|";
+    const gui_forms::LiveSurfaceSnapshot surface = (*endpoint.live_surface()).snapshot();
+    return snapshot_has(endpoint.snapshot(), expected.c_str()) &&
+           surface.description.width == width && surface.description.height == height;
+}
+
+// State hunt S4: the endpoint holds its size twice, in the DIB and in the live
+// surface it hands out. A caller that reconfigures the surface directly (or a
+// configure whose put-back failed) left the two apart, and submit copied
+// height rows of width * 4 bytes into the smaller lease: a heap overrun from
+// caller pixels. Now every writer checks the lease against the DIB first, so
+// the submit and the publishes are refused and nothing is written.
+void check_submit_after_foreign_reconfigure() {
+    using gui_forms::host::WindowsCompatibilityPaintEndpoint;
+    std::shared_ptr<WindowsCompatibilityPaintEndpoint> endpoint =
+        WindowsCompatibilityPaintEndpoint::acquire(64U, 48U);
+    require(static_cast<bool>(endpoint), "S4 endpoint");
+    require(endpoint_sizes_agree(*endpoint, 64U, 48U), "S4 sizes agree at creation");
+    constexpr std::uint32_t width = 64U;
+    constexpr std::uint32_t height = 48U;
+    constexpr std::uint64_t row_bytes = static_cast<std::uint64_t>(width) * 4U;
+    std::vector<std::byte> frame(static_cast<std::size_t>(row_bytes) * height, std::byte{0x7f});
+    require((*endpoint).submit_bgra32_premultiplied(width, height, row_bytes, frame),
+            "S4 a submit at the endpoint's size is accepted");
+
+    gui_forms::LiveSurfaceDescription smaller{};
+    smaller.width = 8U;
+    smaller.height = 4U;
+    smaller.opaque = true;
+    require((*(*endpoint).live_surface()).reconfigure(smaller), "S4 the surface takes a size directly");
+    require(!endpoint_sizes_agree(*endpoint, 64U, 48U), "S4 the copies now disagree");
+    require(!(*endpoint).submit_bgra32_premultiplied(width, height, row_bytes, frame),
+            "S4 a submit against a smaller lease is refused, not copied");
+    require(!(*endpoint).drain_now(), "S4 a publish against a smaller lease is refused");
+
+    // configure to a new size makes both copies one again.
+    require((*endpoint).configure(32U, 16U), "S4 configure after the foreign reconfigure");
+    require(endpoint_sizes_agree(*endpoint, 32U, 16U), "S4 sizes agree after configure");
+    std::vector<std::byte> small_frame(static_cast<std::size_t>(32U * 4U) * 16U, std::byte{0x10});
+    require((*endpoint).submit_bgra32_premultiplied(32U, 16U, 32U * 4U, small_frame),
+            "S4 a submit at the agreed size is accepted again");
+    (*endpoint).release();
+}
+
 } // namespace
 
 int main() {
     check_write_lease_recovery();
+    check_submit_after_foreign_reconfigure();
 
     using gui_forms::host::WindowsCompatibilityPaintEndpoint;
 

@@ -77,12 +77,18 @@ jobs:
           - {runner: macos-15, platform: macos-arm64}
           - {runner: ubuntu-24.04, platform: linux-x64}
           - {runner: ubuntu-24.04-arm, platform: linux-arm64}
+          # x86_64-pc-windows-msvc on STXlib's own runtime (owner, 2026-11-24):
+          # the MSYS2 CLANG64 package gives only clang, lld and the shell.
+          - {runner: windows-2022, platform: windows-x64, shell: 'msys2 {0}'}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: ${{ matrix.platform == 'windows-x64' && 120 || 60 }}
     env:
       CC: clang
       CXX: clang++
       OBJCXX: clang++
+    defaults:
+      run:
+        shell: ${{ matrix.shell || 'bash' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -97,12 +103,14 @@ jobs:
       # names the template_harness commit that installs the toolchain.
       - name: Fetch the pinned test cache
         id: cache
+        shell: bash
         run: |
           directory="$(python gui_forms_tests/tools/fetch_test_cache.py --platform ${{ matrix.platform }} | tail -1)"
           echo "directory=$directory" >> "$GITHUB_OUTPUT"
           commit="$(sed -n 's/^commit = "\([0-9a-f]*\)"/\1/p' gui_forms_tests/gui_forms.lock)"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
       - name: Check out the template_harness gui_forms pins
+        shell: bash
         env:
           LOCK: ${{ steps.cache.outputs.directory }}/source/harness.lock
         run: |
@@ -113,6 +121,22 @@ jobs:
           git -C template_harness checkout -q --detach FETCH_HEAD
           echo "HARNESS_PROJECT=$PWD/template_harness/projects/gui_forms.toml" >> "$GITHUB_ENV"
           echo "HARNESS_WORKSPACE=$PWD" >> "$GITHUB_ENV"
+      # Windows: the CLANG64 toolchain gui_forms publishes (template_harness
+      # windows_toolchain.py restore; projects/gui_forms.toml names
+      # malkuth-software/gui_forms as its publisher), as gui_forms' native job.
+      - uses: actions/setup-python@v5
+        id: toolchain-python
+        if: runner.os == 'Windows'
+        with:
+          python-version: '3.14'
+          update-environment: false
+      - name: Restore the published Windows toolchain without MSYS2 mirrors
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOOLCHAIN_PYTHON: ${{ steps.toolchain-python.outputs.python-path }}
+        run: '"$TOOLCHAIN_PYTHON" template_harness/harness/windows_toolchain.py restore'
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         env:
@@ -137,10 +161,12 @@ jobs:
       # The same runtime gui_forms' native jobs link (its key, so a restore
       # finds what they saved only within this repository's caches).
       - uses: actions/cache@v4
+        if: runner.os != 'Windows'
         with:
           path: .build/toolchain
           key: gui-tests-runtimes-v1-${{ matrix.platform }}-${{ steps.compiler.outputs.identity }}-${{ hashFiles('template_harness/harness/build_linux_runtimes.py', 'template_harness/harness/build_macos_runtimes.py', 'template_harness/harness/linux_runtime_manifest.py', 'template_harness/harness/macos_runtime_manifest.py') }}
       - name: Build the static runtimes
+        if: runner.os != 'Windows'
         run: |
           if [ ! -f "$GUI_FORMS_LLVM_RUNTIME/runtime-manifest.json" ]; then
             if [ "$RUNNER_OS" = macOS ]; then
@@ -149,6 +175,21 @@ jobs:
               python template_harness/harness/build_linux_runtimes.py --work "$RUNNER_TEMP/llvm-runtimes" --prefix "$GUI_FORMS_LLVM_RUNTIME" --jobs 4
             fi
           fi
+      # Windows: STXlib's own runtime and libc++ (gui_forms tools/own_runtime.py,
+      # from the cache's source tree), at the STXlib commit the pinned gui_forms
+      # takes through stx; the settings' recorded locations are remapped to
+      # these (ci_tests.py local_settings).
+      - uses: actions/cache@v4
+        if: runner.os == 'Windows'
+        with:
+          path: .ci/own-runtime
+          key: gui-tests-own-runtime-v1-${{ steps.compiler.outputs.identity }}-${{ steps.cache.outputs.commit }}
+          restore-keys: gui-tests-own-runtime-v1-${{ steps.compiler.outputs.identity }}-
+      - name: Build STXlib's own runtime and libc++ for the Windows target
+        if: runner.os == 'Windows'
+        env:
+          GF: ${{ steps.cache.outputs.directory }}/source
+        run: python "$GF/tools/own_runtime.py" build --out .ci/own-runtime --jobs 4 --github-env
       - name: Configure the compiler cache
         run: |
           echo "CCACHE_DIR=$PWD/.ccache" >> "$GITHUB_ENV"
@@ -177,6 +218,31 @@ jobs:
           else
             python gui_forms_tests/tools/ci_tests.py --platform ${{ matrix.platform }} --jobs 4 --test-jobs 4 $CHANGED
           fi
+      # SK2: the time each host spends presenting a frame
+      # (benchmarks/present_profile_workload.cpp), in the tree the suite
+      # built against the test cache. Its values are evidence, never a gate;
+      # a workload that cannot run fails the job, because a broken
+      # measurement is a defect. Moved from gui_forms' native job
+      # (roadmap R1).
+      - name: Measure present time per frame
+        run: |
+          build=gui_forms_tests/.build/${{ matrix.platform }}
+          result=.ci/present-${{ matrix.platform }}.json
+          cmake --build "$build" --target gui_forms_present_profile_workload --parallel 4
+          mkdir -p .ci
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a -s "-screen 0 1280x1024x24 -noreset" "$build/gui_forms_present_profile_workload" "$result"
+          else
+            "$build/gui_forms_present_profile_workload" "$result"
+          fi
+          cat "$result" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: present-${{ matrix.platform }}
+          path: .ci/present-${{ matrix.platform }}.json
+          include-hidden-files: true
+          overwrite: true
+          retention-days: 90
       - name: Report cache statistics
         if: always()
         run: ccache --show-stats

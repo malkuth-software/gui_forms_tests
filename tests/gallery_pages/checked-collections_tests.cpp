@@ -1,6 +1,7 @@
 #include "support.hpp"
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/check_box_values.hpp"
+#include "gui_forms/controls/checked_combo_box.hpp"
 #include "gui_forms/controls/checked_list_box.hpp"
 #include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/list_view.hpp"
@@ -76,6 +77,19 @@ void test_checked_collections(gui_forms::Window& window) {
                 (*status).text.read() == "ListView item task.anatomy renamed to Publish item anatomy" &&
                 (*list_view).items()[0].text == "Publish item anatomy",
             "Enter commits the gallery ListView's label and the page reports it");
+
+    // The columns field: each check reports the columns now shown.
+    const std::shared_ptr<CheckedComboBox> columns =
+        std::dynamic_pointer_cast<CheckedComboBox>(window.find("gallery.checked.combo.field"));
+    const std::shared_ptr<gui_forms::Label> columns_status =
+        std::dynamic_pointer_cast<gui_forms::Label>(window.find("gallery.checked.combo.status"));
+    require(columns && columns_status && (*columns).text() == "Task, Owner" &&
+                (*columns_status).text.read() == "Open the list and tick the columns to show",
+            "the columns field shows its checked columns");
+    (*columns).set_item_checked("due", true);
+    require((*columns_status).text.read() == "Columns shown: Task, Owner, Due", "a check reports the columns shown");
+    (*columns).set_all_checked(false);
+    require((*columns_status).text.read() == "No columns shown", "clearing every check reports no columns");
 }
 
 } // namespace gallery_pages_tests

@@ -1,10 +1,11 @@
 // The internal interpolation seam (src/core/interpolation): binary64, the
 // engine's result clamped to the caller's range, every refusal before any
-// write, and nothing else added to the engine (stx_conv). The engine itself
-// is tested in stx_conv/tests.
+// write, and nothing else added to the engine (stxlib::conv's LineField,
+// one axis after the other for images). The engine itself is tested in
+// STXlib's tests.
 #include "src/core/interpolation/interpolation.hpp"
 
-#include <stx_conv/conv.hpp>
+#include <stxlib/conv.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -15,6 +16,7 @@
 #include <limits>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -77,8 +79,62 @@ void line_values() {
     require(at[4] >= 0.4 && at[4] <= 0.9, "a midpoint lies between its neighbours here");
 }
 
-// The seam's result is the engine's, clamped: bit for bit, for lines,
-// positions and images, with padding in every stride.
+// One line through the engine directly: `nodes` nodes of `lanes` lanes,
+// `stride` apart from `first`, to `target_nodes` nodes `out_stride` apart
+// from `out`, by `mode`. A one-node line is spread, as the seam spreads it.
+void engine_line(const double* first, std::size_t nodes, std::size_t lanes, std::size_t stride, double* out,
+                 std::size_t target_nodes, std::size_t out_stride, stxlib::conv::Mode mode) {
+    if (nodes == 1) {
+        for (std::size_t node = 0; node < target_nodes; ++node) {
+            for (std::size_t lane = 0; lane < lanes; ++lane) out[node * out_stride + lane] = first[lane];
+        }
+        return;
+    }
+    stxlib::OperationResult<stxlib::conv::LineField> made =
+        stxlib::conv::LineField::make(nodes, lanes, stxlib::conv::FieldOptions{});
+    require(made.succeeded(), "engine field");
+    stxlib::conv::LineField field = std::move(made).take_value();
+    const std::size_t extent = (nodes - 1) * stride + lanes;
+    const stxlib::conv::LineSamples samples{stxlib::View<double>(first, extent), nodes, lanes, stride};
+    require(field.compile(samples).succeeded(), "engine compile");
+    const std::size_t out_extent = (target_nodes - 1) * out_stride + lanes;
+    const stxlib::conv::MutableLineSamples target{stxlib::MutableView<double>(out, out_extent), target_nodes, lanes,
+                                                  out_stride};
+    require(stxlib::conv::transfer(field, mode, target).succeeded(), "engine transfer");
+}
+
+// One image through the engine directly, rows then columns (an unchanged
+// axis copied), into `out` (`out_row` apart), not yet clamped.
+void engine_image(const std::vector<double>& image, std::size_t width, std::size_t height, std::size_t channels,
+                  std::size_t row_stride, std::vector<double>& out, std::size_t target_width,
+                  std::size_t target_height, std::size_t out_row, stxlib::conv::Mode mode) {
+    const std::size_t working_row = target_width * channels;
+    std::vector<double> working(height * working_row, sentinel);
+    if (width == target_width) {
+        for (std::size_t y = 0; y < height; ++y) {
+            for (std::size_t x = 0; x < working_row; ++x) working[y * working_row + x] = image[y * row_stride + x];
+        }
+    } else {
+        for (std::size_t y = 0; y < height; ++y) {
+            engine_line(image.data() + y * row_stride, width, channels, channels, working.data() + y * working_row,
+                        target_width, channels, mode);
+        }
+    }
+    if (height == target_height) {
+        for (std::size_t y = 0; y < height; ++y) {
+            for (std::size_t x = 0; x < working_row; ++x) out[y * out_row + x] = working[y * working_row + x];
+        }
+    } else {
+        for (std::size_t x = 0; x < target_width; ++x) {
+            engine_line(working.data() + x * channels, height, channels, working_row, out.data() + x * channels,
+                        target_height, out_row, mode);
+        }
+    }
+}
+
+// The seam's result is the engine's, clamped: bit for bit, for lines and
+// images (nodal is the engine's preview, pixel area its canon), with padding
+// in every stride.
 void seam_is_engine_clamped() {
     Values values{};
     const std::size_t lanes = 3;
@@ -89,26 +145,26 @@ void seam_is_engine_clamped() {
         for (std::size_t lane = 0; lane < lanes; ++lane) source[node * stride + lane] = values.next();
     }
     const std::size_t targets[] = {1, 4, 11, 29};
+    const interpolation::Sampling samplings[] = {interpolation::Sampling::nodal, interpolation::Sampling::pixel_area};
+    const stxlib::conv::Mode modes[] = {stxlib::conv::Mode::preview, stxlib::conv::Mode::canon};
     for (const std::size_t target_length : targets) {
-        const std::size_t out_stride = lanes + 1;
-        std::vector<double> seam(target_length * out_stride, sentinel);
-        std::vector<double> engine(target_length * out_stride, sentinel);
-        const Status status = interpolation::resample_line({source, length, lanes, stride},
-                                                           {seam, target_length, out_stride},
-                                                           interpolation::Sampling::nodal, unit);
-        require_status(status, Status::ok, "line through the seam");
-        stx_conv::Profile64 profile(length, lanes);
-        stx_conv::LineWorkspace64 work(length, lanes);
-        const stx_conv::LinePlan64 plan(length, target_length, stx_conv::Sampling::nodal);
-        require(stx_conv::compile({source, stride}, profile, work) == stx_conv::Status::ok, "engine compile");
-        require(stx_conv::evaluate(profile, plan, {engine, out_stride}) == stx_conv::Status::ok, "engine evaluate");
-        for (std::size_t node = 0; node < target_length; ++node) {
-            for (std::size_t lane = 0; lane < lanes; ++lane) {
-                double& value = engine[node * out_stride + lane];
-                value = std::clamp(value, 0.0, 1.0);
+        for (std::size_t which = 0; which < 2; ++which) {
+            const std::size_t out_stride = lanes + 1;
+            std::vector<double> seam(target_length * out_stride, sentinel);
+            std::vector<double> engine(target_length * out_stride, sentinel);
+            const Status status = interpolation::resample_line({source, length, lanes, stride},
+                                                               {seam, target_length, out_stride}, samplings[which],
+                                                               unit);
+            require_status(status, Status::ok, "line through the seam");
+            engine_line(source.data(), length, lanes, stride, engine.data(), target_length, out_stride, modes[which]);
+            for (std::size_t node = 0; node < target_length; ++node) {
+                for (std::size_t lane = 0; lane < lanes; ++lane) {
+                    double& value = engine[node * out_stride + lane];
+                    value = std::clamp(value, 0.0, 1.0);
+                }
             }
+            require(same_bytes(seam, engine), "line: the seam is the engine, clamped, and padding is untouched");
         }
-        require(same_bytes(seam, engine), "line: the seam is the engine, clamped, and padding is untouched");
     }
     const std::size_t width = 7;
     const std::size_t height = 5;
@@ -123,22 +179,17 @@ void seam_is_engine_clamped() {
         std::size_t height = 0;
     };
     const Size sizes[] = {{7, 5}, {13, 5}, {7, 2}, {16, 11}, {3, 2}, {1, 1}};
-    const interpolation::Sampling samplings[] = {interpolation::Sampling::nodal, interpolation::Sampling::pixel_area};
     for (const Size size : sizes) {
-        for (const interpolation::Sampling sampling : samplings) {
+        for (std::size_t which = 0; which < 2; ++which) {
             const std::size_t out_row = size.width * channels + 1;
             std::vector<double> seam(size.height * out_row, sentinel);
             std::vector<double> engine(size.height * out_row, sentinel);
             const Status status = interpolation::resample_image({image, width, height, channels, row_stride},
-                                                                {seam, size.width, size.height, out_row}, sampling, unit);
+                                                                {seam, size.width, size.height, out_row},
+                                                                samplings[which], unit);
             require_status(status, Status::ok, "image through the seam");
-            const stx_conv::Sampling engine_sampling = sampling == interpolation::Sampling::nodal
-                ? stx_conv::Sampling::nodal
-                : stx_conv::Sampling::pixel_area;
-            const stx_conv::ImagePlan64 plan(width, height, size.width, size.height, engine_sampling);
-            stx_conv::ImageWorkspace64 work(plan, channels);
-            require(stx_conv::resize(plan, {image, row_stride}, {engine, out_row}, work) == stx_conv::Status::ok,
-                    "engine resize");
+            engine_image(image, width, height, channels, row_stride, engine, size.width, size.height, out_row,
+                         modes[which]);
             for (std::size_t y = 0; y < size.height; ++y) {
                 for (std::size_t x = 0; x < size.width * channels; ++x) {
                     double& value = engine[y * out_row + x];
@@ -148,27 +199,48 @@ void seam_is_engine_clamped() {
             require(same_bytes(seam, engine), "image: the seam is the engine, clamped, and padding is untouched");
         }
     }
+    // A one-pixel source axis is spread.
+    const std::vector<double> column{0.25, 0.5, 0.75};
+    std::vector<double> spread(4 * 3, sentinel);
+    require_status(interpolation::resample_image({column, 1, 3, 1, 1}, {spread, 4, 3, 4},
+                                                 interpolation::Sampling::pixel_area, unit),
+                   Status::ok, "a one-pixel-wide image");
+    for (std::size_t y = 0; y < 3; ++y) {
+        for (std::size_t x = 0; x < 4; ++x) require(spread[y * 4 + x] == column[y], "each row spreads its pixel");
+    }
 }
 
-// Two-node pulses overshoot in the engine (by about 0.16 here); the seam's output
-// stays in range.
+// Signals that may overshoot in the engine (two-node pulses, a step); the
+// seam's output stays in range and is the engine's clamped, so wherever the
+// engine leaves the range the clamp is what brings it back. Whether the
+// engine overshoots here is printed, not required: stxlib::conv's field may
+// keep within its neighbours where stx_conv's profile did not.
 void clamp_is_active() {
-    const std::vector<double> source{0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0};
+    const std::vector<double> pulses{0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0};
+    const std::vector<double> step{0.0, 0.0, 0.0, 1.0, 1.0, 1.0};
+    const std::vector<double>* const signals[] = {&pulses, &step};
+    const interpolation::Sampling samplings[] = {interpolation::Sampling::nodal, interpolation::Sampling::pixel_area};
+    const stxlib::conv::Mode modes[] = {stxlib::conv::Mode::preview, stxlib::conv::Mode::canon};
     const std::size_t target_length = 29;
-    stx_conv::Profile64 profile(source.size(), 1);
-    stx_conv::LineWorkspace64 work(source.size(), 1);
-    const stx_conv::LinePlan64 plan(source.size(), target_length, stx_conv::Sampling::pixel_area);
-    std::vector<double> engine(target_length, sentinel);
-    require(stx_conv::compile({source, 1}, profile, work) == stx_conv::Status::ok, "engine compile");
-    require(stx_conv::evaluate(profile, plan, {engine, 1}) == stx_conv::Status::ok, "engine evaluate");
-    const double engine_low = *std::min_element(engine.begin(), engine.end());
-    const double engine_high = *std::max_element(engine.begin(), engine.end());
-    require(engine_low < 0.0 || engine_high > 1.0, "the engine overshoots this signal (else this test proves nothing)");
-    std::vector<double> seam(target_length, sentinel);
-    const Status status = interpolation::resample_line({source, source.size(), 1, 1}, {seam, target_length, 1},
-                                                       interpolation::Sampling::pixel_area, unit);
-    require_status(status, Status::ok, "clamped resample");
-    for (const double value : seam) require(value >= 0.0 && value <= 1.0, "the seam clamps to the range");
+    bool overshoots = false;
+    for (const std::vector<double>* const signal : signals) {
+        const std::vector<double>& source = *signal;
+        for (std::size_t which = 0; which < 2; ++which) {
+            std::vector<double> engine(target_length, sentinel);
+            engine_line(source.data(), source.size(), 1, 1, engine.data(), target_length, 1, modes[which]);
+            const double engine_low = *std::min_element(engine.begin(), engine.end());
+            const double engine_high = *std::max_element(engine.begin(), engine.end());
+            overshoots = overshoots || engine_low < 0.0 || engine_high > 1.0;
+            std::vector<double> seam(target_length, sentinel);
+            const Status status = interpolation::resample_line({source, source.size(), 1, 1},
+                                                               {seam, target_length, 1}, samplings[which], unit);
+            require_status(status, Status::ok, "clamped resample");
+            for (double& value : engine) value = std::clamp(value, 0.0, 1.0);
+            require(same_bytes(seam, engine), "the seam is the engine, clamped");
+            for (const double value : seam) require(value >= 0.0 && value <= 1.0, "the seam clamps to the range");
+        }
+    }
+    std::cout << "the engine " << (overshoots ? "overshoots" : "does not overshoot") << " these signals\n";
     const interpolation::ValueRange narrow{0.25, 0.75};
     const std::vector<double> inside{0.25, 0.75, 0.25, 0.75, 0.25};
     std::vector<double> narrowed(17, sentinel);
@@ -234,10 +306,9 @@ void refusals() {
     require_status(interpolation::resample_line({padded, 3, 1, 2}, {padded_target, 4, 1},
                                                 interpolation::Sampling::nodal, unit),
                    Status::ok, "padding is not read");
-    // A range past the engine's sample limit (1e100): the engine refuses.
-    const std::vector<double> huge{0.0, 1.0e200, 0.0};
-    line_refused({huge, 3, 1, 1}, 4, 1, {-1.0e300, 1.0e300}, Status::sample_out_of_range,
-                 "a sample past the engine's limit");
+    // More lanes than the engine's line field takes (64).
+    const std::vector<double> wide(65, 0.5);
+    line_refused({wide, 1, 65, 65}, 4, 65, unit, Status::invalid_shape, "more than 64 lanes");
 
     std::vector<double> at(3, sentinel);
     const std::vector<double> before_at = at;

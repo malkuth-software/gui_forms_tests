@@ -8,8 +8,10 @@
  *
  * The program consumes gf_abi.h and the C standard library only. The
  * matrix is read by a small scanner that knows this file's shape: a
- * "protocol_version" number and, per host, a "platform" string followed
- * by its "capabilities" array of strings. */
+ * "protocol_version" number, an "environmental" array of strings (the
+ * capabilities a host reports or not by how the process runs, left out of
+ * the comparison) and, per host, a "platform" string followed by its
+ * "capabilities" array of strings. */
 
 #include "gui_forms/c/gf_abi.h"
 
@@ -69,6 +71,8 @@ static const capability_name capability_names[] = {
     {"direct_buffers", GF_HOST_CAPABILITY_DIRECT_BUFFERS},
     {"host_scroll", GF_HOST_CAPABILITY_HOST_SCROLL},
     {"reference_presentation", GF_HOST_CAPABILITY_REFERENCE_PRESENTATION},
+    {"desktop_notifications", GF_HOST_CAPABILITY_DESKTOP_NOTIFICATIONS},
+    {"safe_insets", GF_HOST_CAPABILITY_SAFE_INSETS},
 };
 
 enum { capability_name_count = (int)(sizeof(capability_names) / sizeof(capability_names[0])) };
@@ -106,21 +110,15 @@ static gf_host_capability bit_named(const char* name, size_t length) {
     return 0u;
 }
 
-/* Reads the capabilities array after the row of platform into set. Returns
- * 0 when the row or its array is missing, or a name is unknown. */
-static int read_row(const char* text, const char* platform, gf_host_capability* set) {
-    char key[160];
-    snprintf(key, sizeof(key), "\"platform\": \"%s\"", platform);
-    const char* row = strstr(text, key);
-    if (row == NULL) {
-        fprintf(stderr, "the matrix has no row for %s\n", platform);
-        return 0;
-    }
-    const char* array = strstr(row, "\"capabilities\"");
+/* Reads the array of capability names that follows key (a quoted name)
+ * from at into set; where says whose array it is. Returns 0 when the array
+ * is missing or unterminated, or a name is unknown. */
+static int read_names(const char* at, const char* key, const char* where, gf_host_capability* set) {
+    const char* array = strstr(at, key);
     const char* open = array != NULL ? strchr(array, '[') : NULL;
     const char* close = open != NULL ? strchr(open, ']') : NULL;
     if (close == NULL) {
-        fprintf(stderr, "the row for %s has no capabilities array\n", platform);
+        fprintf(stderr, "%s has no %s array\n", where, key);
         return 0;
     }
     gf_host_capability found = 0u;
@@ -132,13 +130,13 @@ static int read_row(const char* text, const char* platform, gf_host_capability* 
         }
         const char* end = strchr(start + 1, '"');
         if (end == NULL || end >= close) {
-            fprintf(stderr, "an unterminated name in the row for %s\n", platform);
+            fprintf(stderr, "an unterminated name in %s\n", where);
             return 0;
         }
         const size_t length = (size_t)(end - start - 1);
         const gf_host_capability bit = bit_named(start + 1, length);
         if (bit == 0u) {
-            fprintf(stderr, "the row for %s names an unknown capability %.*s\n", platform, (int)length, start + 1);
+            fprintf(stderr, "%s names an unknown capability %.*s\n", where, (int)length, start + 1);
             return 0;
         }
         found |= bit;
@@ -146,6 +144,21 @@ static int read_row(const char* text, const char* platform, gf_host_capability* 
     }
     *set = found;
     return 1;
+}
+
+/* Reads the capabilities array after the row of platform into set. Returns
+ * 0 when the row or its array is missing, or a name is unknown. */
+static int read_row(const char* text, const char* platform, gf_host_capability* set) {
+    char key[160];
+    snprintf(key, sizeof(key), "\"platform\": \"%s\"", platform);
+    const char* row = strstr(text, key);
+    if (row == NULL) {
+        fprintf(stderr, "the matrix has no row for %s\n", platform);
+        return 0;
+    }
+    char where[192];
+    snprintf(where, sizeof(where), "the row for %s", platform);
+    return read_names(row, "\"capabilities\"", where, set);
 }
 
 static void print_names(const char* label, gf_host_capability set) {
@@ -210,13 +223,16 @@ int main(int argc, char** argv) {
         fprintf(stderr, "protocol %u, the matrix says %lu\n", report.protocol_version, expected_version);
         ++failures;
     }
+    gf_host_capability environmental = 0u;
     gf_host_capability expected = 0u;
-    if (!read_row(text, platform, &expected)) {
+    if (!read_names(text, "\"environmental\"", "the matrix", &environmental)) {
         ++failures;
-    } else if (expected != report.available) {
+    } else if (!read_row(text, platform, &expected)) {
+        ++failures;
+    } else if ((expected & ~environmental) != (report.available & ~environmental)) {
         fprintf(stderr, "%s reports another capability set than its row\n", platform);
-        print_names("reported, not in the row", report.available & ~expected);
-        print_names("in the row, not reported", expected & ~report.available);
+        print_names("reported, not in the row", report.available & ~expected & ~environmental);
+        print_names("in the row, not reported", expected & ~report.available & ~environmental);
         ++failures;
     }
     free(text);

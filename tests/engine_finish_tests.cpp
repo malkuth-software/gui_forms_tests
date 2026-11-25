@@ -796,7 +796,8 @@ void bake_budget_refuses_large_finishes() {
 // finish tiles over its built-in recipe, anchored at the part's corner:
 // the first paint queues the tiles and draws none; idle frames paint them;
 // the next paint draws each, and the last (world tile column 2, row 1 of a
-// 300 x 200 face at scale 1) holds the world bake's bytes there.
+// 300 x 200 face at scale 1) holds the world bake's bytes there, its apron
+// (finish_tile_apron) included.
 void refused_glint_paints_world_tiles() {
     FinishFill fill = study_fill(FinishKind::glint);
     fill.glint = GlintPreset::blasted_enamel;
@@ -816,13 +817,15 @@ void refused_glint_paints_world_tiles() {
     window.paint(made.painter);
     require(made.painter.rasters >= before + 6U, "the next paint draws the six tiles over the face");
     require(made.painter.last != nullptr, "a tile is drawn");
-    std::shared_ptr<PartRaster> expected = make_raster(finish_tile_side, finish_tile_side);
+    std::shared_ptr<PartRaster> expected = make_raster(finish_tile_raster_side, finish_tile_raster_side);
     FinishScratch scratch{};
-    engine_primitives::reserve_finish_scratch(scratch, finish_tile_side);
+    engine_primitives::reserve_finish_scratch(scratch, finish_tile_raster_side);
     const std::int64_t tile = static_cast<std::int64_t>(finish_tile_side);
-    static_cast<void>(engine_primitives::paint_world_finish(fill, 1.0, 2 * tile, tile, (*expected).view(), scratch));
-    require(same_area(*made.painter.last, 0U, 0U, *expected, 0U, 0U, finish_tile_side, finish_tile_side),
-            "the last tile is the world's finish there, its origin at the face's corner");
+    const std::int64_t apron = static_cast<std::int64_t>(finish_tile_apron);
+    static_cast<void>(engine_primitives::paint_world_finish(fill, 1.0, 2 * tile - apron, tile - apron,
+                                                            (*expected).view(), scratch));
+    require(same_area(*made.painter.last, 0U, 0U, *expected, 0U, 0U, finish_tile_raster_side, finish_tile_raster_side),
+            "the last tile is the world's finish there, apron and all, its origin at the face's corner");
 }
 
 // -- the theme language ------------------------------------------------------------

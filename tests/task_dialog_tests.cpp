@@ -1,7 +1,8 @@
 // TaskDialog (stage W): page validation, the in-window modal presentation,
 // published parts, buttons that close and buttons that do not, the default
 // button, Escape, radio buttons, the verification check box, the expander,
-// the progress bar, navigation to another page, semantics and disposal.
+// the progress bar, navigation to another page, semantics and disposal; the
+// input field and the input box built on it.
 
 #include "gui_forms/anatomy/types/anatomy_types.hpp"
 #include "gui_forms/binding/property_type/property_type.hpp"
@@ -9,8 +10,10 @@
 #include "gui_forms/control/stable_id/stable_id.hpp"
 #include "gui_forms/controls/button.hpp"
 #include "gui_forms/controls/button_base.hpp"
+#include "gui_forms/controls/input_box.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/controls/task_dialog.hpp"
+#include "gui_forms/controls/text_box.hpp"
 #include "gui_forms/controls/wizard.hpp"
 #include "gui_forms/dirty.hpp"
 #include "gui_forms/resources/stock_icons/stock_icons.hpp"
@@ -418,14 +421,138 @@ void navigation_and_cancel() {
     require(recorder.results.size() == results && !(*dialog).shown(), "a disposed dialog closes without an event");
 }
 
+// The input field: validation, focus, Enter, the result's text and the
+// input box helpers.
+void input_field() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("input.root"));
+    Window window(root, {640.0, 480.0});
+    window.perform_layout();
+    std::shared_ptr<TaskDialog> probe = make_control<TaskDialog>(StableId("input.probe"));
+    TaskDialogPage too_long = input_box_page({.prompt = "Name", .default_response = "abcdef", .maximum_length = 3U});
+    require(throws_invalid(SetPage{probe.get(), too_long}), "a default response past the maximum length is refused");
+    TaskDialogPage bad_text = input_box_page({.prompt = "Name", .placeholder = std::string("\xff")});
+    require(throws_invalid(SetPage{probe.get(), bad_text}), "an input placeholder that is not UTF-8 is refused");
+
+    InputBoxRequest request{};
+    request.title = "New folder";
+    request.prompt = "Name the new folder";
+    request.default_response = "Untitled";
+    request.placeholder = "Folder name";
+    request.maximum_length = 32U;
+    const TaskDialogPage page = input_box_page(request);
+    require(page.caption == "New folder" && page.text == "Name the new folder" && page.input.has_value() &&
+                page.buttons.size() == 2U && page.default_button == "ok" && page.allow_cancel,
+            "the input box page holds the prompt, the field, OK by default and Cancel");
+
+    Recorder recorder;
+    std::vector<SubscriptionToken> tokens;
+    const std::shared_ptr<TaskDialog> box = show_input_box(root, request, StableId("input.box"));
+    require(box != nullptr && (*box).shown(), "show_input_box shows the box");
+    subscribe(*box, recorder, tokens);
+    window.perform_layout();
+    const std::shared_ptr<TextBox> field = (*box).input_box();
+    require(field != nullptr && std::string((*field).stable_id().value()) == "input.box.input" &&
+                (*field).text.read() == "Untitled" && (*field).placeholder_text.read() == "Folder name" &&
+                (*field).maximum_length.read() == 32U && (*field).accessible_name.read() == "Name the new folder",
+            "the field carries the default response, placeholder, limit and the prompt as its name");
+    require(window.focused_control() == std::static_pointer_cast<Control>(field), "the field takes focus first");
+    require((*box).parts().input.present && (*box).parts().text.present &&
+                (*box).parts().input.bounds.y >= (*box).parts().text.bounds.y + (*box).parts().text.bounds.height,
+            "the input part sits below the prompt");
+    (*field).text = "Evidence";
+    require(window.dispatch_key({KeyAction::down, PhysicalKey::enter}) && !(*box).shown() &&
+                !recorder.results.empty() && recorder.results.back().button_id == "ok" &&
+                recorder.results.back().input_text == "Evidence",
+            "Enter in the field clicks OK and the result carries the text");
+    const InputBoxResult accepted = input_box_result(recorder.results.back());
+    require(accepted.accepted && accepted.text == "Evidence", "input_box_result reads an accepted answer");
+
+    const std::shared_ptr<TaskDialog> again = show_input_box(root, request, StableId("input.again"));
+    require(again != nullptr, "a second input box shows");
+    subscribe(*again, recorder, tokens);
+    window.perform_layout();
+    (*(*again).input_box()).text = "Discarded";
+    require(window.dispatch_key({KeyAction::down, PhysicalKey::escape}) && !(*again).shown(),
+            "Escape cancels the input box");
+    const InputBoxResult cancelled = input_box_result(recorder.results.back());
+    require(!cancelled.accepted && cancelled.text.empty(), "a cancelled input box answers nothing");
+
+    std::shared_ptr<Panel> detached = make_control<Panel>(StableId("input.detached"));
+    require(show_input_box(detached, request) == nullptr, "an owner outside a window shows no box");
+    TaskDialogPage plain;
+    plain.heading = "No field";
+    (*probe).set_page(plain);
+    require((*probe).input_box() == nullptr && (*probe).input_text().empty() && !(*probe).parts().input.present,
+            "a page without input has no field");
+}
+
 } // namespace
 
+// State hunt, run 6 (2026-11-23): a page whose default button is disabled
+// shows with a focus scope; a show the window refuses a scope (outside an
+// active containing scope) is not left shown; and a page whose child the
+// window refuses (C21) leaves the page shown before, matching its children.
+void scope_and_page_agreement() {
+    std::shared_ptr<Panel> root = make_control<Panel>(StableId("dialog.agree.root"));
+    std::shared_ptr<Button> owner = make_control<Button>(StableId("dialog.agree.owner"), "Scan");
+    (*owner).set_requested_bounds({20.0, 20.0, 120.0, 32.0});
+    std::shared_ptr<Button> fence = make_control<Button>(StableId("dialog.agree.fence"), "Fence");
+    (*fence).set_requested_bounds({20.0, 500.0, 120.0, 32.0});
+    // Holds the identity the dialog's Preview button would take.
+    std::shared_ptr<Button> taken = make_control<Button>(StableId("dialog.agree.button.preview"), "Taken");
+    (*taken).set_requested_bounds({200.0, 500.0, 120.0, 32.0});
+    (*root).add_child(owner);
+    (*root).add_child(fence);
+    (*root).add_child(taken);
+    Window window(root, {720.0, 560.0});
+    window.perform_layout();
+    std::shared_ptr<TaskDialog> dialog = make_control<TaskDialog>(StableId("dialog.agree"));
+    TaskDialogPage disabled_default{};
+    disabled_default.heading = "Nothing to confirm";
+    disabled_default.buttons = {{.standard = TaskDialogStandardButton::ok, .enabled = false},
+                                {.standard = TaskDialogStandardButton::cancel}};
+    disabled_default.default_button = "ok";
+    (*dialog).set_page(disabled_default);
+    require((*dialog).show(owner) && (*dialog).shown() && window.focus_scope_depth() == 1U &&
+                (*dialog).agrees_with_itself(),
+            "a disabled default button does not keep the dialog from its focus scope");
+    TaskDialogPage with_preview = disabled_default;
+    with_preview.buttons.push_back({.stable_id = "preview", .text = "Preview"});
+    bool refused = false;
+    try {
+        (*dialog).set_page(with_preview);
+    } catch (const std::exception&) {
+        refused = true;
+    }
+    require(refused && (*dialog).page().buttons.size() == 2U && (*dialog).agrees_with_itself() && (*dialog).button("cancel"),
+            "a page whose child is refused leaves the page before, with its children");
+    (*dialog).close("cancel");
+    require(!(*dialog).shown() && (*dialog).agrees_with_itself() && window.focus_scope_depth() == 0U, "it closes");
+
+    const FocusScopeId fenced = window.begin_focus_scope(fence);
+    bool show_refused = false;
+    try {
+        static_cast<void>((*dialog).show(owner));
+    } catch (const std::logic_error&) {
+        show_refused = true;
+    }
+    require(show_refused && !(*dialog).shown() && !(*dialog).parent() && (*dialog).agrees_with_itself() &&
+                window.focus_scope_depth() == 1U,
+            "a show refused a scope is not left shown");
+    require(window.end_focus_scope(fenced) && (*dialog).show(owner) && (*dialog).shown() && (*dialog).agrees_with_itself(),
+            "the dialog shows afterwards");
+    (*dialog).close("cancel");
+    require(!(*dialog).shown() && window.focus_scope_depth() == 0U, "and closes cleanly");
+}
+
 int main() {
+    scope_and_page_agreement();
     validation();
     modal_presentation();
     closed_while_opening();
     navigation_and_cancel();
+    input_field();
     std::cout << "TaskDialog: validation, modal presentation, parts, buttons, Enter and Escape, radio buttons, "
-                 "verification, expander, progress, navigation, semantics and disposal passed\n";
+                 "verification, expander, progress, navigation, semantics, disposal and the input box passed\n";
     return 0;
 }

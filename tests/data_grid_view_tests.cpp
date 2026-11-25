@@ -4514,7 +4514,24 @@ void semantics_stop_when_a_handler_changes_the_grid() {
     require(!snapshot.roots.empty(), "the snapshot is published");
 }
 
+// N2 (state hunt, 2026-11-23): disposing the control with its menu open
+// closes the menu while the control is no longer alive; the menu's close
+// report must not reach a repaint (the refusal left a noexcept function and
+// ended the process). The window comes to rest, as the breaker's last step.
+void disposed_with_its_choices_open() {
+    std::shared_ptr<DataGridView> grid = make_grid("grid.disposed");
+    Window window(grid, {360.0, 260.0});
+    window.perform_layout();
+    require(window.request_focus(grid) && (*grid).set_current_cell(cell_at(0U, 2U)) && key(window, PhysicalKey::f4) &&
+                (*grid).drop_down_open(),
+            "F4 opens the combo box cell's choices");
+    (*grid).dispose();
+    require(!(*grid).is_alive() && window.focus_scope_depth() == 0U && !window.captured_control(),
+            "disposing the grid with a cell's choices open closes them and their focus scope");
+}
+
 int main() {
+    disposed_with_its_choices_open();
     columns_and_rows();
     column_change_under_reset_handlers();
     semantics_stop_when_a_handler_changes_the_grid();

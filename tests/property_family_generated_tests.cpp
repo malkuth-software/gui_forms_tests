@@ -9,9 +9,11 @@
 #include "gui_forms/controls/block_panel.hpp"
 #include "gui_forms/controls/breadcrumb_trail.hpp"
 #include "gui_forms/controls/button.hpp"
+#include "gui_forms/controls/button_text_box.hpp"
 #include "gui_forms/controls/callout.hpp"
 #include "gui_forms/controls/card.hpp"
 #include "gui_forms/controls/check_box.hpp"
+#include "gui_forms/controls/checked_combo_box.hpp"
 #include "gui_forms/controls/checked_list_box.hpp"
 #include "gui_forms/controls/choice_group.hpp"
 #include "gui_forms/controls/color_picker.hpp"
@@ -57,11 +59,13 @@
 #include "gui_forms/controls/page_view.hpp"
 #include "gui_forms/controls/panel.hpp"
 #include "gui_forms/controls/picture_box.hpp"
+#include "gui_forms/controls/pie_chart.hpp"
 #include "gui_forms/controls/plot3d_view.hpp"
 #include "gui_forms/controls/plot_annotation_item.hpp"
 #include "gui_forms/controls/plot_axis_item.hpp"
 #include "gui_forms/controls/plot_series_item.hpp"
 #include "gui_forms/controls/plot_view.hpp"
+#include "gui_forms/controls/popup_container_box.hpp"
 #include "gui_forms/controls/progress_bar.hpp"
 #include "gui_forms/controls/progress_ring.hpp"
 #include "gui_forms/controls/property_grid.hpp"
@@ -379,6 +383,10 @@ void test_button_base_properties() {
     }
 }
 
+void test_button_text_box_properties() {
+    std::shared_ptr<ButtonTextBox> control = make_control<ButtonTextBox>(StableId("generated.buttontextbox"));
+}
+
 void test_callout_properties() {
     std::shared_ptr<Callout> control = make_control<Callout>(StableId("generated.callout"));
     {
@@ -471,6 +479,34 @@ void test_check_box_properties() {
         const std::optional<BindingValue> by_name = (*control).property_value("indicator_style");
         expect(by_name && *by_name == PropertyValueTraits<ChoiceIndicatorStyle>::to_binding(sample),
                "CheckBox.indicator_style: the table reads the cell");
+    }
+}
+
+void test_checked_combo_box_properties() {
+    std::shared_ptr<CheckedComboBox> control = make_control<CheckedComboBox>(StableId("generated.checkedcombobox"));
+    {
+        const std::string sample = std::string(" + ");
+        (*control).separator = sample;
+        expect((*control).separator.read() == sample, "CheckedComboBox.separator: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("separator");
+        expect(by_name && *by_name == PropertyValueTraits<std::string>::to_binding(sample),
+               "CheckedComboBox.separator: the table reads the cell");
+    }
+    {
+        const std::string sample = std::string("codemod.hint");
+        (*control).placeholder_text = sample;
+        expect((*control).placeholder_text.read() == sample, "CheckedComboBox.placeholder_text: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("placeholder_text");
+        expect(by_name && *by_name == PropertyValueTraits<std::string>::to_binding(sample),
+               "CheckedComboBox.placeholder_text: the table reads the cell");
+    }
+    {
+        const std::uint32_t sample = std::uint32_t{5U};
+        (*control).max_drop_down_items = sample;
+        expect((*control).max_drop_down_items.read() == sample, "CheckedComboBox.max_drop_down_items: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("max_drop_down_items");
+        expect(by_name && *by_name == PropertyValueTraits<std::uint32_t>::to_binding(sample),
+               "CheckedComboBox.max_drop_down_items: the table reads the cell");
     }
 }
 
@@ -1334,6 +1370,14 @@ void test_indicator_lamp_properties() {
         expect(by_name && *by_name == PropertyValueTraits<IndicatorLampStyle>::to_binding(sample),
                "IndicatorLamp.lamp_style: the table reads the cell");
     }
+    {
+        const bool sample = true;
+        (*control).lamp_sparkle = sample;
+        expect((*control).lamp_sparkle.read() == sample, "IndicatorLamp.lamp_sparkle: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("lamp_sparkle");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "IndicatorLamp.lamp_sparkle: the table reads the cell");
+    }
 }
 
 void test_info_banner_properties() {
@@ -2011,6 +2055,47 @@ void test_picture_box_properties() {
     }
 }
 
+void test_pie_chart_properties() {
+    std::shared_ptr<PieChart> control = make_control<PieChart>(StableId("generated.piechart"));
+    {
+        const double sample = 60.0;
+        (*control).doughnut_radius = sample;
+        expect((*control).doughnut_radius.read() == sample, "PieChart.doughnut_radius: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("doughnut_radius");
+        expect(by_name && *by_name == PropertyValueTraits<double>::to_binding(sample),
+               "PieChart.doughnut_radius: the table reads the cell");
+    }
+    {
+        const double sample = 90.0;
+        (*control).start_angle = sample;
+        expect((*control).start_angle.read() == sample, "PieChart.start_angle: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("start_angle");
+        expect(by_name && *by_name == PropertyValueTraits<double>::to_binding(sample),
+               "PieChart.start_angle: the table reads the cell");
+    }
+    {
+        const PieChartLabelStyle sample = PieChartLabelStyle::outside;
+        (*control).label_style = sample;
+        expect((*control).label_style.read() == sample, "PieChart.label_style: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("label_style");
+        expect(by_name && *by_name == PropertyValueTraits<PieChartLabelStyle>::to_binding(sample),
+               "PieChart.label_style: the table reads the cell");
+    }
+    {
+        const bool sample = !(*control).legend_visible.read();
+        (*control).legend_visible = sample;
+        expect((*control).legend_visible.read() == sample, "PieChart.legend_visible: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("legend_visible");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "PieChart.legend_visible: the table reads the cell");
+    }
+    {
+        const FontSpec sample = FontSpec{FontRole::content, 12.0, 700, false};
+        (*control).font = sample;
+        expect((*control).font.read() == sample, "PieChart.font: a write stores");
+    }
+}
+
 void test_plot3d_view_properties() {
     std::shared_ptr<Plot3DView> control = make_control<Plot3DView>(StableId("generated.plot3dview"));
     {
@@ -2236,6 +2321,24 @@ void test_plot_view_properties() {
         const std::optional<BindingValue> by_name = (*control).property_value("crosshair");
         expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
                "PlotView.crosshair: the table reads the cell");
+    }
+}
+
+void test_popup_container_box_properties() {
+    std::shared_ptr<PopupContainerBox> control = make_control<PopupContainerBox>(StableId("generated.popupcontainerbox"));
+    {
+        const std::string sample = std::string("codemod.text");
+        int raises = 0;
+        const SubscriptionToken token = (*control).text_changed().subscribe(RaiseCounter{&raises});
+        (*control).text = sample;
+        expect((*control).text.read() == sample, "PopupContainerBox.text: a write stores");
+        expect(raises == 1, "PopupContainerBox.text: a changed write raises once");
+        (*control).text = sample;
+        expect(raises == 1, "PopupContainerBox.text: an equal write raises nothing");
+        static_cast<void>(token);
+        const std::optional<BindingValue> by_name = (*control).property_value("text");
+        expect(by_name && *by_name == PropertyValueTraits<std::string>::to_binding(sample),
+               "PopupContainerBox.text: the table reads the cell");
     }
 }
 
@@ -2570,24 +2673,24 @@ void test_rich_text_box_properties() {
 void test_scaled_group_box_properties() {
     std::shared_ptr<ScaledGroupBox> control = make_control<ScaledGroupBox>(StableId("generated.scaledgroupbox"));
     {
-        const Size sample = Size{640.0, 480.0};
-        (*control).design_size = sample;
-        expect((*control).design_size.read() == sample, "ScaledGroupBox.design_size: a write stores");
-        const std::optional<BindingValue> by_name = (*control).property_value("design_size");
-        expect(by_name && *by_name == PropertyValueTraits<Size>::to_binding(sample),
-               "ScaledGroupBox.design_size: the table reads the cell");
+        const ScaledAspect sample = ScaledAspect::uniform;
+        (*control).aspect = sample;
+        expect((*control).aspect.read() == sample, "ScaledGroupBox.aspect: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("aspect");
+        expect(by_name && *by_name == PropertyValueTraits<ScaledAspect>::to_binding(sample),
+               "ScaledGroupBox.aspect: the table reads the cell");
     }
 }
 
 void test_scaled_panel_properties() {
     std::shared_ptr<ScaledPanel> control = make_control<ScaledPanel>(StableId("generated.scaledpanel"));
     {
-        const Size sample = Size{640.0, 480.0};
-        (*control).design_size = sample;
-        expect((*control).design_size.read() == sample, "ScaledPanel.design_size: a write stores");
-        const std::optional<BindingValue> by_name = (*control).property_value("design_size");
-        expect(by_name && *by_name == PropertyValueTraits<Size>::to_binding(sample),
-               "ScaledPanel.design_size: the table reads the cell");
+        const ScaledAspect sample = ScaledAspect::uniform;
+        (*control).aspect = sample;
+        expect((*control).aspect.read() == sample, "ScaledPanel.aspect: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("aspect");
+        expect(by_name && *by_name == PropertyValueTraits<ScaledAspect>::to_binding(sample),
+               "ScaledPanel.aspect: the table reads the cell");
     }
 }
 
@@ -3207,6 +3310,22 @@ void test_tree_list_view_properties() {
         (*control).font = sample;
         expect((*control).font.read() == sample, "TreeListView.font: a write stores");
     }
+    {
+        const bool sample = !(*control).check_boxes.read();
+        (*control).check_boxes = sample;
+        expect((*control).check_boxes.read() == sample, "TreeListView.check_boxes: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("check_boxes");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "TreeListView.check_boxes: the table reads the cell");
+    }
+    {
+        const bool sample = !(*control).cascading_checks.read();
+        (*control).cascading_checks = sample;
+        expect((*control).cascading_checks.read() == sample, "TreeListView.cascading_checks: a write stores");
+        const std::optional<BindingValue> by_name = (*control).property_value("cascading_checks");
+        expect(by_name && *by_name == PropertyValueTraits<bool>::to_binding(sample),
+               "TreeListView.cascading_checks: the table reads the cell");
+    }
 }
 
 void test_tree_view_properties() {
@@ -3473,9 +3592,11 @@ int main() {
     test_breadcrumb_trail_properties();
     test_button_properties();
     test_button_base_properties();
+    test_button_text_box_properties();
     test_callout_properties();
     test_card_properties();
     test_check_box_properties();
+    test_checked_combo_box_properties();
     test_checked_list_box_properties();
     test_choice_group_properties();
     test_color_picker_properties();
@@ -3524,11 +3645,13 @@ int main() {
     test_page_view_properties();
     test_panel_properties();
     test_picture_box_properties();
+    test_pie_chart_properties();
     test_plot3d_view_properties();
     test_plot_annotation_item_properties();
     test_plot_axis_item_properties();
     test_plot_series_item_properties();
     test_plot_view_properties();
+    test_popup_container_box_properties();
     test_progress_bar_properties();
     test_progress_ring_properties();
     test_property_grid_properties();

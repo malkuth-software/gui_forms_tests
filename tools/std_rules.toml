@@ -1,5 +1,6 @@
 # check_std_rules for GUI.Forms' tests (D15, decision 6a), the rules gui_forms
-# checks in its own tree (gui_forms tools/std_rules.toml), over tests/. The
+# checks in its own tree (gui_forms tools/std_rules.toml), over tests/ and
+# the measurement programs and fuzz targets that came with them. The
 # tool is gui_forms' tools/check_std_rules.py, from the test cache's source
 # tree; the house-style job runs:
 #   python3 -I <cache>/source/tools/check_std_rules.py --config tools/std_rules.toml
@@ -7,7 +8,7 @@
 format = 1
 root = ".."
 profile = "consumer"
-paths = ["tests", "file_manager_demoboard/tests"]
+paths = ["tests", "file_manager_demoboard/tests", "benchmarks", "fuzz"]
 # Native code, where the host-only rules (pthread, wchar_t and the rest)
 # do not apply: the tests and probes that drive a native host or its system
 # interfaces directly.

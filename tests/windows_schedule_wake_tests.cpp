@@ -10,8 +10,8 @@
 // Before the seam, the Windows host re-armed only at the end of its own
 // damage collections, so the restarted Timer waited for the previous,
 // distant deadline.
-// The windows are hidden popups driven message by message; nothing takes
-// the foreground.
+// The windows are popups shown off screen without activation and driven
+// message by message; nothing takes the foreground.
 #include "gui_forms/basic_controls.hpp"
 #include "gui_forms/timer/timer/timer.hpp"
 #include "gui_forms/window.hpp"
@@ -29,6 +29,9 @@ namespace gui_forms::host {
 namespace {
 
 constexpr Size scene_size{160.0, 100.0};
+// The fixture windows' position, device pixels: far off every monitor, so a
+// shown fixture never appears on a desktop someone is using.
+constexpr int off_screen = -32000;
 // The restarted Timer's interval, and the distant one it replaces: without
 // the seam the window would wake only at the distant deadline.
 constexpr std::chrono::milliseconds restarted_interval{40};
@@ -85,12 +88,14 @@ protected:
         if (!armed_ || window_ == nullptr) return;
         armed_ = false;
         const FrameTime due = FrameClock::now() + restarted_interval;
-        static_cast<void>((*window_).schedule_paint(shared_from_this(), due));
+        // The token keeps the deadline: a discarded token revokes it.
+        deadline_ = (*window_).schedule_paint(shared_from_this(), due);
     }
 
 private:
     Window* window_{};
     bool armed_{};
+    FrameRequestToken deadline_{};
 };
 
 struct ScheduleWakeHostFixture final {
@@ -98,7 +103,7 @@ struct ScheduleWakeHostFixture final {
         if (!condition) throw std::runtime_error(message);
     }
 
-    // One hidden host window over its own model.
+    // One host window over its own model, shown off screen (open).
     struct HostedWindow final {
         std::unique_ptr<WindowsHostState> state;
         Window* model{};
@@ -116,11 +121,14 @@ struct ScheduleWakeHostFixture final {
         hosted.state = std::make_unique<WindowsHostState>(std::move(owned), std::move(options));
         hosted.window = CreateWindowExW(WS_EX_NOACTIVATE,
                                         reinterpret_cast<LPCWSTR>(static_cast<ULONG_PTR>(native_class)),
-                                        L"Schedule wake fixture", WS_POPUP, 0, 0,
+                                        L"Schedule wake fixture", WS_POPUP, off_screen, off_screen,
                                         static_cast<int>(scene_size.width), static_cast<int>(scene_size.height),
                                         nullptr, nullptr, GetModuleHandleW(nullptr), hosted.state.get());
         require(hosted.window != nullptr, "fixture native creation");
         require((*hosted.state).initialize(hosted.window), "fixture host initialization");
+        // Shown without activation: Windows keeps no update region for a
+        // hidden window, so the host's damage would never become a paint.
+        ShowWindow(hosted.window, SW_SHOWNOACTIVATE);
         return hosted;
     }
 
@@ -132,11 +140,10 @@ struct ScheduleWakeHostFixture final {
         }
     }
 
-    // The fixture's windows are hidden, so the system sends them no
-    // WM_PAINT; a pending update region is painted as it would be for a
-    // visible window.
-    static void paint_pending(HWND window) {
-        if (GetUpdateRect(window, nullptr, FALSE) != FALSE) SendMessageW(window, WM_PAINT, 0, 0);
+    // The fixture drives the window message by message, so a pending
+    // update region is painted here, as the system's WM_PAINT would.
+    static void paint_pending(HostedWindow& hosted) {
+        if (GetUpdateRect(hosted.window, nullptr, FALSE) != FALSE) SendMessageW(hosted.window, WM_PAINT, 0, 0);
     }
 
     // True while a schedule wake is queued for `window`.
@@ -163,7 +170,7 @@ struct ScheduleWakeHostFixture final {
             require(wait != WAIT_FAILED, "the window's loop waits");
             if (clock_count == 1U && wait == WAIT_OBJECT_0) (*hosted.state).scheduler_clock_signalled();
             drain(hosted.window);
-            paint_pending(hosted.window);
+            paint_pending(hosted);
         }
     }
 
@@ -220,13 +227,30 @@ struct ScheduleWakeHostFixture final {
         // schedule wake is still queued after the paint.
         (*root).arm(*hosted.model);
         (*root).invalidate(Dirty::paint);
+        const PaintLeaseSnapshot after_arm = (*hosted.model).paint_lease_snapshot();
+        const bool dispatch_pending = (*hosted.state).render_dispatch_pending_;
+        const bool presentation_pending = (*hosted.state).presentation_pending_;
+        std::uint64_t renders = 0U;
         MSG render{};
         while (PeekMessageW(&render, hosted.window, render_dispatch_message, render_dispatch_message, PM_REMOVE) !=
                FALSE) {
             DispatchMessageW(&render);
+            ++renders;
         }
-        paint_pending(hosted.window);
-        require((*root).paints == first_paints + 1U, "the armed paint ran");
+        const bool damage_pending = !(*hosted.state).pending_damage_.empty();
+        paint_pending(hosted);
+        // The state the paint depends on, so that a failure names the link
+        // that broke: the model's wake, the host's posted wake, the render
+        // dispatch, the update region.
+        require((*root).paints == first_paints + 1U,
+                "the armed paint ran once (paints " + std::to_string((*root).paints - first_paints) +
+                    " after the arm; wakes queued " + std::to_string(after_arm.render_wakes_queued) +
+                    ", coalesced " + std::to_string(after_arm.render_wakes_coalesced) + ", wake owed " +
+                    (after_arm.render_wake_queued ? "yes" : "no") + ", occluded " +
+                    ((*hosted.model).occluded() ? "yes" : "no") + ", host dispatch pending " +
+                    (dispatch_pending ? "yes" : "no") + ", presentation pending " +
+                    (presentation_pending ? "yes" : "no") + ", render messages " + std::to_string(renders) +
+                    ", host damage " + (damage_pending ? "pending" : "empty") + ")");
         require(schedule_wake_queued(hosted.window), "a deadline set while painting posts a schedule wake");
         run_until(hosted, (*root).paints, first_paints + 2U);
         require((*root).paints >= first_paints + 2U, "the paint deadline repaints with no other input");

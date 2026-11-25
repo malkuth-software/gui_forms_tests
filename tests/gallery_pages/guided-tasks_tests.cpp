@@ -1,6 +1,8 @@
 #include "support.hpp"
 #include "gui_forms/controls/callout.hpp"
+#include "gui_forms/controls/label.hpp"
 #include "gui_forms/controls/lookup_combo_box.hpp"
+#include "gui_forms/controls/popup_container_box.hpp"
 #include "gui_forms/controls/step_indicator.hpp"
 #include "gui_forms/controls/wizard.hpp"
 
@@ -49,6 +51,24 @@ void test_guided_tasks(gui_forms::Window& window) {
     require(window.dispatch_key({KeyAction::down, PhysicalKey::escape}), "Escape closes the About box");
     window.perform_layout();
     require(window.find("gallery.guided.about-dialog") == nullptr, "the About box closed");
+
+    // The due date field: its popup is the calendar, and Escape leaves the
+    // date unchanged.
+    const std::shared_ptr<PopupContainerBox> due =
+        std::dynamic_pointer_cast<PopupContainerBox>(window.find("gallery.guided.popup"));
+    require(due && (*due).text.read() == "Choose a date" && (*due).popup_content() &&
+                window.find("gallery.guided.popup.calendar") == nullptr,
+            "the due date field holds its calendar, not shown");
+    click(window, due);
+    window.perform_layout();
+    require((*due).popup_shown() && window.find("gallery.guided.popup.calendar") != nullptr,
+            "a click on the field shows the calendar");
+    require(window.dispatch_key({KeyAction::down, PhysicalKey::escape}) && !(*due).popup_shown(),
+            "Escape closes the calendar");
+    const std::shared_ptr<gui_forms::Label> result =
+        std::dynamic_pointer_cast<gui_forms::Label>(window.find("gallery.guided.result"));
+    require(result && (*result).text.read() == "Due date unchanged: Choose a date",
+            "the page reports the unchanged date");
 }
 
 }  // namespace gallery_pages_tests

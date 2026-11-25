@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>GuiDrawing.MetricsFacade</AssemblyName>
+  </PropertyGroup>
+  <!-- The generated facade is gui_forms': GUI_FORMS_SOURCE_DIR (a test cache's
+       source tree or a checkout), else a gui_forms checkout beside this one. -->
+  <PropertyGroup>
+    <GuiFormsSourceDir Condition="'$(GuiFormsSourceDir)' == '' and '$(GUI_FORMS_SOURCE_DIR)' != ''">$([MSBuild]::EnsureTrailingSlash('$(GUI_FORMS_SOURCE_DIR)'))</GuiFormsSourceDir>
+    <GuiFormsSourceDir Condition="'$(GuiFormsSourceDir)' == ''">$(MSBuildThisFileDirectory)../../../gui_forms/</GuiFormsSourceDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(GuiFormsSourceDir)generated/facade-v1/System.Drawing.Common/System.Drawing.Common.csproj" />
+  </ItemGroup>
+</Project>

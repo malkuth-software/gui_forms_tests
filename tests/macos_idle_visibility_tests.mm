@@ -52,6 +52,8 @@ struct Probe final {
     std::uint64_t baseline_wakes{0};
     std::uint64_t baseline_draws{0};
     std::uint32_t stage{0};
+    // Re-reads of the current stage's visibility condition (await_visibility).
+    std::uint32_t visibility_polls{0};
     bool attached_hidden{false};
     bool completed{false};
     std::string failure{};
@@ -77,6 +79,34 @@ std::uint64_t counter(const std::string& snapshot, const std::string& key) {
 
 void require(Probe& probe, bool condition, const char* message) {
     if (!condition && probe.failure.empty()) probe.failure = message;
+}
+
+// AppKit reports occlusion from the window server after orderFront and
+// orderOut return, with no bound on when; a model's occluded() follows
+// that report (windowDidChangeOcclusionState:). A visibility condition is
+// read again every visibility_poll_ms until it holds, for at most
+// visibility_poll_limit reads (5 s).
+constexpr std::int64_t visibility_poll_ms = 50;
+constexpr std::uint32_t visibility_poll_limit = 100;
+
+void enqueue(Probe& probe, std::int64_t milliseconds);
+
+// True when `synchronized` holds: the stage goes on. Otherwise false, with
+// the next read queued, or `message` recorded once the limit is reached
+// (the stage then goes on and the run ends on the failure).
+bool await_visibility(Probe& probe, bool synchronized, const char* message) {
+    if (synchronized) {
+        probe.visibility_polls = 0;
+        return true;
+    }
+    ++probe.visibility_polls;
+    if (probe.visibility_polls < visibility_poll_limit) {
+        enqueue(probe, visibility_poll_ms);
+        return false;
+    }
+    probe.visibility_polls = 0;
+    require(probe, false, message);
+    return true;
 }
 
 double extent(const std::string& snapshot, const std::string& key) {
@@ -147,7 +177,7 @@ void exercise(Probe& probe) {
     NSWindow* primary = find_window(@"Idle probe primary");
     if (child == nil || primary == nil) throw std::runtime_error("missing owned window");
     const std::string snapshot = [child.contentView hostJSON];
-    std::printf("idle-stage=%u|host=%s\n", probe.stage, snapshot.c_str());
+    if (probe.visibility_polls == 0) std::printf("idle-stage=%u|host=%s\n", probe.stage, snapshot.c_str());
     if (probe.stage == 0) {
         require(probe, probe.attached_hidden, "initial hidden model was not occluded");
         require(probe, (*probe.child_model).occluded(), "hidden model became visible");
@@ -157,8 +187,13 @@ void exercise(Probe& probe) {
         require(probe, !hidden_deadline, "initial hidden caret retained a wake deadline");
         probe.show();
     } else if (probe.stage == 1) {
-        require(probe, child.isVisible && !(*probe.child_model).occluded(),
-                "show did not synchronize visibility");
+        // Was read once, 750 ms after show(), and failed once in two runs
+        // (job 138988304006) with the model still occluded: the window
+        // server's report had not come yet.
+        if (!await_visibility(probe, child.isVisible && !(*probe.child_model).occluded(),
+                              "show did not synchronize visibility within 5 s")) {
+            return;
+        }
         const bool focused = (*probe.child_model).request_focus(probe.text);
         require(probe, focused, "visible textbox could not focus");
         probe.baseline_wakes = counter(snapshot, "scheduled_wake_count");
@@ -183,8 +218,10 @@ void exercise(Probe& probe) {
                 "visible presentation must report nonempty submitted extents");
         probe.hide();
     } else if (probe.stage == 3) {
-        require(probe, !child.isVisible && (*probe.child_model).occluded(),
-                "hide did not synchronize visibility");
+        if (!await_visibility(probe, !child.isVisible && (*probe.child_model).occluded(),
+                              "hide did not synchronize visibility within 5 s")) {
+            return;
+        }
         // Let ordering callbacks settle before measuring the hidden interval.
         probe.baseline_wakes = counter(snapshot, "scheduled_wake_count");
         probe.baseline_draws = counter(snapshot, "native_draw_count");
@@ -197,8 +234,10 @@ void exercise(Probe& probe) {
         verify_phases(probe, snapshot, false);
         probe.show();
     } else {
-        require(probe, child.isVisible && !(*probe.child_model).occluded(),
-                "second show did not restore visibility");
+        if (!await_visibility(probe, child.isVisible && !(*probe.child_model).occluded(),
+                              "second show did not restore visibility within 5 s")) {
+            return;
+        }
         probe.completed = true;
         [primary performClose:nil];
         return;

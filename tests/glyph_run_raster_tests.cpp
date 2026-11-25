@@ -57,7 +57,7 @@ void origin_keeps_phase_and_snaps_baseline() {
 }
 
 void rasterization_is_deterministic_and_scales(const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 13.0, 400, false};
     const ShapedText shaped = engine.shape(corpus, font);
@@ -145,7 +145,7 @@ std::size_t identity_index = 0;
 std::size_t identity_mismatches = 0;
 
 void report_identity_hashes(const char* name, const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     GlyphRunRasterizer rasterizer(engine);
     const double sizes[3]{9.0, 13.0, 20.0};
@@ -171,7 +171,7 @@ void report_identity_hashes(const char* name, const char* font_path) {
 // Bold and oblique synthesis, and the unhinted general-transform path used
 // by the C drawing API.
 void synthesis_and_transforms(const char* font_path, const std::uint64_t (&expected)[5]) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 16.0, 400, false};
     const ShapedText shaped = engine.shape(corpus, font);
@@ -251,7 +251,7 @@ bool same_coverage(const GlyphRunCoverage& left, const GlyphRunCoverage& right) 
 // - at 30 degrees (the mask's surface) the run keeps the upright run's ink
 //   within 8%, its ink spans the turned advance, and the drawing repeats.
 void turned_text_is_stxlibs(const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 13.0, 400, false};
     GlyphRunRasterizer rasterizer(engine);
@@ -309,7 +309,7 @@ void turned_text_is_stxlibs(const char* font_path) {
 // by one and combined in run order as documented, c + p * (255 - c) / 255,
 // for every synthesis.
 void repeated_glyphs_match_single_glyph_runs(const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 13.0, 400, false};
     const ShapedText shaped = engine.shape(corpus, font);
@@ -347,7 +347,7 @@ void repeated_glyphs_match_single_glyph_runs(const char* font_path) {
 // ems from its origin, which FreeType refused) draw, and the rasterizer
 // stays usable for ordinary runs afterwards.
 void large_transformed_glyphs_draw(const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 16.0, 400, false};
     const ShapedText shaped = engine.shape(corpus, font);
@@ -370,7 +370,7 @@ void large_transformed_glyphs_draw(const char* font_path) {
 // Every coverage carries the glyph face's profile, which retained coverage
 // is checked against.
 void coverage_carries_the_face_profile(const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 13.0, 400, false};
     GlyphRunRasterizer rasterizer(engine);
@@ -389,8 +389,8 @@ void typefaces_are_shared_and_counted(const char* font_path) {
     const std::size_t before = gui_forms::detail::program_typeface_count();
     const AllocationCounts counted_before = thread_allocation_statistics().of(AllocationSubsystem::text_layout);
     {
-        HarfBuzzFontEngine first_engine;
-        HarfBuzzFontEngine second_engine;
+        TextShapeEngine first_engine;
+        TextShapeEngine second_engine;
         require(first_engine.register_shared_typeface(FontRole::control, 400, false, bytes).has_value() &&
                     second_engine.register_shared_typeface(FontRole::control, 400, false, bytes).has_value(),
                 "shared bytes register in both engines");
@@ -439,8 +439,8 @@ void registered_typefaces_serve_every_executor(const char* font_path) {
         require(found.typeface == (*font).typeface.get() && found.keeper.get() == owner.get(),
                 "executors borrow the registered typeface, kept by its owner");
         {
-            HarfBuzzFontEngine first_engine;
-            HarfBuzzFontEngine second_engine;
+            TextShapeEngine first_engine;
+            TextShapeEngine second_engine;
             require(first_engine.register_owned_typeface(FontRole::control, 400, false, bytes, owner).has_value() &&
                         second_engine.register_owned_typeface(FontRole::control, 400, false, bytes, owner).has_value(),
                     "the owned bytes register in both engines");
@@ -476,7 +476,7 @@ void registered_typefaces_serve_every_executor(const char* font_path) {
 }
 
 void unknown_faces_are_reported() {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     GlyphRunRasterizer rasterizer(engine);
     ShapedText shaped{};
     ShapedFontRun run{};
@@ -492,7 +492,7 @@ void unknown_faces_are_reported() {
 // paint; with a window, only the glyphs that can show are rendered, so the
 // same line draws its visible part.
 void long_lines_fail_soft_and_window_limits_glyphs(const char* font_path) {
-    HarfBuzzFontEngine engine;
+    TextShapeEngine engine;
     require(engine.register_typeface(FontRole::control, 400, false, read_file(font_path)).has_value(), "font registers");
     const FontSpec font{FontRole::control, 13.0, 400, false};
     std::string line;

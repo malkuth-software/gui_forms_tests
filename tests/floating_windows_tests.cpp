@@ -369,6 +369,11 @@ void test_session_end_is_its_own_close_reason() {
     application.simulate_user_close(main.id());
     require(reasons.size() == 2U && reasons[1] == HostCloseReason::user,
             "the close button must still report the user's close");
+    // The program's close request is asked with the reason application.
+    require(main.request_close().accepted(), "the program's close request was refused");
+    require(reasons.size() == 3U && reasons[2] == HostCloseReason::application,
+            "request_close must report the program's close, not the user's");
+    require(main.active() && closed == 0, "a refused program close closed the window");
 
     refuse = false;
     require(application.simulate_session_end(), "an accepted session end reported as refused");
