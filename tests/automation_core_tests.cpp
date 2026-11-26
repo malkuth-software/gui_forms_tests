@@ -1174,22 +1174,30 @@ private:
     ClosingQuestionState* state_;
 };
 
-// One program window with unsaved work, served AI-led.
+// One program window with unsaved work, served AI-led (or with the given
+// control settings: --mcp-shared's default, or first_come for --mcp-fcfs).
 class DisconnectRig final {
 public:
-    DisconnectRig() {
+    DisconnectRig() : DisconnectRig(led_settings()) {}
+    explicit DisconnectRig(ControlSettings given, bool allow = true) {
+        settings = given;
+        presenter.take_allow = allow;
         std::vector<ApplicationWindow> windows{};
         windows.push_back(modal_entry("main", ""));
         windows.back().options.closing = AskOnClosing(state);
         application = std::make_unique<host::HeadlessApplication>(std::move(windows));
         state.application = application.get();
-        settings.ai_led = true;
         control = std::make_unique<AutomationControl>(settings, &presenter);
         core = std::make_unique<AutomationCore>(*control);
         Window& window = *(*application).model((*application).id("main"));
         require((*core).attach_window(window, "main", false, (*application).handle("main")), "the window joins");
         pump = std::make_unique<WindowPump>(window, *control, presenter);
         (*control).begin_ai_led((*pump).now());
+    }
+    [[nodiscard]] static ControlSettings led_settings() {
+        ControlSettings led{};
+        led.ai_led = true;
+        return led;
     }
     [[nodiscard]] bool open() const { return (*application).id("main").valid(); }
     [[nodiscard]] ToolReply run(const char* arguments) { return (*core).run("disconnect", arguments, *pump); }
@@ -1261,6 +1269,71 @@ void disconnect_soft_balks_and_hard_ends() {
         (*rig.core).hard_disconnect();
         require(rig.state.asked == 1U && rig.state.shown && rig.open(),
                 "a transport drop shows the program's question to the user");
+    }
+}
+
+// Owner, MCP 1.0.6: disconnect is an act ("the act of messaging in order
+// to tell it to close, paradoxically is an action"). As a first act it takes
+// control in the launch's mode, then closes per its mode.
+void disconnect_is_a_first_act_in_both_modes() {
+    {
+        ControlSettings fcfs{};
+        fcfs.first_come = true;
+        DisconnectRig rig(fcfs);
+        require((*rig.control).state() == ControlState::user_control, "a first-come launch starts with the user");
+        const std::string reply = success_text(rig.run("{\"mode\":\"hard\",\"discard_unsaved\":true}"));
+        require(contains(reply, "unsaved changes discarded") && rig.presenter.takes == 0U && !rig.open() &&
+                    !contains(reply, "You now hold control"),
+                "under --mcp-fcfs a first disconnect takes control at once and closes per its mode");
+    }
+    {
+        ControlSettings fcfs{};
+        fcfs.first_come = true;
+        DisconnectRig rig(fcfs);
+        const std::string balked = success_text(rig.run("{}"));
+        require(contains(balked, "not disconnected: the program has unsaved work") && rig.open() &&
+                    (*rig.control).state() == ControlState::model_control,
+                "a first soft disconnect takes control and still balks over unsaved work");
+    }
+    {
+        DisconnectRig rig(ControlSettings{});
+        const std::string reply = success_text(rig.run("{\"mode\":\"hard\",\"discard_unsaved\":true}"));
+        require(rig.presenter.takes == 1U && contains(reply, "unsaved changes discarded") && !rig.open(),
+                "under --mcp-shared a first disconnect asks with the countdown, then closes per its mode");
+    }
+    {
+        DisconnectRig rig(ControlSettings{}, false);
+        const ToolReply refused = rig.run("{\"mode\":\"hard\",\"discard_unsaved\":true}");
+        require(failed_with(refused, ToolError::declined) && contains(failure_text(refused), "stays open") &&
+                    rig.presenter.takes == 1U && rig.open() && rig.state.asked == 0U,
+                "a refused take leaves the program open, asks nothing, and the reply says so");
+    }
+    // close (owner: "simply connect and then call program close"): an act
+    // that quits the program; the save question follows on_unsaved.
+    {
+        ControlSettings fcfs{};
+        fcfs.first_come = true;
+        DisconnectRig rig(fcfs);
+        const std::string balked = success_text((*rig.core).run("close", "{}", *rig.pump));
+        require(contains(balked, "not closed: the program has unsaved work") && contains(balked, "Save changes?") &&
+                    rig.open() && !rig.state.shown && rig.presenter.takes == 0U,
+                "under --mcp-fcfs a first close takes control at once and stops at the save question");
+        const std::string closed = success_text((*rig.core).run("close", "{\"on_unsaved\":\"discard\"}", *rig.pump));
+        require(contains(closed, "ok: closed every program window") && !rig.open() && !rig.state.shown,
+                "close with on_unsaved discard quits the program");
+    }
+    {
+        DisconnectRig rig(ControlSettings{});
+        rig.state.dirty = false;
+        const std::string closed = success_text((*rig.core).run("close", "{}", *rig.pump));
+        require(rig.presenter.takes == 1U && contains(closed, "ok: closed every program window") && !rig.open(),
+                "under --mcp-shared a first close asks with the countdown, then quits");
+    }
+    {
+        DisconnectRig rig(ControlSettings{}, false);
+        const ToolReply refused = (*rig.core).run("close", "{\"on_unsaved\":\"discard\"}", *rig.pump);
+        require(failed_with(refused, ToolError::declined) && rig.open() && rig.state.asked == 0U,
+                "a refused take leaves the program open and asks nothing");
     }
 }
 
@@ -2035,6 +2108,7 @@ int main() {
     take_back_answers_over_model_modals();
     a_models_close_answers_the_programs_question();
     disconnect_soft_balks_and_hard_ends();
+    disconnect_is_a_first_act_in_both_modes();
     the_users_pointer_never_feeds_a_model_gesture();
     idle_ignores_the_signs_motion();
     settling_survives_moving_stripes();

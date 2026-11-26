@@ -462,8 +462,7 @@ def main():
             process.stdin.close()
             time.sleep(1.5)
             require(process.poll() is None, "the program stays up when its input closes")
-            # An act (the countdown allows it): a disconnect closes only a
-            # program the model holds.
+            # An act through the folder (the countdown allows it).
             done = subprocess.run(["sh", "-c", "echo 'act action=press target=probe.button' > %s/in; cat %s/out"
                                    % (folder, folder)], capture_output=True, timeout=TIMEOUT)
             require(done.stdout.decode("utf-8").rstrip().endswith(". ok"),
