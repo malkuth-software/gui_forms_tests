@@ -64,8 +64,13 @@ def disconnect_message(identity):
 
 
 def end_program(process, replies, timeout):
-    """A hard disconnect, answered, then the input closed; the exit code, or None."""
+    """A pointer move (a disconnect closes only a program the model holds;
+    --mcp-fcfs takes control at once), a hard disconnect, answered, then the
+    input closed; the exit code, or None."""
     try:
+        send(process, {'jsonrpc': '2.0', 'id': 98, 'method': 'tools/call',
+                       'params': {'name': 'pointer', 'arguments': {'action': 'move', 'position': {'x': 1, 'y': 1}}}})
+        reply_to(replies, 98, timeout)
         send(process, disconnect_message(99))
         reply_to(replies, 99, timeout)
     except (queue.Empty, BrokenPipeError, OSError):

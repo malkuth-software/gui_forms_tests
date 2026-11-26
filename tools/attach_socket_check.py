@@ -462,10 +462,12 @@ def main():
             process.stdin.close()
             time.sleep(1.5)
             require(process.poll() is None, "the program stays up when its input closes")
-            done = subprocess.run(["sh", "-c", "echo probe_ready > %s/in; cat %s/out" % (folder, folder)],
-                                  capture_output=True, timeout=TIMEOUT)
+            # An act (the countdown allows it): a disconnect closes only a
+            # program the model holds.
+            done = subprocess.run(["sh", "-c", "echo 'act action=press target=probe.button' > %s/in; cat %s/out"
+                                   % (folder, folder)], capture_output=True, timeout=TIMEOUT)
             require(done.stdout.decode("utf-8").rstrip().endswith(". ok"),
-                    "the folder answers after the input closed: " + done.stdout.decode("utf-8")[-200:])
+                    "the folder acts after the input closed: " + done.stdout.decode("utf-8")[-200:])
             subprocess.run(["sh", "-c", "echo 'disconnect mode=hard discard_unsaved=true' > %s/in; cat %s/out"
                             % (folder, folder)], capture_output=True, timeout=TIMEOUT)
         finally:
