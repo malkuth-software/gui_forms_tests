@@ -22,6 +22,12 @@
 // are synthetic mouse events posted to the application's queue; they reach
 // only an active application, so ctest launches this bundle through
 // cmake/run_macos_activated_test.cmake.
+//
+// The test's steps run as main-queue work, which may run inside the host's
+// [NSApp runModalSession:]; that call sends the posted click itself, past
+// the host loop's hold. The host therefore holds the press at the alert's
+// buttons too (GuiFormsHeldAlertAnswer); before, the click answered the
+// alert in that ordering (macos-arm64 CI, 2026-11-25).
 
 namespace {
 
@@ -33,6 +39,8 @@ struct TakeBackProbe final {
     bool chain_finished{};
     bool alert_open_after_held_click{};
     bool panel_shown_over_alert{};
+    std::uint32_t presses_after_click{};
+    bool button_press_held{};
     bool panel_click_reached{};
     bool alert_open_after_take_back{};
     bool closed_by_watchdog{};
@@ -147,6 +155,17 @@ void take_back(void* context) {
     // and on screen.
     probe.panel_shown_over_alert = probe.panel.visible && alert != nil && probe.panel.level > alert.level &&
         (probe.panel.occlusionState & NSWindowOcclusionStateVisible) != 0;
+    probe.presses_after_click = probe.presses;
+    // A press that reaches the alert's button past the host's event loop (an
+    // accessibility press, or a click [NSApp runModalSession:] sends on its
+    // own) is held at the button as well: it offers take-back again and the
+    // alert stays open.
+    if (alert != nil) {
+        NSButton* const yes = find_button(alert.contentView, @"Yes");
+        static_cast<void>([yes accessibilityPerformPress]);
+        probe.button_press_held = probe.presses == probe.presses_after_click + 1U &&
+            !probe.dialog_finished && [NSApp modalWindow] == alert;
+    }
 
     static_cast<void>(click(find_button(probe.panel.contentView, @"Take Back Control")));
     post_after(step_nanoseconds, &probe, &answer_alert);
@@ -229,9 +248,10 @@ int main() {
         const bool checks[] = {
             result.status.accepted(),
             !probe.closed_by_watchdog,
-            probe.presses == 1U,
+            probe.presses_after_click == 1U,
             probe.alert_open_after_held_click,
             probe.panel_shown_over_alert,
+            probe.button_press_held,
             probe.panel_click_reached,
             probe.alert_open_after_take_back,
             choice == gui_forms::HostDialogChoice::no,
@@ -239,6 +259,7 @@ int main() {
         const char* const names[] = {
             "the dialog ran", "no watchdog", "the held click offered take-back once",
             "the held click left the alert open", "the take-back panel shows above the alert",
+            "a press past the event loop is held at the button",
             "the take-back panel takes the click", "taking back leaves the alert open",
             "the alert then answers the user",
         };

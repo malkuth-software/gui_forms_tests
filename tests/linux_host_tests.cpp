@@ -12,6 +12,7 @@
 #include <array>
 #include <bit>
 #include <chrono>
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -60,10 +61,30 @@ struct Root final : Control {
       dropped = true;
   }
 };
+// A peer walks windows other clients own (find_window), and one can be
+// destroyed between XQueryTree and the next read: a dialog closing as the
+// next step's walk starts. Xlib's default handler then exits the peer, and
+// the modal dialog it was to answer waits for ever (linux-arm64 CI,
+// 2026-11-25: BadWindow on X_GetProperty, then the 45 s ctest timeout). A
+// vanished window is only skipped; any other error still fails the peer.
+// Every peer is a forked child with one thread, so a process-wide handler
+// set by the peer is enough.
+int peer_x_error(Display *, XErrorEvent *error) {
+  if ((*error).error_code == BadWindow)
+    return 0;
+  std::cerr << "Peer X error " << static_cast<int>((*error).error_code)
+            << " on request " << static_cast<int>((*error).request_code)
+            << '\n';
+  _exit(1);
+}
+Display *open_peer_display() {
+  static_cast<void>(XSetErrorHandler(&peer_x_error));
+  return XOpenDisplay(nullptr);
+}
 struct Peer final {
   Display *display;
   ::Window window;
-  Peer() : display(XOpenDisplay(nullptr)), window(0) {
+  Peer() : display(open_peer_display()), window(0) {
     require(display != nullptr, "Peer cannot connect to X11");
     window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, 2,
                                  2, 0, 0, 0);
@@ -235,6 +256,23 @@ struct Peer final {
   }
 };
 void child_result(bool pass) { _exit(pass ? 0 : 1); }
+// A modal dialog a peer answers has no end of its own: if the peer fails
+// before its keys, show_dialog would wait until the ctest timeout with no
+// message. The alarm ends the run with one, well inside that timeout.
+void dialog_peer_silent(int) {
+  constexpr char message[] = "Dialog peer never answered the dialog\n";
+  static_cast<void>(write(STDERR_FILENO, message, sizeof(message) - 1));
+  _exit(1);
+}
+struct DialogAlarm final {
+  DialogAlarm() {
+    static_cast<void>(std::signal(SIGALRM, &dialog_peer_silent));
+    static_cast<void>(alarm(15));
+  }
+  ~DialogAlarm() { static_cast<void>(alarm(0)); }
+  DialogAlarm(const DialogAlarm &) = delete;
+  DialogAlarm &operator=(const DialogAlarm &) = delete;
+};
 void wait_child(Runtime &runtime, pid_t child) {
   int status = 0;
   const std::chrono::steady_clock::time_point deadline =
@@ -368,7 +406,9 @@ void dialog(Runtime &runtime, NativeWindow &window,
     payload.filters = {{"PNG", {"png"}}};
     request.payload = payload;
   }
+  std::optional<DialogAlarm> alarm_guard{std::in_place};
   const HostDialogResult result = (*window.services).show_dialog(request);
+  alarm_guard.reset();
   const HostPathDialogResult *paths =
       std::get_if<HostPathDialogResult>(&result.payload);
   require(
@@ -412,7 +452,9 @@ HostDialogResult dialog_with_keys(Runtime &runtime, NativeWindow &window,
       child_result(false);
     }
   }
+  std::optional<DialogAlarm> alarm_guard{std::in_place};
   const HostDialogResult result = (*window.services).show_dialog(request);
+  alarm_guard.reset();
   wait_child(runtime, child);
   return result;
 }
