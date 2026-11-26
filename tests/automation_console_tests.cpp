@@ -531,7 +531,7 @@ void help_comes_from_the_documentation() {
     const std::string draw = help_text("plan_paint_draw", tools, context);
     require(has(draw, "Units are picture pixels.") && has(draw, "shape  one of line, oval, required") &&
                 has(draw, "size  integer, 1 to 100, optional: The outline's width in pixels.") &&
-                has(draw, "call plan_paint_draw {\"shape\":\"line\",\"from\":{\"x\":10,\"y\":10}}"),
+                has(draw, "Example:\n  plan_paint.draw shape=line from={\"x\":10,\"y\":10}"),
             "help <tool> gives the description, typed arguments with their ranges and units, and an example");
     require(has(help_text("plan_paint_mystery", tools, context), "not documented"),
             "an undocumented tool says so");
@@ -579,6 +579,48 @@ void help_is_a_dotted_tree() {
     require(has(near, "`help plan_paint.draw`"), "an unknown path names the nearest");
 }
 
+// MCP round 6: an example is a call the tool accepts, in key=value form:
+// its points differ, its numbered items run from minimum to maximum, a
+// colour is #RRGGBB, and a schema's examples or default come first (the
+// 1.0.6 review: plan_paint.gradient's example repeated its point and gave
+// empty stops).
+void examples_are_calls_the_tool_accepts() {
+    ToolSpec gradient{};
+    gradient.name = "plan_paint_gradient";
+    gradient.description = "Paints a gradient.";
+    gradient.input_schema =
+        "{\"type\":\"object\",\"properties\":{\"from\":{\"type\":[\"object\",\"array\"],\"properties\":"
+        "{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\"]},\"to\":{\"type\":"
+        "[\"object\",\"array\"],\"properties\":{\"x\":{\"type\":\"number\"},\"y\":{\"type\":\"number\"}},"
+        "\"required\":[\"x\",\"y\"]},\"stops\":{\"type\":\"array\",\"minItems\":2,\"maxItems\":32,\"items\":"
+        "{\"type\":\"object\",\"properties\":{\"position\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},"
+        "\"colour\":{\"type\":\"string\"}},\"required\":[\"position\",\"colour\"]}},\"kind\":{\"type\":\"string\","
+        "\"enum\":[\"linear\",\"radial\"]}},\"required\":[\"from\",\"to\",\"stops\"]}";
+    gradient.access = ToolAccess::acting;
+    const std::string example = tool_example(gradient, "plan_paint.gradient");
+    require(example == "plan_paint.gradient from={\"x\":10,\"y\":10} to={\"x\":120,\"y\":40} "
+                       "stops=[{\"position\":0,\"colour\":\"#3366CC\"},{\"position\":1,\"colour\":\"#3366CC\"}]",
+            "the gradient's example has two points that differ and two full stops from 0 to 1");
+    require(tool_example_arguments(gradient) ==
+                "{\"from\":{\"x\":10,\"y\":10},\"to\":{\"x\":120,\"y\":40},\"stops\":[{\"position\":0,"
+                "\"colour\":\"#3366CC\"},{\"position\":1,\"colour\":\"#3366CC\"}]}",
+            "the example's arguments as JSON");
+    std::vector<ToolSpec> tools{gradient};
+    HelpContext context{};
+    require(has(help_text("plan_paint_gradient", tools, context), "Example:\n  plan_paint_gradient from="),
+            "help gives the example under the tool's path");
+    ToolSpec chosen{};
+    chosen.name = "pick";
+    chosen.input_schema =
+        "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"examples\":[\"two words\"]},"
+        "\"count\":{\"type\":\"integer\",\"minimum\":1,\"default\":4},\"steps\":{\"type\":\"array\",\"minItems\":3,"
+        "\"items\":{\"type\":\"string\",\"enum\":[\"up\"]}},\"label\":{\"type\":\"string\"},\"note\":{\"type\":"
+        "\"string\"}},\"required\":[\"mode\",\"count\",\"steps\",\"label\"]}";
+    require(tool_example(chosen, "") == "pick mode=\"two words\" count=4 steps=[\"up\",\"up\",\"up\"] label=text",
+            "examples and defaults come first, arrays have their fewest items, a string with a space stays JSON, "
+            "an optional argument is left out");
+}
+
 // Round 5: the instructions say who may connect and how control works, and
 // where help is, with no token and no prompt cost.
 void the_instructions_say_who_may_connect() {
@@ -612,6 +654,7 @@ int main() {
     timing_lines_are_quiet();
     help_comes_from_the_documentation();
     help_is_a_dotted_tree();
+    examples_are_calls_the_tool_accepts();
     the_instructions_say_who_may_connect();
     std::cout << "automation console tests passed\n";
     return 0;

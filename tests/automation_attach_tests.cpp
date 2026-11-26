@@ -3,7 +3,8 @@
 // - a connection's first line: a JSON object is MCP (its method, id,
 //   self-reported client read), anything else the console;
 // - the console's commands, a call's arguments as one JSON object or as
-//   key=value items;
+//   key=value items; help's key=value examples read back as the arguments
+//   they show (MCP round 6);
 // - a refused initialize's JSON-RPC error line, the discovery entry's text,
 //   with the access line;
 // - the peer rule refuses another user (attach_peer_allowed: a test cannot
@@ -21,6 +22,8 @@
 //   request IDs, and on POSIX a round trip through its FIFOs, their modes,
 //   and the folder's removal.
 
+#include "src/controls/automation/help/automation_help.hpp"
+#include "src/core/json/json_reader/json_reader.hpp"
 #include "src/runtime/automation/attach_endpoint.hpp"
 
 #include <stxlib/clocks.hpp>
@@ -118,8 +121,55 @@ void console_commands() {
             "an unclosed quote is refused");
     require(parse_console_command("call").verb == ConsoleVerb::unknown, "a call needs a tool");
     const ConsoleCommand other = parse_console_command("ls -l");
-    require(other.verb == ConsoleVerb::unknown && contains(other.error, "help, tools, call"),
-            "anything else names the commands");
+    require(other.verb == ConsoleVerb::unknown && contains(other.error, console_verb_summary()) &&
+                contains(console_verb_summary(), "help [path], tools, call <tool>") &&
+                contains(console_verb_summary(), "quit (or exit"),
+            "anything else names the commands, from the table the parser reads");
+    std::vector<ToolSpec> served(3U);
+    served[0].name = "release_control";
+    served[1].name = "plan_paint_draw";
+    served[2].name = "plan_paint_fill";
+    require(tool_command_summary(served) == "release_control (or release), plan_paint.<name> (2 tools: help plan_paint)",
+            "the tools as commands, from the tools served");
+}
+
+// MCP round 6: help's example, sent as a command, is read as the
+// arguments tool_example_arguments gives (gui_forms_automation_core_tests
+// runs those through every built-in tool).
+void examples_read_back() {
+    std::vector<ToolSpec> specs{};
+    ToolSpec gradient{};
+    gradient.name = "plan_paint_gradient";
+    gradient.input_schema =
+        "{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"x\":{\"type\":"
+        "\"number\"},\"y\":{\"type\":\"number\"}},\"required\":[\"x\",\"y\"]},\"stops\":{\"type\":\"array\","
+        "\"minItems\":2,\"items\":{\"type\":\"object\",\"properties\":{\"position\":{\"type\":\"number\","
+        "\"minimum\":0,\"maximum\":1},\"colour\":{\"type\":\"string\"}},\"required\":[\"position\",\"colour\"]}},"
+        "\"kind\":{\"type\":\"string\",\"enum\":[\"linear\",\"radial\"]}},\"required\":[\"from\",\"stops\","
+        "\"kind\"]}";
+    specs.push_back(gradient);
+    ToolSpec words{};
+    words.name = "say";
+    words.input_schema =
+        "{\"type\":\"object\",\"properties\":{\"text\":{\"type\":\"string\",\"examples\":[\"two words\"]},"
+        "\"label\":{\"type\":\"string\"},\"count\":{\"type\":\"integer\",\"minimum\":2},\"loud\":{\"type\":"
+        "\"boolean\"},\"code\":{\"type\":\"string\",\"default\":\"12\"}},\"required\":[\"text\",\"label\","
+        "\"count\",\"loud\",\"code\"]}";
+    specs.push_back(words);
+    ToolSpec bare{};
+    bare.name = "windows";
+    specs.push_back(bare);
+    for (const ToolSpec& spec : specs) {
+        const std::string example = tool_example(spec, "");
+        require(example.rfind(spec.name, 0U) == 0U, "an example begins with the tool's name: " + example);
+        const ConsoleCommand command = parse_console_command("call " + example);
+        require(command.verb == ConsoleVerb::call && command.tool == spec.name,
+                "an example is a call: " + example + ": " + command.error);
+        const gui_forms::detail::JsonReadResult sent = gui_forms::detail::read_json(command.arguments_json);
+        const gui_forms::detail::JsonReadResult shown = gui_forms::detail::read_json(tool_example_arguments(spec));
+        require(sent && shown && sent.root == shown.root,
+                "an example reads back as the arguments it shows: " + example + " gave " + command.arguments_json);
+    }
 }
 
 void error_lines() {
@@ -440,6 +490,7 @@ void door_round_trip() {
 int main() {
     opening_lines();
     console_commands();
+    examples_read_back();
     error_lines();
     info_entries();
     peer_rule();

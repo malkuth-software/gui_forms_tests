@@ -33,6 +33,7 @@
 #include "gui_forms/window.hpp"
 #include "src/controls/automation/control/automation_control.hpp"
 #include "src/controls/automation/core/automation_core.hpp"
+#include "src/controls/automation/help/automation_help.hpp"
 #include "src/controls/automation/presenter/stock_presenter.hpp"
 #include "src/controls/automation/tools/automation_tools.hpp"
 #include "src/core/surface_root/access/surface_request_access.hpp"
@@ -50,6 +51,7 @@
 #include <cstdint>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <stdexcept>
 #include <iostream>
 #include <memory>
@@ -486,15 +488,27 @@ void inspect_traces_the_routed_events() {
     Fixture fixture(false);
     const ToolReply clicked = fixture.call("pointer", "{\"action\":\"click\",\"target\":\"auto.press\"}");
     require(clicked.success_value() != nullptr && fixture.presses == 1U, "a pointer click clicks the button");
-    require(fixture.presenter.pointer_moves != 0U, "the presenter hears where the pointer is (the tag line on hover)");
+    require(fixture.presenter.pointer_moves != 0U, "the presenter hears where the pointer is");
     const std::string trace =
         success_text(fixture.call("inspect", "{\"target\":\"auto.press\",\"what\":[\"events\"]}"));
     require(contains(trace, "pointer") && contains(trace, "auto.press"),
             "the events section shows the click routed to the button");
 }
 
-void the_stock_presenter_shows_the_tag_line_on_hover() {
+// MCP round 6 (owner): an empty tooltip showed over the title while a
+// model was connected. The top border shows no tooltip now (the title note
+// names the model), a blank tooltip never shows, and hovering File while a
+// model is only connected shows File's own tooltip as usual.
+void a_connected_model_leaves_tooltips_as_they_are() {
     const std::shared_ptr<Panel> root = make_control<Panel>(StableId("auto.tag.root"));
+    const std::shared_ptr<Button> file = make_control<Button>(StableId("auto.tag.file"), "File");
+    (*file).set_requested_bounds(Rect{0.0, 0.0, 60.0, 24.0});
+    (*file).tool_tip_text = "Open, save and print";
+    (*root).add_child(file);
+    const std::shared_ptr<Button> blank = make_control<Button>(StableId("auto.tag.blank"), "Blank");
+    (*blank).set_requested_bounds(Rect{80.0, 0.0, 60.0, 24.0});
+    (*blank).tool_tip_text = " \t ";
+    (*root).add_child(blank);
     Window window(root, Size{300.0, 200.0});
     window.perform_layout();
     StockPresenter presenter{};
@@ -504,16 +518,20 @@ void the_stock_presenter_shows_the_tag_line_on_hover() {
     client.client_name = "Claude Code";
     client.model_name = "Claude Opus 5.5";
     presenter.client_changed(client);
-    // Entering the top border, moving along it, leaving it and entering
-    // again: each entry asks for the tag line, the moves along it do not.
-    presenter.pointer_moved(window, Point{40.0, 1.0}, false);
-    presenter.pointer_moved(window, Point{80.0, 1.0}, false);
-    presenter.pointer_moved(window, Point{80.0, 100.0}, false);
-    presenter.pointer_moved(window, Point{80.0, 1.0}, false);
-    presenter.pointer_moved(window, Point{80.0, 1.0}, true);
+    require(std::string(window.title_note()).find("Claude Opus 5.5 is connected") != std::string::npos,
+            "the title note names the model");
+    presenter.pointer_moved(window, Point{200.0, 1.0}, false);
+    presenter.pointer_moved(window, Point{220.0, 1.0}, false);
+    require(!window.tool_tip_visible(), "the top border shows no tooltip");
+    window.show_tool_tip(blank);
+    require(!window.tool_tip_visible(), "a blank tooltip never shows");
+    window.show_tool_tip(file);
+    require(window.tool_tip_visible() && window.tool_tip_text() == "Open, save and print",
+            "hovering File while a model is connected shows File's own tooltip");
+    window.hide_tool_tip();
     presenter.disconnected();
     presenter.window_detached(window);
-    require(client_label(client) == "Claude Opus 5.5 via Claude Code", "the tag line names the model and client");
+    require(client_label(client) == "Claude Opus 5.5 via Claude Code", "the label names the model and client");
 }
 
 // A call's failure detail, empty when it succeeded.
@@ -547,6 +565,28 @@ void tool_schemas_stay_in_the_served_subset() {
         reset = reset || spec.name == "reset";
     }
     require(batch && find && reset, "batch, find and reset are served");
+}
+
+// MCP round 6: help's example for every tool is a call the tool accepts
+// (the 1.0.6 review: plan_paint.gradient's example was refused). Each runs
+// in a fresh fixture, so a close or a disconnect leaves the next alone; a
+// tool may still fail for what the fixture lacks, never for its arguments.
+void every_example_passes_argument_checks() {
+    std::vector<ToolSpec> specs{};
+    {
+        Fixture listing(true);
+        listing.core.fill_tool_specs(specs);
+    }
+    require(!specs.empty(), "the tools are listed");
+    for (const ToolSpec& spec : specs) {
+        Fixture fixture(true);
+        const std::string arguments = tool_example_arguments(spec);
+        const ToolReply reply = fixture.call(spec.name, arguments);
+        if (failed_with(reply, ToolError::invalid_arguments)) {
+            std::cerr << spec.name << " " << arguments << ": " << failure_text(reply) << '\n';
+            require(false, "a tool refuses its own help example's arguments");
+        }
+    }
 }
 
 void arguments_are_strict_and_find_finds() {
@@ -757,8 +797,10 @@ void a_first_act_asks_to_take_control() {
     require(fixture.control.state() == ControlState::model_control &&
                 fixture.presenter.state == ControlState::model_control,
             "the model holds control and the presenter shows AI mode");
-    require(contains(first, "You now hold control") && contains(first, "auto.check"),
-            "the first allowed act's reply carries the window's snapshot");
+    require(contains(first, "You now hold control (AI mode): later acts run at once until you call release_control "
+                            "or 30 s pass without a call.") &&
+                !contains(first, "The window now") && !contains(first, "auto.secret"),
+            "the first allowed act's reply says control is held, with the act's own result and no snapshot");
     const std::string second = success_text(fixture.call("act", "{\"action\":\"press\",\"target\":\"auto.press\"}"));
     require(fixture.presenter.takes == 1U && fixture.presses == 2U && !contains(second, "You now hold control"),
             "later acts run at once without asking");
@@ -911,9 +953,21 @@ void a_first_come_launch_takes_control_at_the_first_act() {
     WindowPump pump(*fixture.window, control, presenter);
     control.begin_ai_led(pump.now());
     require(control.state() == ControlState::user_control, "a first-come launch starts with the user in control");
+    // MCP round 6: the wording follows the launch; nobody is asked here.
+    const std::string listing = success_text(core.run("windows", "{}", pump));
+    require(contains(listing, "your first act takes it at once") && !contains(listing, "asks them"),
+            "windows says the first act takes control at once");
     require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.press\"}", pump)) &&
                 presenter.takes == 0U && fixture.presses == 1U,
             "the first act takes control with no countdown");
+    require(contains(success_text(core.run("windows", "{}", pump)), "until release_control or the user takes it back"),
+            "windows says how a first-come hold ends");
+    const std::string released = success_text(core.run("release_control", "{}", pump));
+    require(contains(released, "Your next act takes it again at once") && !contains(released, "asks the user"),
+            "release_control says the next act takes control again");
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.press\"}", pump)) &&
+                presenter.takes == 0U && control.state() == ControlState::model_control,
+            "the act after a release takes control at once");
     require(control.state() == ControlState::model_control, "the first act leaves the model in control");
     control.tick(pump.now() + std::chrono::minutes(10));
     require(control.state() == ControlState::model_control, "idle never returns a first-come launch's control");
@@ -1709,6 +1763,16 @@ void large_batches_run() {
 }
 
 // Round 3, item 6: capture points answers colours instead of an image.
+// A path as a JSON string's contents.
+std::string json_escaped(const std::string& text) {
+    std::string escaped{};
+    for (const char letter : text) {
+        if (letter == '\\' || letter == '"') escaped += '\\';
+        escaped += letter;
+    }
+    return escaped;
+}
+
 void capture_samples_points() {
     Fixture fixture(false);
 #if defined(GUI_FORMS_TEST_FONT_DIR)
@@ -1736,6 +1800,29 @@ void capture_samples_points() {
     const ToolReply objects = fixture.call("capture", "{\"points\":[{\"x\":1,\"y\":1},[2,2]]}");
     require(succeeded(objects) && contains(success_text(objects), "1,1 #") && contains(success_text(objects), "2,2 #"),
             "capture takes points as {x, y} and as [x, y]");
+    // MCP round 6: path saves the PNG to a file and the reply names it,
+    // with no image; only an absolute .png path, and a file already there
+    // only with overwrite.
+    const std::filesystem::path file = std::filesystem::temp_directory_path() /
+                                       ("gui-forms-capture-" + std::to_string(std::chrono::steady_clock::now()
+                                                                                  .time_since_epoch()
+                                                                                  .count()) + ".png");
+    std::error_code ignored{};
+    std::filesystem::remove(file, ignored);
+    const std::string arguments = "{\"path\":\"" + json_escaped(file.string()) + "\"}";
+    const ToolReply saved = fixture.call("capture", arguments);
+    require(succeeded(saved) && (*saved.success_value()).images.empty() &&
+                contains(success_text(saved), "saved: " + file.string()) && contains(success_text(saved), " px)"),
+            "capture path saves the PNG and replies with its path, size and dimensions, no image");
+    require(std::filesystem::file_size(file, ignored) > 8U, "the file holds the PNG");
+    require(failed_with(fixture.call("capture", arguments), ToolError::unsupported_action),
+            "a file already at path is kept without overwrite");
+    const std::string replace = "{\"path\":\"" + json_escaped(file.string()) + "\",\"overwrite\":true}";
+    require(succeeded(fixture.call("capture", replace)), "overwrite replaces it");
+    std::filesystem::remove(file, ignored);
+    require(failed_with(fixture.call("capture", "{\"path\":\"shot.png\"}"), ToolError::invalid_arguments) &&
+                failed_with(fixture.call("capture", "{\"path\":\"/tmp/shot.txt\"}"), ToolError::invalid_arguments),
+            "a relative path or one not ending .png is refused");
 }
 
 // 1.0.5 review: a program tool's own reply says what it did; a drawing
@@ -2086,8 +2173,9 @@ int main() {
     the_public_registry_adds_tools();
     a_program_tool_meets_the_dialog_rule();
     inspect_traces_the_routed_events();
-    the_stock_presenter_shows_the_tag_line_on_hover();
+    a_connected_model_leaves_tooltips_as_they_are();
     tool_schemas_stay_in_the_served_subset();
+    every_example_passes_argument_checks();
     arguments_are_strict_and_find_finds();
     rows_a_list_does_not_show_are_reached_by_id();
     a_model_closes_the_dialog_it_opened_but_never_submits_it();

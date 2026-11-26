@@ -8,7 +8,8 @@ Starts the MCP launch probe with --mcp-shared in a private run directory
 model (MCP round 5: no prompts, no sessions, no tokens; the program owns
 control and its record):
 - --mcp-help prints the help tree with no socket and exits, and --mcp (the
-  help panel) prints its top, saying the program is not shared;
+  help panel) prints its top, saying the program is not shared; both, and
+  --help, do so with the display environment removed (no native host);
 - a launch without a flag has no MCP: no socket, no discovery entry, no
   command folder and no MCP lines;
 - the program says its socket on standard error, and --mcp-socket prints it;
@@ -21,12 +22,14 @@ control and its record):
   countdown), the second acts at once with no question, so control
   persisted across connections;
 - console mode: help, dotted help paths, tools, call with key=value, an
-  unknown tool, the transcript (every connection's lines, labelled), quit;
+  unknown tool, the status line ending every reply (`. ok`, `. #7 error`,
+  `. error at 2`), the transcript (every connection's lines, labelled),
+  quit;
 - the command folder (/tmp/<id>, the owner's zero-binary door): the
   printed command, modes 0700 and 0600, an echo/cat round trip through
   sh -c, two acts chained across separate shells keep control, the
   request-id echo, a blank line answered "error: empty command", the
-  discovery entry's door line;
+  discovery entry's door line, a capture saved in the folder;
 - --mcp-fcfs: started in the background with its input at /dev/null, it
   stays up, its start-up text names the mode, and a chained act runs at
   once (first come, first served: no countdown); a hard disconnect ends it
@@ -235,11 +238,26 @@ def console_mode(path):
     console.send("tools\n")
     require("probe_ready" in console.until_prompt(), "tools lists the probe's tool")
     console.send("call probe_ready\n")
-    require(console.until_prompt().strip() == "ready", "call answers the tool's text")
+    require(console.until_prompt() == "ready\n. ok\n", "call answers the tool's text and the status line")
     console.send("call find name=Probe role=button\n")
     require("probe.button" in console.until_prompt(), "key=value arguments reach the tool")
     console.send("call no_such_tool\n")
     require(console.until_prompt().startswith("error:"), "an unknown tool answers an error")
+    # Every reply ends with the folder's status line (MCP round 6), the
+    # request ID echoed and a chain's failure named.
+    console.send("#7 call no_such_tool\n")
+    require(console.until_prompt().rstrip().endswith(". #7 error"), "the status line echoes the request ID")
+    # An unknown command lists what is accepted, from the dispatcher's
+    # table and the tools served (MCP round 6).
+    console.send("frobnicate\n")
+    reply = console.until_prompt()
+    require("the commands are help [path], tools, call <tool>" in reply and "release_control (or release)" in reply and
+            "disconnect" in reply and "close" in reply and "probe_ready" in reply,
+            "an unknown command lists the commands and the tools: " + reply)
+    console.send("probe_ready && no_such_tool\n")
+    reply = console.until_prompt()
+    require(reply.startswith("[1] ready\n") and reply.rstrip().endswith(". error at 2"),
+            "a chain's status line names its failure: " + repr(reply))
     console.send("transcript\n")
     transcript = console.until_prompt()
     require("call find name=Probe role=button" in transcript and "== session console pid " in transcript and
@@ -317,6 +335,14 @@ def door_mode(path, entry, process):
     subprocess.run(["sh", "-c", "echo 'help mcp.control' > %s/in" % folder], timeout=TIMEOUT)
     later = subprocess.run(["sh", "-c", "cat %s/out" % folder], capture_output=True, timeout=TIMEOUT)
     require("-- Control --" in later.stdout.decode("utf-8"), "a reply waits for a reader in a later shell")
+    # A capture with no path saves to the folder (MCP round 6): no image
+    # bytes come down out. A probe build without a raster refuses it.
+    reply, _ = send("capture")
+    if reply.rstrip().endswith(". ok"):
+        require("saved: %s/capture-1.png" % folder in reply and os.path.getsize(folder + "/capture-1.png") > 8 and
+                "[image:" not in reply, "a capture through the folder is saved there: " + reply[-300:])
+    else:
+        require("[image:" not in reply, "a refused capture sends no image: " + reply[-300:])
     require("probe_ready" in open(folder + "/help", encoding="utf-8").read(), "help is a file too")
     require("pid: " in open(folder + "/info", encoding="utf-8").read(), "info names the process")
     return folder
@@ -429,6 +455,17 @@ def help_without_socket(probe, environment):
             "Send: echo '<command>' > /tmp/<id>/in" in text and "probe_ready" in text,
             "--mcp prints the help panel: " + text[:400])
     require(b"MCP socket:" not in panel.stderr, "--mcp opens no socket")
+    # The help flags never start the native host (MCP round 6: --mcp-help
+    # aborted in NSApplication with no window server): with the display
+    # environment removed, the full help still comes, with the tool the
+    # probe registers in its window's ready callback, and status 0.
+    bare = {key: value for key, value in environment.items() if key not in ("DISPLAY", "WAYLAND_DISPLAY")}
+    for flags in (["--mcp-help"], ["--mcp"], ["--help"]):
+        done = subprocess.run([probe] + flags, capture_output=True, env=bare, timeout=TIMEOUT)
+        text = done.stdout.decode("utf-8")
+        require(done.returncode == 0 and ("probe_ready" in text or flags == ["--help"]) and
+                "--mcp-fcfs" in text, "%s without a display prints its help and exits 0: %d %s" %
+                (" ".join(flags), done.returncode, (text + done.stderr.decode("utf-8", "replace"))[:400]))
 
 
 def main():
