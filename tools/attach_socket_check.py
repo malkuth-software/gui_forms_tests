@@ -25,7 +25,8 @@ control and its record):
 - the command folder (/tmp/<id>, the owner's zero-binary door): the
   printed command, modes 0700 and 0600, an echo/cat round trip through
   sh -c, two acts chained across separate shells keep control, the
-  request-id echo, the discovery entry's door line;
+  request-id echo, a blank line answered "error: empty command", the
+  discovery entry's door line;
 - --mcp-fcfs: started in the background with its input at /dev/null, it
   stays up, its start-up text names the mode, and a chained act runs at
   once (first come, first served: no countdown); a hard disconnect ends it
@@ -281,6 +282,13 @@ def door_mode(path, entry, process):
     second, took = send("#42 " + press)
     require(first.rstrip().endswith(". ok") and second.rstrip().endswith(". #42 ok") and took < 8.0,
             "two acts chained across shells keep control, the request ID echoed: %.1f s: %s" % (took, second[-200:]))
+    # An empty or blank line is answered, so `cat out` never blocks.
+    for blank in ("", "   "):
+        reply, _ = send(blank)
+        require(reply == "error: empty command\n. error\n", "a blank line gets a reply: " + repr(reply))
+    reply, _ = send("probe_ready && ")
+    require("[2] error: empty command" in reply and reply.rstrip().endswith(". error at 2"),
+            "an empty chained part is an error: " + repr(reply))
     reply, _ = send("#e1 no_such_tool")
     require(reply.rstrip().endswith(". #e1 error"), "an error's end line says so: " + reply[-200:])
     # Chains (owner): && stops at a failure, ; goes on, and separators in
