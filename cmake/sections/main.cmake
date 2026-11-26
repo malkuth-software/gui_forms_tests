@@ -224,8 +224,8 @@ if(TARGET gui_forms_application)
     target_link_libraries(gui_forms_application_native_tests PRIVATE gui_forms_application)
     add_test(NAME gui_forms_application_native_tests COMMAND gui_forms_application_native_tests)
     set_tests_properties(gui_forms_application_native_tests PROPERTIES TIMEOUT 30)
-    # cp37: a program started with --mcp answers initialize and tools/list
-    # and ends when its input closes (tools/mcp_launch_check.py), so a build
+    # cp37: a program started with --mcp-fcfs answers initialize and
+    # tools/list and ends after a hard disconnect (tools/mcp_launch_check.py), so a build
     # whose MCP has no transport fails here.
     if(GUI_FORMS_MCP AND NOT GUI_FORMS_HIGH_INTEGRITY)
         find_package(Python3 COMPONENTS Interpreter QUIET)

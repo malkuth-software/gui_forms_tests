@@ -7,7 +7,10 @@ Starts the MCP launch probe with --mcp-shared in a private run directory
 (HOME on macOS, XDG_RUNTIME_DIR elsewhere), and checks, under the owner's UCI
 model (MCP round 5: no prompts, no sessions, no tokens; the program owns
 control and its record):
-- --mcp-help prints the help tree with no socket and exits;
+- --mcp-help prints the help tree with no socket and exits, and --mcp (the
+  help panel) prints its top, saying the program is not shared;
+- a launch without a flag has no MCP: no socket, no discovery entry, no
+  command folder and no MCP lines;
 - the program says its socket on standard error, and --mcp-socket prints it;
 - the discovery entry <pid>.info names the socket, counts the tools and
   says who may connect;
@@ -23,11 +26,14 @@ control and its record):
   printed command, modes 0700 and 0600, an echo/cat round trip through
   sh -c, two acts chained across separate shells keep control, the
   request-id echo, the discovery entry's door line;
-- --mcp-folder: started in the background with its input at /dev/null, it
-  stays up, its start-up line names the flag, and a chained act runs at
-  once (AI-led, no countdown); a hard disconnect ends it and its folder;
-- the program ends when its input closes, and the socket, the entry and the
-  command folder go with it.
+- --mcp-fcfs: started in the background with its input at /dev/null, it
+  stays up, its start-up text names the mode, and a chained act runs at
+  once (first come, first served: no countdown); a hard disconnect ends it
+  and its folder;
+- the --mcp-shared program stays up when its input closes (the end of
+  standard input ends only the stdio session), its folder still answers,
+  and a hard disconnect through the folder ends it, the socket, the entry
+  and the command folder going with it.
 Another user's peer cannot be made here; the rule is checked in
 gui_forms_automation_attach_tests.
 
@@ -296,13 +302,61 @@ def door_mode(path, entry, process):
     return folder
 
 
-def folder_launch(probe, environment, private):
-    """--mcp-folder: started in the background with its input at /dev/null,
-    the program stays up, prints the folder's line naming the flag, and a
-    chained command acts at once (AI-led: no countdown)."""
-    errors_path = os.path.join(private, "folder-launch.err")
+def door_folders():
+    """The command folders now in /tmp: name to the pid their info names."""
+    found = {}
+    for name in os.listdir("/tmp"):
+        if not re.fullmatch(r"[0-9a-f]{8}", name):
+            continue
+        try:
+            with open("/tmp/%s/info" % name, encoding="utf-8") as read:
+                pid = re.search(r"^pid: (\d+)$", read.read(), re.M)
+        except OSError:
+            continue
+        if pid:
+            found[name] = int(pid.group(1))
+    return found
+
+
+def unflagged_launch(probe, environment, private):
+    """No flag, no MCP (owner, MCP 1.0.6): the window runs, and the program
+    makes no socket, no discovery entry and no command folder, and prints no
+    MCP lines."""
+    errors_path = os.path.join(private, "unflagged.err")
     with open(errors_path, "wb") as errors, open(os.devnull, "rb") as nothing:
-        process = subprocess.Popen([probe, "--mcp-folder"], stdin=nothing, stdout=subprocess.DEVNULL,
+        process = subprocess.Popen([probe], stdin=nothing, stdout=subprocess.PIPE, stderr=errors, env=environment,
+                                   start_new_session=True)
+    try:
+        time.sleep(3.0)
+        require(process.poll() is None, "the unflagged program runs")
+        listed = [name for name in os.listdir(private) if name.endswith(".sock") or name.endswith(".info")]
+        run_directory = os.path.join(private, "Library", "Caches", "gui-forms", "run")
+        if os.path.isdir(run_directory):
+            listed += os.listdir(run_directory)
+        mine = [name for name, pid in door_folders().items() if pid == process.pid]
+        require(not listed and not mine, "an unflagged launch makes no socket, entry or folder: %r %r" % (listed, mine))
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=TIMEOUT)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+    printed = process.stdout.read().decode("utf-8", "replace")
+    with open(errors_path, encoding="utf-8", errors="replace") as read:
+        text = read.read()
+    require("GUI.Forms: MCP socket" not in text and "command folder" not in text and "GUI.Forms" not in printed,
+            "an unflagged launch prints no MCP lines: " + (text + printed)[:300])
+
+
+def fcfs_launch(probe, environment, private):
+    """--mcp-fcfs: started in the background with its input at /dev/null, the
+    program stays up (the end of its input ends only the stdio session),
+    names the mode in its start-up text, and a chained command acts at once
+    (first come, first served: no countdown)."""
+    errors_path = os.path.join(private, "fcfs-launch.err")
+    with open(errors_path, "wb") as errors, open(os.devnull, "rb") as nothing:
+        process = subprocess.Popen([probe, "--mcp-fcfs"], stdin=nothing, stdout=subprocess.DEVNULL,
                                    stderr=errors, env=environment, start_new_session=True)
     folder = ""
     try:
@@ -313,12 +367,13 @@ def folder_launch(probe, environment, private):
             with open(errors_path, encoding="utf-8", errors="replace") as read:
                 text = read.read()
                 found = re.search(r"command folder is /tmp/([0-9a-f]{8})$", text, re.M)
-                if found and not re.search(r"^GUI\.Forms:   mode: --mcp-folder: AI-led", text, re.M):
+                if found and not re.search(r"^GUI\.Forms:   mode: --mcp-fcfs: first come, first served", text,
+                                           re.M):
                     found = None
-        require(found is not None, "--mcp-folder prints the folder's line naming the flag")
+        require(found is not None, "--mcp-fcfs prints the folder's line and names the mode")
         folder = "/tmp/" + found.group(1)
         time.sleep(1.0)
-        require(process.poll() is None, "--mcp-folder stays up with its input at /dev/null")
+        require(process.poll() is None, "--mcp-fcfs stays up with its input at /dev/null")
         started = time.monotonic()
         done = subprocess.run(["sh", "-c", "echo 'act action=press target=probe.button && probe_ready' > %s/in; "
                                "cat %s/out" % (folder, folder)], capture_output=True, timeout=TIMEOUT)
@@ -330,12 +385,12 @@ def folder_launch(probe, environment, private):
                         % (folder, folder)], capture_output=True, timeout=TIMEOUT)
         process.wait(timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
-        fail("the --mcp-folder program did not end after a hard disconnect")
+        fail("the --mcp-fcfs program did not end after a hard disconnect")
     finally:
         if process.poll() is None:
             process.kill()
             process.wait()
-    require(not os.path.exists(folder), "the --mcp-folder program's folder goes with it")
+    require(not os.path.exists(folder), "the --mcp-fcfs program's folder goes with it")
 
 
 def help_without_socket(probe, environment):
@@ -348,6 +403,12 @@ def help_without_socket(probe, environment):
                              timeout=TIMEOUT)
     require(section.returncode == 0 and "-- Control --" in section.stdout.decode("utf-8"),
             "--mcp-help takes a dotted path")
+    panel = subprocess.run([probe, "--mcp"], capture_output=True, env=environment, timeout=TIMEOUT)
+    text = panel.stdout.decode("utf-8")
+    require(panel.returncode == 0 and "isn't shared with a model right now" in text and "--mcp-fcfs" in text and
+            "Send: echo '<command>' > /tmp/<id>/in" in text and "probe_ready" in text,
+            "--mcp prints the help panel: " + text[:400])
+    require(b"MCP socket:" not in panel.stderr, "--mcp opens no socket")
 
 
 def main():
@@ -368,7 +429,8 @@ def main():
         environment["HOME"] = private
         environment["XDG_RUNTIME_DIR"] = private
         help_without_socket(probe, environment)
-        folder_launch(probe, environment, private)
+        unflagged_launch(probe, environment, private)
+        fcfs_launch(probe, environment, private)
         process = subprocess.Popen([probe, "--mcp-shared"], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.PIPE, env=environment)
         folder = ""
@@ -395,15 +457,26 @@ def main():
             one_shot_connections(path)
             console_mode(path)
             folder = door_mode(path, entry, process)
-        finally:
-            # The portable shutdown: the launching client's input closes.
+            # The end of standard input ends the stdio session only: the
+            # program stays up and its folder answers (owner, MCP 1.0.6).
             process.stdin.close()
+            time.sleep(1.5)
+            require(process.poll() is None, "the program stays up when its input closes")
+            done = subprocess.run(["sh", "-c", "echo probe_ready > %s/in; cat %s/out" % (folder, folder)],
+                                  capture_output=True, timeout=TIMEOUT)
+            require(done.stdout.decode("utf-8").rstrip().endswith(". ok"),
+                    "the folder answers after the input closed: " + done.stdout.decode("utf-8")[-200:])
+            subprocess.run(["sh", "-c", "echo 'disconnect mode=hard discard_unsaved=true' > %s/in; cat %s/out"
+                            % (folder, folder)], capture_output=True, timeout=TIMEOUT)
+        finally:
+            if not process.stdin.closed:
+                process.stdin.close()
             try:
                 process.wait(timeout=TIMEOUT)
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait()
-                fail("the program did not end when its input closed")
+                fail("the program did not end after a hard disconnect through its folder")
         require(not os.path.exists(path) and not os.path.exists(info), "the socket and the entry go with the program")
         require(not os.path.exists(folder), "the command folder goes with the program")
     print("attach socket check passed")

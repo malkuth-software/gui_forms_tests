@@ -737,8 +737,8 @@ void the_sign_shows_ai_mode_and_review_mode_shows_none() {
     }
 #if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
     AutomationLaunch launch{};
-    launch.mcp = true;
-    require(automation_launch_refusal(launch, false) == nullptr, "a plain --mcp launch is not refused");
+    launch.fcfs = true;
+    require(automation_launch_refusal(launch, false) == nullptr, "a plain --mcp-fcfs launch is not refused");
     launch.appearance_review = true;
     require(automation_launch_refusal(launch, false) != nullptr, "a release build refuses appearance review");
     require(automation_launch_refusal(launch, true) == nullptr, "a test build takes appearance review");
@@ -889,7 +889,41 @@ void an_ai_led_launch_holds_control_without_asking() {
     shared.shared = true;
     require(shared.requested() && automation_launch_refusal(shared, false) == nullptr,
             "--mcp-shared is a launch of its own");
+    // No flag, no MCP (owner, MCP 1.0.6): the run is never made, so no
+    // folder, socket or discovery entry (tools/attach_socket_check.py looks).
+    const AutomationLaunch none{};
+    require(!none.requested(), "a launch without a flag asks for no MCP");
 #endif
+}
+
+// --mcp-fcfs (owner, MCP 1.0.6): first come, first served. The user holds
+// the program until a model's first act, which takes control at once with
+// no question; idle never returns it; the user gets it back only by
+// taking it back, and the model's next act takes it again at once.
+void a_first_come_launch_takes_control_at_the_first_act() {
+    Fixture fixture(false);
+    ControlSettings settings{};
+    settings.first_come = true;
+    TestPresenter presenter{};
+    AutomationControl control(settings, &presenter);
+    AutomationCore core(control);
+    require(core.attach_window(*fixture.window, "auto.fcfs.window"), "the window joins the first-come automation");
+    WindowPump pump(*fixture.window, control, presenter);
+    control.begin_ai_led(pump.now());
+    require(control.state() == ControlState::user_control, "a first-come launch starts with the user in control");
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.press\"}", pump)) &&
+                presenter.takes == 0U && fixture.presses == 1U,
+            "the first act takes control with no countdown");
+    require(control.state() == ControlState::model_control, "the first act leaves the model in control");
+    control.tick(pump.now() + std::chrono::minutes(10));
+    require(control.state() == ControlState::model_control, "idle never returns a first-come launch's control");
+    control.user_took_back();
+    require(control.state() == ControlState::user_control, "the user takes a first-come launch back by asking");
+    require(control.take_notice().find("your next act takes it again") != std::string::npos,
+            "the notice says the next act takes control again");
+    require(succeeded(core.run("act", "{\"action\":\"press\",\"target\":\"auto.press\"}", pump)) &&
+                presenter.takes == 0U && control.state() == ControlState::model_control,
+            "after a take-back the next act takes control at once again");
 }
 
 // A tooltip's window gets no band and no tag line: the tag line on a
@@ -1688,7 +1722,7 @@ void the_tool_list_is_stable_for_the_launch() {
 // called it and served nothing). Last, since what it takes stays taken.
 void taken_arguments_still_launch() {
     std::string program = "program";
-    std::string led = "--mcp";
+    std::string led = "--mcp-fcfs";
     std::string file = "picture.png";
     std::array<char*, 4> argv{program.data(), led.data(), file.data(), nullptr};
     int argc = 3;
@@ -1696,7 +1730,7 @@ void taken_arguments_still_launch() {
     require(argc == 2 && std::string_view(argv[1]) == "picture.png" && argv[2] == nullptr,
             "take_mcp_arguments leaves the program its own arguments");
 #if defined(GUI_FORMS_TEST_AUTOMATION_RUN)
-    require(read_automation_launch().mcp, "the taken --mcp still launches the automation");
+    require(read_automation_launch().fcfs, "the taken --mcp-fcfs still launches the automation");
 #endif
 }
 
@@ -1992,6 +2026,7 @@ int main() {
     release_control_gives_control_back();
     a_press_offers_take_back_and_taking_back_interrupts();
     an_ai_led_launch_holds_control_without_asking();
+    a_first_come_launch_takes_control_at_the_first_act();
     popup_windows_carry_no_sign();
     round_two_replies_are_structured_and_strict();
     select_on_a_pressable_item_says_it_only_selects();

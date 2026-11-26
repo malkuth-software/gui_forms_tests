@@ -1,10 +1,11 @@
-"""Starts a GUI.Forms program with --mcp and checks that it serves MCP (cp37).
+"""Starts a GUI.Forms program with --mcp-fcfs and checks that it serves MCP (cp37).
 
 The program (tests/mcp_launch_probe.cpp) must answer initialize with its
 server information and tools/list with the built-in tools (snapshot, act,
 capture among them) and the probe's own tool probe_ready, registered in its
-window's ready callback, then end within the timeout once its standard input
-closes, the portable shutdown. A build whose MCP has no transport (an STXlib
+window's ready callback, then end within the timeout after a hard disconnect
+(the end of standard input alone ends only the stdio session, never the
+program: MCP 1.0.6). A build whose MCP has no transport (an STXlib
 package without stxlib::mcp) answers nothing and fails here.
 
 Then the start race: the program is launched again `launches` times, and
@@ -57,8 +58,18 @@ def initialize_message(identity):
                        'clientInfo': {'name': 'gui-forms-mcp-launch-check', 'version': '1'}}}
 
 
-def end_program(process, timeout):
-    """Closes the program's input and waits for it; its exit code, or None."""
+def disconnect_message(identity):
+    return {'jsonrpc': '2.0', 'id': identity, 'method': 'tools/call',
+            'params': {'name': 'disconnect', 'arguments': {'mode': 'hard', 'discard_unsaved': True}}}
+
+
+def end_program(process, replies, timeout):
+    """A hard disconnect, answered, then the input closed; the exit code, or None."""
+    try:
+        send(process, disconnect_message(99))
+        reply_to(replies, 99, timeout)
+    except (queue.Empty, BrokenPipeError, OSError):
+        pass
     try:
         process.stdin.close()
     except OSError:
@@ -76,7 +87,7 @@ def start_race(program, timeout, launches):
     failures = 0
     counts = set()
     for launch in range(launches):
-        process = subprocess.Popen([program, '--mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        process = subprocess.Popen([program, '--mcp-fcfs'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.DEVNULL)
         replies = queue.Queue()
         threading.Thread(target=reader, args=(process.stdout, replies), daemon=True).start()
@@ -99,7 +110,7 @@ def start_race(program, timeout, launches):
             problem = 'no reply within %s seconds' % timeout
         except (BrokenPipeError, OSError) as error:
             problem = 'the program closed its input: %s' % error
-        code = end_program(process, timeout)
+        code = end_program(process, replies, timeout)
         if not problem and code != 0:
             problem = 'exit %s' % code
         if problem:
@@ -119,7 +130,7 @@ def main(argv):
     program = argv[1]
     timeout = float(argv[2]) if len(argv) > 2 else 30.0
     launches = int(argv[3]) if len(argv) > 3 else DEFAULT_LAUNCHES
-    process = subprocess.Popen([program, '--mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+    process = subprocess.Popen([program, '--mcp-fcfs'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     replies = queue.Queue()
     threading.Thread(target=reader, args=(process.stdout, replies), daemon=True).start()
@@ -145,19 +156,13 @@ def main(argv):
     except (BrokenPipeError, OSError) as error:
         print('FAILED: the program closed its input:', error)
         failures += 1
-    try:
-        process.stdin.close()
-    except OSError:
-        pass
-    try:
-        code = process.wait(timeout=timeout)
+    code = end_program(process, replies, timeout)
+    if code is None:
+        print('shutdown FAILED: still running', timeout, 'seconds after a hard disconnect')
+        failures += 1
+    else:
         print('shutdown', 'ok' if code == 0 else 'FAILED', 'exit', code)
         failures += 0 if code == 0 else 1
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait()
-        print('shutdown FAILED: still running', timeout, 'seconds after its input closed')
-        failures += 1
     if failures:
         sys.stderr.write(process.stderr.read().decode('utf-8', 'replace')[-2000:])
     failures += start_race(program, timeout, launches)

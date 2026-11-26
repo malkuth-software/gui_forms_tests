@@ -1,16 +1,16 @@
 // The MCP launch probe (cp37): a GUI.Forms program under Application::run
-// with one button, which tools/mcp_launch_check.py starts with --mcp. The
-// check says initialize and tools/list over the program's standard input and
-// output and then closes the input, the portable shutdown, so a build whose
-// MCP has no transport (an STXlib package without stxlib::mcp) fails a test
-// instead of shipping a --mcp that only reports it has none.
+// with one button, which tools/mcp_launch_check.py starts with --mcp-fcfs.
+// The check says initialize and tools/list over the program's standard input
+// and output and then ends it with a hard disconnect, so a build whose MCP
+// has no transport (an STXlib package without stxlib::mcp) fails a test
+// instead of shipping an MCP launch that only reports it has none.
 //
 // Its window's ready callback registers one program tool, probe_ready: the
 // check requires it in the first tools/list, with the built-in set, however
 // soon after launch the client asks (serving starts after the first
 // window's ready callback; 1.0.3's start race, macos-arm64).
 //
-//   gui_forms_mcp_launch_probe --mcp
+//   gui_forms_mcp_launch_probe --mcp-fcfs
 
 #include "gui_forms/application.hpp"
 #include "gui_forms/automation/tools/model_tools.hpp"

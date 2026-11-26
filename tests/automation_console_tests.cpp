@@ -517,6 +517,12 @@ void help_comes_from_the_documentation() {
             "help gives the access line, the commands, the topics and the program's note");
     require(!has(overview, "token") && !has(overview, "resume"), "help names no token and no resume");
     require(has(overview, "Chain commands with && (stop on error) or ; (continue)"), "help says how to chain");
+    require(has(overview, "Modes: --mcp-shared (permission-led") && has(overview, "--mcp-fcfs (first come") &&
+                has(overview, "Without either the program has no MCP at all.") &&
+                has(overview, "Send: echo '<command>' > /tmp/<id>/in; cat /tmp/<id>/out") &&
+                has(overview, "release_control hands control back; disconnect mode=soft|hard") &&
+                !has(overview, "--mcp-folder"),
+            "help names the modes, the doors, the send line and how to end (MCP 1.0.6)");
     const std::string listing = help_text("tools", tools, context);
     const std::string draw_line = listing.substr(listing.find("plan_paint_draw"), listing.find('\n'));
     require(has(draw_line, "Draws a shape on the picture.") && !has(draw_line, "Units") &&

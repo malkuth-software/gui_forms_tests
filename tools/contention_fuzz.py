@@ -1,7 +1,7 @@
 """Seeded contention fuzzer for a GUI.Forms Windows program.
 
 Drives one program (the menu probe, which is the Gallery under
-Application::run, or a product such as Plan Paint, started with --mcp) from
+Application::run, or a product such as Plan Paint, started with --mcp-fcfs) from
 three directions at once, in an order fixed by a seed:
 
 - automation tool calls over MCP (snapshot, capture, pointer clicks and
@@ -153,7 +153,7 @@ class Program:
         self.answer_ms = answer_ms
         environment = dict(os.environ)
         environment['GUI_FORMS_WINDOWS_SCALE'] = scale
-        self.client = mcp_client.McpClient([executable, '--mcp'], environment, 'gui-forms-contention-fuzz')
+        self.client = mcp_client.McpClient([executable, '--mcp-fcfs'], environment, 'gui-forms-contention-fuzz')
         self.process = self.client.process
         self.main = None
         self.thread = 0
@@ -214,8 +214,8 @@ class Program:
         """Runs one of the fuzzer's automation commands as an MCP tool call.
 
         snapshot waits for its reply (it must succeed within answer_ms); the
-        others are sent and not waited for. close closes MCP's input, the
-        program's portable shutdown. True when the call was sent (and, for a
+        others are sent and not waited for. close ends the program (a hard
+        disconnect, then MCP's input closed). True when the call was sent (and, for a
         snapshot, succeeded)."""
         words = command.split(' ')
         name = words[0]
