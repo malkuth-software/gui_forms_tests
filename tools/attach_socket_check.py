@@ -126,24 +126,40 @@ INITIALIZED = json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized
 
 
 DOOR_LINES = []
+STDERR_PARTIAL = [b""]
+
+
+def read_stderr_lines(process):
+    """The program's complete standard error lines that have arrived, appended
+    to DOOR_LINES; None at its end. Read from the descriptor itself: a
+    buffered readline after select leaves the lines of one write in Python's
+    buffer, where select no longer sees them (the start-up text is one
+    write)."""
+    ready, _, _ = select.select([process.stderr], [], [], 0.5)
+    if not ready:
+        return [] if process.poll() is None else None
+    chunk = os.read(process.stderr.fileno(), 65536)
+    if not chunk:
+        return None
+    data = STDERR_PARTIAL[0] + chunk
+    parts = data.split(b"\n")
+    STDERR_PARTIAL[0] = parts.pop()
+    lines = [part.decode("utf-8", "replace").rstrip() for part in parts]
+    DOOR_LINES.extend(lines)
+    return lines
 
 
 def socket_from_stderr(process):
     deadline = time.monotonic() + TIMEOUT
     seen = DOOR_LINES
     while time.monotonic() < deadline:
-        ready, _, _ = select.select([process.stderr], [], [], 0.5)
-        if not ready:
-            if process.poll() is not None:
-                break
-            continue
-        line = process.stderr.readline().decode("utf-8", "replace")
-        if not line:
+        lines = read_stderr_lines(process)
+        if lines is None:
             break
-        seen.append(line.rstrip())
-        found = re.match(r"GUI\.Forms: MCP socket: (.+)$", line.rstrip())
-        if found:
-            return found.group(1)
+        for line in lines:
+            found = re.match(r"GUI\.Forms: MCP socket: (.+)$", line)
+            if found:
+                return found.group(1)
     fail("the program did not say its socket; it said: " + " | ".join(seen))
     return ""
 
@@ -240,12 +256,8 @@ def door_mode(path, entry, process):
     # socket's line.
     deadline = time.monotonic() + TIMEOUT
     while time.monotonic() < deadline and not any(line.startswith("GUI.Forms:   help:") for line in DOOR_LINES):
-        ready, _, _ = select.select([process.stderr], [], [], 0.5)
-        if ready:
-            line = process.stderr.readline().decode("utf-8", "replace")
-            if not line:
-                break
-            DOOR_LINES.append(line.rstrip())
+        if read_stderr_lines(process) is None:
+            break
     text = "\n".join(DOOR_LINES)
     named = re.search(r"GUI\.Forms: \S+ is a GUI\.Forms program .*command folder is /tmp/([0-9a-f]{8})$", text, re.M)
     sent = re.search(r"^GUI\.Forms:   send: (.*)$", text, re.M)

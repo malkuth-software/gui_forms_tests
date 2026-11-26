@@ -12,6 +12,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <dispatch/dispatch.h>
+#include <cerrno>
+#include <signal.h>
+#include <unistd.h>
 #include <functional>
 #include <memory>
 #include <string>
@@ -275,6 +278,30 @@ bool report_pass(ProbeState& state, const Pass& pass, NSView* const view, const 
     return passed;
 }
 
+// Another GUI.Forms program serving MCP on this machine (its socket in
+// ~/Library/Caches/gui-forms/run, named <pid>.sock, with that process
+// alive), or 0. A stray one left running made every drag pass stall once
+// for about 1.1 s (2026-11-25); the probe refuses to measure beside one
+// rather than report the stall as the toolkit's. A GUI.Forms program
+// launched without MCP has no socket and is not seen.
+pid_t other_gui_forms_program(std::string& socket) {
+    NSString* const home = NSHomeDirectory();
+    if (home == nil) return 0;
+    NSString* const directory = [home stringByAppendingPathComponent:@"Library/Caches/gui-forms/run"];
+    NSArray<NSString*>* const names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:directory error:nil];
+    for (NSString* name in names) {
+        if (![name hasSuffix:@".sock"]) continue;
+        const long long number = [[name stringByDeletingPathExtension] longLongValue];
+        if (number <= 0 || number == static_cast<long long>(getpid())) continue;
+        const pid_t pid = static_cast<pid_t>(number);
+        const bool alive = kill(pid, 0) == 0 || errno == EPERM;
+        if (!alive) continue;
+        socket = std::string([[directory stringByAppendingPathComponent:name] UTF8String]);
+        return pid;
+    }
+    return 0;
+}
+
 void tick(void* context);
 
 void schedule(ProbeState& state, const std::uint64_t milliseconds) {
@@ -382,6 +409,14 @@ private:
 } // namespace
 
 int main(int argc, char** argv) {
+    std::string other_socket;
+    const pid_t other = other_gui_forms_program(other_socket);
+    if (other != 0) {
+        std::printf("live-resize|FAIL another GUI.Forms program is running (pid %d, MCP socket %s); stop it and "
+                    "run the probe again: beside one, every drag pass stalls\nfailures=1\n",
+                    static_cast<int>(other), other_socket.c_str());
+        return 2;
+    }
     ProbeState state{};
     for (int index = 1; index + 1 < argc; ++index) {
         const std::string_view argument(argv[index]);
